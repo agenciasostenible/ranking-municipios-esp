@@ -1,5 +1,9 @@
 -- 0224: Municipios costeros que faltaban en la BD (para mostrar sus playas y el ranking).
 -- Solo nombre/provincia/comunidad (el PDF de playas no trae coordenadas ni población).
+-- Limpieza previa (idempotente): quita datos de playa y municipios sintéticos 9xxxx.
+DELETE FROM entidades WHERE fuente='inventario_playas_pdf';
+DELETE FROM puntuaciones WHERE categoria='Playas';
+DELETE FROM municipios WHERE codigo_ine LIKE '9%';
 
 INSERT OR IGNORE INTO municipios (codigo_ine,nombre,provincia,comunidad,nombre_search) VALUES ('90001','Ares','A Coruña','Galicia','ares');
 INSERT OR IGNORE INTO municipios (codigo_ine,nombre,provincia,comunidad,nombre_search) VALUES ('90002','Arteixo','A Coruña','Galicia','arteixo');
