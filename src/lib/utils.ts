@@ -68,6 +68,8 @@ export const CAT_COLORS: Record<string, string> = {
   naturaleza:        '#43a047',
   senderismo:        '#00897b',
   agua:              '#1e88e5',
+  playas:            '#0097a7',
+  Playas:            '#0097a7',
   gastronomia:       '#f4511e',
   restaurantes_top:  '#fb8c00',
   estrellas:         '#5c35c0',

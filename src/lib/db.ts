@@ -34,6 +34,7 @@ export const ICONS: Record<string, string> = {
   aceite:            'opacity',
   vinos:             'wine_bar',
   playas:            'beach_access',
+  Playas:            'beach_access',
   pueblo_bonito:     'brightness_5',
   notoriedad_search: 'trending_up',
 
@@ -75,6 +76,7 @@ export const LABELS: Record<string, string> = {
   aceite:            'Aceite',
   vinos:             'Vinos',
   playas:            'Playas',
+  Playas:            'Playas',
   pueblo_bonito:     'Pueblo bonito',
   notoriedad_search: 'Popularidad',
 
@@ -112,6 +114,7 @@ export const TABS = [
   { key: 'TurismoRural',     label: 'Rural',       icon: 'cottage' },
   { key: 'estrellas',        label: 'Astro',       icon: 'nights_stay' },
   { key: 'castillos',        label: 'Castillos',   icon: 'castle' },
+  { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
   { key: 'yacimientos',      label: 'Arqueología', icon: 'archaeology' },
   { key: 'birdwatching',     label: 'Birds',       icon: 'flutter_dash' },
   { key: 'ciclismo',         label: 'Bici',        icon: 'pedal_bike' },
@@ -162,6 +165,7 @@ export const SIDEBAR_GROUPS = [
     title: 'Naturaleza',
     icon: 'park',
     items: [
+      { key: 'playas',       label: 'Playas',         icon: 'beach_access' },
       { key: 'miradores',    label: 'Miradores',      icon: 'binoculars' },
       { key: 'birdwatching', label: 'Birdwatching',   icon: 'flutter_dash' },
       { key: 'estrellas',    label: 'Cielos oscuros', icon: 'nights_stay' },
@@ -198,5 +202,6 @@ export const FICHA_CATS = [
   'ranking_global','monumentos','fiestas','senderismo',
   'gastronomia','camping','TurismoRural',
   'estrellas','castillos','yacimientos','ciclismo','birdwatching',
+  'Playas',
   'pueblo_bonito','notoriedad_search',
 ];
