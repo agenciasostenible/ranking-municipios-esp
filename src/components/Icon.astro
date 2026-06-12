@@ -1,0 +1,55 @@
+---
+import { Trophy, Landmark, PartyPopper, TreePine, Footprints, Utensils, Tent,
+  Waves, Users, Mountain, House, Moon, Castle, Shovel, Building2, Building,
+  Music2, Star, Droplet, Wine, Umbrella, Binoculars, Bird, Bike, Fish,
+  Heart, Backpack, Diamond, Accessibility, Flower2, Bath, Church, Store,
+  ShoppingBasket, Leaf, Flame, Eye, SunMoon } from 'lucide-astro';
+
+interface Props { name: string; size?: number; class?: string; }
+const { name, size = 22, class: cls = '' } = Astro.props;
+
+const MAP: Record<string, any> = {
+  emoji_events:    Trophy,
+  account_balance: Landmark,
+  celebration:     PartyPopper,
+  park:            TreePine,
+  hiking:          Footprints,
+  restaurant:      Utensils,
+  camping:         Tent,
+  water:           Waves,
+  family_restroom: Users,
+  landscape:       Mountain,
+  cottage:         House,
+  nights_stay:     Moon,
+  castle:          Castle,
+  archaeology:     Shovel,
+  museum:          Building2,
+  location_city:   Building,
+  festival:        Music2,
+  star:            Star,
+  opacity:         Droplet,
+  wine_bar:        Wine,
+  beach_access:    Umbrella,
+  binoculars:      Binoculars,
+  flutter_dash:    Bird,
+  mountain:        Mountain,
+  pedal_bike:      Bike,
+  climbing:        Mountain,
+  phishing:        Fish,
+  favorite:        Heart,
+  backpack:        Backpack,
+  diamond:         Diamond,
+  accessible:      Accessibility,
+  self_improvement:Flower2,
+  hot_tub:         Bath,
+  church:          Church,
+  storefront:      Store,
+  shopping_basket: ShoppingBasket,
+  local_grocery_store: ShoppingBasket,
+  person:          Users,
+  place:           Landmark,
+};
+
+const Component = MAP[name] ?? Landmark;
+---
+<Component size={size} class={cls} />

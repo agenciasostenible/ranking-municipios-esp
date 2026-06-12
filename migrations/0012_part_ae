@@ -1,0 +1,5 @@
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'mercados_gastro' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'mercados_gastro';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'miradores' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'miradores';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'mochilero' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'mochilero';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'monumentos' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'monumentos';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'museos' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'museos';

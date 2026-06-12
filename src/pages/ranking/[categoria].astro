@@ -1,0 +1,625 @@
+---
+import { DB } from '../../lib/d1client';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { TABS, SIDEBAR_GROUPS, ALL_CATS, getCatInfo, LABELS, formatPob } from '../../lib/db';
+import { CAT_COLORS } from '../../lib/utils';
+// @ts-ignore
+
+let { categoria } = Astro.params;
+
+// Normalizar categoría: playas -> Playas
+if (categoria === 'campings') categoria = 'Campings';
+if (categoria === 'playas') categoria = 'Playas';
+if (categoria === 'turismo_rural') categoria = 'TurismoRural';
+
+const url = Astro.url;
+const prov    = url.searchParams.get('provincia') ?? '';
+const ccaa    = url.searchParams.get('ccaa') ?? '';
+const comarca = url.searchParams.get('comarca') ?? '';
+const tam     = url.searchParams.get('tamano') ?? '';
+const page    = parseInt(url.searchParams.get('page') ?? '1');
+const perPage = 50;
+const offset  = (page - 1) * perPage;
+
+const catLabel = LABELS[categoria!] ?? categoria!;
+const catInfo  = getCatInfo(categoria!);
+const catColor = CAT_COLORS[categoria!] ?? '#FF385C';
+
+// Build WHERE
+const whereClauses = [`p.categoria = ?`, `COALESCE(m.es_duplicado, 0) = 0`];
+const params: any[] = [categoria];
+if (prov)   { whereClauses.push(`m.provincia = ?`);  params.push(prov); }
+if (ccaa)   { whereClauses.push(`m.comunidad = ?`);  params.push(ccaa); }
+if (comarca){ whereClauses.push(`m.comarca = ?`);    params.push(comarca); }
+if (tam === 'micro') whereClauses.push(`m.poblacion < 500`);
+else if (tam === 'peq') whereClauses.push(`m.poblacion >= 500 AND m.poblacion < 5000`);
+else if (tam === 'med') whereClauses.push(`m.poblacion >= 5000 AND m.poblacion < 20000`);
+else if (tam === 'grd') whereClauses.push(`m.poblacion >= 20000`);
+const where = whereClauses.join(' AND ');
+
+const countRow = await DB.prepare(
+  `SELECT COUNT(*) as n FROM puntuaciones p JOIN municipios m ON p.codigo_ine=m.codigo_ine WHERE ${where}`
+).bind(...params).first();
+const totalRows = countRow?.n ?? 0;
+const totalPages = Math.max(1, Math.ceil(totalRows / perPage));
+
+const { results: rankingRaw } = await DB.prepare(`
+  SELECT m.codigo_ine, m.nombre, m.provincia, m.comunidad, m.comarca, m.poblacion,
+         CASE WHEN p.categoria IN ('Campings', 'TurismoRural') THEN m.why_json ELSE NULL END as why_json,
+         m.foto_url, p.puntuacion, p.ranking_provincial
+  FROM puntuaciones p
+  JOIN municipios m ON p.codigo_ine = m.codigo_ine
+  WHERE ${where}
+  ORDER BY p.puntuacion DESC
+  LIMIT ${perPage} OFFSET ${offset}
+`).bind(...params).all();
+
+const ranking = (rankingRaw as any[]).map(r => ({
+  ...r,
+  why: r.why_json ? (() => { try { return JSON.parse(r.why_json); } catch { return []; } })() : [],
+  foto: r.foto_url && r.foto_url !== 'NONE' ? r.foto_url : null,
+}));
+
+const { results: provincias } = await DB.prepare(`SELECT DISTINCT provincia FROM municipios ORDER BY provincia`).all();
+const { results: ccaas }     = await DB.prepare(`SELECT DISTINCT comunidad FROM municipios ORDER BY comunidad`).all();
+
+const maxPts: number = ranking.length ? Math.max(...(ranking as any[]).map((r: any) => r.puntuacion ?? 0)) : 100;
+
+function buildUrl(overrides: Record<string, string | number>) {
+  const p: Record<string, string> = { provincia: prov, ccaa, comarca, tamano: tam };
+  Object.assign(p, Object.fromEntries(Object.entries(overrides).map(([k,v]) => [k, String(v)])));
+  const qs = Object.entries(p).filter(([,v]) => v && v !== '1').map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  return `/ranking/${categoria}${qs ? '?' + qs : ''}`;
+}
+---
+<Base
+  title={`Mejores pueblos de España por ${catLabel} ${new Date().getFullYear()} — Ranking Spain`}
+  description={`Ranking de los ${totalRows} mejores municipios de España por ${catInfo.label.toLowerCase()}. Descubre qué pueblo visitar, compara destinos y encuentra el viaje perfecto.`}
+>
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": `Mejores pueblos de España por ${catLabel} ${new Date().getFullYear()}`,
+  "description": `Ranking de los ${totalRows} mejores municipios de España por ${catLabel.toLowerCase()}.`,
+  "url": `https://rankingspain.com/ranking/${categoria}`,
+  "numberOfItems": totalRows,
+  "itemListElement": ranking.slice(0, 10).map((r: any, i: number) => ({
+    "@type": "ListItem",
+    "position": i + 1,
+    "name": r.nombre,
+    "url": `https://rankingspain.com/municipio/${r.codigo_ine}`,
+  })),
+})} />
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://rankingspain.com/" },
+    { "@type": "ListItem", "position": 2, "name": `Ranking ${catLabel}`, "item": `https://rankingspain.com/ranking/${categoria}` },
+  ]
+})} />
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": `¿Cuál es el mejor pueblo de España para ${catLabel.toLowerCase()}?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": ranking.length > 0
+          ? `Según nuestro ranking, el mejor municipio de España para ${catLabel.toLowerCase()} es ${(ranking as any[])[0].nombre} (${(ranking as any[])[0].provincia}), con una puntuación de ${Number((ranking as any[])[0].puntuacion).toFixed(1)} puntos. Le siguen ${(ranking as any[]).slice(1,3).map((r:any)=>r.nombre).join(' y ')}.`
+          : `Consulta el ranking actualizado en rankingspain.com/ranking/${categoria}`
+      }
+    },
+    {
+      "@type": "Question",
+      "name": `¿Cuántos municipios tiene el ranking de ${catLabel.toLowerCase()}?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `El ranking de ${catLabel.toLowerCase()} incluye ${totalRows} municipios de toda España, evaluados y ordenados por puntuación. Puedes filtrar por provincia, comunidad autónoma o tamaño del municipio.`
+      }
+    },
+    {
+      "@type": "Question",
+      "name": `¿Cómo se calcula el ranking de ${catLabel.toLowerCase()}?`,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `La puntuación se calcula a partir de datos objetivos: entidades registradas en OpenStreetMap, bienes de interés cultural, visitas a Wikipedia y otros indicadores públicos. El ranking se actualiza periódicamente.`
+      }
+    }
+  ]
+})} />
+
+<!-- Category chips -->
+<div class="chips-wrap">
+  <button class="chips-arrow chips-arrow-left" id="chips-prev" aria-label="Anterior">&#8249;</button>
+  <div class="chips-bar" id="chips-bar">
+    <div class="chips-inner">
+      {TABS.map(t => (
+        <a href={`/ranking/${t.key}`} class={`chip-cat${t.key === categoria ? ' active' : ''}`}>
+          <Icon name={t.icon} size={20} />
+          {t.label}
+        </a>
+      ))}
+    </div>
+  </div>
+  <button class="chips-arrow chips-arrow-right" id="chips-next" aria-label="Siguiente">&#8250;</button>
+</div>
+<script>
+  const bar = document.getElementById('chips-bar');
+  document.getElementById('chips-prev')?.addEventListener('click', () => bar?.scrollBy({ left: -300, behavior: 'smooth' }));
+  document.getElementById('chips-next')?.addEventListener('click', () => bar?.scrollBy({ left: 300, behavior: 'smooth' }));
+</script>
+
+<!-- Filters -->
+<div class="filters-bar">
+  <div class="filter-group">
+    <label>Categoría</label>
+    <select id="fCat">
+      {SIDEBAR_GROUPS.map(g => (
+        <optgroup label={g.title}>
+          {g.items.map(t => (
+            <option value={t.key} selected={t.key === categoria}>{t.label}</option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Provincia</label>
+    <select id="fProv">
+      <option value="">Todas las provincias</option>
+      {provincias.map((p: any) => <option value={p.provincia} selected={p.provincia === prov}>{p.provincia}</option>)}
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>CC.AA.</label>
+    <select id="fCCAA">
+      <option value="">Todas</option>
+      {ccaas.map((c: any) => <option value={c.comunidad} selected={c.comunidad === ccaa}>{c.comunidad}</option>)}
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Tamaño</label>
+    <select id="fTam">
+      <option value="" selected={!tam}>Cualquiera</option>
+      <option value="micro" selected={tam==='micro'}>Micro (&lt;500)</option>
+      <option value="peq" selected={tam==='peq'}>Pequeño (500–5k)</option>
+      <option value="med" selected={tam==='med'}>Mediano (5k–20k)</option>
+      <option value="grd" selected={tam==='grd'}>Grande (&gt;20k)</option>
+    </select>
+  </div>
+  <a href={`/ranking/${categoria}`} class="btn-reset">✕ Limpiar</a>
+</div>
+
+<!-- Content -->
+<div class="page-content">
+  <div class="info-bar">
+    <div class="istat"><div class="n">{totalRows.toLocaleString('es-ES')}</div><div class="l">Municipios</div></div>
+    <div class="istat" style={`border-left: 3px solid ${catColor}`}>
+      <div class="n" style={`color:${catColor}`}><Icon name={catInfo.icon} size={18} /> {catInfo.label}</div>
+      <div class="l">Categoría activa</div>
+    </div>
+    {(prov || ccaa) && (
+      <div class="istat"><div class="n">{prov || ccaa}</div><div class="l">Filtro geográfico</div></div>
+    )}
+    <div class="istat"><div class="n">{page}/{totalPages}</div><div class="l">Página</div></div>
+  </div>
+
+  <div class="top-municipios-label">🏆 Top Municipios</div>
+
+  <div class="result-header">
+    <div>
+      <h2>{catLabel}</h2>
+      <div class="sub">
+        {totalRows.toLocaleString('es-ES')} municipios ·
+        Mostrando {(page-1)*perPage+1}–{Math.min(page*perPage, totalRows)}
+        {prov ? ` en ${prov}` : ccaa ? ` en ${ccaa}` : ''}
+      </div>
+    </div>
+    {totalPages > 1 && (
+      <div class="pg">
+        {page > 1 && <a href={buildUrl({ page: page - 1 })} class="pgb">‹</a>}
+        {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+          const s = Math.max(1, page - 3);
+          const p2 = s + i;
+          if (p2 > totalPages) return null;
+          return <a href={buildUrl({ page: p2 })} class={`pgb${p2 === page ? ' active' : ''}`}>{p2}</a>;
+        })}
+        {page < totalPages && <a href={buildUrl({ page: page + 1 })} class="pgb">›</a>}
+        <span class="pg-info">{totalRows.toLocaleString('es-ES')} total</span>
+      </div>
+    )}
+  </div>
+
+  <table class="ranking-table" id="ranking-table">
+    <thead>
+      <tr>
+        <th style="width:46px">#</th>
+        <th>Municipio</th>
+        <th style="width:200px">Puntuación</th>
+        <th>Por qué destaca</th>
+        <th>Provincia</th>
+        <th>CC.AA.</th>
+        <th style="width:80px">Hab.</th>
+      </tr>
+    </thead>
+    <tbody>
+      {(ranking as any[]).map((r, i) => {
+        const pos = offset + i + 1;
+        const pct = maxPts > 0 ? Math.round((r.puntuacion / maxPts) * 100) : 0;
+        const cls = pos === 1 ? 'pos g' : pos === 2 ? 'pos s' : pos === 3 ? 'pos b' : 'pos';
+        const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
+        const whyChips = (r.why as string[]).slice(0, 3);
+        return (
+          <>
+            <tr class="rank-row" data-codigo={r.codigo_ine}>
+              <td><span class={cls}>{med}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="row-thumb"
+                    style={r.foto ? `background:url('${r.foto}') center/cover no-repeat` : 'background:#e8e8e8'}
+                    data-codigo={r.foto ? null : r.codigo_ine}>
+                  </div>
+                  <div>
+                    <a href={`/municipio/${r.codigo_ine}?desde=${categoria}`}
+                       style={`color:var(--text);font-weight:600;font-size:.875rem`}
+                       onclick="event.stopPropagation()">{r.nombre}</a>
+                    <span class="expand-arrow">▶</span>
+                    <div style="font-size:.72rem;color:var(--text-2);margin-top:1px">{r.comarca ?? ''}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="bar-cell">
+                  <span class="pts" style={`color:${catColor}`}>{Number(r.puntuacion).toFixed(1)}</span>
+                  <div class="bar-wrap">
+                    <div class="bar-fill" style={`width:${pct}%;background:${catColor}`}></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  {whyChips.map((chip: string) => <span class="why-chip">{chip}</span>)}
+                </div>
+              </td>
+              <td><span class="prov-tag">{r.provincia}</span></td>
+              <td><span class="ctag">{r.comunidad}</span></td>
+              <td><span style="color:var(--text-2);font-size:.78rem">{formatPob(r.poblacion)}</span></td>
+            </tr>
+            <tr class="expand-row" id={`expand-${r.codigo_ine}`} style="display:none">
+              <td colspan="7" style="padding:0">
+                <div class="expand-panel">
+                  <div class="desde-block-inline" data-nombre={r.nombre} data-puntuacion={r.puntuacion} data-pos={offset + i + 1} data-rank-prov={r.ranking_provincial ?? ''}>
+                    <div class="desde-block-title">¿Por qué {r.nombre} destaca en {catInfo.label}?</div>
+                    <div class="desde-block-meta">
+                      <span class="desde-pts" style={`color:${catColor}`}>{Number(r.puntuacion).toFixed(1)} pts</span>
+                      {r.ranking_provincial && <span class="desde-rank-prov">· #{r.ranking_provincial} en {r.provincia}</span>}
+                      <span class="desde-rank-es">· #{offset + i + 1} en España</span>
+                    </div>
+                    <div class="desde-entidades-loading" data-codigo={r.codigo_ine} style="font-size:.8rem;color:#aaa;margin-top:8px">Cargando recursos...</div>
+                  </div>
+                  <div class="expand-section-title">📊 Desglose por categoría</div>
+                  <div class="bars-loading" data-codigo={r.codigo_ine} style="font-size:.8rem;color:#aaa">Cargando...</div>
+                  <div class="expand-note">
+                    La puntuación combina: inventario de recursos + sellos oficiales (BIC, UNESCO, IT) + notoriedad Wikipedia + datos de alojamiento y gastronomía.
+                  </div>
+                  <div style="margin-top:10px">
+                    <a href={`/municipio/${r.codigo_ine}?desde=${categoria}`}
+                       style="font-size:.82rem;color:var(--primary);font-weight:600">
+                      Ver ficha completa →
+                    </a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </>
+        );
+      })}
+    </tbody>
+  </table>
+
+  {totalPages > 1 && (
+    <div class="pg" style="margin-top:20px;justify-content:center">
+      {page > 1 && <a href={buildUrl({ page: page - 1 })} class="pgb">‹ Anterior</a>}
+      <span class="pg-info">Página {page} de {totalPages}</span>
+      {page < totalPages && <a href={buildUrl({ page: page + 1 })} class="pgb">Siguiente ›</a>}
+    </div>
+  )}
+</div>
+
+<script define:vars={{ categoria }}>
+function buildQs(cat) {
+  const p = document.getElementById('fProv').value;
+  const c = document.getElementById('fCCAA').value;
+  const t = document.getElementById('fTam').value;
+  const qs = [
+    p && `provincia=${encodeURIComponent(p)}`,
+    !p && c && `ccaa=${encodeURIComponent(c)}`,
+    t && `tamano=${t}`,
+  ].filter(Boolean).join('&');
+  return `/ranking/${cat || categoria}${qs ? '?' + qs : ''}`;
+}
+
+document.getElementById('fProv').addEventListener('change', function() {
+  if (this.value) document.getElementById('fCCAA').value = '';
+  window.location.href = buildQs(categoria);
+});
+document.getElementById('fCCAA').addEventListener('change', function() {
+  if (this.value) document.getElementById('fProv').value = '';
+  window.location.href = buildQs(categoria);
+});
+document.getElementById('fTam').addEventListener('change', () => window.location.href = buildQs(categoria));
+document.getElementById('fCat').addEventListener('change', function() {
+  window.location.href = buildQs(this.value);
+});
+
+// Update nav links with current filters
+function updateNavLinks() {
+  const qs = buildQs('__CAT__').split('__CAT__')[1];
+  document.querySelectorAll('a.chip-cat').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    const m = href.match(/\/ranking\/([^?]+)/);
+    if (m) a.setAttribute('href', `/ranking/${m[1]}${qs}`);
+  });
+}
+updateNavLinks();
+
+// ── Expandable rows ──
+const CAT_COLORS_JS = {
+  ranking_global:'#FF385C',historia:'#5c6bc0',castillos:'#7b5ea7',yacimientos:'#8d6e63',
+  fiestas:'#e53935',naturaleza:'#43a047',senderismo:'#00897b',agua:'#1e88e5',
+  gastronomia:'#f4511e',restaurantes_top:'#fb8c00',estrellas:'#5c35c0',
+  birdwatching:'#2e7d32',aceite:'#827717',vinos:'#6a1b9a',museos:'#455a64',
+  camping:'#ef6c00',aventura:'#d81b60',ninos:'#039be5',escapada_rural:'#558b2f',
+  pareja:'#e91e63',retiros:'#7e57c2',ciclismo:'#00838f',escalada:'#bf360c',
+  pesca:'#1565c0',miradores:'#4527a0',cuevas:'#4e342e',
+  semana_santa:'#6d4c41',lujo:'#f9a825',accesible:'#37474f',festivales:'#e65100',
+};
+const CAT_LABELS_JS = {
+  historia:'🏛️ Historia',castillos:'🏰 Castillos',yacimientos:'⚱️ Arqueología',
+  fiestas:'🎉 Fiestas',naturaleza:'🌿 Naturaleza',senderismo:'🥾 Senderismo',
+  agua:'💧 Agua',gastronomia:'🍽️ Gastronomía',restaurantes_top:'⭐ Rest. top',
+  estrellas:'🌌 Astroturismo',birdwatching:'🦅 Birdwatching',aceite:'🫒 Aceite',
+  vinos:'🍷 Vinos',museos:'🖼️ Museos',camping:'⛺ Camping',aventura:'🧗 Aventura',
+  ninos:'👨‍👩‍👧 Familias',escapada_rural:'🏡 Rural',pareja:'💑 Parejas',retiros:'🧘 Retiros',
+  ciclismo:'🚵 Cicloturismo',escalada:'🧗 Escalada',pesca:'🎣 Pesca',
+  playas:'🏖️ Playas',miradores:'🔭 Miradores',cuevas:'🕳️ Cuevas',
+  semana_santa:'✝️ Semana Santa',lujo:'💎 Lujo',accesible:'♿ Accesible',festivales:'🎪 Festivales',
+};
+
+const TIPO_ICONS_JS = {
+  castillo:'🏰',monumento:'🏛️',conjunto:'🏘️',yacimiento:'⚱️',
+  fiesta:'🎉',espacio:'🌿',gastronomia:'🍽️',producto:'🧀',
+  sendero:'🥾',mirador:'🔭',iglesia:'⛪',museo:'🖼️',
+  agua:'💧',playa_fluvial:'🏖️',playa:'🏖️',montaña:'⛰️',fauna:'🦅',
+  cueva:'🕳️',camping:'⛺',balneario:'♨️',ruta:'🗺️',deporte:'🚵',festival:'🎪',
+};
+const CAT_TIPOS_JS = {
+  senderismo:    ['sendero'],
+  ciclismo:      ['sendero','deporte','ruta'],
+  agua:          ['agua','playa_fluvial','playa'],
+  naturaleza:    ['espacio','montaña','mirador','fauna'],
+  camping:       ['camping'],
+  historia:      ['castillo','yacimiento','monumento','conjunto','museo'],
+  castillos:     ['castillo'],
+  yacimientos:   ['yacimiento'],
+  gastronomia:   ['gastronomia','producto'],
+  fiestas:       ['fiesta','festival'],
+  estrellas:     ['mirador','espacio'],
+  birdwatching:  ['espacio','fauna'],
+  aventura:      ['cueva','montaña','sendero'],
+  escapada_rural:['espacio','mirador'],
+  retiros:       ['balneario','espacio'],
+  aceite:        ['producto'],
+  vinos:         ['producto'],
+  miradores:     ['mirador'],
+  cuevas:        ['cueva'],
+  museos:        ['museo'],
+};
+const SELLO_STYLES = {
+  'UNESCO':           'background:#e3f2fd;color:#0d47a1',
+  'IT Internacional': 'background:#fce4ec;color:#880e4f',
+  'Parque Nacional':  'background:#e8f5e9;color:#1b5e20',
+  'BIC Nacional':     'background:#fff3e0;color:#e65100',
+  'IT Nacional':      'background:#f3e5f5;color:#4a148c',
+  'Autonómico':       'background:#e0f7fa;color:#006064',
+};
+
+let openCodigo = null;
+const scoresCache = {};
+const entidadesCache = {};
+
+async function loadScores(codigo) {
+  if (scoresCache[codigo]) return scoresCache[codigo];
+  const data = await fetch(`/api/municipio-scores/${codigo}`).then(r => r.json());
+  scoresCache[codigo] = data;
+  return data;
+}
+async function loadEntidades(codigo) {
+  if (entidadesCache[codigo] !== undefined) return entidadesCache[codigo];
+  const data = await fetch(`/api/entidades/${codigo}`).then(r => r.json());
+  entidadesCache[codigo] = data;
+  return data;
+}
+
+function renderDesdeEntidades(el, entidades) {
+  if (!entidades.length) {
+    el.outerHTML = '<div style="font-size:.8rem;color:#aaa;font-style:italic;margin-top:6px">Sin recursos específicos registrados aún.</div>';
+    return;
+  }
+  const items = entidades.slice(0, 6).map(e => {
+    const icon = TIPO_ICONS_JS[e.tipo] || '📍';
+    const selloStyle = SELLO_STYLES[e.nivel_sello] || '';
+    const selloHtml = e.nivel_sello
+      ? `<span style="${selloStyle};padding:1px 7px;border-radius:8px;font-size:.62rem;font-weight:700;margin-left:6px">${e.nivel_sello}</span>`
+      : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0">
+      <span style="font-size:1.1rem;flex-shrink:0">${icon}</span>
+      <span style="font-size:.82rem;font-weight:600;color:#222">${e.nombre}</span>${selloHtml}
+    </div>`;
+  }).join('');
+  el.outerHTML = `<div class="desde-entidades-loaded" style="margin-top:8px">${items}</div>`;
+}
+
+function renderEntidades(el, entidades) {
+  if (!entidades.length) {
+    el.innerHTML = '<div style="font-size:.8rem;color:#aaa;font-style:italic">Sin datos de recursos</div>';
+    return;
+  }
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">${
+    entidades.map(e => {
+      const icon = TIPO_ICONS_JS[e.tipo] || '📍';
+      const selloStyle = SELLO_STYLES[e.nivel_sello] || 'background:#f0f0f0;color:#666';
+      const selloHtml = e.nivel_sello
+        ? `<span style="${selloStyle};padding:2px 8px;border-radius:8px;font-size:.65rem;font-weight:700">${e.nivel_sello}</span>`
+        : '';
+      const descHtml = e.descripcion
+        ? `<div style="font-size:.73rem;color:#717171;margin-bottom:5px;line-height:1.4">${e.descripcion}</div>`
+        : '';
+      return `<div style="background:#fff;border-radius:10px;padding:10px 12px;border:1px solid #EBEBEB;display:flex;gap:10px">
+        <div style="font-size:1.4rem;flex-shrink:0;line-height:1.2">${icon}</div>
+        <div>
+          <div style="font-weight:600;color:#222;font-size:.82rem;margin-bottom:3px">${e.nombre}</div>
+          ${descHtml}${selloHtml}
+        </div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
+function renderBars(el, scores) {
+  const top = scores.filter(s => CAT_LABELS_JS[s.categoria] && s.puntuacion > 0)
+    .sort((a, b) => b.puntuacion - a.puntuacion).slice(0, 12);
+  const max = top[0]?.puntuacion || 100;
+  el.innerHTML = top.map(s => {
+    const color = CAT_COLORS_JS[s.categoria] || '#FF385C';
+    const pct = Math.round((s.puntuacion / max) * 100);
+    const label = CAT_LABELS_JS[s.categoria] || s.categoria;
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="width:130px;font-size:.74rem;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</div>
+      <div style="flex:1;background:#F0F0F0;border-radius:3px;height:6px">
+        <div style="width:${pct}%;background:${color};height:6px;border-radius:3px;transition:width .4s"></div>
+      </div>
+      <div style="width:32px;text-align:right;font-size:.74rem;font-weight:700;color:${color}">${s.puntuacion.toFixed(1)}</div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleExpand(codigo) {
+  const expandRow = document.getElementById(`expand-${codigo}`);
+
+  if (openCodigo && openCodigo !== codigo) {
+    const prev = document.getElementById(`expand-${openCodigo}`);
+    if (prev) prev.style.display = 'none';
+    const prevRow = document.querySelector(`.rank-row[data-codigo="${openCodigo}"]`);
+    if (prevRow) prevRow.classList.remove('row-open');
+  }
+
+  if (openCodigo === codigo) {
+    expandRow.style.display = 'none';
+    document.querySelector(`.rank-row[data-codigo="${codigo}"]`)?.classList.remove('row-open');
+    openCodigo = null;
+    return;
+  }
+
+  openCodigo = codigo;
+  expandRow.style.display = 'table-row';
+  document.querySelector(`.rank-row[data-codigo="${codigo}"]`)?.classList.add('row-open');
+
+  const desdeEntEl = expandRow.querySelector('.desde-entidades-loading');
+  const barsEl = expandRow.querySelector('.bars-loading');
+
+  const [entidades, scores] = await Promise.all([
+    desdeEntEl ? loadEntidades(codigo) : Promise.resolve(null),
+    barsEl ? loadScores(codigo) : Promise.resolve(null),
+  ]);
+
+  // Para Campings, mostrar why_json en lugar de entidades
+  if (categoria === 'Campings') {
+    if (desdeEntEl && scores && scores.length > 0) {
+      const currentScore = scores.find(s => s.categoria === 'Campings');
+      if (currentScore && currentScore.why_json) {
+        const whyData = typeof currentScore.why_json === 'string'
+          ? JSON.parse(currentScore.why_json)
+          : currentScore.why_json;
+        const whyText = Array.isArray(whyData) ? whyData[0] : whyData;
+        if (whyText) {
+          desdeEntEl.innerHTML = `<div style="font-size:.82rem;color:#222;line-height:1.5;margin-top:8px">${whyText}</div>`;
+          desdeEntEl.className = 'desde-entidades-loaded';
+        }
+      }
+    }
+  } else if (desdeEntEl && entidades !== null) {
+    const tipos = CAT_TIPOS_JS[categoria] || [];
+    const filtradas = tipos.length
+      ? entidades.filter(e => tipos.includes(e.tipo))
+      : entidades;
+    renderDesdeEntidades(desdeEntEl, filtradas);
+  }
+  if (barsEl && scores !== null) {
+    barsEl.className = 'bars-loaded';
+    renderBars(barsEl, scores);
+  }
+}
+
+document.querySelectorAll('.rank-row').forEach(row => {
+  row.addEventListener('click', () => {
+    const codigo = row.getAttribute('data-codigo');
+    if (codigo) toggleExpand(codigo);
+  });
+});
+
+// Estilos del thumbnail
+const thumbStyle = document.createElement('style');
+thumbStyle.textContent = `.row-thumb{width:44px;height:44px;border-radius:8px;flex-shrink:0;background:#e8e8e8;}`;
+document.head.appendChild(thumbStyle);
+
+</script>
+
+<style>
+.desde-block-inline {
+  background: #fffbf0;
+  border: 1.5px solid #ffe082;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.desde-block-title {
+  font-size: .9rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 6px;
+}
+.desde-block-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.desde-pts {
+  font-size: .88rem;
+  font-weight: 700;
+}
+.desde-rank-prov, .desde-rank-es {
+  font-size: .78rem;
+  color: #888;
+}
+.top-municipios-label {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: #888;
+  padding: 16px 20px 0;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+</style>
+</Base>

@@ -1,0 +1,69 @@
+-- Gastronomía Almería — generado desde guías gastronómicas Excel
+-- Andalucía
+-- Provincias: Almería
+-- Municipios con datos: 39
+
+-- 1. Reset
+UPDATE puntuaciones SET puntuacion=0 WHERE categoria='gastronomia'
+  AND codigo_ine IN (SELECT codigo_ine FROM municipios WHERE provincia IN ('Almería'));
+
+-- 2. Limpiar entidades automáticas OSM/wikidata
+DELETE FROM entidades WHERE tipo IN ('gastronomia','producto')
+  AND fuente IN ('wikidata','OSM')
+  AND codigo_ine IN (SELECT codigo_ine FROM municipios WHERE provincia IN ('Almería'));
+
+-- 3. Default 12 para todos
+UPDATE puntuaciones SET puntuacion=12 WHERE categoria='gastronomia'
+  AND codigo_ine IN (SELECT codigo_ine FROM municipios WHERE provincia IN ('Almería'));
+
+-- 4. Scores individuales (35 municipios con datos)
+UPDATE puntuaciones SET puntuacion=71 WHERE codigo_ine='04004' AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=50 WHERE codigo_ine IN ('04025', '04083') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=46 WHERE codigo_ine IN ('04002', '04006', '04032') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=43 WHERE codigo_ine IN ('04023', '04079', '04014', '04057') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=39 WHERE codigo_ine IN ('04008', '04902') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=36 WHERE codigo_ine IN ('04016', '04064') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=32 WHERE codigo_ine IN ('04029', '04100', '04010', '04046') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=29 WHERE codigo_ine IN ('04017', '04066', '04098', '04088') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=25 WHERE codigo_ine IN ('04013', '04053', '04099') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=24 WHERE codigo_ine='04047' AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=22 WHERE codigo_ine IN ('04009', '04045') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=18 WHERE codigo_ine IN ('04035', '04012', '04050', '04001') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=15 WHERE codigo_ine IN ('04003', '04026', '04086') AND categoria='gastronomia';
+
+-- 5. Entidades gastronómicas
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04004','gastronomia','Capital Española de la Gastronomía 2019','Capital Española de la Gastronomía 2019. Destaca por el tapeo gratuito con la bebida. la gamba roja. galanes y platos tradicionales como gurullos con conejo y migas.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04002','gastronomia','Espléndida cocina marinera basada en su activo puerto pesquero','Espléndida cocina marinera basada en su activo puerto pesquero. Destacan el pulpo seco. la azas con bacalao y los fideos con rascacio.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04008','gastronomia','Destaca por la innovación de su agricultura (cocina de invernadero de alta gama) y mariscos en Al...','Destaca por la innovación de su agricultura (cocina de invernadero de alta gama) y mariscos en Almerimar. Restaurante La Costa (1 Estrella Michelin).','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04902','gastronomia','Destaca por la innovación de su agricultura (cocina de invernadero de alta gama) y mariscos en Al...','Destaca por la innovación de su agricultura (cocina de invernadero de alta gama) y mariscos en Almerimar. Restaurante La Costa (1 Estrella Michelin).','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04023','gastronomia','Gran variedad de restaurantes de pescado fresco','Gran variedad de restaurantes de pescado fresco. arroces marineros y cocina internacional. Destaca el emperador a la plancha y el calamar de potera.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04079','gastronomia','Gran variedad de restaurantes de pescado fresco','Gran variedad de restaurantes de pescado fresco. arroces marineros y cocina internacional. Destaca el emperador a la plancha y el calamar de potera.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04017','gastronomia','Cocina tradicional del desierto y costa','Cocina tradicional del desierto y costa. Destacan las migas de sémola. los embutidos artesanales y los guisos con cordero segureño.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04066','gastronomia','Cocina tradicional del desierto y costa','Cocina tradicional del desierto y costa. Destacan las migas de sémola. los embutidos artesanales y los guisos con cordero segureño.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04006','gastronomia','Famosa por sus pescados de roca y el galán frito','Famosa por sus pescados de roca y el galán frito. Tradición marinera con excelentes calderetas de pescado y arroces caldosos en el entorno de Cabo de Gata.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04032','gastronomia','Famosa por sus pescados de roca y el galán frito','Famosa por sus pescados de roca y el galán frito. Tradición marinera con excelentes calderetas de pescado y arroces caldosos en el entorno de Cabo de Gata.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04016','gastronomia','Platos típicos de herencia árabe y marinera como el guiso de pelotas','Platos típicos de herencia árabe y marinera como el guiso de pelotas. los gurullos y excelentes pescados frescos en sus restaurantes de playa.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04064','gastronomia','Platos típicos de herencia árabe y marinera como el guiso de pelotas','Platos típicos de herencia árabe y marinera como el guiso de pelotas. los gurullos y excelentes pescados frescos en sus restaurantes de playa.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04029','gastronomia','Destaca por el torto de avena','Destaca por el torto de avena. los guisos de vigilia con bacalao y una variada oferta de restauración mediterránea tradicional.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04100','gastronomia','Destaca por el torto de avena','Destaca por el torto de avena. los guisos de vigilia con bacalao y una variada oferta de restauración mediterránea tradicional.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04035','gastronomia','Guisos tradicionales de la cuenca minera como el ajo colorao','Guisos tradicionales de la cuenca minera como el ajo colorao. las pelotas de maíz y dulces tradicionales como los alfajores.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04013','gastronomia','Gastronomía de frontera con Murcia','Gastronomía de frontera con Murcia. Destacan las empanadas de almendra. las migas con tropezones y pasas. y los guisos de trigo.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04053','gastronomia','Gastronomía de frontera con Murcia','Gastronomía de frontera con Murcia. Destacan las empanadas de almendra. las migas con tropezones y pasas. y los guisos de trigo.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04003','gastronomia','Platos tradicionales de la comarca del Almanzora: puchero de trigo','Platos tradicionales de la comarca del Almanzora: puchero de trigo. gachas de caldo colorao y repostería artesana de mantecados.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04025','gastronomia','Famoso a nivel nacional por su Jamón de Serón con IGP','Famoso a nivel nacional por su Jamón de Serón con IGP. Excelentes embutidos (morcilla. longaniza) y platos de matanza serrana.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04083','gastronomia','Famoso a nivel nacional por su Jamón de Serón con IGP','Famoso a nivel nacional por su Jamón de Serón con IGP. Excelentes embutidos (morcilla. longaniza) y platos de matanza serrana.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04099','gastronomia','Gastronomía de los Vélez','Gastronomía de los Vélez. Destaca el choto frito. las migas de harina. la tarta de almendra y embutidos curados a gran altitud.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04098','gastronomia','Excelente manteca de lomo','Excelente manteca de lomo. carnes de caza mayor. estofados de cordero y dulces navideños de tradición artesanal.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04014','gastronomia','Centro vitivinícola de Almería (Vinos de la Tierra de Laujar-Alpujarra)','Centro vitivinícola de Almería (Vinos de la Tierra de Laujar-Alpujarra). Destaca por el choto al ajo ardiente y potajes alpujarreños.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04057','gastronomia','Centro vitivinícola de Almería (Vinos de la Tierra de Laujar-Alpujarra)','Centro vitivinícola de Almería (Vinos de la Tierra de Laujar-Alpujarra). Destaca por el choto al ajo ardiente y potajes alpujarreños.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04010','gastronomia','Cocina de la Alpujarra almeriense','Cocina de la Alpujarra almeriense. Destacan sus embutidos caseros. las patatas a lo pobre con lomo y sus bodegas de vino local.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04046','gastronomia','Cocina de la Alpujarra almeriense','Cocina de la Alpujarra almeriense. Destacan sus embutidos caseros. las patatas a lo pobre con lomo y sus bodegas de vino local.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04012','gastronomia','Platos de la Sierra de los Filabres: caldos de pimentón','Platos de la Sierra de los Filabres: caldos de pimentón. migas con engañifa de cerdo y repostería conventual.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04050','gastronomia','Platos de la Sierra de los Filabres: caldos de pimentón','Platos de la Sierra de los Filabres: caldos de pimentón. migas con engañifa de cerdo y repostería conventual.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04088','gastronomia','Destaca por su excelente Aceite de Oliva Virgen Extra de oliva del desierto','Destaca por su excelente Aceite de Oliva Virgen Extra de oliva del desierto. Cocina rústica: asado de cordero y gachas.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04026','gastronomia','Platos tradicionales de arcilla y fuego: cordero al horno','Platos tradicionales de arcilla y fuego: cordero al horno. ollas de trigo y dulces fritos de herencia morisca.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04086','gastronomia','Platos tradicionales de arcilla y fuego: cordero al horno','Platos tradicionales de arcilla y fuego: cordero al horno. ollas de trigo y dulces fritos de herencia morisca.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04009','gastronomia','Guisos de alta montaña','Guisos de alta montaña. cazuela de choto. migas de sémola con arenques y embutidos curados al aire de Sierra Nevada.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04045','gastronomia','Guisos de alta montaña','Guisos de alta montaña. cazuela de choto. migas de sémola con arenques y embutidos curados al aire de Sierra Nevada.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04001','gastronomia','Tradición micológica (setas de temporada) y cocina alpujarreña: gachas','Tradición micológica (setas de temporada) y cocina alpujarreña: gachas. migas y guiso de hinojos.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('04047','gastronomia','Cocina de la Safor','Cocina de la Safor.','excel_curado',date('now'));

@@ -1,0 +1,50 @@
+-- Enriquecimiento desde: https://www.guiarepsol.com/es/viajar/vamos-de-excursion/playas-comunidad-valenciana/
+-- Artículo: 15 playas de la Comunidad Valenciana que no te puedes perder
+-- Generado: 2026-06-06T21:19:20.145475
+-- Municipios: 4
+
+-- Calpe (Alicante) — Cala Baladrar con vistas al Peñón de Ifach y chiringuito de calidad
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03010', 'mencion', 'playas', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03010', 'mencion', 'gastronomia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03010', 'mencion', 'miradores', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '03010' AND categoria = 'playas';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03010', 'playas', 20);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='gastronomia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='gastronomia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='gastronomia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '03010' AND categoria = 'gastronomia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03010', 'gastronomia', 20);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03010' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '03010' AND categoria = 'miradores';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03010', 'miradores', 20);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏖️ Playas: Cala Baladrar con vistas al Peñón de Ifach y chiringuito de calidad') WHERE codigo_ine = '03010' AND COALESCE(why_json, '[]') NOT LIKE '%Cala Baladrar con vi%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🍽️ Gastronomía: Cala Baladrar con vistas al Peñón de Ifach y chiringuito de calidad') WHERE codigo_ine = '03010' AND COALESCE(why_json, '[]') NOT LIKE '%Cala Baladrar con vi%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03010', 'playa', 'Cala Baladrar', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03010', 'chiringuito', 'Baladrar Beach Bar', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03010', 'monumento natural', 'Peñón de Ifach', 'articulo_web');
+
+-- Benissa (Alicante) — Zona costera con vistas panorámicas desde Cala Baladrar
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03009', 'mencion', 'playas', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03009', 'mencion', 'naturaleza', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03009' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03009' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03009' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 10) WHERE codigo_ine = '03009' AND categoria = 'playas';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03009', 'playas', 10);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03009' AND tipo='mencion' AND nombre='naturaleza' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03009' AND tipo='mencion' AND nombre='naturaleza' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03009' AND tipo='mencion' AND nombre='naturaleza' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 10) WHERE codigo_ine = '03009' AND categoria = 'naturaleza';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03009', 'naturaleza', 10);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏖️ Playas: Zona costera con vistas panorámicas desde Cala Baladrar') WHERE codigo_ine = '03009' AND COALESCE(why_json, '[]') NOT LIKE '%Zona costera con vis%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🌿 Naturaleza: Zona costera con vistas panorámicas desde Cala Baladrar') WHERE codigo_ine = '03009' AND COALESCE(why_json, '[]') NOT LIKE '%Zona costera con vis%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03009', 'vista panorámica', 'Vistas desde Baladrar hacia Benissa', 'articulo_web');
+
+-- Alicante (Alicante) — Playa con acceso fácil, castillo de Santa Bárbara e importante yacimiento romano
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03003', 'mencion', 'playas', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03003', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03003', 'mencion', 'yacimientos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '03003' AND categoria = 'playas';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03003', 'playas', 20);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '03003' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03003', 'historia', 20);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='03003' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '03003' AND categoria = 'yacimientos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03003', 'yacimientos', 20);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏖️ Playas: Playa con acceso fácil, castillo de Santa Bárbara e importante yacimiento romano') WHERE codigo_ine = '03003' AND COALESCE(why_json, '[]') NOT LIKE '%Playa con acceso fác%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Playa con acceso fácil, castillo de Santa Bárbara e importante yacimiento romano') WHERE codigo_ine = '03003' AND COALESCE(why_json, '[]') NOT LIKE '%Playa con acceso fác%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03003', 'playa', 'Playa de la Albufereta', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03003', 'castillo', 'Castillo de Santa Bárbara', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('03003', 'yacimiento arqueológico', 'Lucentum', 'articulo_web');
+
+-- Resumen: 3/4 municipios encontrados
+-- No encontrados: Xeraco (Valencia)

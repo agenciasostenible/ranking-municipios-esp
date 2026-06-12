@@ -1,0 +1,326 @@
+---
+import { DB } from '../../lib/d1client';
+import Base from '../../layouts/Base.astro';
+import { getCatInfo, formatPob, TABS, LABELS } from '../../lib/db';
+// @ts-ignore
+
+const { nombre } = Astro.params;
+const provincia = decodeURIComponent(nombre!);
+
+const url = Astro.url;
+const catParam = url.searchParams.get('categoria') ?? 'ranking_global';
+const catLabel = LABELS[catParam] ?? catParam;
+const catInfo  = getCatInfo(catParam);
+
+const comunidadRow = await DB.prepare(`SELECT comunidad FROM municipios WHERE provincia = ? LIMIT 1`).bind(provincia).first();
+const comunidad = comunidadRow?.comunidad ?? '';
+
+const { results: allRanking } = await DB.prepare(`
+  SELECT MIN(m.codigo_ine) as codigo_ine, m.nombre, m.comarca, m.comunidad, m.poblacion,
+         m.why_json, m.foto_url, MAX(p.puntuacion) as puntuacion, p.ranking_provincial
+  FROM puntuaciones p
+  JOIN municipios m ON p.codigo_ine = m.codigo_ine
+  WHERE p.categoria = ? AND m.provincia = ? AND COALESCE(m.es_duplicado, 0) = 0
+  GROUP BY m.nombre
+  ORDER BY puntuacion DESC
+  LIMIT 300
+`).bind(catParam, provincia).all();
+
+const ranking     = (allRanking as any[]).filter(r => r.puntuacion > 0).map(r => ({
+  ...r,
+  why: r.why_json ? (() => { try { return JSON.parse(r.why_json); } catch { return []; } })() : [],
+  foto: r.foto_url && r.foto_url !== 'NONE' ? r.foto_url : null,
+}));
+const sinDatos    = (allRanking as any[]).filter(r => r.puntuacion <= 0).length;
+const totalMunis  = (allRanking as any[]).length;
+
+const maxPts: number = ranking.length ? Math.max(...ranking.map((r: any) => r.puntuacion ?? 0)) : 100;
+---
+<Base
+  title={`Mejores pueblos de ${provincia} ${new Date().getFullYear()} — Ranking turístico`}
+  description={`Descubre los mejores municipios de ${provincia} ordenados por ${catLabel.toLowerCase()}. Compara destinos y encuentra el mejor pueblo de ${provincia} para tu viaje.`}
+>
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://rankingspain.com/" },
+    { "@type": "ListItem", "position": 2, "name": comunidad, "item": `https://rankingspain.com/ranking/ranking_global?ccaa=${encodeURIComponent(comunidad)}` },
+    { "@type": "ListItem", "position": 3, "name": provincia, "item": `https://rankingspain.com/provincia/${encodeURIComponent(provincia)}` },
+  ]
+})} />
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": `Mejores pueblos de ${provincia} ${new Date().getFullYear()}`,
+  "description": `Ranking turístico de los municipios de ${provincia}.`,
+  "url": `https://rankingspain.com/provincia/${encodeURIComponent(provincia)}`,
+  "numberOfItems": ranking.length,
+  "itemListElement": ranking.slice(0, 10).map((r: any, i: number) => ({
+    "@type": "ListItem",
+    "position": i + 1,
+    "name": r.nombre,
+    "url": `https://rankingspain.com/municipio/${r.codigo_ine}`,
+  })),
+})} />
+
+<!-- Hero provincia -->
+<div class="prov-hero">
+  <div class="prov-hero-inner">
+    <div class="prov-breadcrumb">
+      <a href="/">Inicio</a> <span>›</span>
+      <a href={`/ranking/ranking_global?ccaa=${encodeURIComponent(comunidad)}`}>{comunidad}</a> <span>›</span>
+      <span>{provincia}</span>
+    </div>
+    <h1 class="prov-hero-title">📍 {provincia}</h1>
+    <p class="prov-hero-sub">{totalMunis} municipios · {comunidad}</p>
+
+    <div class="prov-cats">
+      {TABS.slice(0,12).map(t => (
+        <a href={`/provincia/${encodeURIComponent(provincia)}?categoria=${t.key}`}
+           class={`prov-cat-pill${t.key === catParam ? ' active' : ''}`}>
+          {t.label}
+        </a>
+      ))}
+    </div>
+    <details class="prov-cats-more">
+      <summary>Más categorías ↓</summary>
+      <div class="prov-cats prov-cats-extra">
+        {TABS.slice(12).map(t => (
+          <a href={`/provincia/${encodeURIComponent(provincia)}?categoria=${t.key}`}
+             class={`prov-cat-pill${t.key === catParam ? ' active' : ''}`}>
+            {t.label}
+          </a>
+        ))}
+      </div>
+    </details>
+  </div>
+</div>
+
+<div style="max-width:1100px;margin:0 auto;padding:16px 20px">
+  <div class="result-header">
+    <div>
+      <h2>{catLabel}</h2>
+      <div class="sub">
+        {ranking.length} municipios con datos en {provincia}
+        {sinDatos > 0 && <span class="sin-datos-note"> · {sinDatos} sin datos aún</span>}
+      </div>
+    </div>
+  </div>
+
+  {ranking.length === 0 && (
+    <div class="empty-state">
+      <div style="font-size:2rem;margin-bottom:12px">🔍</div>
+      <div style="font-weight:700;margin-bottom:6px">Sin datos para esta categoría</div>
+      <div style="color:var(--text-2);font-size:.875rem">
+        Aún no tenemos información de {catLabel.toLowerCase()} para los municipios de {provincia}.
+        Prueba con <a href={`/provincia/${encodeURIComponent(provincia)}`} style="color:var(--primary)">el ranking global</a>.
+      </div>
+    </div>
+  )}
+
+  <!-- Desktop: tabla -->
+  {ranking.length > 0 && (
+    <table class="ranking-table">
+      <thead>
+        <tr>
+          <th style="width:46px">#</th>
+          <th>Municipio</th>
+          <th style="width:200px">Puntuación</th>
+          <th>Por qué destaca</th>
+          <th>Comarca</th>
+          <th style="width:80px">Hab.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {ranking.map((r: any, i: number) => {
+          const pos = i + 1;
+          const pct = maxPts > 0 ? Math.round((r.puntuacion / maxPts) * 100) : 0;
+          const cls = pos === 1 ? 'pos g' : pos === 2 ? 'pos s' : pos === 3 ? 'pos b' : 'pos';
+          const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
+          const whyChips = (r.why as string[]).slice(0, 3);
+          return (
+            <tr class="rank-row" data-href={`/municipio/${r.codigo_ine}${catParam !== 'ranking_global' ? `?desde=${catParam}` : ''}`} style="cursor:pointer">
+              <td><span class={cls}>{med}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="row-thumb"
+                    style={r.foto ? `background:url('${r.foto}') center/cover no-repeat` : 'background:#e8e8e8'}>
+                  </div>
+                  <div>
+                    <a href={`/municipio/${r.codigo_ine}${catParam !== 'ranking_global' ? `?desde=${catParam}` : ''}`}
+                       style="color:var(--text);font-weight:600;font-size:.875rem"
+                       onclick="event.stopPropagation()">{r.nombre}</a>
+                    <div style="font-size:.72rem;color:var(--text-2);margin-top:1px">{r.comarca ?? ''}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="bar-cell">
+                  <span class="pts">{Number(r.puntuacion).toFixed(1)}</span>
+                  <div class="bar-wrap">
+                    <div class="bar-fill" style={`width:${pct}%`}></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  {whyChips.map((chip: string) => <span class="why-chip">{chip}</span>)}
+                </div>
+              </td>
+              <td><span class="tag">{r.comarca ?? '—'}</span></td>
+              <td><span style="color:var(--text-2);font-size:.78rem">{formatPob(r.poblacion)}</span></td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  )}
+
+  <!-- Mobile: cards -->
+  {ranking.length > 0 && (
+    <div class="prov-cards">
+      {ranking.map((r: any, i: number) => {
+        const pos = i + 1;
+        const pct = maxPts > 0 ? Math.round((r.puntuacion / maxPts) * 100) : 0;
+        const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `#${pos}`;
+        return (
+          <a href={`/municipio/${r.codigo_ine}${catParam !== 'ranking_global' ? `?desde=${catParam}` : ''}`} class="prov-card">
+            <span class="prov-card-pos">{med}</span>
+            <span class="prov-card-info">
+              <span class="prov-card-name">{r.nombre}</span>
+              <span class="prov-card-sub">{r.comarca ?? ''}{r.comarca && r.poblacion ? ' · ' : ''}{r.poblacion ? formatPob(r.poblacion) + ' hab.' : ''}</span>
+            </span>
+            <span class="prov-card-pts">
+              <span class="prov-card-score">{Number(r.puntuacion).toFixed(1)}</span>
+              <div class="prov-bar"><div class="prov-bar-fill" style={`width:${pct}%`}></div></div>
+            </span>
+          </a>
+        );
+      })}
+    </div>
+  )}
+</div>
+
+<script>
+  document.querySelectorAll('.rank-row[data-href]').forEach(row => {
+    row.addEventListener('click', () => {
+      window.location.href = (row as HTMLElement).dataset.href!;
+    });
+  });
+
+  const thumbStyle = document.createElement('style');
+  thumbStyle.textContent = `.row-thumb{width:44px;height:44px;border-radius:8px;flex-shrink:0;background:#e8e8e8;}`;
+  document.head.appendChild(thumbStyle);
+</script>
+
+<style>
+.prov-hero {
+  background: linear-gradient(135deg, #1a3a5c 0%, #2e6da4 100%);
+  padding: 28px 20px 24px;
+  color: #fff;
+}
+.prov-hero-inner { max-width: 1100px; margin: 0 auto; }
+.prov-breadcrumb {
+  font-size: .78rem;
+  color: rgba(255,255,255,.65);
+  margin-bottom: 12px;
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+}
+.prov-breadcrumb a { color: rgba(255,255,255,.75); text-decoration: none; }
+.prov-breadcrumb a:hover { color: #fff; }
+.prov-hero-title { font-size: 1.8rem; font-weight: 800; margin: 0 0 4px; }
+.prov-hero-sub { font-size: .9rem; color: rgba(255,255,255,.75); margin: 0 0 20px; }
+
+.prov-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.prov-cat-pill {
+  padding: 7px 14px;
+  border-radius: 30px;
+  font-size: .82rem;
+  font-weight: 600;
+  background: rgba(255,255,255,.15);
+  border: 1.5px solid rgba(255,255,255,.3);
+  color: rgba(255,255,255,.9);
+  text-decoration: none;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.prov-cat-pill:hover { background: rgba(255,255,255,.28); border-color: rgba(255,255,255,.6); }
+.prov-cat-pill.active { background: #FF385C; border-color: #FF385C; color: #fff; }
+.prov-cats-more { margin-top: 4px; }
+.prov-cats-more summary {
+  font-size: .8rem;
+  color: rgba(255,255,255,.65);
+  cursor: pointer;
+  list-style: none;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+.prov-cats-more summary:hover { color: #fff; }
+.prov-cats-extra { margin-top: 8px; }
+
+.sin-datos-note { color: var(--text-2); font-style: italic; }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text);
+}
+
+.prov-cards { display: none; flex-direction: column; gap: 8px; }
+
+@media (max-width: 700px) {
+  .ranking-table { display: none !important; }
+  .prov-cards { display: flex; }
+}
+
+.prov-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+.prov-card:active { background: #f7f7f7; }
+.prov-card-pos {
+  font-size: 1.1rem;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: center;
+  color: #888;
+  flex-shrink: 0;
+}
+.prov-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.prov-card-name {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prov-card-sub { font-size: .75rem; color: #888; }
+.prov-card-pts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.prov-card-score { font-size: .9rem; font-weight: 700; color: var(--primary); }
+.prov-bar { width: 50px; height: 4px; background: #eee; border-radius: 2px; overflow: hidden; }
+.prov-bar-fill { height: 100%; background: var(--primary); border-radius: 2px; }
+</style>
+</Base>

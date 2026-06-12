@@ -1,0 +1,59 @@
+-- Enriquecimiento desde: https://viajar.elperiodico.com/escapate_cerca/ruta-perfecta-despues-60-anos-extremadura-130987652
+-- Artículo: La ruta perfecta para hacer después de los 60 años recorre anfiteatros romanos, ciudades monumentales y algunos de los conjuntos históricos más impresionantes de Extremadura
+-- Generado: 2026-06-07T12:25:46.492919
+-- Municipios: 3
+
+-- Mérida (Badajoz) — Conjunto arqueológico romano más importante de Europa occidental
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('06018', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('06018', 'mencion', 'yacimientos', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('06018', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '06018' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('06018', 'historia', 25);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '06018' AND categoria = 'yacimientos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('06018', 'yacimientos', 25);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='06018' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '06018' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('06018', 'museos', 25);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Conjunto arqueológico romano más importante de Europa occidental') WHERE codigo_ine = '06018' AND COALESCE(why_json, '[]') NOT LIKE '%Conjunto arqueológic%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '⚱️ Arqueología: Conjunto arqueológico romano más importante de Europa occidental') WHERE codigo_ine = '06018' AND COALESCE(why_json, '[]') NOT LIKE '%Conjunto arqueológic%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('06018', 'monumento', 'Teatro Romano de Mérida', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('06018', 'monumento', 'Anfiteatro Romano', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('06018', 'monumento', 'Templo de Diana', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('06018', 'monumento', 'Puente Romano sobre el Guadiana', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('06018', 'festival', 'Festival Internacional de Teatro Clásico de Mérida', 'articulo_web');
+
+-- Cáceres (Cáceres) — Patrimonio Mundial UNESCO con conjunto medieval mejor conservado de Europa
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15005', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15005', 'mencion', 'pueblo_bonito', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15005', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '15005' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('15005', 'historia', 25);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '15005' AND categoria = 'pueblo_bonito';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('15005', 'pueblo_bonito', 25);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15005' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '15005' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('15005', 'museos', 25);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Patrimonio Mundial UNESCO con conjunto medieval mejor conservado de Europa') WHERE codigo_ine = '15005' AND COALESCE(why_json, '[]') NOT LIKE '%Patrimonio Mundial U%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🌸 Pueblo bonito: Patrimonio Mundial UNESCO con conjunto medieval mejor conservado de Europa') WHERE codigo_ine = '15005' AND COALESCE(why_json, '[]') NOT LIKE '%Patrimonio Mundial U%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15005', 'zona_historica', 'Ciudad Monumental', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15005', 'monumento', 'Torre de Bujaco', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15005', 'monumento', 'Plaza Mayor de Cáceres', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15005', 'monumento', 'Palacios nobiliarios', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15005', 'monumento', 'Iglesias y casas solariegas', 'articulo_web');
+
+-- Trujillo (Cáceres) — Plaza Mayor monumental y castillo islámico con vistas espectaculares
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15018', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15018', 'mencion', 'castillos', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15018', 'mencion', 'miradores', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 23) WHERE codigo_ine = '15018' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('15018', 'historia', 23);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 23) WHERE codigo_ine = '15018' AND categoria = 'castillos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('15018', 'castillos', 23);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='15018' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 23) WHERE codigo_ine = '15018' AND categoria = 'miradores';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('15018', 'miradores', 23);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Plaza Mayor monumental y castillo islámico con vistas espectaculares') WHERE codigo_ine = '15018' AND COALESCE(why_json, '[]') NOT LIKE '%Plaza Mayor monument%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏰 Castillos: Plaza Mayor monumental y castillo islámico con vistas espectaculares') WHERE codigo_ine = '15018' AND COALESCE(why_json, '[]') NOT LIKE '%Plaza Mayor monument%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15018', 'plaza', 'Plaza Mayor de Trujillo', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15018', 'castillo', 'Castillo de origen islámico', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15018', 'monumento', 'Palacios renacentistas', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('15018', 'mirador', 'Vistas desde el castillo', 'articulo_web');
+
+-- Resumen: 3/3 municipios encontrados

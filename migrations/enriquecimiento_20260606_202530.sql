@@ -1,0 +1,90 @@
+-- Enriquecimiento desde: https://www.espanafascinante.com/articulo/lugares/catedrales-espanolas-patrimonio-humanidad/20241115124219281218.html
+-- Artículo: Descubre las 11 catedrales españolas que son Patrimonio de la Humanidad
+-- Generado: 2026-06-06T20:25:30.545397
+-- Municipios: 7
+
+-- Ávila (Ávila) — Catedral del Salvador, primera catedral gótica de España
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('51025', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('51025', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='51025' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='51025' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='51025' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '51025' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('51025', 'historia', 20);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='51025' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='51025' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='51025' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '51025' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('51025', 'museos', 20);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Catedral del Salvador, primera catedral gótica de España') WHERE codigo_ine = '51025' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral del Salvado%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🖼️ Museos: Catedral del Salvador, primera catedral gótica de España') WHERE codigo_ine = '51025' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral del Salvado%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('51025', 'catedral', 'Catedral del Salvador', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('51025', 'monumento', 'Muralla de Ávila', 'articulo_web');
+
+-- Baeza (Jaén) — Catedral de la Natividad en ciudad Patrimonio más pequeña
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('24010', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('24010', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='24010' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='24010' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='24010' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 18) WHERE codigo_ine = '24010' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('24010', 'historia', 18);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='24010' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='24010' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='24010' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 18) WHERE codigo_ine = '24010' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('24010', 'museos', 18);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Catedral de la Natividad en ciudad Patrimonio más pequeña') WHERE codigo_ine = '24010' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral de la Nativ%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🖼️ Museos: Catedral de la Natividad en ciudad Patrimonio más pequeña') WHERE codigo_ine = '24010' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral de la Nativ%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('24010', 'catedral', 'Catedral de la Natividad de Nuestra Señora', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('24010', 'capilla', 'Capilla Dorada', 'articulo_web');
+
+-- Burgos (Burgos) — Única catedral española Patrimonio por sí misma, gótica francesa
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('09003', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('09003', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='09003' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='09003' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='09003' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '09003' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('09003', 'historia', 25);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='09003' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='09003' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='09003' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '09003' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('09003', 'museos', 25);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Única catedral española Patrimonio por sí misma, gótica francesa') WHERE codigo_ine = '09003' AND COALESCE(why_json, '[]') NOT LIKE '%Única catedral españ%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🖼️ Museos: Única catedral española Patrimonio por sí misma, gótica francesa') WHERE codigo_ine = '09003' AND COALESCE(why_json, '[]') NOT LIKE '%Única catedral españ%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('09003', 'catedral', 'Catedral Basílica Metropolitana de Santa María', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('09003', 'tumba', 'Tumba del Cid Campeador', 'articulo_web');
+
+-- Córdoba (Córdoba) — Catedral-Mezquita famosa mundialmente con arcadas coloridas
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('17008', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('17008', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='17008' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='17008' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='17008' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '17008' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('17008', 'historia', 25);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='17008' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='17008' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='17008' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '17008' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('17008', 'museos', 25);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Catedral-Mezquita famosa mundialmente con arcadas coloridas') WHERE codigo_ine = '17008' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral-Mezquita fa%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🖼️ Museos: Catedral-Mezquita famosa mundialmente con arcadas coloridas') WHERE codigo_ine = '17008' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral-Mezquita fa%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('17008', 'catedral-mezquita', 'Catedral de Nuestra Señora de la Asunción', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('17008', 'jardín', 'Patio de los Naranjos', 'articulo_web');
+
+-- Cuenca (Cuenca) — Catedral gótica de 1196 junto a famosas casas colgadas
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('14004', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('14004', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='14004' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='14004' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='14004' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 18) WHERE codigo_ine = '14004' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('14004', 'historia', 18);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='14004' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='14004' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='14004' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 18) WHERE codigo_ine = '14004' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('14004', 'museos', 18);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Catedral gótica de 1196 junto a famosas casas colgadas') WHERE codigo_ine = '14004' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral gótica de 1%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🖼️ Museos: Catedral gótica de 1196 junto a famosas casas colgadas') WHERE codigo_ine = '14004' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral gótica de 1%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('14004', 'catedral', 'Catedral de Cuenca', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('14004', 'atracción', 'Casas colgadas de Cuenca', 'articulo_web');
+
+-- Salamanca (Salamanca) — Catedral Nueva con 737 vidrieras, obra gótico-barroca
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('37011', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('37011', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='37011' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='37011' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='37011' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '37011' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('37011', 'historia', 20);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='37011' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='37011' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='37011' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '37011' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('37011', 'museos', 20);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Catedral Nueva con 737 vidrieras, obra gótico-barroca') WHERE codigo_ine = '37011' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral Nueva con 7%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🖼️ Museos: Catedral Nueva con 737 vidrieras, obra gótico-barroca') WHERE codigo_ine = '37011' AND COALESCE(why_json, '[]') NOT LIKE '%Catedral Nueva con 7%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('37011', 'catedral', 'Catedral Nueva de Salamanca', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('37011', 'detalle', 'Astronauta esculpido en puerta norte', 'articulo_web');
+
+-- San Cristóbal de la Laguna (Tenerife) — Única catedral española construida con hormigón, neoclásica
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('38023', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('38023', 'mencion', 'museos', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='38023' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='38023' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='38023' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 18) WHERE codigo_ine = '38023' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('38023', 'historia', 18);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='38023' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='38023' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='38023' AND tipo='mencion' AND nombre='museos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 18) WHERE codigo_ine = '38023' AND categoria = 'museos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('38023', 'museos', 18);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Única catedral española construida con hormigón, neoclásica') WHERE codigo_ine = '38023' AND COALESCE(why_json, '[]') NOT LIKE '%Única catedral españ%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🖼️ Museos: Única catedral española construida con hormigón, neoclásica') WHERE codigo_ine = '38023' AND COALESCE(why_json, '[]') NOT LIKE '%Única catedral españ%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('38023', 'catedral', 'Santa Iglesia Catedral de San Cristóbal de La Laguna', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('38023', 'púlpito', 'Púlpito de Pasquale Bocciardo', 'articulo_web');
+
+-- Resumen: 7/7 municipios encontrados

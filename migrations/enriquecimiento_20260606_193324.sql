@@ -1,0 +1,58 @@
+-- Enriquecimiento desde: https://www.idealista.com/news/vacacional/destinos-turisticos/2026/04/21/893926-estos-son-los-10-castillos-en-asturias-que-debes-conocer
+-- Artículo: Estos son los 10 castillos en Asturias que debes conocer
+-- Generado: 2026-06-06T19:33:24.728456
+-- Municipios: 6
+
+-- Oviedo (Asturias) — Castillo de Las Caldas asociado al reinado de Alfonso II
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05013', 'mencion', 'castillos', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05013', 'mencion', 'historia', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05013' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05013' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05013' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 15) WHERE codigo_ine = '05013' AND categoria = 'castillos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('05013', 'castillos', 15);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05013' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05013' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05013' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 15) WHERE codigo_ine = '05013' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('05013', 'historia', 15);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏰 Castillos: Castillo de Las Caldas asociado al reinado de Alfonso II') WHERE codigo_ine = '05013' AND COALESCE(why_json, '[]') NOT LIKE '%Castillo de Las Cald%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Castillo de Las Caldas asociado al reinado de Alfonso II') WHERE codigo_ine = '05013' AND COALESCE(why_json, '[]') NOT LIKE '%Castillo de Las Cald%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05013', 'castillo', 'Castillo de Las Caldas', 'articulo_web');
+
+-- Salas (Asturias) — Torre del siglo XIV y Palacio de Valdés formando conjunto histórico
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('33059', 'mencion', 'castillos', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('33059', 'mencion', 'historia', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33059' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33059' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33059' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '33059' AND categoria = 'castillos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('33059', 'castillos', 20);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33059' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33059' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33059' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 20) WHERE codigo_ine = '33059' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('33059', 'historia', 20);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏰 Castillos: Torre del siglo XIV y Palacio de Valdés formando conjunto histórico') WHERE codigo_ine = '33059' AND COALESCE(why_json, '[]') NOT LIKE '%Torre del siglo XIV %';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Torre del siglo XIV y Palacio de Valdés formando conjunto histórico') WHERE codigo_ine = '33059' AND COALESCE(why_json, '[]') NOT LIKE '%Torre del siglo XIV %';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('33059', 'torre', 'Torre de Valdés de Salas', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('33059', 'palacio', 'Palacio de Valdés', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('33059', 'palacio', 'Palacio de Doriga', 'articulo_web');
+
+-- Morcín (Asturias) — Torreón del siglo XII utilizado como coto de caza por obispo
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('33038', 'mencion', 'castillos', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('33038', 'mencion', 'historia', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33038' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33038' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33038' AND tipo='mencion' AND nombre='castillos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 15) WHERE codigo_ine = '33038' AND categoria = 'castillos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('33038', 'castillos', 15);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33038' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33038' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='33038' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 15) WHERE codigo_ine = '33038' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('33038', 'historia', 15);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏰 Castillos: Torreón del siglo XII utilizado como coto de caza por obispo') WHERE codigo_ine = '33038' AND COALESCE(why_json, '[]') NOT LIKE '%Torreón del siglo XI%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Torreón del siglo XII utilizado como coto de caza por obispo') WHERE codigo_ine = '33038' AND COALESCE(why_json, '[]') NOT LIKE '%Torreón del siglo XI%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('33038', 'torreón', 'Torreón de Peñerudes', 'articulo_web');
+
+-- Gijón (Asturias) — Fortificación prerromana astur de los siglos VII-VI a.C. con vistas al mar
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05009', 'mencion', 'yacimientos', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05009', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05009', 'mencion', 'miradores', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='yacimientos' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 22) WHERE codigo_ine = '05009' AND categoria = 'yacimientos';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('05009', 'yacimientos', 22);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 22) WHERE codigo_ine = '05009' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('05009', 'historia', 22);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='05009' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 22) WHERE codigo_ine = '05009' AND categoria = 'miradores';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('05009', 'miradores', 22);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '⚱️ Arqueología: Fortificación prerromana astur de los siglos VII-VI a.C. con vistas al mar') WHERE codigo_ine = '05009' AND COALESCE(why_json, '[]') NOT LIKE '%Fortificación prerro%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Fortificación prerromana astur de los siglos VII-VI a.C. con vistas al mar') WHERE codigo_ine = '05009' AND COALESCE(why_json, '[]') NOT LIKE '%Fortificación prerro%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05009', 'yacimiento', 'Castro de Noega', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05009', 'parque', 'Parque arqueológico-natural Campa Torres', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('05009', 'monumento', 'Monumento dedicado al emperador Augusto', 'articulo_web');
+
+-- Resumen: 4/6 municipios encontrados
+-- No encontrados: Las Caldas (Asturias), Olloniego (Asturias)

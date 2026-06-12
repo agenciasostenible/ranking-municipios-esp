@@ -1,0 +1,43 @@
+-- Enriquecimiento desde: https://viajar.elperiodico.com/viajeros/refugio-pablo-alboran-36-anos-mediterraneo-130619172
+-- Artículo: El refugio de Pablo Alborán (36 años) está a orillas del Mediterráneo: un pueblo de casas blancas en la Costa del Sol que considera su 'punto de equilibrio'
+-- Generado: 2026-06-07T12:39:36.575964
+-- Municipios: 3
+
+-- Frigiliana (Málaga) — Pueblo blanco con casco antiguo Conjunto Histórico-Artístico y vistas desde El Fuerte
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32010', 'mencion', 'pueblo_bonito', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32010', 'mencion', 'historia', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32010', 'mencion', 'miradores', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '32010' AND categoria = 'pueblo_bonito';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('32010', 'pueblo_bonito', 25);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='historia' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '32010' AND categoria = 'historia';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('32010', 'historia', 25);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32010' AND tipo='mencion' AND nombre='miradores' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 25) WHERE codigo_ine = '32010' AND categoria = 'miradores';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('32010', 'miradores', 25);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🌸 Pueblo bonito: Pueblo blanco con casco antiguo Conjunto Histórico-Artístico y vistas desde El Fuerte') WHERE codigo_ine = '32010' AND COALESCE(why_json, '[]') NOT LIKE '%Pueblo blanco con ca%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏛️ Historia: Pueblo blanco con casco antiguo Conjunto Histórico-Artístico y vistas desde El Fuerte') WHERE codigo_ine = '32010' AND COALESCE(why_json, '[]') NOT LIKE '%Pueblo blanco con ca%';
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32010', 'ruta_senderismo', 'Ruta a El Fuerte', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32010', 'mirador', 'El Fuerte', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32010', 'area_protegida', 'Parque Natural de las Sierras de Tejeda, Almijara y Alhama', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32010', 'barrio_historico', 'Barribarto', 'articulo_web');
+
+-- Benalmádena (Málaga) — Lugar donde Pablo Alborán pasó parte de su infancia, en la Costa del Sol
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('29025', 'mencion', 'playas', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('29025', 'mencion', 'naturaleza', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='29025' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='29025' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='29025' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 10) WHERE codigo_ine = '29025' AND categoria = 'playas';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('29025', 'playas', 10);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='29025' AND tipo='mencion' AND nombre='naturaleza' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='29025' AND tipo='mencion' AND nombre='naturaleza' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='29025' AND tipo='mencion' AND nombre='naturaleza' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 10) WHERE codigo_ine = '29025' AND categoria = 'naturaleza';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('29025', 'naturaleza', 10);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏖️ Playas: Lugar donde Pablo Alborán pasó parte de su infancia, en la Costa del Sol') WHERE codigo_ine = '29025' AND COALESCE(why_json, '[]') NOT LIKE '%Lugar donde Pablo Al%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🌿 Naturaleza: Lugar donde Pablo Alborán pasó parte de su infancia, en la Costa del Sol') WHERE codigo_ine = '29025' AND COALESCE(why_json, '[]') NOT LIKE '%Lugar donde Pablo Al%';
+
+-- Nerja (Málaga) — Pueblo pintoresco de la Costa del Sol a 7 km de Frigiliana
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32017', 'mencion', 'playas', 'articulo_web');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, fuente) VALUES ('32017', 'mencion', 'pueblo_bonito', 'articulo_web');
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32017' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32017' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32017' AND tipo='mencion' AND nombre='playas' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 12) WHERE codigo_ine = '32017' AND categoria = 'playas';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('32017', 'playas', 12);
+UPDATE puntuaciones SET puntuacion = MIN(  CASE (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32017' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web')  WHEN 1 THEN 70 WHEN 2 THEN 80 WHEN 3 THEN 88  ELSE CASE WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32017' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web') >= 10 THEN 100  WHEN (SELECT COUNT(*) FROM entidades WHERE codigo_ine='32017' AND tipo='mencion' AND nombre='pueblo_bonito' AND fuente='articulo_web') >= 5 THEN 95 ELSE 92 END END,  puntuacion + 12) WHERE codigo_ine = '32017' AND categoria = 'pueblo_bonito';
+INSERT OR IGNORE INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('32017', 'pueblo_bonito', 12);
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🏖️ Playas: Pueblo pintoresco de la Costa del Sol a 7 km de Frigiliana') WHERE codigo_ine = '32017' AND COALESCE(why_json, '[]') NOT LIKE '%Pueblo pintoresco de%';
+UPDATE municipios SET why_json = json_insert(COALESCE(why_json, '[]'), '$[#]', '🌸 Pueblo bonito: Pueblo pintoresco de la Costa del Sol a 7 km de Frigiliana') WHERE codigo_ine = '32017' AND COALESCE(why_json, '[]') NOT LIKE '%Pueblo pintoresco de%';
+
+-- Resumen: 3/3 municipios encontrados

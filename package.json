@@ -1,0 +1,31 @@
+{
+  "name": "ranking-municipios-esp",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "build:cf": "astro build && node scripts/postbuild.cjs",
+    "preview": "wrangler pages dev ./dist",
+    "astro": "astro",
+    "db:create": "wrangler d1 create ranking-municipios",
+    "db:migrate:local": "wrangler d1 execute ranking-municipios --local --file=migrations/0001_schema.sql && wrangler d1 execute ranking-municipios --local --file=migrations/0002_seed_jaen.sql",
+    "db:migrate:remote": "wrangler d1 execute ranking-municipios --file=migrations/0001_schema.sql && wrangler d1 execute ranking-municipios --file=migrations/0002_seed_jaen.sql",
+    "dev:cf": "npm run build && npm run preview",
+    "deploy": "npm run build && npx wrangler pages deploy --project-name=ranking-municipios-esp"
+  },
+  "dependencies": {
+    "@astrojs/vercel": "^10.0.8",
+    "astro": "^6.4.3",
+    "lucide-astro": "^0.556.0",
+    "satori": "^0.26.0"
+  },
+  "devDependencies": {
+    "@astrojs/cloudflare": "^13.6.1",
+    "@cloudflare/workers-types": "^4.20260603.1",
+    "wrangler": "^4.98.0"
+  }
+}

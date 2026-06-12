@@ -1,0 +1,24 @@
+-- CÁDIZ: 23 municipios
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Alcalá de los Gazules' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=65 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Alcalá Del Valle' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=74 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Algeciras' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=90 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Arcos de la Frontera' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=68 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Barbate' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=84 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Bornos' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Cadiz' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=94 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Castellar de la Frontera' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=75 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Chipiona' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=78 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Conil de la Frontera' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=93 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='El Puerto de Santa María' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Jerez de la Frontera' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=89 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Jimena de la Frontera' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=82 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Medina Sidonia' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Olvera' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=62 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Puerto Real' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=84 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Rota' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=86 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='San Fernando' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=65 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='San Roque' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Sanlúcar de Barrameda' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=96 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Tarifa' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=82 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Vejer de la Frontera' AND provincia='Cádiz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Zahara de la Sierra' AND provincia='Cádiz') AND categoria='castillos';

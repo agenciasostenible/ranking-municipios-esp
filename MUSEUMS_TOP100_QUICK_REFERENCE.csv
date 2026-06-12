@@ -1,0 +1,76 @@
+Provincia,Ciudad,Museo,Tipo,Puntuación,Visitantes,Notas
+Madrid,Madrid,Museo del Prado,Art/National,95,3000000,UNESCO World Heritage
+Madrid,Madrid,Museo Reina Sofía,Contemporary/National,95,3200000,Guernica - Picasso masterpiece
+Barcelona,Barcelona,Museu Nacional d'Art de Catalunya (MNAC),Art/National,92,1200000,Catalan art collections
+Bilbao,Bilbao,Museo Guggenheim Bilbao,Contemporary,92,1500000,UNESCO-nominated architecture
+Madrid,Madrid,Museo Arqueológico Nacional,Archaeology/National,90,600000,Iberian culture
+Málaga,Málaga,Museo Picasso Málaga,Art/Specialized,88,500000,Picasso birthplace
+Barcelona,Barcelona,Museu Picasso Barcelona,Art/Specialized,88,1500000,Most complete Picasso collection
+Sevilla,Sevilla,Museo de Bellas Artes de Sevilla,Art,88,700000,Spanish masters - Murillo
+Valladolid,Valladolid,Museo Nacional de Escultura,Sculpture/National,88,600000,Spanish sculpture masterpieces
+Granada,Granada,Museo de la Alhambra,Islamic/Palace,88,3000000,UNESCO site - Islamic palace
+Barcelona,Barcelona,Museu d'Art Contemporani (MACBA),Contemporary,85,500000,Modern art - contemporary focus
+Bilbao,Bilbao,Museo de Bellas Artes de Bilbao,Art,85,300000,Basque art - European masters
+Valencia,Valencia,Museu de Belles Arts de València,Art,85,600000,Goya and El Greco works
+Toledo,Toledo,Museo de Santa Cruz,Art/History,85,1200000,El Greco collection - Renaissance
+Córdoba,Córdoba,Museo de la Mezquita-Catedral,Religious/Islamic,85,1500000,Greatest Islamic architecture in Spain
+Barcelona,Barcelona,Fundació Joan Miró,Art/Specialized,84,600000,Miró collection - Catalan master
+Málaga,Málaga,Museo de Málaga,Art/Archaeology,84,mixed,Phoenician-Roman-Islamic artifacts
+Granada,Granada,Museo del Generalife,Palace/Islamic,84,mixed,Alhambra summer palace - Islamic gardens
+Madrid,Madrid,Museo Thyssen-Bornemisza,Art/National,88,2000000,Trinity Museum - European masterpieces
+Valencia,Valencia,Institut Valencià d'Art Modern (IVAM),Contemporary,82,400000,Modern and contemporary art
+Córdoba,Córdoba,Museo de Bellas Artes de Córdoba,Art,82,400000,Spanish painting - Córdoba school
+Burgos,Burgos,Museo de la Evolución Humana,Science,82,500000,Atapuerca findings - human evolution
+Granada,Granada,Museo Arqueológico de Granada,Archaeology,82,500000,Moorish Granada - Nasrid period
+Santiago,Santiago de Compostela,Museo de la Catedral,Religious,82,500000,Camino de Santiago pilgrimage treasury
+Cuenca,Cuenca,Museo de Arte Abstracto Español,Contemporary,82,200000,Spanish abstract art - world-class
+Sevilla,Sevilla,Museo de la Catedral,Religious/History,82,mixed,Cathedral treasury
+Toledo,Toledo,El Greco Museum (Casa-Museo),House-Museum,82,mixed,Painter's residence - works
+Zaragoza,Zaragoza,Museo de Zaragoza,Art/Archaeology,80,500000,Fine arts and artifacts
+Salamanca,Salamanca,Museo de Bellas Artes de Salamanca,Art,80,300000,Spanish painting - religious art
+Oviedo,Oviedo,Museo de Bellas Artes de Asturias,Art,80,400000,Asturian art - Spanish painting
+León,León,Museo de Bellas Artes de León,Art,80,400000,Spanish painting - medieval art
+Burgos,Burgos,Museo de Burgos,Art/Archaeology,80,300000,Spanish painting and medieval
+Valladolid,Valladolid,Museo de Bellas Artes de Valladolid,Art,80,500000,Spanish painting collection
+Sevilla,Sevilla,Museo del Alcázar Real,Palace,80,mixed,Royal palace - Mudéjar architecture
+Barcelona,Barcelona,Museu d'Arqueologia de Catalunya,Archaeology,80,mixed,Greek Roman medieval artifacts
+Valencia,Valencia,Museu de la Ceràmica González Martí,Ceramics,75,200000,Valencian ceramics - major collection
+Zaragoza,Zaragoza,Museo del Teatro de Caesaraugusta,Archaeology,75,mixed,Roman theater - interactive
+Málaga,Málaga,Museo de la Catedral,Religious/History,75,mixed,Cathedral art - Málaga context
+Córdoba,Córdoba,Museo Arqueológico de Córdoba,Archaeology,78,mixed,Roman Cordoba - Moorish period
+Málaga,Málaga,Alcazaba de Málaga,Palace/Archaeological,78,mixed,Moorish palace - Islamic architecture
+Cádiz,Cádiz,Museo de Cádiz,Art/Archaeology,78,400000,Phoenician Roman artifacts
+Santiago,Santiago de Compostela,Museo de Bellas Artes de Galicia,Art,78,mixed,Galician art - Spanish masters
+Toledo,Toledo,Museo de la Catedral,Religious,78,mixed,Cathedral treasury
+Úbeda,Úbeda,Museo de Arte Mexicano,American Art,78,100000,Unique collection of Mexican colonial
+Palma,Palma de Mallorca,Museo de la Catedral,Religious/History,78,mixed,Cathedral of Mallorca
+Alicante,Alicante,Museo de la Asegurada,Contemporary,78,300000,Contemporary art collection
+Granada,Granada,Museo de la Sinagoga del Tránsito,Jewish History,76,mixed,Sefardi artifacts
+Islas Baleares,Palma,Museo de Mallorca,History/Archaeology,76,300000,Balearic culture - Islamic period
+Alicante,Alicante,Museo Arqueológico Provincial (MARQ),Archaeology,76,mixed,Iberian-Byzantine-Islamic
+San Sebastián,San Sebastián,Museo de Bellas Artes de Guipúzcoa,Art,76,200000,Basque art - Spanish painting
+Cuenca,Cuenca,Museo de la Fundación Antonio Pérez,Contemporary,76,mixed,Modern Spanish art
+Vitoria-Gasteiz,Vitoria-Gasteiz,ARTIUM (Museo Arte Contemporáneo),Contemporary,75,200000,Basque contemporary art
+Cádiz,Cádiz,Oratorio de la Santa Cueva,Religious/Art,74,mixed,Goya frescos - 18th-century chapel
+Santander,Santander,Museo de Prehistoria y Arqueología,Archaeology,75,200000,Cantabrian caves - prehistoric art
+Jaén,Jaén,Museo Provincial de Jaén,Archaeology/Art,75,300000,Iberian culture - Roman mosaics
+Zaragoza,Zaragoza,Museo del Foro de Caesaraugusta,Archaeology,74,mixed,Roman forum excavations
+Salamanca,Salamanca,Museo Universitario de Salamanca,University,74,mixed,Academic art and manuscripts
+San Sebastián,San Sebastián,Museo San Telmo,Ethnography/History,74,mixed,Basque culture - maritime
+Islas Baleares,Palma,Fundació Juan March,Contemporary,74,mixed,Modern Spanish art
+Granada,Granada,Museo de la Catedral de Granada,Religious,75,mixed,Cathedral art collection
+Toledo,Toledo,Museo de la Sinagoga de Santa María la Blanca,Jewish History,75,mixed,Medieval Jewish history
+Cuenca,Cuenca,Museo de Cuenca (Casa Mangana),History/Archaeology,75,mixed,Medieval Cuenca artifacts
+Pamplona,Pamplona,Museo de Navarra,Art/History,75,mixed,Navarre history - Iberian artifacts
+Oviedo,Oviedo,Cámara Santa,Religious/Historical,75,mixed,Pre-Romanesque art
+Tenerife,Santa Cruz,Museo de la Naturaleza y Antropología,Natural History,75,200000,Canary Islands culture
+Salamanca,Salamanca,Museo de la Catedral de Salamanca,Religious,72,mixed,Cathedral treasury
+Cádiz,Cádiz,Museo de las Cortes de Cádiz,History,72,mixed,Spanish Constitution history
+Jaén,Jaén,Museo de Jaén (Centro Interpretación),Archaeology,72,mixed,Iberian heritage interpretation
+Córdoba,Córdoba,Museo de los Concilios,History,72,mixed,Visigothic councils artifacts
+Málaga,Málaga,Museo del Patrimonio Municipal,History,72,mixed,Local history - Málaga artifacts
+Ourense,Ourense,Museo de Ourense,Art/History,72,mixed,Galician art - medieval artifacts
+Lugo,Lugo,Museo de Lugo,History/Archaeology,72,150000,Roman walls - medieval Lugo
+Almería,Almería,Museo de Almería,Archaeology/History,72,250000,Iberian-Roman-Islamic artifacts
+Logroño,Logroño,Museo de La Rioja,Art/History,72,150000,La Rioja history and archaeology
+Zaragoza,Zaragoza,Museo Taller de los Bujardos,Ethnography,65,mixed,Traditional crafts

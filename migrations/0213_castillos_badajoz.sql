@@ -1,0 +1,21 @@
+-- BADAJOZ: 20 municipios
+UPDATE puntuaciones SET puntuacion=96 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Alburquerque' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=84 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Alconchel' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=68 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Azuaga' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Badajoz' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=89 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Burguillos Del Cerro' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Cabeza Del Buey' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=52 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Castuera (entorno Rural de la' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=93 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Feria' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Fregenal de la Sierra' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=82 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Herrera Del Duque' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=94 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Jerez de los Caballeros' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=70 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Llerena' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=94 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Medellín' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=55 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Monesterio' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Olivenza' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Orellana la Vieja' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Puebla de Alcocer' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=58 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Salvaleón' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Villalba de los Barros' AND provincia='Badajoz') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=93 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Zafra' AND provincia='Badajoz') AND categoria='castillos';

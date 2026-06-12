@@ -1,0 +1,63 @@
+-- Gastronomía Málaga — generado desde guías gastronómicas Excel
+-- Andalucía
+-- Provincias: Málaga
+-- Municipios con datos: 29
+
+-- 1. Reset
+UPDATE puntuaciones SET puntuacion=0 WHERE categoria='gastronomia'
+  AND codigo_ine IN (SELECT codigo_ine FROM municipios WHERE provincia IN ('Málaga'));
+
+-- 2. Limpiar entidades automáticas OSM/wikidata
+DELETE FROM entidades WHERE tipo IN ('gastronomia','producto')
+  AND fuente IN ('wikidata','OSM')
+  AND codigo_ine IN (SELECT codigo_ine FROM municipios WHERE provincia IN ('Málaga'));
+
+-- 3. Default 12 para todos
+UPDATE puntuaciones SET puntuacion=12 WHERE categoria='gastronomia'
+  AND codigo_ine IN (SELECT codigo_ine FROM municipios WHERE provincia IN ('Málaga'));
+
+-- 4. Scores individuales (29 municipios con datos)
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN ('29069', '32014') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=78 WHERE codigo_ine IN ('29067', '32016') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=74 WHERE codigo_ine IN ('29084', '32019') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=67 WHERE codigo_ine='32002' AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=57 WHERE codigo_ine='29901' AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=53 WHERE codigo_ine IN ('29051', '29075', '32009', '32017') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=50 WHERE codigo_ine IN ('29054', '29094', '32011', '32023') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=46 WHERE codigo_ine IN ('29070', '29025', '29053', '32010', '32015') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=43 WHERE codigo_ine='29082' AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=39 WHERE codigo_ine IN ('29091', '32025', '32022') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=36 WHERE codigo_ine IN ('29042', '32003') AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=32 WHERE codigo_ine='29068' AND categoria='gastronomia';
+UPDATE puntuaciones SET puntuacion=29 WHERE codigo_ine='29038' AND categoria='gastronomia';
+
+-- 5. Entidades gastronómicas
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29067','gastronomia','Meca del espeto de sardinas (Pedregalejo/El Palo)','Meca del espeto de sardinas (Pedregalejo/El Palo). el pescaíto frito. la ensalada malagueña.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29069','gastronomia','Capital del lujo gastronómico internacional andaluz','Capital del lujo gastronómico internacional andaluz. Mayor concentración de estrellas Michelin: Skina (2). Nintai. El Lago.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29070','gastronomia','Excelente oferta en restaurantes de cocina tradicional andaluza en el pueblo y pescados frescos y...','Excelente oferta en restaurantes de cocina tradicional andaluza en el pueblo y pescados frescos y arroces en la zona costera de la Cala de Mijas.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29054','gastronomia','Gran variedad de chiringuitos de espetos y marisco fresco tradicionales combinados con una amplís...','Gran variedad de chiringuitos de espetos y marisco fresco tradicionales combinados con una amplísima oferta internacional y de cocina fusión en su centro turístico.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29094','gastronomia','Capital de la Axarquía','Capital de la Axarquía. Destaca por su producción de aguacates y mangos tropicales. el ajoblanco veleño. los maimones y el vino dulce moscatel.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29901','gastronomia','Histórico templo del pescaíto frito en el barrio marinero de La Carihuela','Histórico templo del pescaíto frito en el barrio marinero de La Carihuela. Coquinas. calamares. lenguados y excelentes arroces marineros.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29051','gastronomia','Excelente cocina de mar en su puerto pesquero y chiringuitos: sopa de rascacio','Excelente cocina de mar en su puerto pesquero y chiringuitos: sopa de rascacio. espetos de sardina y una pujante cocina de vanguardia en su casco histórico.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29025','gastronomia','Gastronomía cosmopolita de alta gama en Puerto Marina junto a excelentes propuestas de pescado fr...','Gastronomía cosmopolita de alta gama en Puerto Marina junto a excelentes propuestas de pescado frito andaluz y cocina de mercado tradicional.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32002','gastronomia','Cuna de la Porra Antequerana','Cuna de la Porra Antequerana. el bienmesabe antequerano (dulce conventual glorioso) y el mollete de Antequera. el pan más famoso de Andalucía para desayunar.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29082','gastronomia','Famoso por sus boquerones victorianos (calidad suprema)','Famoso por sus boquerones victorianos (calidad suprema). los espetos a pie de playa y los guisos marineros de marengos.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29084','gastronomia','Referente de la cocina serrana de autor con Bardal (2 Estrellas Michelin)','Referente de la cocina serrana de autor con Bardal (2 Estrellas Michelin). Famosa por sus carnes de caza. setas de la serranía. yemas de Ronda y bodegas de vino tinto excelentes.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29038','gastronomia','Famosa por sus embutidos tradicionales (morcilla de Cártama)','Famosa por sus embutidos tradicionales (morcilla de Cártama). las patatas de su vega. los guisos de cerdo ibérico y el lomo en manteca.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29075','gastronomia','Cocina costera en chiringuitos icónicos (como el de Ayo y sus paellas a la leña)','Cocina costera en chiringuitos icónicos (como el de Ayo y sus paellas a la leña). pescados frescos del mar de Alborán y ricas ensaladas de aguacate tropical.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29042','gastronomia','El corazón de la huerta malagueña: sopa poncima','El corazón de la huerta malagueña: sopa poncima. excelentes tomates de Coín. naranjas.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29091','gastronomia','Famoso por celebrar la Fiesta de las Migas de Torrox','Famoso por celebrar la Fiesta de las Migas de Torrox. Destacan sus migas con arrope. el pescado frito de su costa y la ensaladilla de arriera.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29068','gastronomia','Destaca por su producción de uva moscatel de Alejandría y sus vinos artesanales de lagar','Destaca por su producción de uva moscatel de Alejandría y sus vinos artesanales de lagar. combinados con una gran oferta de pescado fresco en Sabinillas.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32025','gastronomia','Cuna de las Aceitunas de Alora (primera aceituna de mesa con DOP en España)','Cuna de las Aceitunas de Alora (primera aceituna de mesa con DOP en España). Cocina: sopa perota (plato icónico del campo) y los helados artesanos.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32003','gastronomia','Gastronomía de la comarca norte: porra archidonesa','Gastronomía de la comarca norte: porra archidonesa. cazuela de San José. dulces conventuales de las monjas mínimas y excelentes aceites de oliva.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('29053','gastronomia','Famosa por albergar la única fábrica de Miel de Caña de Europa','Famosa por albergar la única fábrica de Miel de Caña de Europa. Platos: choto al cortijero con miel de caña. berenjenas fritas con miel y arropes dulces.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32009','gastronomia','Excelente cocina de mar en su puerto pesquero y chiringuitos: sopa de rascacio','Excelente cocina de mar en su puerto pesquero y chiringuitos: sopa de rascacio. espetos de sardina y una pujante cocina de vanguardia en su casco histórico.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32010','gastronomia','Famosa por albergar la única fábrica de Miel de Caña de Europa','Famosa por albergar la única fábrica de Miel de Caña de Europa. Platos: choto al cortijero con miel de caña. berenjenas fritas con miel y arropes dulces.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32011','gastronomia','Gran variedad de chiringuitos de espetos y marisco fresco tradicionales combinados con una amplís...','Gran variedad de chiringuitos de espetos y marisco fresco tradicionales combinados con una amplísima oferta internacional y de cocina fusión en su centro turístico.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32014','gastronomia','Capital del lujo gastronómico internacional andaluz','Capital del lujo gastronómico internacional andaluz. Mayor concentración de estrellas Michelin: Skina (2). Nintai. El Lago.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32015','gastronomia','Excelente oferta en restaurantes de cocina tradicional andaluza en el pueblo y pescados frescos y...','Excelente oferta en restaurantes de cocina tradicional andaluza en el pueblo y pescados frescos y arroces en la zona costera de la Cala de Mijas.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32016','gastronomia','Meca del espeto de sardinas (Pedregalejo/El Palo)','Meca del espeto de sardinas (Pedregalejo/El Palo). el pescaíto frito. la ensalada malagueña.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32017','gastronomia','Cocina costera en chiringuitos icónicos (como el de Ayo y sus paellas a la leña)','Cocina costera en chiringuitos icónicos (como el de Ayo y sus paellas a la leña). pescados frescos del mar de Alborán y ricas ensaladas de aguacate tropical.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32019','gastronomia','Referente de la cocina serrana de autor con Bardal (2 Estrellas Michelin)','Referente de la cocina serrana de autor con Bardal (2 Estrellas Michelin). Famosa por sus carnes de caza. setas de la serranía. yemas de Ronda y bodegas de vino tinto excelentes.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32022','gastronomia','Famoso por celebrar la Fiesta de las Migas de Torrox','Famoso por celebrar la Fiesta de las Migas de Torrox. Destacan sus migas con arrope. el pescado frito de su costa y la ensaladilla de arriera.','excel_curado',date('now'));
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('32023','gastronomia','Capital de la Axarquía','Capital de la Axarquía. Destaca por su producción de aguacates y mangos tropicales. el ajoblanco veleño. los maimones y el vino dulce moscatel.','excel_curado',date('now'));

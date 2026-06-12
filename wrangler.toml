@@ -1,0 +1,9 @@
+name = "ranking-municipios-esp"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist/client"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ranking-municipios"
+database_id = "d664746a-8439-488d-a42c-73aaf17b2140"

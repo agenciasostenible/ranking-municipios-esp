@@ -1,0 +1,21 @@
+-- CÓRDOBA: 20 municipios
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Aguilar de la Frontera' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=99 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Almodóvar Del Río' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=84 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Baena' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=97 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Belalcázar' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=89 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Belmez' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=86 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Bujalance' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=82 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Carcabuey' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Córdoba' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=55 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Dos Torres' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Espejo' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=85 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Iznájar' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=88 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Luque' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Montemayor' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=74 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Montilla' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Palma Del Río' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=58 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Posadas' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Priego de Córdoba' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=84 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Santa Eufemia' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=52 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Torrecampo' AND provincia='Córdoba') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Zuheros' AND provincia='Córdoba') AND categoria='castillos';

@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+out/
+.vercel/
+.astro/
+.output/
+
+# wrangler / cloudflare local state
+.wrangler/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+
+# local db
+ranking.db

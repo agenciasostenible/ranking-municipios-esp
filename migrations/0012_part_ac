@@ -1,0 +1,5 @@
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'cuevas' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'cuevas';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'escalada' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'escalada';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'escapada_rural' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'escapada_rural';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'estrellas' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'estrellas';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'festivales' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'festivales';

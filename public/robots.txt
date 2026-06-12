@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /municipio/
+Allow: /ranking/
+Allow: /provincia/
+
+Disallow: /api/
+
+Sitemap: https://rankingspain.com/sitemap.xml

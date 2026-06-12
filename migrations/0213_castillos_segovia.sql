@@ -1,0 +1,20 @@
+-- SEGOVIA: 19 municipios
+UPDATE puntuaciones SET puntuacion=54 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Arcones' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Ayllón' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=52 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Casla' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=55 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Castillejo de Mesleón' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=99 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Coca' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=58 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Condado de Castralvo (pedanía de' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Cuéllar' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=62 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Fresno de Cantespino' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=75 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Maderuelo' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=60 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Orejana' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Pedraza' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=54 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Prádena' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=100 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Segovia' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=82 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Sepúlveda' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=94 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Turégano' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=74 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Valdeprados' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=50 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Valle de Tabladillo' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=52 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Veganzones' AND provincia='Segovia') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=55 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Villaverde de Íscar' AND provincia='Segovia') AND categoria='castillos';

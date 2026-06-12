@@ -1,0 +1,21 @@
+-- PONTEVEDRA: 20 municipios
+UPDATE puntuaciones SET puntuacion=55 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Agolada' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=89 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Agoncillo' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=70 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Aller' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Castro-urdiales' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=89 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Catoira' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Clavijo' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=74 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Cortezubi (municipalidad de Pamplona' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Cuzcurrita de Río Tirón' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Javier' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=85 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Llanes' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=93 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Marcilla' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=52 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Marín' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=99 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Olite' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=94 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Pamplona' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=94 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Sajazarra' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=82 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Soto Del Barco' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=96 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Soutomaior' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Valdeolea' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Valdáliga (san Vicente de la Barquera' AND provincia='Pontevedra') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=80 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE nombre='Vigo' AND provincia='Pontevedra') AND categoria='castillos';

@@ -1,0 +1,36 @@
+-- Castillos galicia
+
+UPDATE puntuaciones SET puntuacion=99 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='LUGO' AND UPPER(TRIM(provincia))='LUGO') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=93 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='MONFORTE DE LEMOS' AND UPPER(TRIM(provincia))='LUGO') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='PALAS DE REI' AND UPPER(TRIM(provincia))='LUGO') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=72 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='CHANTADA' AND UPPER(TRIM(provincia))='LUGO') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=70 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='CASTROVERDE' AND UPPER(TRIM(provincia))='LUGO') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=50 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='PALAS DE REI' AND UPPER(TRIM(provincia))='LUGO') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=97 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='VERÍN' AND UPPER(TRIM(provincia))='OURENSE') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='CASTRO CALDELAS' AND UPPER(TRIM(provincia))='OURENSE') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=89 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='RIBADAVIA' AND UPPER(TRIM(provincia))='OURENSE') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=84 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='MACEDA' AND UPPER(TRIM(provincia))='OURENSE') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='SANDIÁS' AND UPPER(TRIM(provincia))='OURENSE') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=68 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='ALLARIZ' AND UPPER(TRIM(provincia))='OURENSE') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=50 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='VILAMARTÍN DE VALDEORRAS RURAL (O' AND UPPER(TRIM(provincia))='OURENSE') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=99 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='OLITE' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=96 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='SOUTOMAIOR' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=95 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='JAVIER' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=94 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='PAMPLONA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=94 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='SAJAZARRA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=93 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='MARCILLA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='CUZCURRITA DE RÍO TIRÓN' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=92 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='VALDÁLIGA (SAN VICENTE DE LA BARQUERA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='CASTRO-URDIALES' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=91 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='CLAVIJO' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=89 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='AGONCILLO' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=89 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='CATOIRA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=85 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='LLANES' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=82 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='SOTO DEL BARCO' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=80 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='VIGO' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=76 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='VALDEOLEA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=74 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='CORTEZUBI (MUNICIPALIDAD DE PAMPLONA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=70 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='ALLER' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=55 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='AGOLADA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=55 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='VALDEOLEA' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';
+UPDATE puntuaciones SET puntuacion=52 WHERE codigo_ine IN (SELECT codigo_ine FROM municipios WHERE UPPER(TRIM(nombre))='MARÍN' AND UPPER(TRIM(provincia))='PONTEVEDRA') AND categoria='castillos';

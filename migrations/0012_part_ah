@@ -1,0 +1,3 @@
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'senderismo' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'senderismo';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'vinos' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'vinos';
+UPDATE puntuaciones SET ranking_nacional = (SELECT COUNT(*) + 1 FROM puntuaciones p2 WHERE p2.categoria = 'yacimientos' AND p2.puntuacion > puntuaciones.puntuacion) WHERE categoria = 'yacimientos';
