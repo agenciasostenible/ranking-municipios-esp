@@ -2,7 +2,7 @@
 import { DB } from '../../lib/d1client';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
-import { getCatInfo, formatPob, LABELS, FICHA_CATS } from '../../lib/db';
+import { getCatInfo, formatPob, LABELS, FICHA_CATS, DETAIL_CATS } from '../../lib/db';
 import { getTipoIcon, getSelloStyle, TIPO_LABEL } from '../../lib/entidades';
 import { getProvGradient, CAT_COLORS } from '../../lib/utils';
 // @ts-ignore
@@ -42,7 +42,7 @@ const totalProv = totalProvRow?.n ?? 0;
 
 const globalScore = puntuaciones.find((p: any) => p.categoria === 'ranking_global');
 const fichaScores = (puntuaciones as any[]).filter((p: any) => FICHA_CATS.includes(p.categoria));
-const detailScores = (puntuaciones as any[]).filter((p: any) => LABELS[p.categoria]);
+const detailScores = (puntuaciones as any[]).filter((p: any) => DETAIL_CATS.includes(p.categoria));
 
 const why: string[] = municipio.why_json
   ? (() => { try { return JSON.parse(municipio.why_json as string); } catch { return []; } })()

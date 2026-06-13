@@ -65,6 +65,7 @@ export const LABELS: Record<string, string> = {
   monumentos:        'Monumentos',
   gastronomia:       'Gastronomía',
   camping:           'Camping',
+  Campings:          'Camping',
   TurismoRural:      'Turismo Rural',
   castillos:         'Castillos',
   museos:            'Museos',
@@ -182,11 +183,19 @@ export const SIDEBAR_GROUPS = [
 // Lista completa de categorías del sidebar (para el select de categoría)
 export const ALL_CATS = SIDEBAR_GROUPS.flatMap(g => g.items);
 
-// Categorías a mostrar en la ficha de municipio
+// Categorías a mostrar en la ficha de municipio (tarjetas de ranking)
 export const FICHA_CATS = [
   'ranking_global','monumentos','fiestas','senderismo',
-  'gastronomia','camping','TurismoRural',
+  'gastronomia','Campings','TurismoRural',
   'castillos',
   'Playas',
+  'pueblo_bonito','notoriedad_instagram',
+];
+
+// Categorías a mostrar en el gráfico de "Puntuaciones detalladas" (barras)
+// Solo las categorías confirmadas / en uso.
+export const DETAIL_CATS = [
+  'monumentos','gastronomia','Playas','castillos','fiestas',
+  'senderismo','TurismoRural','Campings','vinos',
   'pueblo_bonito','notoriedad_instagram',
 ];
