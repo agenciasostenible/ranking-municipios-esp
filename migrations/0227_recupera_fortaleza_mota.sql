@@ -1,0 +1,3 @@
+-- 0227: Reinserta Fortaleza de la Mota (Alcalá la Real) como castillo verificado;
+-- se perdió en 0226 por estar como articulo_web (el PDF la había saltado por colisión).
+INSERT OR IGNORE INTO entidades (codigo_ine,tipo,nombre,descripcion,fuente,fecha_ingesta) VALUES ('24002','fortaleza','Fortaleza de la Mota','Siglos XIII-XIV. Colosal ciudad fortificada de origen nazarí tomada por Alfonso XI en 1341. Posee un triple recinto amurallado de sillería y tapial, Alcazaba con tres grandes torres (Homenaje, Campana y Mocha) y una intrincada red de túneles militares subterráneos de asedio.','inventario_castillos_pdf',date('now'));
