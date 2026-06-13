@@ -72,13 +72,8 @@ const municipios = (rankingGlobal as any[]).map(r => ({
           {key:'Campings',      emoji:'⛺', label:'Camping'},
           {key:'TurismoRural',  emoji:'🏡', label:'Turismo Rural'},
           {key:'castillos',     emoji:'🏰', label:'Castillos', extra:true},
-          {key:'miradores',     emoji:'🔭', label:'Miradores', extra:true},
-          {key:'cuevas',        emoji:'🕳️', label:'Cuevas', extra:true},
           {key:'vinos',         emoji:'🍷', label:'Vinos', extra:true},
           {key:'fiestas',       emoji:'🎉', label:'Fiestas', extra:true},
-
-          {key:'museos',        emoji:'🖼️', label:'Museos', extra:true},
-          {key:'lujo',          emoji:'💎', label:'Lujo', extra:true},
         ].map(c => (
           <button class={`hero-cat-pill${(c as any).extra ? ' hero-cat-extra' : ''}`} data-key={c.key}>
             <span class="hero-cat-emoji">{c.emoji}</span>

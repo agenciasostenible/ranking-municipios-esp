@@ -36,7 +36,7 @@ export const ICONS: Record<string, string> = {
   playas:            'beach_access',
   Playas:            'beach_access',
   pueblo_bonito:     'brightness_5',
-  notoriedad_search: 'trending_up',
+  notoriedad_instagram: 'trending_up',
 
   miradores:         'binoculars',
   birdwatching:      'flutter_dash',
@@ -75,7 +75,7 @@ export const LABELS: Record<string, string> = {
   playas:            'Playas',
   Playas:            'Playas',
   pueblo_bonito:     'Pueblo bonito',
-  notoriedad_search: 'Popularidad',
+  notoriedad_instagram: 'Notoriedad en redes',
 
   miradores:         'Miradores',
   cuevas:            'Cuevas',
@@ -188,5 +188,5 @@ export const FICHA_CATS = [
   'gastronomia','camping','TurismoRural',
   'castillos',
   'Playas',
-  'pueblo_bonito','notoriedad_search',
+  'pueblo_bonito','notoriedad_instagram',
 ];
