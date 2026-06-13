@@ -128,16 +128,13 @@ export const SIDEBAR_GROUPS = [
     items: [
       { key: 'monumentos',  label: 'Monumentos',          icon: 'fort' },
       { key: 'castillos',   label: 'Castillos',           icon: 'castle' },
-      { key: 'museos',      label: 'Museos',              icon: 'museum' },
-      { key: 'conjuntos',   label: 'Conjuntos históricos',icon: 'location_city' },
     ],
   },
   {
     title: 'Fiestas',
     icon: 'celebration',
     items: [
-      { key: 'fiestas',    label: 'Fiestas oficiales', icon: 'celebration' },
-      { key: 'festivales', label: 'Festivales',        icon: 'festival' },
+      { key: 'fiestas',    label: 'Fiestas', icon: 'celebration' },
     ],
   },
   {
@@ -145,9 +142,7 @@ export const SIDEBAR_GROUPS = [
     icon: 'restaurant',
     items: [
       { key: 'gastronomia',       label: 'Gastronomía',      icon: 'restaurant' },
-      { key: 'restaurantes_top',  label: 'Restaurantes top', icon: 'star' },
       { key: 'vinos',             label: 'Vinos y bodegas',  icon: 'wine_bar' },
-      { key: 'productos_locales', label: 'Productos locales',icon: 'shopping_basket' },
     ],
   },
   {
@@ -155,27 +150,14 @@ export const SIDEBAR_GROUPS = [
     icon: 'park',
     items: [
       { key: 'playas',       label: 'Playas',         icon: 'beach_access' },
-      { key: 'miradores',    label: 'Miradores',      icon: 'binoculars' },
-      { key: 'cuevas',       label: 'Cuevas',         icon: 'mountain' },
     ],
   },
   {
     title: 'Activo',
     icon: 'hiking',
     items: [
-      { key: 'senderismo', label: 'Senderismo',   icon: 'hiking' },
-      { key: 'escalada',   label: 'Escalada',     icon: 'climbing' },
-      { key: 'pesca',      label: 'Pesca',        icon: 'phishing' },
-    ],
-  },
-  {
-    title: 'Viajero',
-    icon: 'person',
-    items: [
-      { key: 'mochilero',  label: 'Mochilero',  icon: 'backpack' },
-      { key: 'lujo',       label: 'Lujo',       icon: 'diamond' },
-      { key: 'accesible',  label: 'Accesible',  icon: 'accessible' },
-      { key: 'balnearios', label: 'Balnearios', icon: 'hot_tub' },
+      { key: 'senderismo', label: 'Senderismo', icon: 'hiking' },
+      { key: 'Campings',   label: 'Camping',    icon: 'camping' },
     ],
   },
 ];
