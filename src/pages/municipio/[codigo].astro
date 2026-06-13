@@ -304,18 +304,6 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
     </div>
   )}
 
-  <!-- Why chips block -->
-  {whyToDisplay.length > 0 && (
-    <div class="why-block">
-      <div class="why-block-title">✨ Por qué visitar {municipio.nombre}</div>
-      <div class="why-chips-row">
-        {whyToDisplay.map((chip: string) => (
-          <span class="why-chip-lg">{chip}</span>
-        ))}
-      </div>
-    </div>
-  )}
-
   <!-- Entidades grid -->
   {entidades.length > 0 && (
     <section class="mun-section">
