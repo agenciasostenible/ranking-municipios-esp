@@ -25,47 +25,18 @@ PROJECT_DIR = Path(__file__).parent.parent
 # Tier B (1.0): importantes pero más nicho
 # Tier C (0.6): señales complementarias
 PESOS = {
-    # Tier A
-    "historia":          1.2,
-    "gastronomia":       1.2,
-    "playas":            1.2,
-    "pueblo_bonito":     1.2,
-    "naturaleza":        1.1,
-    # Tier B
-    "senderismo":        1.0,
-    "castillos":         1.0,
-    "museos":            1.0,
-    "fiestas":           1.0,
-    "vinos":             1.0,
-    "restaurantes_top":  1.0,
-    "yacimientos":       1.0,
-    "agua":              0.9,
-    "aventura":          0.9,
-    # Tier C
-    "miradores":         0.7,
-    "camping":           0.6,
-    "ciclismo":          0.6,
-    "retiros":           0.6,
-    "escapada_rural":    0.6,
-    "estrellas":         0.6,
-    "birdwatching":      0.6,
-    "ninos":             0.6,
-    "aceite":            0.5,
-    "monumentos":        0.5,
-    "conjuntos":         0.5,
-    "semana_santa":      0.5,
-    "productos_locales": 0.5,
-    "mercados_gastro":   0.5,
-    "mercados":          0.4,
-    "lujo":              0.4,
-    "pareja":            0.4,
-    "festivales":        0.4,
-    "balnearios":        0.3,
-    "escalada":          0.3,
-    "pesca":             0.3,
-    "mochilero":         0.3,
-    "cuevas":            0.3,
-    "accesible":         0.2,
+    "monumentos":       1.3,
+    "pueblo_bonito":    1.2,
+    "gastronomia":      1.1,
+    "castillos":        1.0,
+    "conjuntos":        1.0,
+    "museos":           0.9,
+    "Playas":           0.8,
+    "senderismo":       0.8,
+    "fiestas":          0.8,
+    "TurismoRural":     0.7,
+    "vinos":            0.6,
+    "festivales":       0.5,
 }
 
 # ── Cómo cada search_X boostea su categoría padre ───────────────────────────
@@ -81,21 +52,22 @@ SEARCH_BOOSTS = {
     "search_pueblo_bonito": ("pueblo_bonito",  0.50, 100),
 }
 
-# notoriedad_search contribuye al global como bonus directo (no como categoría)
-NOTORIEDAD_FACTOR = 0.22   # 50 * 0.22 = 11 pts máx de bonus
-NOTORIEDAD_CAP    = 12.0
-
-# notoriedad_instagram contribuye como bonus secundario
-INSTAGRAM_FACTOR  = 0.15   # 40 * 0.15 = 6 pts máx de bonus
-INSTAGRAM_CAP     = 6.0
+# Media amortiguada (shrinkage): un sitio necesita destacar en VARIAS categorías
+# para liderar. Con pocas categorías, la nota se acerca a una base baja.
+K_VIRTUAL = 2.0
+BASE_M    = 28.0
+# La fama (notoriedad búsqueda + Instagram) solo cuenta como desempate mínimo.
+FAMA_CAP  = 3.0
 
 
 def calc_global(scores: dict) -> float:
     """
-    Fórmula ranking_global:
-      - Promedio ponderado de categorías (solo las que tienen score > 0)
-      - + bonus notoriedad_search (demanda real de búsqueda, máx 12 pts)
-      - + bonus notoriedad_instagram (presencia social, máx 6 pts)
+    Fórmula ranking_global (justa):
+      - Media ponderada de las categorías con score > 0 (no penaliza al de
+        interior por no tener playa: lo que falta no entra en el divisor)
+      - Amortiguada hacia una base baja (28) según cuántas categorías tenga,
+        para que un sitio de una sola categoría fuerte NO lidere
+      - + fama (notoriedad) como desempate mínimo (máx 3 pts)
       - Cap 100
     """
     suma_pond  = 0.0
@@ -108,14 +80,13 @@ def calc_global(scores: dict) -> float:
             suma_pesos += peso
 
     if suma_pesos == 0:
-        base = 0.0
-    else:
-        base = suma_pond / suma_pesos
+        return 0.0
 
-    notoriedad_bonus = min(NOTORIEDAD_CAP, scores.get("notoriedad_search", 0) * NOTORIEDAD_FACTOR)
-    instagram_bonus  = min(INSTAGRAM_CAP,  scores.get("notoriedad_instagram", 0) * INSTAGRAM_FACTOR)
+    base = (suma_pond + K_VIRTUAL * BASE_M) / (suma_pesos + K_VIRTUAL)
+    fama = min(FAMA_CAP, scores.get("notoriedad_search", 0) * 0.04
+                       + scores.get("notoriedad_instagram", 0) * 0.03)
 
-    return round(min(100.0, base + notoriedad_bonus + instagram_bonus), 1)
+    return round(min(100.0, base + fama), 1)
 
 
 def main():
