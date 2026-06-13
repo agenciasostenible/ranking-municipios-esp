@@ -66,14 +66,11 @@ export const LABELS: Record<string, string> = {
   gastronomia:       'Gastronomía',
   camping:           'Camping',
   TurismoRural:      'Turismo Rural',
-  estrellas:         'Astroturismo',
   castillos:         'Castillos',
-  yacimientos:       'Arqueología',
   museos:            'Museos',
   conjuntos:         'Conjuntos',
   festivales:        'Festivales',
   restaurantes_top:  'Rest. top',
-  aceite:            'Aceite',
   vinos:             'Vinos',
   playas:            'Playas',
   Playas:            'Playas',
@@ -81,9 +78,7 @@ export const LABELS: Record<string, string> = {
   notoriedad_search: 'Popularidad',
 
   miradores:         'Miradores',
-  birdwatching:      'Birdwatching',
   cuevas:            'Cuevas',
-  ciclismo:          'Cicloturismo',
   escalada:          'Escalada',
   pesca:             'Pesca',
   mochilero:         'Mochilero',
@@ -112,13 +107,8 @@ export const TABS = [
   { key: 'gastronomia',      label: 'Gastronomía', icon: 'restaurant' },
   { key: 'Campings',         label: 'Camping',     icon: 'camping' },
   { key: 'TurismoRural',     label: 'Rural',       icon: 'cottage' },
-  { key: 'estrellas',        label: 'Astro',       icon: 'nights_stay' },
   { key: 'castillos',        label: 'Castillos',   icon: 'castle' },
   { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
-  { key: 'yacimientos',      label: 'Arqueología', icon: 'archaeology' },
-  { key: 'birdwatching',     label: 'Birds',       icon: 'flutter_dash' },
-  { key: 'ciclismo',         label: 'Bici',        icon: 'pedal_bike' },
-  { key: 'aceite',           label: 'Aceite',      icon: 'opacity' },
   { key: 'vinos',            label: 'Vinos',       icon: 'wine_bar' },
 ];
 
@@ -137,7 +127,6 @@ export const SIDEBAR_GROUPS = [
     items: [
       { key: 'monumentos',  label: 'Monumentos',          icon: 'fort' },
       { key: 'castillos',   label: 'Castillos',           icon: 'castle' },
-      { key: 'yacimientos', label: 'Yacimientos',         icon: 'archaeology' },
       { key: 'museos',      label: 'Museos',              icon: 'museum' },
       { key: 'conjuntos',   label: 'Conjuntos históricos',icon: 'location_city' },
     ],
@@ -156,7 +145,6 @@ export const SIDEBAR_GROUPS = [
     items: [
       { key: 'gastronomia',       label: 'Gastronomía',      icon: 'restaurant' },
       { key: 'restaurantes_top',  label: 'Restaurantes top', icon: 'star' },
-      { key: 'aceite',            label: 'Aceite de oliva',  icon: 'opacity' },
       { key: 'vinos',             label: 'Vinos y bodegas',  icon: 'wine_bar' },
       { key: 'productos_locales', label: 'Productos locales',icon: 'shopping_basket' },
     ],
@@ -167,8 +155,6 @@ export const SIDEBAR_GROUPS = [
     items: [
       { key: 'playas',       label: 'Playas',         icon: 'beach_access' },
       { key: 'miradores',    label: 'Miradores',      icon: 'binoculars' },
-      { key: 'birdwatching', label: 'Birdwatching',   icon: 'flutter_dash' },
-      { key: 'estrellas',    label: 'Cielos oscuros', icon: 'nights_stay' },
       { key: 'cuevas',       label: 'Cuevas',         icon: 'mountain' },
     ],
   },
@@ -177,7 +163,6 @@ export const SIDEBAR_GROUPS = [
     icon: 'hiking',
     items: [
       { key: 'senderismo', label: 'Senderismo',   icon: 'hiking' },
-      { key: 'ciclismo',   label: 'Cicloturismo', icon: 'pedal_bike' },
       { key: 'escalada',   label: 'Escalada',     icon: 'climbing' },
       { key: 'pesca',      label: 'Pesca',        icon: 'phishing' },
     ],
@@ -201,7 +186,7 @@ export const ALL_CATS = SIDEBAR_GROUPS.flatMap(g => g.items);
 export const FICHA_CATS = [
   'ranking_global','monumentos','fiestas','senderismo',
   'gastronomia','camping','TurismoRural',
-  'estrellas','castillos','yacimientos','ciclismo','birdwatching',
+  'castillos',
   'Playas',
   'pueblo_bonito','notoriedad_search',
 ];
