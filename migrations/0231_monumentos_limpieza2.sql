@@ -1,0 +1,2 @@
+-- 0231 Limpieza basura con fecha-en-descripción (recortes de blog que 0229 no pilló)
+DELETE FROM entidades WHERE fuente='inventario_monumentos_pdf' AND (descripcion GLOB '*20[12][0-9] —*' OR descripcion GLOB '*20[12][0-9] –*' OR nombre LIKE 'Comarca de %' OR nombre LIKE 'Turismo en %' OR nombre LIKE '%pueblos bonitos%' OR nombre LIKE '%Castros celtas%' OR nombre LIKE 'GC%' OR nombre IN ('Cáceres','Salamanca','Salamanca y Zamora','El nacimiento de una ciudad','Madrasa Palace','Comarca de Cáceres'));
