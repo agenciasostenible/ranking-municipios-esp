@@ -29,7 +29,7 @@ export const ICONS: Record<string, string> = {
   yacimientos:       'archaeology',
   museos:            'museum',
   conjuntos:         'location_city',
-  festivales:        'festival',
+  festivales:        'music_note',
   restaurantes_top:  'star',
   aceite:            'opacity',
   vinos:             'wine_bar',
@@ -103,7 +103,7 @@ export function formatPob(pob: number | null): string {
 export const TABS = [
   { key: 'ranking_global',   label: 'Global',      icon: 'emoji_events' },
   { key: 'fiestas',          label: 'Fiestas',     icon: 'celebration' },
-  { key: 'festivales',       label: 'Festivales',  icon: 'festival' },
+  { key: 'festivales',       label: 'Festivales',  icon: 'music_note' },
   { key: 'senderismo',       label: 'Senderismo',  icon: 'hiking' },
   { key: 'monumentos',      label: 'Monumentos',  icon: 'fort' },
   { key: 'gastronomia',      label: 'Gastronomía', icon: 'restaurant' },
@@ -138,7 +138,7 @@ export const SIDEBAR_GROUPS = [
     icon: 'celebration',
     items: [
       { key: 'fiestas',    label: 'Fiestas', icon: 'celebration' },
-      { key: 'festivales', label: 'Festivales', icon: 'festival' },
+      { key: 'festivales', label: 'Festivales', icon: 'music_note' },
     ],
   },
   {
