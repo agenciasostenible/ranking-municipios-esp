@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request }) => {
     FROM municipios m
     LEFT JOIN (SELECT codigo_ine, MAX(puntuacion) as puntuacion, MAX(ranking_provincial) as ranking_provincial FROM puntuaciones WHERE categoria='ranking_global' GROUP BY codigo_ine) p
       ON m.codigo_ine = p.codigo_ine
-    WHERE 1=1
+    WHERE COALESCE(m.es_duplicado,0)=0
   `;
   const params: string[] = [];
 

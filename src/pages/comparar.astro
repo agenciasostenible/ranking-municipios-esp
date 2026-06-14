@@ -101,9 +101,10 @@ async function slotSearch(i: number, q: string) {
   if (!q || q.length < 2) { ac.innerHTML = ''; ac.classList.remove('open'); return; }
   debounceTimers[i] = setTimeout(async () => {
     const res: any[] = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json());
-    if (!res.length) { ac.classList.remove('open'); return; }
+    const munis = res.filter((m: any) => m.tipo === 'municipio' && m.codigo_ine && m.provincia);
+    if (!munis.length) { ac.classList.remove('open'); return; }
     ac.innerHTML = '';
-    res.slice(0, 6).forEach((m: any) => {
+    munis.slice(0, 6).forEach((m: any) => {
       const el = document.createElement('div');
       el.className = 'sac-item';
       const strong = document.createElement('strong');
@@ -152,7 +153,7 @@ function renderCard(i: number) {
       <span class="cmp-chip-dot"></span>
       <div class="cmp-chip-text">
         <span class="cmp-chip-name">${m.nombre}</span>
-        <span class="cmp-chip-prov">${m.provincia}</span>
+        <span class="cmp-chip-prov">${m.provincia || ''}</span>
       </div>
       <button class="cmp-chip-clear" data-slot="${i}" aria-label="Quitar">✕</button>
     </div>`;
