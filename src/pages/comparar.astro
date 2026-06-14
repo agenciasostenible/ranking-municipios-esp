@@ -197,9 +197,9 @@ function renderTable(active) {
     return `<tr>
       <td class="cat-label">${cat.label}</td>
       ${vals.map((v, i) => `
-        <td class="score-cell ${v === max && max > 0 ? 'best' : ''}" style="${v === max && max > 0 ? `color:${COLORS[i]};font-weight:700` : ''}">
-          <span class="score-bar-mini" style="--w:${v}%;--c:${COLORS[i]}"></span>
-          ${v}
+        <td class="score-cell ${v === max && max > 0 ? 'best' : ''}">
+          <div class="sc-num" style="${v === max && max > 0 ? `color:${COLORS[i]}` : ''}">${v}</div>
+          <div class="sc-track"><span class="sc-fill" style="width:${v}%;background:${COLORS[i]}"></span></div>
         </td>`).join('')}
     </tr>`;
   }).join('');
@@ -401,14 +401,16 @@ preloadFromParams();
   font-weight: 700; text-align: center; border-bottom: 2px solid #eee;
 }
 .comparar-page .comparar-table th:first-child { text-align: left; }
-.comparar-page .comparar-table td { padding: 11px 16px; border-bottom: 1px solid #f1f1f3; text-align: center; }
+.comparar-page .comparar-table td { padding: 12px 16px; border-bottom: 1px solid #f1f1f3; text-align: center; vertical-align: middle; }
 .comparar-page .cat-label { text-align: left; color: #555; font-weight: 500; }
-.comparar-page .score-cell { position: relative; font-size: 1rem; }
-.comparar-page .score-cell.best { background: #fffbf0; }
-.comparar-page .score-bar-mini {
-  display: inline-block; width: var(--w); height: 3px;
-  background: var(--c); border-radius: 2px; vertical-align: middle;
-  margin-right: 6px; opacity: .5;
+.comparar-page .score-cell { width: 38%; }
+.comparar-page .score-cell.best { background: #fffaf0; }
+.comparar-page .sc-num { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 7px; }
+.comparar-page .score-cell.best .sc-num { font-weight: 800; }
+.comparar-page .sc-track {
+  height: 7px; width: 100%; max-width: 180px; margin: 0 auto;
+  background: #ececf0; border-radius: 4px; overflow: hidden;
 }
+.comparar-page .sc-fill { display: block; height: 100%; border-radius: 4px; transition: width .3s; }
 </style>
 </Base>
