@@ -111,6 +111,7 @@ export const TABS = [
   { key: 'castillos',        label: 'Castillos',   icon: 'castle' },
   { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
   { key: 'vinos',            label: 'Vinos',       icon: 'wine_bar' },
+  { key: 'notoriedad_instagram', label: 'Popularidad', icon: 'trending_up' },
 ];
 
 export const SIDEBAR_GROUPS = [
@@ -118,8 +119,9 @@ export const SIDEBAR_GROUPS = [
     title: 'Global',
     icon: 'emoji_events',
     items: [
-      { key: 'ranking_global',  label: 'Ranking global',  icon: 'emoji_events' },
-      { key: 'TurismoRural',    label: 'Turismo rural',   icon: 'cottage' },
+      { key: 'ranking_global',  label: 'Ranking global',     icon: 'emoji_events' },
+      { key: 'TurismoRural',    label: 'Turismo rural',      icon: 'cottage' },
+      { key: 'notoriedad_instagram', label: 'Popularidad en redes', icon: 'trending_up' },
     ],
   },
   {
