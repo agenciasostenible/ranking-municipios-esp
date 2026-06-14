@@ -122,10 +122,12 @@ async function selectMun(i: number, codigo: string, nombre: string, provincia: s
   const ac = document.getElementById(`ac-${i}`)!;
   ac.classList.remove('open');
   const input = document.getElementById(`input-${i}`) as HTMLInputElement;
-  if (input) { input.value = `${nombre} (${provincia})`; input.readOnly = true; input.classList.add('selected'); }
+  if (input) input.value = '';
   const scores = await fetch(`/api/municipio-scores/${codigo}`).then(r => r.json()).catch(() => null);
   if (!scores) return;
   state[i] = { codigo, nombre, provincia, scores: Array.isArray(scores) ? scores : [] };
+  const search = document.querySelector(`#slot-${i} .slot-search`);
+  if (search) search.classList.add('hidden');
   renderCard(i);
   renderComparison();
 }
@@ -135,8 +137,10 @@ function clearSlot(i: number) {
   const card = document.getElementById(`card-${i}`)!;
   card.classList.add('hidden');
   card.innerHTML = '';
+  const search = document.querySelector(`#slot-${i} .slot-search`);
+  if (search) search.classList.remove('hidden');
   const input = document.getElementById(`input-${i}`) as HTMLInputElement;
-  if (input) { input.value = ''; input.readOnly = false; input.classList.remove('selected'); }
+  if (input) { input.value = ''; input.readOnly = false; input.classList.remove('selected'); input.focus(); }
   renderComparison();
 }
 
@@ -144,14 +148,15 @@ function renderCard(i: number) {
   const m = state[i]!;
   const card = document.getElementById(`card-${i}`)!;
   card.innerHTML = `
-    <div class="mun-card-mini">
-      <div class="mcm-header" style="background:${COLORS[i]}">
-        <span class="mcm-name">${m.nombre}</span>
-        <span class="mcm-prov">${m.provincia}</span>
-        <button class="mcm-clear" data-slot="${i}">✕</button>
+    <div class="cmp-chip" style="--c:${COLORS[i]}">
+      <span class="cmp-chip-dot"></span>
+      <div class="cmp-chip-text">
+        <span class="cmp-chip-name">${m.nombre}</span>
+        <span class="cmp-chip-prov">${m.provincia}</span>
       </div>
+      <button class="cmp-chip-clear" data-slot="${i}" aria-label="Quitar">✕</button>
     </div>`;
-  card.querySelector('.mcm-clear')?.addEventListener('click', () => clearSlot(i));
+  card.querySelector('.cmp-chip-clear')?.addEventListener('click', () => clearSlot(i));
   card.classList.remove('hidden');
 }
 
@@ -308,11 +313,13 @@ preloadFromParams();
 .slot-search { position: relative; }
 .slot-search input {
   width: 100%; box-sizing: border-box;
-  padding: 12px 16px; font-size: .95rem; font-family: inherit;
-  border: 2px solid #e0e0e0; border-radius: 12px; outline: none;
-  transition: border-color .2s;
+  padding: 13px 16px; font-size: .95rem; font-family: inherit;
+  background: #fff; color: var(--text);
+  border: 2px solid #e6e6e9; border-radius: 14px; outline: none;
+  transition: border-color .2s, box-shadow .2s;
 }
-.slot-search input:focus { border-color: var(--primary); }
+.slot-search input::placeholder { color: #aab; }
+.slot-search input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(255,56,92,.12); }
 .slot-search input.selected {
   background: #fff8f8;
   border-color: var(--primary);
@@ -350,19 +357,32 @@ preloadFromParams();
 .comparar-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,56,92,.45); }
 .comparar-btn:active { transform: translateY(0); }
 
-.mun-card-mini { border-radius: 12px; overflow: hidden; border: 1px solid #e0e0e0; }
-.mcm-header {
-  padding: 12px 14px; display: flex; align-items: center; gap: 8px;
-  color: #fff; flex-wrap: wrap;
+/* Chip de municipio seleccionado */
+.cmp-chip {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border: 2px solid var(--c);
+  border-radius: 14px; padding: 12px 14px;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--c) 20%, transparent);
+  animation: chipIn .18s ease;
 }
-.mcm-name { font-weight: 700; font-size: 1rem; flex: 1; }
-.mcm-prov { font-size: .8rem; opacity: .85; }
-.mcm-clear {
-  background: rgba(255,255,255,.2); border: none; color: #fff;
-  border-radius: 50%; width: 24px; height: 24px; cursor: pointer;
-  font-size: .85rem; display: flex; align-items: center; justify-content: center;
+@keyframes chipIn { from { opacity: 0; transform: translateY(-5px) scale(.98); } to { opacity: 1; transform: none; } }
+.cmp-chip-dot {
+  width: 11px; height: 11px; border-radius: 50%; background: var(--c); flex: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent);
 }
-.mcm-clear:hover { background: rgba(255,255,255,.35); }
+.cmp-chip-text { display: flex; flex-direction: column; line-height: 1.25; flex: 1; min-width: 0; }
+.cmp-chip-name {
+  font-weight: 700; font-size: 1.02rem; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cmp-chip-prov { font-size: .78rem; color: #999; }
+.cmp-chip-clear {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  border: none; background: #f1f1f1; color: #999; cursor: pointer;
+  font-size: .78rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s, transform .15s;
+}
+.cmp-chip-clear:hover { background: var(--c); color: #fff; transform: rotate(90deg); }
 .hidden { display: none; }
 
 /* Comparación */
