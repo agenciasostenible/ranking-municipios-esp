@@ -163,13 +163,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
               <span class="mun-score-val">{Number(m.puntuacion).toFixed(1)}</span>
               <span class="mun-card-pob">{m.poblacion ? '· ' + formatPob(m.poblacion) + ' hab.' : ''}</span>
             </div>
-            {whyChips.length > 0 && (
-              <div class="mun-card-chips">
-                {whyChips.map((chip: string) => (
-                  <span class="why-chip">{chip}</span>
-                ))}
-              </div>
-            )}
           </div>
         </a>
       );
@@ -211,8 +204,6 @@ async function loadMore() {
   res.data.forEach((m: any, i: number) => {
     const pos = totalLoaded + i + 1;
     const foto = m.foto_url && m.foto_url !== 'NONE' ? m.foto_url : null;
-    const why = Array.isArray(m.why) ? m.why.slice(0, 3) : [];
-    const chips = why.map((c: string) => `<span class="why-chip">${escHtml(c)}</span>`).join('');
     const bgStyle = foto ? `background:url('${escHtml(foto)}') center/cover no-repeat` : `background:#e0e0e0`;
 
     const card = document.createElement('a');
@@ -232,7 +223,6 @@ async function loadMore() {
           <span class="mun-score-val">${Number(m.puntuacion).toFixed(1)}</span>
           ${m.poblacion ? `<span class="mun-card-pob">· ${formatPobJs(m.poblacion)} hab.</span>` : ''}
         </div>
-        ${chips ? `<div class="mun-card-chips">${chips}</div>` : ''}
       </div>`;
     grid.appendChild(card);
   });
