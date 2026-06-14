@@ -103,6 +103,7 @@ export function formatPob(pob: number | null): string {
 export const TABS = [
   { key: 'ranking_global',   label: 'Global',      icon: 'emoji_events' },
   { key: 'fiestas',          label: 'Fiestas',     icon: 'celebration' },
+  { key: 'festivales',       label: 'Festivales',  icon: 'festival' },
   { key: 'senderismo',       label: 'Senderismo',  icon: 'hiking' },
   { key: 'monumentos',      label: 'Monumentos',  icon: 'fort' },
   { key: 'gastronomia',      label: 'Gastronomía', icon: 'restaurant' },
@@ -137,6 +138,7 @@ export const SIDEBAR_GROUPS = [
     icon: 'celebration',
     items: [
       { key: 'fiestas',    label: 'Fiestas', icon: 'celebration' },
+      { key: 'festivales', label: 'Festivales', icon: 'festival' },
     ],
   },
   {
@@ -169,7 +171,7 @@ export const ALL_CATS = SIDEBAR_GROUPS.flatMap(g => g.items);
 
 // Categorías a mostrar en la ficha de municipio (tarjetas de ranking)
 export const FICHA_CATS = [
-  'ranking_global','monumentos','fiestas','senderismo',
+  'ranking_global','monumentos','fiestas','festivales','senderismo',
   'gastronomia','Campings','TurismoRural',
   'castillos',
   'Playas',
@@ -179,7 +181,7 @@ export const FICHA_CATS = [
 // Categorías a mostrar en el gráfico de "Puntuaciones detalladas" (barras)
 // Solo las categorías confirmadas / en uso.
 export const DETAIL_CATS = [
-  'monumentos','gastronomia','Playas','castillos','fiestas',
+  'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
   'senderismo','TurismoRural','Campings','vinos',
   'pueblo_bonito','notoriedad_instagram',
 ];
