@@ -267,10 +267,14 @@ function buildUrl(overrides: Record<string, string | number>) {
                     data-codigo={r.foto ? null : r.codigo_ine}>
                   </div>
                   <div>
-                    <a href={`/municipio/${r.codigo_ine}?desde=${categoria}`}
-                       style={`color:var(--text);font-weight:600;font-size:.875rem`}
-                       onclick="event.stopPropagation()">{r.nombre}</a>
-                    <span class="expand-arrow">▶</span>
+                    <div class="row-name-line">
+                      <a href={`/municipio/${r.codigo_ine}?desde=${categoria}`}
+                         style={`color:var(--text);font-weight:600;font-size:.875rem`}
+                         onclick="event.stopPropagation()">{r.nombre}</a>
+                      <a href={`/municipio/${r.codigo_ine}?desde=${categoria}`}
+                         class="ver-todo-btn" onclick="event.stopPropagation()">Ver ficha completa →</a>
+                      <span class="expand-arrow" title="Vista rápida">▶</span>
+                    </div>
                     <div style="font-size:.72rem;color:var(--text-2);margin-top:1px">{r.comarca ?? ''}</div>
                   </div>
                 </div>
