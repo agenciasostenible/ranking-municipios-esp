@@ -71,19 +71,16 @@ const municipios = (rankingGlobal as any[]).map(r => ({
           {key:'Playas',        emoji:'🏖️', label:'Playas'},
           {key:'Campings',      emoji:'⛺', label:'Camping'},
           {key:'TurismoRural',  emoji:'🏡', label:'Turismo Rural'},
-          {key:'castillos',     emoji:'🏰', label:'Castillos', extra:true},
-          {key:'vinos',         emoji:'🍷', label:'Vinos', extra:true},
-          {key:'fiestas',       emoji:'🎉', label:'Fiestas', extra:true},
+          {key:'castillos',     emoji:'🏰', label:'Castillos'},
+          {key:'vinos',         emoji:'🍷', label:'Vinos'},
+          {key:'fiestas',       emoji:'🎉', label:'Fiestas'},
         ].map(c => (
-          <button class={`hero-cat-pill${(c as any).extra ? ' hero-cat-extra' : ''}`} data-key={c.key}>
+          <button class="hero-cat-pill" data-key={c.key}>
             <span class="hero-cat-emoji">{c.emoji}</span>
             <span class="hero-cat-label">{c.label}</span>
           </button>
         ))}
       </div>
-      <button class="hero-cats-more" id="hero-cats-more">
-        Ver todas las categorías ↓
-      </button>
     </div>
 
     <!-- Paso 2: Zona opcional + CTA (solo desktop) -->
@@ -319,18 +316,6 @@ document.addEventListener('click', (e) => {
   if (!(e.target as Element)?.closest?.('.hero-search-wrap')) ac.classList.remove('open');
 });
 
-// ── "Ver todas" ──
-const heroCatsMore = document.getElementById('hero-cats-more');
-const heroCats = document.getElementById('hero-cats');
-heroCatsMore?.addEventListener('click', () => {
-  heroCats?.classList.toggle('expanded');
-  if (heroCats?.classList.contains('expanded')) {
-    heroCatsMore.textContent = 'Ver menos ↑';
-  } else {
-    heroCatsMore.textContent = 'Ver todas las categorías ↓';
-  }
-});
-
 // ── Category pills ──
 let selectedCat = '';
 document.querySelectorAll('.hero-cat-pill').forEach(pill => {
@@ -428,21 +413,6 @@ function doSearch() {
 }
 .hero-cat-emoji { font-size: 1.1rem; line-height: 1; }
 .hero-cat-label { white-space: nowrap; }
-.hero-cat-extra { display: none; }
-.hero-cats.expanded .hero-cat-extra { display: flex; }
-.hero-cats-more {
-  margin-top: 12px;
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.85);
-  font-size: .85rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.hero-cats-more:hover { color: #fff; }
 
 /* ── Hero ── */
 .hero-section {
