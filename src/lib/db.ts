@@ -76,7 +76,7 @@ export const LABELS: Record<string, string> = {
   playas:            'Playas',
   Playas:            'Playas',
   pueblo_bonito:     'Pueblo bonito',
-  notoriedad_instagram: 'Notoriedad en redes',
+  notoriedad_instagram: 'Popularidad en redes',
 
   miradores:         'Miradores',
   cuevas:            'Cuevas',
