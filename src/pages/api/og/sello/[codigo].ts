@@ -133,9 +133,10 @@ function pick(row: any, cat: string, provincia: string) {
   else if (prov) { rank = prov; scope = 'prov'; scopeLabel = 'de ' + provincia; }
   else if (nac) { rank = nac; scope = 'es'; scopeLabel = 'de España'; }
   else return null;
+  const raw = LABELS[cat] ?? cat;
   return {
     rank, scope, scopeLabel,
-    catLabel: LABELS[cat] ?? cat,
+    catLabel: raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase(),
     pts: Number(row.puntuacion).toFixed(0),
   };
 }

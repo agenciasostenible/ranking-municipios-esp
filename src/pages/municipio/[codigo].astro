@@ -170,7 +170,7 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
 <Base title={titleSeo} description={descSeo}
   ogTitle={topCatInfo && topCatPos ? `${municipio.nombre} · #${topCatPos} en ${topCatInfo.label} en ${municipio.provincia}` : `${municipio.nombre} — Ranking turístico`}
   ogDescription={descSeo}
-  ogImage={`https://rankingspain.com/api/og/sello/${codigo}`}>
+  ogImage={`https://rankingspain.com/api/og/sello/${codigo}${desde && desde !== 'ranking_global' ? `?cat=${encodeURIComponent(desde)}` : ''}`}>
 
 <script type="application/ld+json" set:html={JSON.stringify({
   "@context": "https://schema.org",
@@ -576,6 +576,7 @@ function openSello(btn){
   if (!opts.length) return;
   let idx=0;
   if (opts.length>1){ const n=parseInt(nac); idx = (n && n<=100) ? 0 : 1; }
+  cat = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
   SELLO = { cat, pts, opts, scopeIdx: idx };
   renderSello();
   document.getElementById('sello-overlay').classList.add('open');
