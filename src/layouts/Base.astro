@@ -613,8 +613,17 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
       border-top: 1px solid #FFE082;
       padding-top: 8px;
     }
-    .expand-arrow { margin-left: 2px; font-size: .65rem; color: #ccc; transition: transform .2s; }
-    .row-open .expand-arrow { transform: rotate(90deg); }
+    .expand-arrow { font-size: .6rem; color: #888; transition: transform .2s; }
+    .row-open .expand-arrow { transform: rotate(180deg); }
+    .vista-rapida-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .7rem; font-weight: 600; line-height: 1.4;
+      color: #555; background: #efefef;
+      border: 1px solid #ddd;
+      padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+      cursor: pointer;
+    }
+    .vista-rapida-btn:hover { background: #e4e4e4; }
     .row-name-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .ver-todo-btn {
       display: inline-flex; align-items: center;

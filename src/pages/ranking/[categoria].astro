@@ -273,7 +273,7 @@ function buildUrl(overrides: Record<string, string | number>) {
                          onclick="event.stopPropagation()">{r.nombre}</a>
                       <a href={`/municipio/${r.codigo_ine}?desde=${categoria}`}
                          class="ver-todo-btn" onclick="event.stopPropagation()">Ver ficha completa →</a>
-                      <span class="expand-arrow" title="Vista rápida">▶</span>
+                      <span class="vista-rapida-btn" title="Ver un resumen aquí mismo">Vista rápida <span class="expand-arrow">▾</span></span>
                     </div>
                     <div style="font-size:.72rem;color:var(--text-2);margin-top:1px">{r.comarca ?? ''}</div>
                   </div>
