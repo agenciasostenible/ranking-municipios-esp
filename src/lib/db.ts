@@ -29,13 +29,13 @@ export const ICONS: Record<string, string> = {
   yacimientos:       'archaeology',
   museos:            'museum',
   conjuntos:         'location_city',
-  festivales:        'music_note',
+  festivales:        'festival',
   restaurantes_top:  'star',
   aceite:            'opacity',
   vinos:             'wine_bar',
   playas:            'beach_access',
   Playas:            'beach_access',
-  pueblo_bonito:     'holiday_village',
+  pueblo_bonito:     'auto_awesome',
   notoriedad_instagram: 'trending_up',
 
   miradores:         'binoculars',
@@ -103,7 +103,7 @@ export function formatPob(pob: number | null): string {
 export const TABS = [
   { key: 'ranking_global',   label: 'Global',      icon: 'emoji_events' },
   { key: 'fiestas',          label: 'Fiestas',     icon: 'celebration' },
-  { key: 'festivales',       label: 'Festivales',  icon: 'music_note' },
+  { key: 'festivales',       label: 'Festivales',  icon: 'festival' },
   { key: 'senderismo',       label: 'Senderismo',  icon: 'hiking' },
   { key: 'monumentos',      label: 'Monumentos',  icon: 'fort' },
   { key: 'gastronomia',      label: 'Gastronomía', icon: 'restaurant' },
@@ -112,7 +112,7 @@ export const TABS = [
   { key: 'castillos',        label: 'Castillos',   icon: 'castle' },
   { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
   { key: 'vinos',            label: 'Vinos',       icon: 'wine_bar' },
-  { key: 'pueblo_bonito',    label: 'Pueblos bonitos', icon: 'holiday_village' },
+  { key: 'pueblo_bonito',    label: 'Pueblos bonitos', icon: 'auto_awesome' },
   { key: 'notoriedad_instagram', label: 'Popularidad', icon: 'trending_up' },
 ];
 
@@ -122,7 +122,7 @@ export const SIDEBAR_GROUPS = [
     icon: 'emoji_events',
     items: [
       { key: 'ranking_global',  label: 'Ranking global',     icon: 'emoji_events' },
-      { key: 'pueblo_bonito',   label: 'Pueblos bonitos',    icon: 'holiday_village' },
+      { key: 'pueblo_bonito',   label: 'Pueblos bonitos',    icon: 'auto_awesome' },
       { key: 'TurismoRural',    label: 'Turismo rural',      icon: 'cottage' },
       { key: 'notoriedad_instagram', label: 'Popularidad en redes', icon: 'trending_up' },
     ],
@@ -140,7 +140,7 @@ export const SIDEBAR_GROUPS = [
     icon: 'celebration',
     items: [
       { key: 'fiestas',    label: 'Fiestas', icon: 'celebration' },
-      { key: 'festivales', label: 'Festivales', icon: 'music_note' },
+      { key: 'festivales', label: 'Festivales', icon: 'festival' },
     ],
   },
   {
