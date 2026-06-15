@@ -377,15 +377,6 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
         const medal = posNum === 1 ? '🥇' : posNum === 2 ? '🥈' : posNum === 3 ? '🥉' : null;
         return (
           <a href={`/ranking/${p.categoria}`} class="ranking-metric-card card">
-            <button class="rmc-share" type="button"
-              data-cat={info.label}
-              data-nac={p.ranking_nacional ?? ''}
-              data-prov={p.ranking_provincial ?? ''}
-              data-pts={Number(p.puntuacion).toFixed(0)}
-              onclick="event.preventDefault();event.stopPropagation();openSello(this)"
-              aria-label={`Compartir el puesto en ${info.label}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            </button>
             <div class="rmc-cat" style={`color:${color}`}><Icon name={info.icon} size={16} /> {info.label}</div>
             <div class="rmc-pos" style={`color:${color}`}>
               {medal ? medal : (posNum ? `#${posNum}` : '—')}
@@ -398,6 +389,16 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
               </div>
             )}
             <div class="rmc-pts">{Number(p.puntuacion).toFixed(1)} pts</div>
+            <button class="rmc-share" type="button"
+              data-cat={info.label}
+              data-nac={p.ranking_nacional ?? ''}
+              data-prov={p.ranking_provincial ?? ''}
+              data-pts={Number(p.puntuacion).toFixed(0)}
+              onclick="event.preventDefault();event.stopPropagation();openSello(this)"
+              aria-label={`Compartir el puesto en ${info.label}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Compartir</span>
+            </button>
           </a>
         );
       })}
@@ -926,14 +927,16 @@ window.openSello = openSello;
 }
 .ranking-metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
 .rmc-share {
-  position: absolute; top: 8px; right: 8px;
-  width: 28px; height: 28px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bg); color: var(--text-2);
-  border: none; cursor: pointer; padding: 0;
+  margin-top: 10px; width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: #fff1f3; color: var(--primary);
+  border: 1px solid rgba(255,56,92,.3); cursor: pointer;
+  border-radius: 10px; padding: 8px 6px;
+  font-size: .72rem; font-weight: 700; line-height: 1;
   transition: background .15s, color .15s;
 }
-.rmc-share:hover { background: var(--primary); color: #fff; }
+.rmc-share span { line-height: 1; }
+.rmc-share:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 /* ── Modal sello compartible ── */
 .sello-overlay {
@@ -1081,6 +1084,12 @@ window.openSello = openSello;
 .mun-hero-photo { background-size: cover; background-position: center; }
 .mun-hero-photo .mun-hero-overlay { background: linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.35) 60%, rgba(0,0,0,.1) 100%); }
 .hero-photo-credit { position: absolute; bottom: 8px; right: 12px; font-size: .65rem; color: rgba(255,255,255,.55); }
+</style>
+
+<style is:global>
+.sello-preview svg { width: 100% !important; height: auto !important; display: block; }
+.scope-pill { font-size: .78rem; font-weight: 600; cursor: pointer; padding: 6px 12px; border-radius: 999px; border: 1.5px solid #EBEBEB; background: #fff; color: #717171; }
+.scope-pill.on { border-color: #FF385C; background: #fff1f3; color: #FF385C; }
 </style>
 
 <script define:vars={{ fotoUrl }}>
