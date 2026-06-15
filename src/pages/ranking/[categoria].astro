@@ -243,7 +243,6 @@ function buildUrl(overrides: Record<string, string | number>) {
         <th style="width:46px">#</th>
         <th>Municipio</th>
         <th style="width:200px">Puntuación</th>
-        <th>Por qué destaca</th>
         <th>Provincia</th>
         <th>CC.AA.</th>
         <th style="width:80px">Hab.</th>
@@ -255,7 +254,6 @@ function buildUrl(overrides: Record<string, string | number>) {
         const pct = maxPts > 0 ? Math.round((r.puntuacion / maxPts) * 100) : 0;
         const cls = pos === 1 ? 'pos g' : pos === 2 ? 'pos s' : pos === 3 ? 'pos b' : 'pos';
         const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
-        const whyChips = (r.why as string[]).slice(0, 3);
         return (
           <>
             <tr class="rank-row" data-codigo={r.codigo_ine}>
@@ -287,17 +285,12 @@ function buildUrl(overrides: Record<string, string | number>) {
                   </div>
                 </div>
               </td>
-              <td>
-                <div style="display:flex;gap:4px;flex-wrap:wrap">
-                  {whyChips.map((chip: string) => <span class="why-chip">{chip}</span>)}
-                </div>
-              </td>
               <td><span class="prov-tag">{r.provincia}</span></td>
               <td><span class="ctag">{r.comunidad}</span></td>
               <td><span style="color:var(--text-2);font-size:.78rem">{formatPob(r.poblacion)}</span></td>
             </tr>
             <tr class="expand-row" id={`expand-${r.codigo_ine}`} style="display:none">
-              <td colspan="7" style="padding:0">
+              <td colspan="6" style="padding:0">
                 <div class="expand-panel">
                   <div class="desde-block-inline" data-nombre={r.nombre} data-puntuacion={r.puntuacion} data-pos={offset + i + 1} data-rank-prov={r.ranking_provincial ?? ''}>
                     <div class="desde-block-title">¿Por qué {r.nombre} destaca en {catInfo.label}?</div>
