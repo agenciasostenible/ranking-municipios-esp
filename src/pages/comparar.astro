@@ -5,13 +5,21 @@ import Base from '../layouts/Base.astro';
 
 <div class="comparar-page">
   <div class="comparar-header">
-    <h1>Comparar municipios</h1>
-    <p>Busca hasta 3 municipios y compara sus puntuaciones</p>
+    <h1>⚖️ Comparar municipios</h1>
+    <p>Elige 2 o 3 municipios y mira lado a lado quién gana en monumentos, gastronomía, playas, fiestas y más.</p>
+    <div class="comparar-ejemplos">
+      <span class="ej-label">Pruébalo:</span>
+      <a class="ej-chip" href="/comparar?a=29084&b=29053">Ronda vs Frigiliana</a>
+      <a class="ej-chip" href="/comparar?a=45168&b=16078">Toledo vs Cuenca</a>
+      <a class="ej-chip" href="/comparar?a=20069&b=48020">San Sebastián vs Bilbao</a>
+      <a class="ej-chip" href="/comparar?a=05008&b=33036">Cudillero vs Llanes</a>
+    </div>
   </div>
 
   <!-- Buscadores -->
   <div class="comparar-slots" id="slots">
     <div class="slot" id="slot-0">
+      <div class="slot-label"><span class="slot-num">1</span> Primer municipio</div>
       <div class="slot-search">
         <input id="input-0" type="text" placeholder="🔍 Busca un municipio..." autocomplete="off">
         <div class="slot-ac" id="ac-0"></div>
@@ -19,6 +27,7 @@ import Base from '../layouts/Base.astro';
       <div class="slot-card hidden" id="card-0"></div>
     </div>
     <div class="slot" id="slot-1">
+      <div class="slot-label"><span class="slot-num">2</span> Segundo municipio</div>
       <div class="slot-search">
         <input id="input-1" type="text" placeholder="🔍 Busca un municipio..." autocomplete="off">
         <div class="slot-ac" id="ac-1"></div>
@@ -26,6 +35,7 @@ import Base from '../layouts/Base.astro';
       <div class="slot-card hidden" id="card-1"></div>
     </div>
     <div class="slot slot-optional" id="slot-2">
+      <div class="slot-label"><span class="slot-num">3</span> Tercero <span class="slot-opt">(opcional)</span></div>
       <div class="slot-search">
         <input id="input-2" type="text" placeholder="🔍 Añadir tercero (opcional)..." autocomplete="off">
         <div class="slot-ac" id="ac-2"></div>
@@ -307,7 +317,28 @@ preloadFromParams();
 .comparar-page { max-width: 900px; margin: 0 auto; padding: 32px 16px 64px; }
 .comparar-page .comparar-header { text-align: center; margin-bottom: 32px; }
 .comparar-page .comparar-header h1 { font-size: 2rem; font-weight: 800; color: var(--text); margin: 0 0 8px; }
-.comparar-page .comparar-header p { color: #666; font-size: 1rem; }
+.comparar-page .comparar-header p { color: #666; font-size: 1rem; max-width: 560px; margin: 0 auto; }
+.comparar-page .comparar-ejemplos {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  align-items: center; margin-top: 18px;
+}
+.comparar-page .ej-label { font-size: .82rem; color: #999; font-weight: 600; }
+.comparar-page .ej-chip {
+  font-size: .82rem; font-weight: 600; color: var(--text);
+  background: #fff; border: 1.5px solid #e6e6e9; border-radius: 999px;
+  padding: 6px 14px; transition: border-color .15s, background .15s;
+}
+.comparar-page .ej-chip:hover { border-color: var(--primary); background: rgba(255,56,92,.05); }
+.comparar-page .slot-label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: 8px;
+}
+.comparar-page .slot-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--primary); color: #fff; font-size: .72rem; font-weight: 700;
+}
+.comparar-page .slot-opt { color: #aaa; font-weight: 500; }
 
 .comparar-page .comparar-slots { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 40px; align-items: start; }
 @media (max-width: 700px) { .comparar-page .comparar-slots { grid-template-columns: 1fr; } }
