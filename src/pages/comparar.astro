@@ -206,11 +206,17 @@ function renderTable(active) {
     const max = Math.max(...vals);
     return `<tr>
       <td class="cat-label">${cat.label}</td>
-      ${vals.map((v, i) => `
-        <td class="score-cell ${v === max && max > 0 ? 'best' : ''}">
-          <div class="sc-num" style="${v === max && max > 0 ? `color:${COLORS[i]}` : ''}">${v}</div>
+      ${vals.map((v, i) => {
+        const isBest = v === max && max > 0;
+        if (v <= 0) {
+          return `<td class="score-cell"><div class="sc-nodata">Sin datos</div></td>`;
+        }
+        return `
+        <td class="score-cell ${isBest ? 'best' : ''}">
+          <div class="sc-num" style="${isBest ? `color:${COLORS[i]}` : ''}">${v}</div>
           <div class="sc-track"><span class="sc-fill" style="width:${v}%;background:${COLORS[i]}"></span></div>
-        </td>`).join('')}
+        </td>`;
+      }).join('')}
     </tr>`;
   }).join('');
 }
@@ -437,6 +443,7 @@ preloadFromParams();
 .comparar-page .score-cell { width: 38%; }
 .comparar-page .score-cell.best { background: #fffaf0; }
 .comparar-page .sc-num { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 7px; }
+.comparar-page .sc-nodata { font-size: .82rem; font-weight: 600; color: #bbb; font-style: italic; }
 .comparar-page .score-cell.best .sc-num { font-weight: 800; }
 .comparar-page .sc-track {
   height: 7px; width: 100%; max-width: 180px; margin: 0 auto;
