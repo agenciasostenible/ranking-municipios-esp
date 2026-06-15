@@ -498,8 +498,21 @@ function fitFont(text, big, mid, small){
   return n > 16 ? small : n > 11 ? mid : big;
 }
 
+function tier(rankStr){
+  const r = parseInt(rankStr) || 0;
+  if (r === 1)  return { eyebrow: 'EL MEJOR EN',  hook: 'es el Nº1' };
+  if (r <= 3)   return { eyebrow: 'TOP 3 EN',     hook: 'está en el TOP 3' };
+  if (r <= 5)   return { eyebrow: 'TOP 5 EN',     hook: 'está en el TOP 5' };
+  if (r <= 10)  return { eyebrow: 'TOP 10 EN',    hook: 'está en el TOP 10' };
+  if (r <= 25)  return { eyebrow: 'TOP 25 EN',    hook: 'está en el TOP 25' };
+  if (r <= 50)  return { eyebrow: 'TOP 50 EN',    hook: 'está en el TOP 50' };
+  if (r <= 100) return { eyebrow: 'TOP 100 EN',   hook: 'está en el TOP 100' };
+  return { eyebrow: 'DESTACA EN', hook: `es el Nº${r}` };
+}
+
 function buildSelloSVG(d){
   const scope = d.opts[d.scopeIdx] || { rank: '', label: '' };
+  const eyebrow = tier(scope.rank).eyebrow;
   const zona = MUNI.comunidad ? `${MUNI.provincia} · ${MUNI.comunidad}` : MUNI.provincia;
   const nombreSize = fitFont(MUNI.nombre, 56, 48, 40);
   const zonaSize = (zona||'').length > 26 ? 18 : 22;
@@ -516,7 +529,7 @@ function buildSelloSVG(d){
 <text x="340" y="186" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="800" fill="#E31C5F">Nº${esc(scope.rank)}</text>
 <rect x="${pillX}" y="252" width="${pillW}" height="40" rx="20" fill="#FF385C"/>
 <text x="340" y="278" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="2.5" fill="#ffffff">${scopeUp}</text>
-<text x="340" y="346" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" letter-spacing="4" fill="#717171">DESTACA EN</text>
+<text x="340" y="346" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" letter-spacing="4" fill="#717171">${eyebrow}</text>
 <text x="340" y="392" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fitFont(d.cat,40,34,28)}" font-weight="800" fill="#FF385C">${esc(d.cat)}</text>
 <line x1="250" y1="424" x2="430" y2="424" stroke="#EBEBEB" stroke-width="2"/>
 <text x="340" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${nombreSize}" font-weight="800" fill="#222222">${esc(MUNI.nombre)}</text>
@@ -529,7 +542,9 @@ function buildSelloSVG(d){
 
 function shareText(){
   const s = SELLO.opts[SELLO.scopeIdx] || {};
-  return `🏆 ${MUNI.nombre} es Nº${s.rank} ${s.label} en ${SELLO.cat} según Ranking Spain`;
+  const h = tier(s.rank).hook;
+  const emoji = parseInt(s.rank) === 1 ? '🥇' : '🏆';
+  return `${emoji} ${MUNI.nombre} ${h} ${s.label} en ${SELLO.cat} según Ranking Spain 👇`;
 }
 
 function renderSello(){
