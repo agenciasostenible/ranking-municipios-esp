@@ -480,10 +480,11 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
       <button class="sello-net fb"   data-net="facebook"><span>Facebook</span></button>
       <button class="sello-net x"    data-net="x"><span>X</span></button>
       <button class="sello-net tg"   data-net="telegram"><span>Telegram</span></button>
-      <button class="sello-net dl"   id="sello-download"><span>Descargar imagen</span></button>
-      <button class="sello-net cp"   id="sello-copy"><span>Copiar enlace</span></button>
+      <button class="sello-net dl wide"  id="sello-download"><span>⬇ Cuadrada</span></button>
+      <button class="sello-net st wide"  id="sello-stories"><span>⬇ Stories</span></button>
+      <button class="sello-net cp full"  id="sello-copy"><span>Copiar enlace</span></button>
     </div>
-    <p class="sello-hint">Para Instagram: descarga la imagen y súbela a tu historia 📸</p>
+    <p class="sello-hint">Para Instagram: descarga la imagen (Stories = vertical) y súbela a tu historia 📸</p>
   </div>
 </div>
 
@@ -583,22 +584,65 @@ function openSello(btn){
 }
 function closeSello(){ document.getElementById('sello-overlay').classList.remove('open'); }
 
-async function selloBlob(){
-  const svg = document.querySelector('#sello-preview svg');
-  if(!svg) return null;
-  const xml = new XMLSerializer().serializeToString(svg);
-  const url = URL.createObjectURL(new Blob([xml], {type:'image/svg+xml;charset=utf-8'}));
-  return await new Promise((res)=>{
+function rasterize(svgStr, w, h){
+  const url = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'}));
+  return new Promise((res)=>{
     const img = new Image();
     img.onload = ()=>{
-      const c = document.createElement('canvas'); c.width=1080; c.height=1080;
-      const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,1080,1080);
-      ctx.drawImage(img,0,0,1080,1080); URL.revokeObjectURL(url);
+      const c = document.createElement('canvas'); c.width=w; c.height=h;
+      const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
       c.toBlob(b=>res(b),'image/png');
     };
     img.onerror=()=>{ URL.revokeObjectURL(url); res(null); };
     img.src = url;
   });
+}
+async function selloBlob(){
+  const svg = document.querySelector('#sello-preview svg');
+  if(!svg) return null;
+  return rasterize(new XMLSerializer().serializeToString(svg), 1080, 1080);
+}
+async function selloBlobVertical(){ return rasterize(buildSelloVertical(SELLO), 1080, 1920); }
+
+async function deliverBlob(blob, suffix, span, orig){
+  const fname = `rankingspain-${MUNI.nombre.toLowerCase().replace(/[^a-z0-9]+/g,'-')}${suffix}.png`;
+  if (blob && navigator.canShare && navigator.canShare({ files:[new File([blob],fname,{type:'image/png'})] })){
+    try { await navigator.share({ files:[new File([blob],fname,{type:'image/png'})], text: shareText() }); span.textContent=orig; return; } catch(_){}
+  }
+  if (blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); }
+  span.textContent=orig;
+}
+
+function buildSelloVertical(d){
+  const scope = d.opts[d.scopeIdx] || { rank:'', label:'' };
+  const eyebrow = tier(scope.rank).eyebrow;
+  const zona = MUNI.comunidad ? `${MUNI.provincia} · ${MUNI.comunidad}` : MUNI.provincia;
+  const nLen = (MUNI.nombre||'').length;
+  const nombreSize = nLen>16 ? 76 : nLen>11 ? 92 : 104;
+  const zonaSize = (zona||'').length > 26 ? 34 : 42;
+  const scopeUp = esc((scope.label||'').toUpperCase());
+  const pillW = Math.max(280, scopeUp.length*22 + 100);
+  const pillX = 540 - pillW/2;
+  return `<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="1080" height="1920" fill="#ffffff"/>
+<rect x="0" y="0" width="1080" height="26" fill="#FF385C"/>
+<circle cx="540" cy="600" r="290" fill="#FFF1F3"/>
+<text x="540" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" font-weight="800" letter-spacing="2"><tspan fill="#FF385C">Ranking </tspan><tspan fill="#222222">Spain</tspan></text>
+<circle cx="540" cy="600" r="150" fill="#ffffff" stroke="#FF385C" stroke-width="8"/>
+<circle cx="540" cy="600" r="122" fill="none" stroke="#FF385C" stroke-width="3" stroke-opacity="0.4"/>
+<text x="540" y="642" text-anchor="middle" font-family="Arial, sans-serif" font-size="116" font-weight="800" fill="#E31C5F">Nº${esc(scope.rank)}</text>
+<rect x="${pillX}" y="800" width="${pillW}" height="74" rx="37" fill="#FF385C"/>
+<text x="540" y="850" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="3" fill="#ffffff">${scopeUp}</text>
+<text x="540" y="990" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="8" fill="#717171">${esc(eyebrow)}</text>
+<text x="540" y="1090" text-anchor="middle" font-family="Arial, sans-serif" font-size="${esc((d.cat||'').length>16?64:(d.cat||'').length>11?78:90)}" font-weight="800" fill="#FF385C">${esc(d.cat)}</text>
+<line x1="330" y1="1180" x2="750" y2="1180" stroke="#EBEBEB" stroke-width="3"/>
+<text x="540" y="1370" text-anchor="middle" font-family="Arial, sans-serif" font-size="${nombreSize}" font-weight="800" fill="#222222">${esc(MUNI.nombre)}</text>
+<text x="540" y="1448" text-anchor="middle" font-family="Arial, sans-serif" font-size="${zonaSize}" font-weight="600" fill="#717171">${esc(zona)}</text>
+<rect x="400" y="1560" width="280" height="96" rx="48" fill="#FF385C"/>
+<text x="540" y="1622" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" font-weight="800" fill="#ffffff">${esc(d.pts)}<tspan font-size="28" font-weight="700" fill="#FFD6DE"> / 100</tspan></text>
+<text x="540" y="1850" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="600" letter-spacing="1" fill="#717171">rankingspain.com</text>
+</svg>`;
 }
 
 function wireSello(){
@@ -620,14 +664,12 @@ function wireSello(){
     const b=e.currentTarget; const s=b.querySelector('span'); const o=s.textContent; s.textContent='¡Copiado!'; setTimeout(()=>s.textContent=o,1800);
   });
   document.getElementById('sello-download')?.addEventListener('click', async (e)=>{
-    const b=e.currentTarget; const s=b.querySelector('span'); const o=s.textContent; s.textContent='Generando…';
-    const blob = await selloBlob();
-    const fname = `rankingspain-${MUNI.nombre.toLowerCase().replace(/[^a-z0-9]+/g,'-')}.png`;
-    if (blob && navigator.canShare && navigator.canShare({ files:[new File([blob],fname,{type:'image/png'})] })){
-      try { await navigator.share({ files:[new File([blob],fname,{type:'image/png'})], text: shareText() }); s.textContent=o; return; } catch(_){}
-    }
-    if (blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); }
-    s.textContent=o;
+    const s=e.currentTarget.querySelector('span'); const o=s.textContent; s.textContent='Generando…';
+    await deliverBlob(await selloBlob(), '', s, o);
+  });
+  document.getElementById('sello-stories')?.addEventListener('click', async (e)=>{
+    const s=e.currentTarget.querySelector('span'); const o=s.textContent; s.textContent='Generando…';
+    await deliverBlob(await selloBlobVertical(), '-stories', s, o);
   });
 }
 wireSello();
@@ -923,19 +965,23 @@ window.openSello = openSello;
 }
 .scope-pill.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
 .sello-actions {
-  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px;
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
 }
 .sello-net {
+  flex: 1 1 calc(25% - 6px);
   display: flex; align-items: center; justify-content: center;
   padding: 11px 6px; border-radius: 12px; border: none; cursor: pointer;
   font-size: .82rem; font-weight: 700; color: #fff;
 }
 .sello-net span { line-height: 1; }
+.sello-net.wide { flex: 1 1 calc(50% - 4px); }
+.sello-net.full { flex: 1 1 100%; }
 .sello-net.wa { background: #25D366; }
 .sello-net.fb { background: #1877F2; }
 .sello-net.x  { background: #000; }
 .sello-net.tg { background: #229ED9; }
-.sello-net.dl { background: var(--primary); grid-column: span 2; }
+.sello-net.dl { background: var(--primary); }
+.sello-net.st { background: var(--primary-dark); }
 .sello-net.cp { background: var(--text); }
 .sello-net:hover { opacity: .9; }
 .sello-hint { text-align: center; font-size: .78rem; color: var(--text-2); margin: 12px 0 2px; }
