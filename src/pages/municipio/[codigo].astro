@@ -64,6 +64,13 @@ const descSeo = `${municipio.nombre} (${municipio.poblacion ? formatPob(municipi
 
 const heroGradient = getProvGradient(municipio.provincia as string);
 
+const MUNI = {
+  nombre: municipio.nombre as string,
+  provincia: municipio.provincia as string,
+  comunidad: municipio.comunidad as string,
+  codigo: codigo as string,
+};
+
 // Mapa categoría → tipos de entidades relevantes
 const CAT_TIPOS: Record<string, string[]> = {
   senderismo:    ['sendero'],
@@ -370,6 +377,15 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
         const medal = posNum === 1 ? '🥇' : posNum === 2 ? '🥈' : posNum === 3 ? '🥉' : null;
         return (
           <a href={`/ranking/${p.categoria}`} class="ranking-metric-card card">
+            <button class="rmc-share" type="button"
+              data-cat={info.label}
+              data-nac={p.ranking_nacional ?? ''}
+              data-prov={p.ranking_provincial ?? ''}
+              data-pts={Number(p.puntuacion).toFixed(0)}
+              onclick="event.preventDefault();event.stopPropagation();openSello(this)"
+              aria-label={`Compartir el puesto en ${info.label}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
             <div class="rmc-cat" style={`color:${color}`}><Icon name={info.icon} size={16} /> {info.label}</div>
             <div class="rmc-pos" style={`color:${color}`}>
               {medal ? medal : (posNum ? `#${posNum}` : '—')}
@@ -445,7 +461,7 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
 </div>
 
 <!-- FAB Share button -->
-<button class="fab-share" onclick="shareThis()" aria-label="Compartir">
+<button class="fab-share" onclick="openSello(null)" aria-label="Compartir">
   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
     <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
@@ -453,22 +469,153 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
   </svg>
 </button>
 
-<script>
-function shareThis() {
-  if (navigator.share) {
-    navigator.share({ title: document.title, url: location.href });
-  } else {
-    navigator.clipboard.writeText(location.href).then(() => {
-      const fab = document.querySelector('.fab-share') as HTMLElement;
-      if (fab) {
-        const orig = fab.innerHTML;
-        fab.innerHTML = '<span style="font-size:.7rem;font-weight:700">¡Copiado!</span>';
-        setTimeout(() => { fab.innerHTML = orig; }, 2000);
-      }
-    });
-  }
+<!-- Modal: sello compartible -->
+<div class="sello-overlay" id="sello-overlay">
+  <div class="sello-modal">
+    <button class="sello-close" id="sello-close" aria-label="Cerrar">✕</button>
+    <div class="sello-preview" id="sello-preview"></div>
+    <div class="sello-scope" id="sello-scope"></div>
+    <div class="sello-actions">
+      <button class="sello-net wa"   data-net="whatsapp"><span>WhatsApp</span></button>
+      <button class="sello-net fb"   data-net="facebook"><span>Facebook</span></button>
+      <button class="sello-net x"    data-net="x"><span>X</span></button>
+      <button class="sello-net tg"   data-net="telegram"><span>Telegram</span></button>
+      <button class="sello-net dl"   id="sello-download"><span>Descargar imagen</span></button>
+      <button class="sello-net cp"   id="sello-copy"><span>Copiar enlace</span></button>
+    </div>
+    <p class="sello-hint">Para Instagram: descarga la imagen y súbela a tu historia 📸</p>
+  </div>
+</div>
+
+<script define:vars={{ MUNI }}>
+const PAGE_URL = `https://rankingspain.com/municipio/${MUNI.codigo}`;
+let SELLO = { cat: '', pts: '', opts: [], scopeIdx: 0 };
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fitFont(text, big, mid, small){
+  const n = (text||'').length;
+  return n > 16 ? small : n > 11 ? mid : big;
 }
-(window as any).shareThis = shareThis;
+
+function buildSelloSVG(d){
+  const scope = d.opts[d.scopeIdx] || { rank: '', label: '' };
+  const zona = MUNI.comunidad ? `${MUNI.provincia} · ${MUNI.comunidad}` : MUNI.provincia;
+  const nombreSize = fitFont(MUNI.nombre, 56, 48, 40);
+  const zonaSize = (zona||'').length > 26 ? 18 : 22;
+  const scopeUp = esc((scope.label||'').toUpperCase());
+  const pillW = Math.max(150, scopeUp.length * 12 + 56);
+  const pillX = 340 - pillW/2;
+  return `<svg width="1080" height="1080" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+<rect x="2" y="2" width="676" height="676" rx="40" fill="#ffffff" stroke="#EBEBEB" stroke-width="2"/>
+<rect x="2" y="2" width="676" height="14" rx="7" fill="#FF385C"/>
+<circle cx="340" cy="168" r="104" fill="#FFF1F3"/>
+<text x="340" y="66" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2.5"><tspan fill="#FF385C">★ </tspan><tspan fill="#222222">RANKING SPAIN</tspan></text>
+<circle cx="340" cy="170" r="58" fill="#ffffff" stroke="#FF385C" stroke-width="3.5"/>
+<circle cx="340" cy="170" r="46" fill="none" stroke="#FF385C" stroke-width="1.5" stroke-opacity="0.4"/>
+<text x="340" y="186" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="800" fill="#E31C5F">Nº${esc(scope.rank)}</text>
+<rect x="${pillX}" y="252" width="${pillW}" height="40" rx="20" fill="#FF385C"/>
+<text x="340" y="278" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="2.5" fill="#ffffff">${scopeUp}</text>
+<text x="340" y="346" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" letter-spacing="4" fill="#717171">DESTACA EN</text>
+<text x="340" y="392" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fitFont(d.cat,40,34,28)}" font-weight="800" fill="#FF385C">${esc(d.cat)}</text>
+<line x1="250" y1="424" x2="430" y2="424" stroke="#EBEBEB" stroke-width="2"/>
+<text x="340" y="486" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${nombreSize}" font-weight="800" fill="#222222">${esc(MUNI.nombre)}</text>
+<text x="340" y="522" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${zonaSize}" font-weight="500" fill="#717171">${esc(zona)}</text>
+<rect x="264" y="556" width="152" height="52" rx="26" fill="#FF385C"/>
+<text x="340" y="590" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800" fill="#ffffff">${esc(d.pts)}<tspan font-size="15" font-weight="700" fill="#FFD6DE"> / 100</tspan></text>
+<text x="340" y="652" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="600" letter-spacing="1" fill="#717171">rankingspain.com</text>
+</svg>`;
+}
+
+function shareText(){
+  const s = SELLO.opts[SELLO.scopeIdx] || {};
+  return `🏆 ${MUNI.nombre} es Nº${s.rank} ${s.label} en ${SELLO.cat} según Ranking Spain`;
+}
+
+function renderSello(){
+  document.getElementById('sello-preview').innerHTML = buildSelloSVG(SELLO);
+  const sc = document.getElementById('sello-scope');
+  if (SELLO.opts.length > 1){
+    sc.style.display = 'flex';
+    sc.innerHTML = SELLO.opts.map((o,i)=>`<button class="scope-pill${i===SELLO.scopeIdx?' on':''}" data-i="${i}">Nº${o.rank} ${esc(o.label)}</button>`).join('');
+    sc.querySelectorAll('.scope-pill').forEach(b=>b.addEventListener('click',()=>{ SELLO.scopeIdx=+b.getAttribute('data-i'); renderSello(); }));
+  } else { sc.style.display='none'; sc.innerHTML=''; }
+}
+
+function openSello(btn){
+  let cat='', nac='', prov='', pts='';
+  if (btn){
+    cat = btn.getAttribute('data-cat'); nac = btn.getAttribute('data-nac');
+    prov = btn.getAttribute('data-prov'); pts = btn.getAttribute('data-pts');
+  } else {
+    const cards = Array.from(document.querySelectorAll('.rmc-share'));
+    let best=null, bestNac=1e9;
+    cards.forEach(c=>{ const n=parseInt(c.getAttribute('data-nac')||'0'); if(n && n<bestNac){bestNac=n;best=c;} });
+    const t = best || cards[0];
+    if(!t) return;
+    cat=t.getAttribute('data-cat'); nac=t.getAttribute('data-nac'); prov=t.getAttribute('data-prov'); pts=t.getAttribute('data-pts');
+  }
+  const opts=[];
+  if (nac) opts.push({ rank:nac, label:'de España' });
+  if (prov) opts.push({ rank:prov, label:'de '+MUNI.provincia });
+  if (!opts.length) return;
+  let idx=0;
+  if (opts.length>1){ const n=parseInt(nac); idx = (n && n<=100) ? 0 : 1; }
+  SELLO = { cat, pts, opts, scopeIdx: idx };
+  renderSello();
+  document.getElementById('sello-overlay').classList.add('open');
+}
+function closeSello(){ document.getElementById('sello-overlay').classList.remove('open'); }
+
+async function selloBlob(){
+  const svg = document.querySelector('#sello-preview svg');
+  if(!svg) return null;
+  const xml = new XMLSerializer().serializeToString(svg);
+  const url = URL.createObjectURL(new Blob([xml], {type:'image/svg+xml;charset=utf-8'}));
+  return await new Promise((res)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const c = document.createElement('canvas'); c.width=1080; c.height=1080;
+      const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,1080,1080);
+      ctx.drawImage(img,0,0,1080,1080); URL.revokeObjectURL(url);
+      c.toBlob(b=>res(b),'image/png');
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); res(null); };
+    img.src = url;
+  });
+}
+
+function wireSello(){
+  document.getElementById('sello-close')?.addEventListener('click', closeSello);
+  document.getElementById('sello-overlay')?.addEventListener('click', (e)=>{ if(e.target.id==='sello-overlay') closeSello(); });
+  document.querySelectorAll('.sello-net[data-net]').forEach(b=>b.addEventListener('click', ()=>{
+    const t = encodeURIComponent(shareText()+' '); const u = encodeURIComponent(PAGE_URL);
+    const net = b.getAttribute('data-net');
+    const urls = {
+      whatsapp:`https://wa.me/?text=${t}${u}`,
+      facebook:`https://www.facebook.com/sharer/sharer.php?u=${u}&quote=${t}`,
+      x:`https://twitter.com/intent/tweet?text=${t}&url=${u}`,
+      telegram:`https://t.me/share/url?url=${u}&text=${t}`,
+    };
+    window.open(urls[net], '_blank', 'noopener');
+  }));
+  document.getElementById('sello-copy')?.addEventListener('click', (e)=>{
+    navigator.clipboard.writeText(shareText()+' '+PAGE_URL);
+    const b=e.currentTarget; const s=b.querySelector('span'); const o=s.textContent; s.textContent='¡Copiado!'; setTimeout(()=>s.textContent=o,1800);
+  });
+  document.getElementById('sello-download')?.addEventListener('click', async (e)=>{
+    const b=e.currentTarget; const s=b.querySelector('span'); const o=s.textContent; s.textContent='Generando…';
+    const blob = await selloBlob();
+    const fname = `rankingspain-${MUNI.nombre.toLowerCase().replace(/[^a-z0-9]+/g,'-')}.png`;
+    if (blob && navigator.canShare && navigator.canShare({ files:[new File([blob],fname,{type:'image/png'})] })){
+      try { await navigator.share({ files:[new File([blob],fname,{type:'image/png'})], text: shareText() }); s.textContent=o; return; } catch(_){}
+    }
+    if (blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); }
+    s.textContent=o;
+  });
+}
+wireSello();
+window.openSello = openSello;
 </script>
 
 <style>
@@ -717,8 +864,65 @@ function shareThis() {
   text-decoration: none;
   color: var(--text);
   transition: transform .2s, box-shadow .2s;
+  position: relative;
 }
 .ranking-metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.rmc-share {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); color: var(--text-2);
+  border: none; cursor: pointer; padding: 0;
+  transition: background .15s, color .15s;
+}
+.rmc-share:hover { background: var(--primary); color: #fff; }
+
+/* ── Modal sello compartible ── */
+.sello-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.55);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.sello-overlay.open { display: flex; }
+.sello-modal {
+  background: #fff; border-radius: 20px;
+  padding: 18px; width: 100%; max-width: 420px;
+  max-height: 92vh; overflow-y: auto;
+  position: relative;
+}
+.sello-close {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: var(--bg); color: var(--text);
+  font-size: 1rem; cursor: pointer; z-index: 2;
+}
+.sello-preview { width: 100%; border-radius: 14px; overflow: hidden; }
+.sello-preview svg { width: 100%; height: auto; display: block; }
+.sello-scope { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.scope-pill {
+  font-size: .78rem; font-weight: 600; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1.5px solid var(--border); background: #fff; color: var(--text-2);
+}
+.scope-pill.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
+.sello-actions {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px;
+}
+.sello-net {
+  display: flex; align-items: center; justify-content: center;
+  padding: 11px 6px; border-radius: 12px; border: none; cursor: pointer;
+  font-size: .82rem; font-weight: 700; color: #fff;
+}
+.sello-net span { line-height: 1; }
+.sello-net.wa { background: #25D366; }
+.sello-net.fb { background: #1877F2; }
+.sello-net.x  { background: #000; }
+.sello-net.tg { background: #229ED9; }
+.sello-net.dl { background: var(--primary); grid-column: span 2; }
+.sello-net.cp { background: var(--text); }
+.sello-net:hover { opacity: .9; }
+.sello-hint { text-align: center; font-size: .78rem; color: var(--text-2); margin: 12px 0 2px; }
 .rmc-cat { font-size: .72rem; font-weight: 600; margin-bottom: 6px; }
 .rmc-pos { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
 .rmc-sub { font-size: .68rem; color: var(--text-2); margin-bottom: 8px; }
