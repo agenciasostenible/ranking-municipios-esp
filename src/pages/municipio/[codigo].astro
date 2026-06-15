@@ -269,6 +269,7 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
       {globalScore && ((globalScore as any).ranking_nacional || globalScore.ranking_provincial) && (
         <button class="mun-share-cta" type="button"
           data-cat="Ranking general"
+          data-prefer="es"
           data-nac={(globalScore as any).ranking_nacional ?? ''}
           data-prov={globalScore.ranking_provincial ?? ''}
           data-pts={Number(globalScore.puntuacion).toFixed(0)}
@@ -587,10 +588,11 @@ function renderSello(){
 }
 
 function openSello(btn){
-  let cat='', nac='', prov='', pts='';
+  let cat='', nac='', prov='', pts='', prefer='';
   if (btn){
     cat = btn.getAttribute('data-cat'); nac = btn.getAttribute('data-nac');
     prov = btn.getAttribute('data-prov'); pts = btn.getAttribute('data-pts');
+    prefer = btn.getAttribute('data-prefer') || '';
   } else {
     const cards = Array.from(document.querySelectorAll('.rmc-share'));
     let best=null, bestNac=1e9;
@@ -604,7 +606,10 @@ function openSello(btn){
   if (prov) opts.push({ rank:prov, label:'de '+MUNI.provincia });
   if (!opts.length) return;
   let idx=0;
-  if (opts.length>1){ const n=parseInt(nac); idx = (n && n<=100) ? 0 : 1; }
+  if (opts.length>1){
+    if (prefer==='es') idx = 0;          // 'de España' siempre va primero
+    else { const n=parseInt(nac); idx = (n && n<=100) ? 0 : 1; }
+  }
   cat = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
   SELLO = { cat, pts, opts, scopeIdx: idx };
   renderSello();
