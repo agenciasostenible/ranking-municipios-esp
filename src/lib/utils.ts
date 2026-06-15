@@ -98,4 +98,5 @@ export const CAT_COLORS: Record<string, string> = {
   mochilero:         '#0288d1',
   accesible:         '#37474f',
   balnearios:        '#00838f',
+  pueblo_bonito:     '#ec407a',
 };

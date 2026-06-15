@@ -35,7 +35,7 @@ export const ICONS: Record<string, string> = {
   vinos:             'wine_bar',
   playas:            'beach_access',
   Playas:            'beach_access',
-  pueblo_bonito:     'brightness_5',
+  pueblo_bonito:     'holiday_village',
   notoriedad_instagram: 'trending_up',
 
   miradores:         'binoculars',
@@ -75,7 +75,7 @@ export const LABELS: Record<string, string> = {
   vinos:             'Vinos',
   playas:            'Playas',
   Playas:            'Playas',
-  pueblo_bonito:     'Pueblo bonito',
+  pueblo_bonito:     'Pueblos bonitos',
   notoriedad_instagram: 'Popularidad en redes',
 
   miradores:         'Miradores',
@@ -112,6 +112,7 @@ export const TABS = [
   { key: 'castillos',        label: 'Castillos',   icon: 'castle' },
   { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
   { key: 'vinos',            label: 'Vinos',       icon: 'wine_bar' },
+  { key: 'pueblo_bonito',    label: 'Pueblos bonitos', icon: 'holiday_village' },
   { key: 'notoriedad_instagram', label: 'Popularidad', icon: 'trending_up' },
 ];
 
@@ -121,6 +122,7 @@ export const SIDEBAR_GROUPS = [
     icon: 'emoji_events',
     items: [
       { key: 'ranking_global',  label: 'Ranking global',     icon: 'emoji_events' },
+      { key: 'pueblo_bonito',   label: 'Pueblos bonitos',    icon: 'holiday_village' },
       { key: 'TurismoRural',    label: 'Turismo rural',      icon: 'cottage' },
       { key: 'notoriedad_instagram', label: 'Popularidad en redes', icon: 'trending_up' },
     ],
