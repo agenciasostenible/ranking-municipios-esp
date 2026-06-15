@@ -170,7 +170,7 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
 <Base title={titleSeo} description={descSeo}
   ogTitle={topCatInfo && topCatPos ? `${municipio.nombre} · #${topCatPos} en ${topCatInfo.label} en ${municipio.provincia}` : `${municipio.nombre} — Ranking turístico`}
   ogDescription={descSeo}
-  ogImage={fotoUrl || `/api/og/${codigo}`}>
+  ogImage={`https://rankingspain.com/api/og/sello/${codigo}`}>
 
 <script type="application/ld+json" set:html={JSON.stringify({
   "@context": "https://schema.org",
