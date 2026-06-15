@@ -36,6 +36,11 @@ export const ICONS: Record<string, string> = {
   playas:            'beach_access',
   Playas:            'beach_access',
   pueblo_bonito:     'auto_awesome',
+  turismo_religioso: 'church',
+  turismo_lgtbi:     'rainbow',
+  turismo_mascotas:  'pets',
+  turismo_activo:    'mountain',
+  oleoturismo:       'opacity',
   notoriedad_instagram: 'trending_up',
 
   miradores:         'binoculars',
@@ -76,6 +81,11 @@ export const LABELS: Record<string, string> = {
   playas:            'Playas',
   Playas:            'Playas',
   pueblo_bonito:     'Pueblos bonitos',
+  turismo_religioso: 'Turismo religioso',
+  turismo_lgtbi:     'Turismo LGTBI',
+  turismo_mascotas:  'Turismo con mascotas',
+  turismo_activo:    'Turismo activo',
+  oleoturismo:       'Oleoturismo',
   notoriedad_instagram: 'Popularidad en redes',
 
   miradores:         'Miradores',
@@ -113,6 +123,11 @@ export const TABS = [
   { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
   { key: 'vinos',            label: 'Vinos',       icon: 'wine_bar' },
   { key: 'pueblo_bonito',    label: 'Pueblos bonitos', icon: 'auto_awesome' },
+  { key: 'turismo_religioso',label: 'Religioso',   icon: 'church' },
+  { key: 'turismo_activo',   label: 'Activo',      icon: 'mountain' },
+  { key: 'oleoturismo',      label: 'Oleoturismo', icon: 'opacity' },
+  { key: 'turismo_mascotas', label: 'Mascotas',    icon: 'pets' },
+  { key: 'turismo_lgtbi',    label: 'LGTBI',       icon: 'rainbow' },
   { key: 'notoriedad_instagram', label: 'Popularidad', icon: 'trending_up' },
 ];
 
@@ -149,6 +164,7 @@ export const SIDEBAR_GROUPS = [
     items: [
       { key: 'gastronomia',       label: 'Gastronomía',      icon: 'restaurant' },
       { key: 'vinos',             label: 'Vinos y bodegas',  icon: 'wine_bar' },
+      { key: 'oleoturismo',       label: 'Oleoturismo',      icon: 'opacity' },
     ],
   },
   {
@@ -162,8 +178,18 @@ export const SIDEBAR_GROUPS = [
     title: 'Activo',
     icon: 'hiking',
     items: [
-      { key: 'senderismo', label: 'Senderismo', icon: 'hiking' },
-      { key: 'Campings',   label: 'Camping',    icon: 'camping' },
+      { key: 'senderismo',     label: 'Senderismo',     icon: 'hiking' },
+      { key: 'Campings',       label: 'Camping',        icon: 'camping' },
+      { key: 'turismo_activo', label: 'Turismo activo', icon: 'mountain' },
+    ],
+  },
+  {
+    title: 'Experiencias',
+    icon: 'auto_awesome',
+    items: [
+      { key: 'turismo_religioso', label: 'Turismo religioso',   icon: 'church' },
+      { key: 'turismo_mascotas',  label: 'Turismo con mascotas', icon: 'pets' },
+      { key: 'turismo_lgtbi',     label: 'Turismo LGTBI',       icon: 'rainbow' },
     ],
   },
 ];
@@ -177,7 +203,9 @@ export const FICHA_CATS = [
   'gastronomia','Campings','TurismoRural',
   'castillos',
   'Playas',
-  'pueblo_bonito','notoriedad_instagram',
+  'pueblo_bonito',
+  'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
+  'notoriedad_instagram',
 ];
 
 // Categorías a mostrar en el gráfico de "Puntuaciones detalladas" (barras)
@@ -185,5 +213,6 @@ export const FICHA_CATS = [
 export const DETAIL_CATS = [
   'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
   'senderismo','TurismoRural','Campings','vinos',
+  'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
   'pueblo_bonito','notoriedad_instagram',
 ];

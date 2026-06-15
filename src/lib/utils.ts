@@ -99,4 +99,9 @@ export const CAT_COLORS: Record<string, string> = {
   accesible:         '#37474f',
   balnearios:        '#00838f',
   pueblo_bonito:     '#ec407a',
+  turismo_religioso: '#6d4c41',
+  turismo_lgtbi:     '#ab47bc',
+  turismo_mascotas:  '#26a69a',
+  turismo_activo:    '#d84315',
+  oleoturismo:       '#9e9d24',
 };

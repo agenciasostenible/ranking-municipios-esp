@@ -11,7 +11,12 @@ export const TIPO_ICONS: Record<string, string> = {
   mirador:    '🔭',
   iglesia:    '⛪',
   museo:      '🖼️',
-  festival:   '🎪',
+  festival:   '🎸',
+  religioso:  '⛪',
+  lgtbi:      '🏳️‍🌈',
+  mascotas:   '🐾',
+  activo:     '🧗',
+  oleoturismo:'🫒',
 };
 
 export const TIPO_LABEL: Record<string, string> = {
@@ -28,6 +33,11 @@ export const TIPO_LABEL: Record<string, string> = {
   iglesia:    'Iglesia/Ermita',
   museo:      'Museo',
   festival:   'Festival',
+  religioso:  'Turismo religioso',
+  lgtbi:      'Turismo LGTBI',
+  mascotas:   'Turismo con mascotas',
+  activo:     'Turismo activo',
+  oleoturismo:'Oleoturismo',
 };
 
 export const SELLO_COLORS: Record<string, { bg: string; color: string }> = {
