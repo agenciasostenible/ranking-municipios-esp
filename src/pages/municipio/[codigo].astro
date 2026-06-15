@@ -334,7 +334,21 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
       ) : (
         <p class="desde-empty">{municipio.nombre} destaca en {desdeInfo.label} en {municipio.provincia}. Descubre todo lo que ofrece en las secciones de abajo 👇</p>
       )}
-      <a href={`/ranking/${desde}`} class="desde-back">← Volver al ranking de {desdeInfo.label}</a>
+      <div class="desde-footer">
+        <a href={`/ranking/${desde}`} class="desde-back">← Volver al ranking de {desdeInfo.label}</a>
+        {desdePuntuacion && (desdePuntuacion.ranking_nacional || desdePuntuacion.ranking_provincial) && (
+          <button class="desde-share" type="button"
+            data-cat={desdeInfo.label}
+            data-nac={desdePuntuacion.ranking_nacional ?? ''}
+            data-prov={desdePuntuacion.ranking_provincial ?? ''}
+            data-pts={Number(desdePuntuacion.puntuacion).toFixed(0)}
+            onclick="openSello(this)"
+            aria-label={`Compartir el puesto en ${desdeInfo.label}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span>Compartir</span>
+          </button>
+        )}
+      </div>
     </div>
   )}
 
@@ -835,6 +849,19 @@ window.openSello = openSello;
   font-weight: 600;
 }
 .desde-back:hover { text-decoration: underline; }
+.desde-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-top: 4px;
+}
+.desde-share {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary); color: #fff; border: none; cursor: pointer;
+  border-radius: 999px; padding: 9px 16px;
+  font-size: .82rem; font-weight: 700; line-height: 1;
+  transition: background .15s;
+}
+.desde-share span { line-height: 1; }
+.desde-share:hover { background: var(--primary-dark); }
 
 /* ── Why block ── */
 .why-block {
