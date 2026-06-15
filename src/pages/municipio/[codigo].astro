@@ -96,30 +96,32 @@ let desdeWhyJson: string[] = [];
 if (desde && desde !== 'ranking_global') {
   desdePuntuacion = (puntuaciones as any[]).find((p: any) => p.categoria === desde);
 
-  // Special handling for Campings and TurismoRural: use why_json instead of entidades
-  if (desde === 'Campings' || desde === 'TurismoRural') {
-    try {
-      desdeWhyJson = municipio.why_json ? JSON.parse(municipio.why_json as string) : [];
-    } catch {
-      desdeWhyJson = [];
-    }
-  } else {
-    const tiposDesde = CAT_TIPOS[desde] ?? [];
-    if (tiposDesde.length) {
-      const placeholders = tiposDesde.map(() => '?').join(',');
-      const { results: de } = await DB.prepare(
-        `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
-         WHERE e.codigo_ine = ? AND e.tipo IN (${placeholders})
-           AND (e.tipo NOT IN ('espacio','parque_natural') OR (
-             SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
-             WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
-           ) <= 8)
-         ORDER BY CASE nivel_sello WHEN 'UNESCO' THEN 1 WHEN 'Parque Nacional' THEN 2 WHEN 'BIC Nacional' THEN 3 ELSE 4 END, nombre LIMIT 12`
-      ).bind(codigo, ...tiposDesde).all();
-      desdeEntidades = de as any[];
-    }
+  // why_json highlights: fallback para cualquier categoría sin entidades propias
+  try {
+    desdeWhyJson = municipio.why_json ? JSON.parse(municipio.why_json as string) : [];
+  } catch {
+    desdeWhyJson = [];
+  }
+
+  // Entidades específicas de la categoría (cuando existen: monumentos, castillos, fiestas, etc.)
+  const tiposDesde = CAT_TIPOS[desde] ?? [];
+  if (tiposDesde.length) {
+    const placeholders = tiposDesde.map(() => '?').join(',');
+    const { results: de } = await DB.prepare(
+      `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
+       WHERE e.codigo_ine = ? AND e.tipo IN (${placeholders})
+         AND (e.tipo NOT IN ('espacio','parque_natural') OR (
+           SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
+           WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
+         ) <= 8)
+       ORDER BY CASE nivel_sello WHEN 'UNESCO' THEN 1 WHEN 'Parque Nacional' THEN 2 WHEN 'BIC Nacional' THEN 3 ELSE 4 END, nombre LIMIT 12`
+    ).bind(codigo, ...tiposDesde).all();
+    desdeEntidades = de as any[];
   }
 }
+
+// Fallback: recursos generales del municipio (para categorías "solo puntuación" sin entidades propias)
+const desdeFallbackEntidades = (entidades as any[]).slice(0, 5);
 
 const desdeInfo = desde ? getCatInfo(desde) : null;
 
@@ -273,15 +275,7 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
           )}
         </div>
       </div>
-      {(desde === 'Campings' || desde === 'TurismoRural') && desdeWhyJson.length > 0 ? (
-        <div class="desde-items">
-          {desdeWhyJson.map((item: string) => (
-            <div class="desde-item">
-              <span class="desde-item-name">{item}</span>
-            </div>
-          ))}
-        </div>
-      ) : desdeEntidades.length > 0 ? (
+      {desdeEntidades.length > 0 ? (
         <div class="desde-items">
           {(desdeEntidades as any[]).map((e: any) => (
             <div class="desde-item">
@@ -298,8 +292,36 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
             </div>
           ))}
         </div>
+      ) : desdeWhyJson.length > 0 ? (
+        <div class="desde-items">
+          {desdeWhyJson.map((item: string) => (
+            <div class="desde-item">
+              <span class="desde-item-name">{item}</span>
+            </div>
+          ))}
+        </div>
+      ) : desdeFallbackEntidades.length > 0 ? (
+        <>
+          <p class="desde-fallback-note">Recursos y atractivos destacados de {municipio.nombre}:</p>
+          <div class="desde-items">
+            {desdeFallbackEntidades.map((e: any) => (
+              <div class="desde-item">
+                <span class="desde-item-icon">{getTipoIcon(e.tipo)}</span>
+                <div class="desde-item-content">
+                  <span class="desde-item-name">{e.nombre}</span>
+                  {e.descripcion && (
+                    <div class="desde-item-desc">{e.descripcion}</div>
+                  )}
+                </div>
+                {e.nivel_sello && e.nivel_sello !== 'Normal' && (
+                  <span class="desde-sello" style={getSelloStyle(e.nivel_sello)}>{e.nivel_sello}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       ) : (
-        <p class="desde-empty">Datos detallados en proceso de actualización.</p>
+        <p class="desde-empty">{municipio.nombre} destaca en {desdeInfo.label} en {municipio.provincia}. Descubre todo lo que ofrece en las secciones de abajo 👇</p>
       )}
       <a href={`/ranking/${desde}`} class="desde-back">← Volver al ranking de {desdeInfo.label}</a>
     </div>
@@ -577,9 +599,13 @@ function shareThis() {
 }
 .desde-empty {
   font-size: .85rem;
-  color: #aaa;
-  font-style: italic;
+  color: #777;
   margin-bottom: 14px;
+}
+.desde-fallback-note {
+  font-size: .8rem;
+  color: #777;
+  margin: 4px 0 8px;
 }
 .desde-back {
   display: inline-block;
