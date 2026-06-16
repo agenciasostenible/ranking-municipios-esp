@@ -1,0 +1,206 @@
+---
+import { DB } from '../lib/d1client';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { getCatInfo } from '../lib/db';
+import { CAT_COLORS } from '../lib/utils';
+
+// Categorías que tienen recurso real + descripción (las que dan rutas verídicas)
+const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
+  { key: 'oleoturismo',       tipo: 'oleoturismo', label: 'Oleoturismo' },
+  { key: 'monumentos',        tipo: 'monumento',   label: 'Monumentos' },
+  { key: 'castillos',         tipo: 'castillo',    label: 'Castillos' },
+  { key: 'turismo_religioso', tipo: 'religioso',   label: 'Turismo religioso' },
+  { key: 'turismo_activo',    tipo: 'activo',      label: 'Turismo activo' },
+  { key: 'turismo_mascotas',  tipo: 'mascotas',    label: 'Turismo con mascotas' },
+  { key: 'turismo_lgtbi',     tipo: 'lgtbi',       label: 'Turismo LGTBI' },
+  { key: 'TurismoRural',      tipo: 'rural',       label: 'Turismo rural' },
+  { key: 'festivales',        tipo: 'festival',    label: 'Festivales' },
+  { key: 'fiestas',           tipo: 'fiesta',      label: 'Fiestas' },
+  { key: 'senderismo',        tipo: 'sendero',     label: 'Senderismo' },
+];
+
+const url = Astro.url;
+const cat  = url.searchParams.get('cat') ?? '';
+const prov = url.searchParams.get('prov') ?? '';
+const dias = Math.min(3, Math.max(1, parseInt(url.searchParams.get('dias') ?? '2')));
+const catCfg = RUTA_CATS.find(c => c.key === cat) ?? null;
+
+// Lista de provincias para el formulario
+const { results: provRows } = await DB.prepare(
+  `SELECT DISTINCT provincia FROM municipios WHERE COALESCE(es_duplicado,0)=0 AND provincia IS NOT NULL ORDER BY provincia`
+).all();
+const provincias = (provRows as any[]).map(r => r.provincia);
+
+function haversine(a: any, b: any) {
+  const R = 6371, t = Math.PI / 180;
+  const dLat = (b.latitud - a.latitud) * t, dLon = (b.longitud - a.longitud) * t;
+  const la1 = a.latitud * t, la2 = b.latitud * t;
+  const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+let dayPlan: any[][] = [];
+let stops: any[] = [];
+let catInfo: any = null;
+let catColor = '#FF385C';
+let totalKm = 0;
+
+if (catCfg && prov) {
+  catInfo = getCatInfo(cat);
+  catColor = CAT_COLORS[cat] ?? '#FF385C';
+  const { results } = await DB.prepare(
+    `SELECT m.codigo_ine, m.nombre, m.latitud, m.longitud, p.puntuacion,
+       (SELECT e.nombre FROM entidades e WHERE e.codigo_ine=m.codigo_ine AND e.tipo=? ORDER BY length(COALESCE(e.descripcion,'')) DESC LIMIT 1) recurso,
+       (SELECT e.descripcion FROM entidades e WHERE e.codigo_ine=m.codigo_ine AND e.tipo=? ORDER BY length(COALESCE(e.descripcion,'')) DESC LIMIT 1) recurso_desc
+     FROM puntuaciones p JOIN municipios m ON m.codigo_ine=p.codigo_ine
+     WHERE p.categoria=? AND m.provincia=? AND COALESCE(m.es_duplicado,0)=0
+       AND m.latitud IS NOT NULL AND m.longitud IS NOT NULL AND p.puntuacion>0
+     ORDER BY p.puntuacion DESC LIMIT 40`
+  ).bind(catCfg.tipo, catCfg.tipo, cat, prov).all();
+
+  const pool = results as any[];
+  const nStops = Math.min(pool.length, dias * 2 + 1); // 3 / 5 / 7
+  const top = pool.slice(0, nStops);
+
+  // Ruta por vecino más cercano partiendo del mejor puntuado
+  if (top.length) {
+    const used = new Set<number>(); const order: any[] = [];
+    let cur = 0; used.add(0); order.push(top[0]);
+    while (order.length < top.length) {
+      let best = -1, bd = Infinity;
+      for (let i = 0; i < top.length; i++) {
+        if (used.has(i)) continue;
+        const d = haversine(top[cur], top[i]);
+        if (d < bd) { bd = d; best = i; }
+      }
+      used.add(best); order.push(top[best]); cur = best;
+    }
+    for (let i = 1; i < order.length; i++) totalKm += haversine(order[i-1], order[i]);
+    stops = order;
+
+    // "Dónde comer" por parada (solo datos reales)
+    for (const s of stops) {
+      const g = await DB.prepare(
+        `SELECT nombre FROM entidades WHERE codigo_ine=? AND tipo IN ('gastronomia','producto')
+         ORDER BY CASE WHEN nombre LIKE '%Michelin%' OR nombre LIKE '%Repsol%' OR nombre LIKE '%Sol %' OR nombre LIKE '%DOP%' THEN 0 ELSE 1 END,
+                  length(nombre) DESC LIMIT 1`
+      ).bind(s.codigo_ine).first();
+      s.comer = g?.nombre ?? null;
+    }
+
+    // Repartir en días (equitativo, secuencial)
+    const per = Math.ceil(stops.length / dias);
+    for (let d = 0; d < dias; d++) dayPlan.push(stops.slice(d*per, (d+1)*per));
+    dayPlan = dayPlan.filter(d => d.length);
+  }
+}
+
+const title = catCfg && prov
+  ? `Ruta de ${catCfg.label} por ${prov} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
+  : 'Planifica tu ruta — Ranking Spain';
+---
+<Base title={title} description="Genera una ruta de viaje real basada en datos verificados de Ranking Spain.">
+<div class="ruta-page">
+  <div class="ruta-hero">
+    <h1>🗺️ Planifica tu ruta</h1>
+    <p>Elige una experiencia y una provincia. Te montamos una ruta <strong>real</strong>, solo con sitios de nuestro inventario verificado.</p>
+  </div>
+
+  <form class="ruta-form" method="get">
+    <div class="rf-field">
+      <label>Experiencia</label>
+      <select name="cat">
+        {RUTA_CATS.map(c => <option value={c.key} selected={c.key===cat}>{c.label}</option>)}
+      </select>
+    </div>
+    <div class="rf-field">
+      <label>Provincia</label>
+      <select name="prov">
+        <option value="">Elige provincia…</option>
+        {provincias.map(p => <option value={p} selected={p===prov}>{p}</option>)}
+      </select>
+    </div>
+    <div class="rf-field rf-dias">
+      <label>Días</label>
+      <div class="rf-dias-btns">
+        {[1,2,3].map(d => <label class={`rf-day${d===dias?' on':''}`}><input type="radio" name="dias" value={d} checked={d===dias} />{d}</label>)}
+      </div>
+    </div>
+    <button type="submit" class="rf-go">Generar ruta</button>
+  </form>
+
+  {catCfg && prov && stops.length === 0 && (
+    <p class="ruta-empty">No tenemos suficientes datos de {catCfg.label} en {prov} para montar una ruta. Prueba otra provincia o experiencia.</p>
+  )}
+
+  {catCfg && prov && stops.length > 0 && (
+    <div class="ruta-result">
+      <div class="ruta-result-head" style={`background:${catColor}`}>
+        <div class="rrh-eyebrow">Ruta a medida · Ranking Spain</div>
+        <div class="rrh-title"><Icon name={catInfo.icon} size={22} /> {catCfg.label} por {prov}</div>
+        <div class="rrh-meta">{stops.length} paradas · {dias} {dias===1?'día':'días'} · ~{Math.round(totalKm)} km entre paradas</div>
+      </div>
+
+      {dayPlan.map((day, di) => (
+        <div class="ruta-day">
+          <div class="ruta-day-tag" style={`color:${catColor};background:${catColor}15`}>DÍA {di+1}</div>
+          {day.map((s: any) => (
+            <div class="ruta-stop">
+              <span class="rs-icon" style={`color:${catColor}`}><Icon name={catInfo.icon} size={18} /></span>
+              <div class="rs-body">
+                <a href={`/municipio/${s.codigo_ine}?desde=${cat}`} class="rs-name">{s.nombre}</a>
+                <span class="rs-score" style={`color:${catColor}`}>{Math.round(s.puntuacion)}/100</span>
+                {s.recurso && <div class="rs-rec">Visita: <strong>{s.recurso}</strong></div>}
+                {s.recurso_desc && <div class="rs-desc">{String(s.recurso_desc).slice(0,160)}{String(s.recurso_desc).length>160?'…':''}</div>}
+                {s.comer
+                  ? <div class="rs-eat">🍽️ Comer: <strong>{s.comer}</strong></div>
+                  : <div class="rs-eat rs-eat-none">🍽️ Sin recomendación gastronómica verificada</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+      <div class="ruta-foot">Todos los lugares provienen del inventario verificado de Ranking Spain. Sin datos inventados.</div>
+    </div>
+  )}
+</div>
+
+<style>
+.ruta-page { max-width: 640px; margin: 0 auto; padding: 28px 16px 60px; }
+.ruta-hero { text-align: center; margin-bottom: 22px; }
+.ruta-hero h1 { font-size: 1.7rem; font-weight: 800; color: var(--text); margin: 0 0 8px; }
+.ruta-hero p { color: var(--text-2); font-size: .95rem; max-width: 520px; margin: 0 auto; }
+.ruta-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 24px; }
+.rf-field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 180px; }
+.rf-field label { font-size: .78rem; font-weight: 700; color: var(--text-2); }
+.rf-field select { padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 12px; font-size: .92rem; font-family: inherit; background: #fff; color: var(--text); }
+.rf-dias { flex: 0 0 auto; }
+.rf-dias-btns { display: flex; gap: 6px; }
+.rf-day { width: 40px; height: 42px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--border); border-radius: 12px; font-weight: 700; color: var(--text-2); cursor: pointer; }
+.rf-day input { display: none; }
+.rf-day.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
+.rf-go { flex: 1 1 100%; background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 13px; font-size: .95rem; font-weight: 700; cursor: pointer; }
+.rf-go:hover { background: var(--primary-dark); }
+.ruta-empty { text-align: center; color: var(--text-2); font-size: .92rem; padding: 20px; }
+.ruta-result { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.ruta-result-head { color: #fff; padding: 18px 20px; }
+.rrh-eyebrow { font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: .85; font-weight: 600; }
+.rrh-title { display: flex; align-items: center; gap: 9px; font-size: 1.25rem; font-weight: 800; margin-top: 3px; }
+.rrh-meta { font-size: .82rem; opacity: .92; margin-top: 5px; }
+.ruta-day { padding: 16px 20px; border-bottom: 1px solid #f2f2f2; }
+.ruta-day-tag { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .5px; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; }
+.ruta-stop { display: flex; gap: 12px; padding: 8px 0; }
+.rs-icon { flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px; background: var(--bg); display: flex; align-items: center; justify-content: center; }
+.rs-body { flex: 1; min-width: 0; }
+.rs-name { font-weight: 700; color: var(--text); font-size: 1rem; text-decoration: none; }
+.rs-name:hover { color: var(--primary); }
+.rs-score { font-size: .82rem; font-weight: 700; margin-left: 8px; }
+.rs-rec { font-size: .88rem; color: var(--text); margin-top: 3px; }
+.rs-desc { font-size: .82rem; color: var(--text-2); margin-top: 3px; line-height: 1.45; }
+.rs-eat { font-size: .85rem; color: var(--text); margin-top: 5px; }
+.rs-eat-none { color: #bbb; font-style: italic; }
+.ruta-foot { background: #fafafa; padding: 11px 20px; font-size: .74rem; color: #999; }
+@media (max-width: 560px) { .rf-field { flex: 1 1 100%; } }
+</style>
+</Base>
