@@ -22,10 +22,17 @@ const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
 ];
 
 const url = Astro.url;
-const cat  = url.searchParams.get('cat') ?? '';
+// Multi-categoría: acepta varios ?cat=... (y ?cat=a,b). Compatible con uno solo.
+let cats = url.searchParams.getAll('cat').flatMap(v => v.split(','));
+cats = [...new Set(cats.filter(k => RUTA_CATS.some(c => c.key === k)))];
 const prov = url.searchParams.get('prov') ?? '';
 const dias = Math.min(3, Math.max(1, parseInt(url.searchParams.get('dias') ?? '2')));
-const catCfg = RUTA_CATS.find(c => c.key === cat) ?? null;
+const selCfgs = RUTA_CATS.filter(c => cats.includes(c.key));
+const tipoByCat:  Record<string,string> = Object.fromEntries(selCfgs.map(c => [c.key, c.tipo]));
+const labelByCat: Record<string,string> = Object.fromEntries(selCfgs.map(c => [c.key, c.label]));
+const infoByCat:  Record<string,any>    = Object.fromEntries(selCfgs.map(c => [c.key, getCatInfo(c.key)]));
+const colorByCat: Record<string,string> = Object.fromEntries(selCfgs.map(c => [c.key, CAT_COLORS[c.key] ?? '#FF385C']));
+const headColor = selCfgs.length ? colorByCat[selCfgs[0].key] : '#FF385C';
 
 // Lista de provincias para el formulario
 const { results: provRows } = await DB.prepare(
@@ -43,26 +50,56 @@ function haversine(a: any, b: any) {
 
 let dayPlan: any[][] = [];
 let stops: any[] = [];
-let catInfo: any = null;
-let catColor = '#FF385C';
 let totalKm = 0;
 
-if (catCfg && prov) {
-  catInfo = getCatInfo(cat);
-  catColor = CAT_COLORS[cat] ?? '#FF385C';
+if (selCfgs.length && prov) {
+  // Todas las puntuaciones de las categorías elegidas en la provincia
+  const catPh = cats.map(() => '?').join(',');
   const { results } = await DB.prepare(
-    `SELECT m.codigo_ine, m.nombre, m.latitud, m.longitud, p.puntuacion,
-       (SELECT e.nombre FROM entidades e WHERE e.codigo_ine=m.codigo_ine AND e.tipo=? ORDER BY length(COALESCE(e.descripcion,'')) DESC LIMIT 1) recurso,
-       (SELECT e.descripcion FROM entidades e WHERE e.codigo_ine=m.codigo_ine AND e.tipo=? ORDER BY length(COALESCE(e.descripcion,'')) DESC LIMIT 1) recurso_desc
-     FROM puntuaciones p JOIN municipios m ON m.codigo_ine=p.codigo_ine
-     WHERE p.categoria=? AND m.provincia=? AND COALESCE(m.es_duplicado,0)=0
-       AND m.latitud IS NOT NULL AND m.longitud IS NOT NULL AND p.puntuacion>0
-     ORDER BY p.puntuacion DESC LIMIT 40`
-  ).bind(catCfg.tipo, catCfg.tipo, cat, prov).all();
+    `SELECT p.codigo_ine, p.categoria, p.puntuacion, m.nombre, m.latitud, m.longitud
+       FROM puntuaciones p JOIN municipios m ON m.codigo_ine=p.codigo_ine
+      WHERE p.categoria IN (${catPh}) AND m.provincia=? AND COALESCE(m.es_duplicado,0)=0
+        AND m.latitud IS NOT NULL AND m.longitud IS NOT NULL AND p.puntuacion>0`
+  ).bind(...cats, prov).all();
 
-  const pool = results as any[];
+  // Por municipio nos quedamos con su mejor categoría elegida (mayor puntuación)
+  const byMuni = new Map<string, any>();
+  for (const r of results as any[]) {
+    const ex = byMuni.get(r.codigo_ine);
+    if (!ex || r.puntuacion > ex.puntuacion) {
+      byMuni.set(r.codigo_ine, {
+        codigo_ine: r.codigo_ine, nombre: r.nombre,
+        latitud: r.latitud, longitud: r.longitud,
+        puntuacion: r.puntuacion, catKey: r.categoria,
+      });
+    }
+  }
+  const pool = [...byMuni.values()].sort((a, b) => b.puntuacion - a.puntuacion);
   const nStops = Math.min(pool.length, dias * 2 + 1); // 3 / 5 / 7
   const top = pool.slice(0, nStops);
+
+  // Recurso (qué hacer) de cada parada según su mejor categoría
+  if (top.length) {
+    const ids = top.map(s => s.codigo_ine);
+    const tipos = [...new Set(top.map(s => tipoByCat[s.catKey]))];
+    const { results: entRows } = await DB.prepare(
+      `SELECT codigo_ine, tipo, nombre, descripcion FROM entidades
+        WHERE codigo_ine IN (${ids.map(() => '?').join(',')})
+          AND tipo IN (${tipos.map(() => '?').join(',')})`
+    ).bind(...ids, ...tipos).all();
+    const recMap = new Map<string, any>();
+    for (const e of entRows as any[]) {
+      const k = e.codigo_ine + '|' + e.tipo;
+      const ex = recMap.get(k);
+      if (!ex || (e.descripcion?.length || 0) > (ex.descripcion?.length || 0)) recMap.set(k, e);
+    }
+    for (const s of top) {
+      const e = recMap.get(s.codigo_ine + '|' + tipoByCat[s.catKey]);
+      s.recurso = e?.nombre ?? null;
+      s.recurso_desc = e?.descripcion ?? null;
+      s.catLabel = labelByCat[s.catKey];
+    }
+  }
 
   // Ruta por vecino más cercano partiendo del mejor puntuado
   if (top.length) {
@@ -110,9 +147,9 @@ if (catCfg && prov) {
       return { nombre: best.nombre, rec: best.rec, km: Math.round(bd), mismo: best.codigo_ine === s.codigo_ine };
     }
     for (const s of stops) {
-      // si la actividad ES turismo rural, no repetimos dormir
-      s.dormir = (cat === 'TurismoRural') ? null : nearestWithData(ruralOpts, s);
-      s.comer  = (cat === 'gastronomia') ? null : nearestWithData(gastroOpts, s);
+      // si la actividad de ESA parada ya es turismo rural / gastronomía, no la repetimos
+      s.dormir = (s.catKey === 'TurismoRural') ? null : nearestWithData(ruralOpts, s);
+      s.comer  = (s.catKey === 'gastronomia') ? null : nearestWithData(gastroOpts, s);
     }
 
     // Enriquecimiento con Google Places: mejor sitio para comer y qué visitar
@@ -120,7 +157,7 @@ if (catCfg && prov) {
     if (PLACES_ENABLED) {
       await Promise.all(stops.map(async (s: any) => {
         const [gcomer, gvisitar] = await Promise.all([
-          cat === 'gastronomia' ? Promise.resolve(null) : getPlace(s.codigo_ine, 'comer', s.latitud, s.longitud),
+          s.catKey === 'gastronomia' ? Promise.resolve(null) : getPlace(s.codigo_ine, 'comer', s.latitud, s.longitud),
           getPlace(s.codigo_ine, 'visitar', s.latitud, s.longitud),
         ]);
         s.gcomer = gcomer;
@@ -141,23 +178,32 @@ const fmtRating = (h: any) => {
   return `${r}${n}`;
 };
 
-const title = catCfg && prov
-  ? `Ruta de ${catCfg.label} por ${prov} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
+const selLabels = selCfgs.map(c => c.label);
+const catTitle = selLabels.length <= 2
+  ? selLabels.join(' y ')
+  : `${selLabels.slice(0, 2).join(', ')} y ${selLabels.length - 2} más`;
+const title = selCfgs.length && prov
+  ? `Ruta de ${catTitle} por ${prov} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
   : 'Planifica tu ruta — Ranking Spain';
 ---
 <Base title={title} description="Genera una ruta de viaje real basada en datos verificados de Ranking Spain.">
 <div class="ruta-page">
   <div class="ruta-hero">
     <h1>🗺️ Planifica tu ruta</h1>
-    <p>Elige <strong>qué hacer</strong> y una provincia. Te montamos una ruta <strong>real</strong> y en cada parada te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google en cada sitio.</p>
+    <p>Elige <strong>una o varias experiencias</strong> y una provincia. Te montamos una ruta <strong>real</strong> y en cada parada te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google en cada sitio.</p>
   </div>
 
   <form class="ruta-form" method="get">
-    <div class="rf-field">
-      <label>¿Qué quieres hacer?</label>
-      <select name="cat">
-        {RUTA_CATS.map(c => <option value={c.key} selected={c.key===cat}>{c.label}</option>)}
-      </select>
+    <div class="rf-field rf-cats">
+      <label>¿Qué quieres hacer? <span class="rf-hint">(puedes elegir varias)</span></label>
+      <div class="rf-chips">
+        {RUTA_CATS.map(c => (
+          <label class={`rf-chip${cats.includes(c.key)?' on':''}`}>
+            <input type="checkbox" name="cat" value={c.key} checked={cats.includes(c.key)} />
+            {c.label}
+          </label>
+        ))}
+      </div>
     </div>
     <div class="rf-field">
       <label>Provincia</label>
@@ -175,30 +221,31 @@ const title = catCfg && prov
     <button type="submit" class="rf-go">Generar ruta</button>
   </form>
 
-  {catCfg && prov && stops.length === 0 && (
-    <p class="ruta-empty">No tenemos suficientes datos de {catCfg.label} en {prov} para montar una ruta. Prueba otra provincia o experiencia.</p>
+  {selCfgs.length > 0 && prov && stops.length === 0 && (
+    <p class="ruta-empty">No tenemos suficientes datos de {catTitle} en {prov} para montar una ruta. Prueba otra provincia o experiencia.</p>
   )}
 
-  {catCfg && prov && stops.length > 0 && (
+  {selCfgs.length > 0 && prov && stops.length > 0 && (
     <div class="ruta-result">
-      <div class="ruta-result-head" style={`background:${catColor}`}>
+      <div class="ruta-result-head" style={`background:${headColor}`}>
         <div class="rrh-eyebrow">Ruta a medida · Ranking Spain</div>
-        <div class="rrh-title"><Icon name={catInfo.icon} size={22} /> {catCfg.label} por {prov}</div>
+        <div class="rrh-title"><Icon name={infoByCat[selCfgs[0].key].icon} size={22} /> {catTitle} por {prov}</div>
         <div class="rrh-meta">{stops.length} paradas · {dias} {dias===1?'día':'días'} · ~{Math.round(totalKm)} km entre paradas</div>
       </div>
 
       {dayPlan.map((day, di) => (
         <div class="ruta-day">
-          <div class="ruta-day-tag" style={`color:${catColor};background:${catColor}15`}>DÍA {di+1}</div>
+          <div class="ruta-day-tag" style={`color:${headColor};background:${headColor}15`}>DÍA {di+1}</div>
           {day.map((s: any) => (
             <div class="ruta-stop">
-              <span class="rs-icon" style={`color:${catColor}`}><Icon name={catInfo.icon} size={18} /></span>
+              <span class="rs-icon" style={`color:${colorByCat[s.catKey]}`}><Icon name={infoByCat[s.catKey].icon} size={18} /></span>
               <div class="rs-body">
-                <a href={`/municipio/${s.codigo_ine}?desde=${cat}`} class="rs-name">{s.nombre}</a>
-                <span class="rs-score" style={`color:${catColor}`}>{Math.round(s.puntuacion)}/100</span>
+                <a href={`/municipio/${s.codigo_ine}?desde=${s.catKey}`} class="rs-name">{s.nombre}</a>
+                <span class="rs-score" style={`color:${colorByCat[s.catKey]}`}>{Math.round(s.puntuacion)}/100</span>
+                <span class="rs-cat" style={`color:${colorByCat[s.catKey]};background:${colorByCat[s.catKey]}15`}>{s.catLabel}</span>
                 {s.recurso && <div class="rs-rec">🎯 Hacer: <strong>{s.recurso}</strong></div>}
                 {s.recurso_desc && <div class="rs-desc">{String(s.recurso_desc).slice(0,150)}{String(s.recurso_desc).length>150?'…':''}</div>}
-                {s.gvisitar && cat !== 'monumentos' && cat !== 'castillos' && (
+                {s.gvisitar && s.catKey !== 'monumentos' && s.catKey !== 'castillos' && (
                   <div class="rs-place">
                     {s.gvisitar.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gvisitar.foto_ref)}`} alt={s.gvisitar.nombre} loading="lazy" width="56" height="56" />}
                     <div class="rs-place-txt">
@@ -207,7 +254,7 @@ const title = catCfg && prov
                     </div>
                   </div>
                 )}
-                {cat !== 'gastronomia' && (s.gcomer
+                {s.catKey !== 'gastronomia' && (s.gcomer
                   ? <div class="rs-place">
                       {s.gcomer.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gcomer.foto_ref)}`} alt={s.gcomer.nombre} loading="lazy" width="56" height="56" />}
                       <div class="rs-place-txt">
@@ -218,7 +265,7 @@ const title = catCfg && prov
                   : s.comer
                   ? <div class="rs-line">🍽️ Comer: <strong>{s.comer.rec}</strong>{s.comer.mismo ? '' : ` · ${s.comer.nombre} (a ${s.comer.km} km)`}</div>
                   : <div class="rs-line rs-none">🍽️ Sin restaurante recomendado cerca</div>)}
-                {cat !== 'TurismoRural' && (s.dormir
+                {s.catKey !== 'TurismoRural' && (s.dormir
                   ? <div class="rs-line">🛏️ Dormir: <strong>{s.dormir.rec}</strong>{s.dormir.mismo ? '' : ` · ${s.dormir.nombre} (a ${s.dormir.km} km)`}</div>
                   : <div class="rs-line rs-none">🛏️ Sin turismo rural verificado cerca</div>)}
               </div>
@@ -239,6 +286,12 @@ const title = catCfg && prov
 .ruta-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 24px; }
 .rf-field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 180px; }
 .rf-field label { font-size: .78rem; font-weight: 700; color: var(--text-2); }
+.rf-cats { flex: 1 1 100%; }
+.rf-hint { font-weight: 500; color: #aaa; }
+.rf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.rf-chip { display: inline-flex; align-items: center; padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: .85rem; font-weight: 600; color: var(--text-2); cursor: pointer; user-select: none; transition: all .12s; }
+.rf-chip input { display: none; }
+.rf-chip.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
 .rf-field select { padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 12px; font-size: .92rem; font-family: inherit; background: #fff; color: var(--text); }
 .rf-dias { flex: 0 0 auto; }
 .rf-dias-btns { display: flex; gap: 6px; }
@@ -261,6 +314,7 @@ const title = catCfg && prov
 .rs-name { font-weight: 700; color: var(--text); font-size: 1rem; text-decoration: none; }
 .rs-name:hover { color: var(--primary); }
 .rs-score { font-size: .82rem; font-weight: 700; margin-left: 8px; }
+.rs-cat { font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 8px; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; }
 .rs-rec { font-size: .88rem; color: var(--text); margin-top: 3px; }
 .rs-desc { font-size: .82rem; color: var(--text-2); margin-top: 3px; line-height: 1.45; }
 .rs-line { font-size: .85rem; color: var(--text); margin-top: 4px; }
@@ -275,4 +329,13 @@ const title = catCfg && prov
 .ruta-foot { background: #fafafa; padding: 11px 20px; font-size: .74rem; color: #999; }
 @media (max-width: 560px) { .rf-field { flex: 1 1 100%; } }
 </style>
+<script>
+  // Marca/desmarca visualmente los chips de categoría al pulsarlos
+  document.querySelectorAll('.rf-chip input').forEach((inp) => {
+    inp.addEventListener('change', (e) => {
+      const el = e.target as HTMLInputElement;
+      el.closest('.rf-chip')?.classList.toggle('on', el.checked);
+    });
+  });
+</script>
 </Base>
