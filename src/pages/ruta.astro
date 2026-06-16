@@ -100,6 +100,38 @@ function haversine(a: any, b: any) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+// "Dentro del pueblo": a menos de NEAR_KM del centro y con calidad → va primero.
+const NEAR_KM = 4;
+const norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+const localidad = (dir: string | null) => {
+  if (!dir) return '';
+  const parts = String(dir).split(',').map(p => p.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : '';
+};
+// Decora cada opción con localidad/km/locLabel y reordena: dentro del pueblo y
+// con calidad (rating ≥ 4) primero; el resto después, por valoración.
+function decoratePlaces(list: any[], stop: any) {
+  const q = (h: any) => (h.rating ?? 0) * Math.log10((h.reviews ?? 0) + 1);
+  for (const it of list) {
+    const km = (it.lat != null && it.lng != null)
+      ? Math.round(haversine(stop, { latitud: it.lat, longitud: it.lng })) : null;
+    const loc = localidad(it.direccion);
+    const enPueblo = (loc && (norm(loc) === norm(stop.nombre) || norm(loc).includes(norm(stop.nombre)) || norm(stop.nombre).includes(norm(loc))))
+      || (km != null && km <= NEAR_KM);
+    it.km = km; it.enPueblo = enPueblo;
+    it.locLabel = enPueblo
+      ? (loc || stop.nombre)
+      : (loc ? `${loc} · a ${km} km` : (km != null ? `a ${km} km` : ''));
+  }
+  list.sort((a, b) => {
+    const ap = (a.enPueblo && (a.rating ?? 0) >= 4.0) ? 1 : 0;
+    const bp = (b.enPueblo && (b.rating ?? 0) >= 4.0) ? 1 : 0;
+    if (ap !== bp) return bp - ap;
+    return q(b) - q(a);
+  });
+  return list;
+}
+
 let dayPlan: any[][] = [];
 let stops: any[] = [];
 let totalKm = 0;
@@ -276,6 +308,10 @@ if (selCfgs.length && prov) {
           : getPlaceOptions(s.codigo_ine, dormirKind, s.latitud, s.longitud, dormirSpec, 4);
 
         const [comerList, visitarList, dormirList] = await Promise.all([comerP, visitarP, dormirP]);
+        // Localidad/km + "dentro del pueblo con calidad primero"
+        decoratePlaces(comerList, s);
+        decoratePlaces(visitarList, s);
+        decoratePlaces(dormirList, s);
         s.comerList = comerList;
         s.dormirList = dormirList;
         s.visitarList = visitarList;
@@ -404,6 +440,7 @@ const title = selCfgs.length && prov
                     <img class="rs-thumb" src={s.visitarCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(s.visitarCur.foto_ref)}` : ''} alt={s.visitarCur.nombre} loading="lazy" width="56" height="56" style={s.visitarCur.foto_ref ? '' : 'display:none'} />
                     <div class="rs-place-txt">
                       <div class="rs-line">👁️ Visitar: <strong class="rs-pname">{s.visitarCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.visitarCur)}</span>{s.visitarList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                      {s.visitarCur.locLabel && <div class="rs-loc">📍 {s.visitarCur.locLabel}</div>}
                       <div class="rs-attr rs-pattr" set:html={s.visitarCur.foto_attr ?? ''}></div>
                     </div>
                   </div>
@@ -413,6 +450,7 @@ const title = selCfgs.length && prov
                       <img class="rs-thumb" src={s.comerCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(s.comerCur.foto_ref)}` : ''} alt={s.comerCur.nombre} loading="lazy" width="56" height="56" style={s.comerCur.foto_ref ? '' : 'display:none'} />
                       <div class="rs-place-txt">
                         <div class="rs-line">🍽️ Comer: <strong class="rs-pname">{s.comerCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.comerCur)}</span>{s.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                        {s.comerCur.locLabel && <div class="rs-loc">📍 {s.comerCur.locLabel}</div>}
                         <div class="rs-attr rs-pattr" set:html={s.comerCur.foto_attr ?? ''}></div>
                       </div>
                     </div>
@@ -424,6 +462,7 @@ const title = selCfgs.length && prov
                       <img class="rs-thumb" src={s.dormirCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(s.dormirCur.foto_ref)}` : ''} alt={s.dormirCur.nombre} loading="lazy" width="56" height="56" style={s.dormirCur.foto_ref ? '' : 'display:none'} />
                       <div class="rs-place-txt">
                         <div class="rs-line">🛏️ Dormir: <strong class="rs-pname">{s.dormirCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.dormirCur)}</span>{s.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                        {s.dormirCur.locLabel && <div class="rs-loc">📍 {s.dormirCur.locLabel}</div>}
                         <div class="rs-attr rs-pattr" set:html={s.dormirCur.foto_attr ?? ''}></div>
                       </div>
                     </div>
@@ -508,6 +547,8 @@ const title = selCfgs.length && prov
         else { img.style.display = 'none'; }
       }
       var attr = box.querySelector('.rs-pattr'); if (attr) attr.innerHTML = it.foto_attr || '';
+      var loc = box.querySelector('.rs-loc');
+      if (loc) { if (it.locLabel) { loc.textContent = '📍 ' + it.locLabel; loc.style.display = ''; } else { loc.style.display = 'none'; } }
     });
   });
 </script>
@@ -562,6 +603,7 @@ const title = selCfgs.length && prov
 .rs-line { font-size: .85rem; color: var(--text); margin-top: 4px; }
 .rs-star { color: #e8a200; font-weight: 700; margin-left: 7px; font-size: .8rem; white-space: nowrap; }
 .rs-alt { font-size: .8rem; color: var(--text-2); margin-top: 2px; }
+.rs-loc { font-size: .76rem; color: var(--text-2); margin-top: 2px; }
 .rs-swap-btn { margin-left: 8px; font-size: .72rem; font-weight: 700; color: var(--primary); background: #fff1f3; border: 1px solid rgba(255,56,92,.25); border-radius: 14px; padding: 2px 9px; cursor: pointer; white-space: nowrap; }
 .rs-swap-btn:hover { background: var(--primary); color: #fff; }
 .rs-place { display: flex; gap: 10px; align-items: flex-start; margin-top: 4px; }
