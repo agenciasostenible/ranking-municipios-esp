@@ -308,7 +308,9 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
       .hamburger { display: flex; }
       .mob-search-band { display: block; }
       .header-search { display: none; }
-      .header-nav .nav-link:first-child { display: none; }
+      /* En móvil, los enlaces van en el menú hamburguesa: ocultamos las
+         pastillas inline para que no se corten ni empujen el menú fuera. */
+      .header-nav { display: none; }
       .header-inner { gap: 10px; }
     }
 
