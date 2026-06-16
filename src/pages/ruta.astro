@@ -199,10 +199,22 @@ const title = catCfg && prov
                 {s.recurso && <div class="rs-rec">🎯 Hacer: <strong>{s.recurso}</strong></div>}
                 {s.recurso_desc && <div class="rs-desc">{String(s.recurso_desc).slice(0,150)}{String(s.recurso_desc).length>150?'…':''}</div>}
                 {s.gvisitar && cat !== 'monumentos' && cat !== 'castillos' && (
-                  <div class="rs-line">👁️ Visitar: <strong>{s.gvisitar.nombre}</strong><span class="rs-star">★ {fmtRating(s.gvisitar)}</span></div>
+                  <div class="rs-place">
+                    {s.gvisitar.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gvisitar.foto_ref)}`} alt={s.gvisitar.nombre} loading="lazy" width="56" height="56" />}
+                    <div class="rs-place-txt">
+                      <div class="rs-line">👁️ Visitar: <strong>{s.gvisitar.nombre}</strong><span class="rs-star">★ {fmtRating(s.gvisitar)}</span></div>
+                      {s.gvisitar.foto_attr && <div class="rs-attr" set:html={s.gvisitar.foto_attr}></div>}
+                    </div>
+                  </div>
                 )}
                 {cat !== 'gastronomia' && (s.gcomer
-                  ? <div class="rs-line">🍽️ Comer: <strong>{s.gcomer.nombre}</strong><span class="rs-star">★ {fmtRating(s.gcomer)}</span></div>
+                  ? <div class="rs-place">
+                      {s.gcomer.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gcomer.foto_ref)}`} alt={s.gcomer.nombre} loading="lazy" width="56" height="56" />}
+                      <div class="rs-place-txt">
+                        <div class="rs-line">🍽️ Comer: <strong>{s.gcomer.nombre}</strong><span class="rs-star">★ {fmtRating(s.gcomer)}</span></div>
+                        {s.gcomer.foto_attr && <div class="rs-attr" set:html={s.gcomer.foto_attr}></div>}
+                      </div>
+                    </div>
                   : s.comer
                   ? <div class="rs-line">🍽️ Comer: <strong>{s.comer.rec}</strong>{s.comer.mismo ? '' : ` · ${s.comer.nombre} (a ${s.comer.km} km)`}</div>
                   : <div class="rs-line rs-none">🍽️ Sin restaurante recomendado cerca</div>)}
@@ -253,6 +265,12 @@ const title = catCfg && prov
 .rs-desc { font-size: .82rem; color: var(--text-2); margin-top: 3px; line-height: 1.45; }
 .rs-line { font-size: .85rem; color: var(--text); margin-top: 4px; }
 .rs-star { color: #e8a200; font-weight: 700; margin-left: 7px; font-size: .8rem; white-space: nowrap; }
+.rs-place { display: flex; gap: 10px; align-items: flex-start; margin-top: 4px; }
+.rs-thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg); }
+.rs-place-txt { flex: 1; min-width: 0; }
+.rs-place-txt .rs-line { margin-top: 0; }
+.rs-attr { font-size: .66rem; color: #aaa; margin-top: 2px; }
+.rs-attr :global(a) { color: #aaa; }
 .rs-none { color: #bbb; font-style: italic; }
 .ruta-foot { background: #fafafa; padding: 11px 20px; font-size: .74rem; color: #999; }
 @media (max-width: 560px) { .rf-field { flex: 1 1 100%; } }

@@ -30,6 +30,8 @@ export type PlaceHit = {
   lat: number | null;
   lng: number | null;
   direccion: string | null;
+  foto_ref: string | null;
+  foto_attr: string | null;
 };
 
 export type PlaceKind = 'comer' | 'visitar';
@@ -45,6 +47,21 @@ function score(r: any): number {
   const rating = r.rating ?? 0;
   const n = r.user_ratings_total ?? 0;
   return rating * Math.log10(n + 1);
+}
+
+/**
+ * Trae los bytes de una foto de Google Places (server-side, con la clave secreta).
+ * La usa el endpoint /api/place-photo para que la clave nunca llegue al navegador.
+ */
+export async function fetchPlacePhoto(ref: string, maxwidth = 600): Promise<Response | null> {
+  if (!KEY) return null;
+  const u = new URL('https://maps.googleapis.com/maps/api/place/photo');
+  u.searchParams.set('maxwidth', String(maxwidth));
+  u.searchParams.set('photo_reference', ref);
+  u.searchParams.set('key', KEY as string);
+  const res = await fetch(u.toString(), { redirect: 'follow' });
+  if (!res.ok || !res.body) return null;
+  return res;
 }
 
 async function nearbySearch(lat: number, lng: number, kind: PlaceKind): Promise<PlaceHit | null> {
@@ -73,6 +90,7 @@ async function nearbySearch(lat: number, lng: number, kind: PlaceKind): Promise<
   const pool = conReseñas.length ? conReseñas : arr;
   pool.sort((a, b) => score(b) - score(a));
   const r = pool[0];
+  const photo = r.photos?.[0];
   return {
     place_id: r.place_id,
     nombre: r.name,
@@ -81,6 +99,8 @@ async function nearbySearch(lat: number, lng: number, kind: PlaceKind): Promise<
     lat: r.geometry?.location?.lat ?? null,
     lng: r.geometry?.location?.lng ?? null,
     direccion: r.vicinity ?? null,
+    foto_ref: photo?.photo_reference ?? null,
+    foto_attr: photo?.html_attributions?.length ? photo.html_attributions.join(' ') : null,
   };
 }
 
@@ -99,7 +119,7 @@ export async function getPlace(
   // 1) Caché viva (< 30 días)
   try {
     const cached = await DB.prepare(
-      `SELECT place_id, nombre, rating, reviews, lat, lng, direccion
+      `SELECT place_id, nombre, rating, reviews, lat, lng, direccion, foto_ref, foto_attr
          FROM places_cache
         WHERE codigo_ine = ? AND kind = ?
           AND fetched_at > datetime('now', '-30 days')
@@ -126,8 +146,8 @@ export async function getPlace(
       .bind(codigo_ine, kind).run();
     await DB.prepare(
       `INSERT INTO places_cache
-         (codigo_ine, kind, place_id, nombre, rating, reviews, lat, lng, direccion)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (codigo_ine, kind, place_id, nombre, rating, reviews, lat, lng, direccion, foto_ref, foto_attr)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       codigo_ine, kind,
       hit ? hit.place_id : '__none__',
@@ -137,6 +157,8 @@ export async function getPlace(
       hit?.lat ?? null,
       hit?.lng ?? null,
       hit?.direccion ?? null,
+      hit?.foto_ref ?? null,
+      hit?.foto_attr ?? null,
     ).run();
   } catch {
     /* si falla la escritura de caché, devolvemos igualmente el resultado */
