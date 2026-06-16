@@ -212,7 +212,9 @@ export async function getLodgingPair(
   const cb = await cacheRead(codigo_ine, kind);
   if (cb !== undefined) {
     const ca = await cacheRead(codigo_ine, kind + '#alt');
-    return { best: cb, alt: ca === undefined ? null : ca };
+    // Si hay mejor cacheado y alternativa (o no hay alojamiento), servimos caché.
+    // Si el mejor existe pero falta la fila de alternativa, recalculamos.
+    if (ca !== undefined || cb === null) return { best: cb, alt: ca === undefined ? null : ca };
   }
   let list: PlaceHit[] = [];
   try { list = await nearbyList(lat, lng, spec); } catch { /* ignore */ }
