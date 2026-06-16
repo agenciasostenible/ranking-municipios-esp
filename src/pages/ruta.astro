@@ -372,7 +372,7 @@ const title = selCfgs.length && prov
               </div>
             </div>
             {idx < day.length - 1 && s.driveNext && (
-              <div class="ruta-drive">🚗 {fmtDur(s.driveNext.min)} · {s.driveNext.km} km{s.driveNext.est ? ' aprox.' : ''}</div>
+              <div class="ruta-drive">🚗 {fmtDur(s.driveNext.min)} · {s.driveNext.km} km hasta {day[idx+1].nombre}{s.driveNext.est ? ' (aprox.)' : ''}</div>
             )}
             </Fragment>
           ))}
