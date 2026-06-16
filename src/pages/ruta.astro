@@ -79,14 +79,32 @@ if (catCfg && prov) {
     for (let i = 1; i < order.length; i++) totalKm += haversine(order[i-1], order[i]);
     stops = order;
 
-    // "Dónde comer" por parada (solo datos reales)
+    // Opciones de DORMIR (turismo rural) y COMER (gastronomía) en la provincia
+    const { results: ruralRows } = await DB.prepare(
+      `SELECT m.codigo_ine, m.nombre, m.latitud, m.longitud,
+         (SELECT nombre FROM entidades e WHERE e.codigo_ine=m.codigo_ine AND e.tipo='rural' ORDER BY length(COALESCE(descripcion,'')) DESC LIMIT 1) rec
+       FROM municipios m WHERE m.provincia=? AND COALESCE(m.es_duplicado,0)=0 AND m.latitud IS NOT NULL
+         AND EXISTS(SELECT 1 FROM entidades e WHERE e.codigo_ine=m.codigo_ine AND e.tipo='rural')`
+    ).bind(prov).all();
+    const { results: gastroRows } = await DB.prepare(
+      `SELECT m.codigo_ine, m.nombre, m.latitud, m.longitud,
+         (SELECT nombre FROM entidades e WHERE e.codigo_ine=m.codigo_ine AND e.tipo IN ('gastronomia','producto')
+           ORDER BY CASE WHEN nombre LIKE '%Michelin%' OR nombre LIKE '%Repsol%' OR nombre LIKE '%Sol %' OR nombre LIKE '%DOP%' THEN 0 ELSE 1 END, length(nombre) DESC LIMIT 1) rec
+       FROM municipios m WHERE m.provincia=? AND COALESCE(m.es_duplicado,0)=0 AND m.latitud IS NOT NULL
+         AND EXISTS(SELECT 1 FROM entidades e WHERE e.codigo_ine=m.codigo_ine AND e.tipo IN ('gastronomia','producto'))`
+    ).bind(prov).all();
+    const ruralOpts = ruralRows as any[]; const gastroOpts = gastroRows as any[];
+
+    function nearestWithData(opts: any[], s: any) {
+      let best: any = null, bd = Infinity;
+      for (const o of opts) { const d = haversine(s, o); if (d < bd) { bd = d; best = o; } }
+      if (!best) return null;
+      return { nombre: best.nombre, rec: best.rec, km: Math.round(bd), mismo: best.codigo_ine === s.codigo_ine };
+    }
     for (const s of stops) {
-      const g = await DB.prepare(
-        `SELECT nombre FROM entidades WHERE codigo_ine=? AND tipo IN ('gastronomia','producto')
-         ORDER BY CASE WHEN nombre LIKE '%Michelin%' OR nombre LIKE '%Repsol%' OR nombre LIKE '%Sol %' OR nombre LIKE '%DOP%' THEN 0 ELSE 1 END,
-                  length(nombre) DESC LIMIT 1`
-      ).bind(s.codigo_ine).first();
-      s.comer = g?.nombre ?? null;
+      // si la actividad ES turismo rural, no repetimos dormir
+      s.dormir = (cat === 'TurismoRural') ? null : nearestWithData(ruralOpts, s);
+      s.comer  = (cat === 'gastronomia') ? null : nearestWithData(gastroOpts, s);
     }
 
     // Repartir en días (equitativo, secuencial)
@@ -104,12 +122,12 @@ const title = catCfg && prov
 <div class="ruta-page">
   <div class="ruta-hero">
     <h1>🗺️ Planifica tu ruta</h1>
-    <p>Elige una experiencia y una provincia. Te montamos una ruta <strong>real</strong>, solo con sitios de nuestro inventario verificado.</p>
+    <p>Elige <strong>qué hacer</strong> y una provincia. Te montamos una ruta <strong>real</strong> y en cada parada te decimos <strong>dónde comer</strong> (gastronomía) y <strong>dónde dormir</strong> (turismo rural). Solo sitios de nuestro inventario verificado.</p>
   </div>
 
   <form class="ruta-form" method="get">
     <div class="rf-field">
-      <label>Experiencia</label>
+      <label>¿Qué quieres hacer?</label>
       <select name="cat">
         {RUTA_CATS.map(c => <option value={c.key} selected={c.key===cat}>{c.label}</option>)}
       </select>
@@ -151,11 +169,14 @@ const title = catCfg && prov
               <div class="rs-body">
                 <a href={`/municipio/${s.codigo_ine}?desde=${cat}`} class="rs-name">{s.nombre}</a>
                 <span class="rs-score" style={`color:${catColor}`}>{Math.round(s.puntuacion)}/100</span>
-                {s.recurso && <div class="rs-rec">Visita: <strong>{s.recurso}</strong></div>}
-                {s.recurso_desc && <div class="rs-desc">{String(s.recurso_desc).slice(0,160)}{String(s.recurso_desc).length>160?'…':''}</div>}
-                {s.comer
-                  ? <div class="rs-eat">🍽️ Comer: <strong>{s.comer}</strong></div>
-                  : <div class="rs-eat rs-eat-none">🍽️ Sin recomendación gastronómica verificada</div>}
+                {s.recurso && <div class="rs-rec">🎯 Hacer: <strong>{s.recurso}</strong></div>}
+                {s.recurso_desc && <div class="rs-desc">{String(s.recurso_desc).slice(0,150)}{String(s.recurso_desc).length>150?'…':''}</div>}
+                {cat !== 'gastronomia' && (s.comer
+                  ? <div class="rs-line">🍽️ Comer: <strong>{s.comer.rec}</strong>{s.comer.mismo ? '' : ` · ${s.comer.nombre} (a ${s.comer.km} km)`}</div>
+                  : <div class="rs-line rs-none">🍽️ Sin gastronomía verificada cerca</div>)}
+                {cat !== 'TurismoRural' && (s.dormir
+                  ? <div class="rs-line">🛏️ Dormir: <strong>{s.dormir.rec}</strong>{s.dormir.mismo ? '' : ` · ${s.dormir.nombre} (a ${s.dormir.km} km)`}</div>
+                  : <div class="rs-line rs-none">🛏️ Sin turismo rural verificado cerca</div>)}
               </div>
             </div>
           ))}
@@ -198,8 +219,8 @@ const title = catCfg && prov
 .rs-score { font-size: .82rem; font-weight: 700; margin-left: 8px; }
 .rs-rec { font-size: .88rem; color: var(--text); margin-top: 3px; }
 .rs-desc { font-size: .82rem; color: var(--text-2); margin-top: 3px; line-height: 1.45; }
-.rs-eat { font-size: .85rem; color: var(--text); margin-top: 5px; }
-.rs-eat-none { color: #bbb; font-style: italic; }
+.rs-line { font-size: .85rem; color: var(--text); margin-top: 4px; }
+.rs-none { color: #bbb; font-style: italic; }
 .ruta-foot { background: #fafafa; padding: 11px 20px; font-size: .74rem; color: #999; }
 @media (max-width: 560px) { .rf-field { flex: 1 1 100%; } }
 </style>
