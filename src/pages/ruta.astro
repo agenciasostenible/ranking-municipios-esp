@@ -21,6 +21,28 @@ const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
   { key: 'senderismo',        tipo: 'sendero',     label: 'Senderismo' },
 ];
 
+// Perfiles de búsqueda en Google según la categoría de la parada, para que el
+// "qué visitar / dónde comer" sea coherente (y no te mande a la catedral con perro).
+//  - comer.keyword:    sesga el restaurante (red de seguridad: si no hay, cae al mejor).
+//  - visitar:          null = ocultar (el "qué hacer" ya ES lo que visitas);
+//                      objeto = búsqueda adaptada; ausente = atracción genérica.
+type CatProfile = {
+  comer?: { keyword?: string };
+  visitar?: { keyword?: string; type?: string; excludeTypes?: string[] } | null;
+};
+const CAT_PROFILE: Record<string, CatProfile> = {
+  turismo_mascotas: {
+    comer:   { keyword: 'pet friendly' },
+    visitar: { keyword: 'pet friendly', excludeTypes: ['church','place_of_worship','museum','art_gallery','hindu_temple','mosque','synagogue'] },
+  },
+  turismo_lgtbi:    { visitar: { keyword: 'lgtbi friendly' } },
+  oleoturismo:      { visitar: { keyword: 'almazara aceite de oliva' } },
+  turismo_activo:   { visitar: { keyword: 'naturaleza aventura' } },
+  turismo_religioso:{ visitar: null },
+  monumentos:       { visitar: null },
+  castillos:        { visitar: null },
+};
+
 const url = Astro.url;
 // Multi-categoría: acepta varios ?cat=... (y ?cat=a,b). Compatible con uno solo.
 let cats = url.searchParams.getAll('cat').flatMap(v => v.split(','));
@@ -156,10 +178,29 @@ if (selCfgs.length && prov) {
     // en cada parada (rating + nº de reseñas). Solo si hay clave configurada.
     if (PLACES_ENABLED) {
       await Promise.all(stops.map(async (s: any) => {
-        const [gcomer, gvisitar] = await Promise.all([
-          s.catKey === 'gastronomia' ? Promise.resolve(null) : getPlace(s.codigo_ine, 'comer', s.latitud, s.longitud),
-          getPlace(s.codigo_ine, 'visitar', s.latitud, s.longitud),
-        ]);
+        const prof = CAT_PROFILE[s.catKey] ?? {};
+
+        // COMER: restaurante (con preferencia de categoría + red de seguridad)
+        const comerKw = prof.comer?.keyword;
+        const comerSpec = { type: 'restaurant', radius: 7000, minReviews: 30, keyword: comerKw, softKeyword: true };
+        const comerKind = 'comer' + (comerKw ? '_' + s.catKey : '');
+        const comerP = s.catKey === 'gastronomia'
+          ? Promise.resolve(null)
+          : getPlace(s.codigo_ine, comerKind, s.latitud, s.longitud, comerSpec);
+
+        // VISITAR: según perfil (null = ocultar; ausente = atracción genérica)
+        const visCfg = ('visitar' in prof) ? prof.visitar : { type: 'tourist_attraction' };
+        let visitarP: Promise<any> = Promise.resolve(null);
+        if (visCfg) {
+          const visSpec = {
+            type: visCfg.type ?? 'tourist_attraction', radius: 12000, minReviews: 15,
+            keyword: visCfg.keyword, excludeTypes: visCfg.excludeTypes,
+          };
+          const visKind = 'visitar' + (visCfg.keyword || visCfg.excludeTypes ? '_' + s.catKey : '');
+          visitarP = getPlace(s.codigo_ine, visKind, s.latitud, s.longitud, visSpec);
+        }
+
+        const [gcomer, gvisitar] = await Promise.all([comerP, visitarP]);
         s.gcomer = gcomer;
         s.gvisitar = gvisitar;
       }));
@@ -245,7 +286,7 @@ const title = selCfgs.length && prov
                 <span class="rs-cat" style={`color:${colorByCat[s.catKey]};background:${colorByCat[s.catKey]}15`}>{s.catLabel}</span>
                 {s.recurso && <div class="rs-rec">🎯 Hacer: <strong>{s.recurso}</strong></div>}
                 {s.recurso_desc && <div class="rs-desc">{String(s.recurso_desc).slice(0,150)}{String(s.recurso_desc).length>150?'…':''}</div>}
-                {s.gvisitar && s.catKey !== 'monumentos' && s.catKey !== 'castillos' && (
+                {s.gvisitar && (
                   <div class="rs-place">
                     {s.gvisitar.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gvisitar.foto_ref)}`} alt={s.gvisitar.nombre} loading="lazy" width="56" height="56" />}
                     <div class="rs-place-txt">
@@ -335,6 +376,14 @@ const title = selCfgs.length && prov
     inp.addEventListener('change', (e) => {
       const el = e.target as HTMLInputElement;
       el.closest('.rf-chip')?.classList.toggle('on', el.checked);
+    });
+  });
+
+  // Selector de días (radios): mueve el resaltado al pulsar
+  document.querySelectorAll('.rf-day input').forEach((inp) => {
+    inp.addEventListener('change', () => {
+      document.querySelectorAll('.rf-day').forEach((d) => d.classList.remove('on'));
+      (inp as HTMLElement).closest('.rf-day')?.classList.add('on');
     });
   });
 </script>

@@ -34,12 +34,21 @@ export type PlaceHit = {
   foto_attr: string | null;
 };
 
-export type PlaceKind = 'comer' | 'visitar';
-
-// Configuración por tipo de parada
-const CFG: Record<PlaceKind, { type: string; radius: number; minReviews: number }> = {
-  comer:   { type: 'restaurant',         radius: 7000,  minReviews: 30 },
-  visitar: { type: 'tourist_attraction', radius: 12000, minReviews: 15 },
+/**
+ * Especificación de búsqueda. Permite adaptar la consulta a la categoría:
+ *  - keyword:      sesga la búsqueda (p.ej. "pet friendly", "lgtbi friendly").
+ *  - excludeTypes: descarta resultados de esos tipos de Google (p.ej. iglesias
+ *                  para rutas con mascotas, donde no entra el perro).
+ *  - softKeyword:  si con keyword no hay resultado, reintenta sin él (red de
+ *                  seguridad para "comer": nunca dejamos sin restaurante).
+ */
+export type SearchSpec = {
+  type: string;
+  radius?: number;
+  minReviews?: number;
+  keyword?: string;
+  excludeTypes?: string[];
+  softKeyword?: boolean;
 };
 
 // Puntuación: valoración ponderada por nº de reseñas (evita 5,0 con 3 reseñas).
@@ -64,12 +73,12 @@ export async function fetchPlacePhoto(ref: string, maxwidth = 600): Promise<Resp
   return res;
 }
 
-async function nearbySearch(lat: number, lng: number, kind: PlaceKind): Promise<PlaceHit | null> {
-  const cfg = CFG[kind];
+async function nearbyOnce(lat: number, lng: number, spec: SearchSpec, useKeyword: boolean): Promise<PlaceHit | null> {
   const u = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
   u.searchParams.set('location', `${lat},${lng}`);
-  u.searchParams.set('radius', String(cfg.radius));
-  u.searchParams.set('type', cfg.type);
+  u.searchParams.set('radius', String(spec.radius ?? 9000));
+  u.searchParams.set('type', spec.type);
+  if (useKeyword && spec.keyword) u.searchParams.set('keyword', spec.keyword);
   u.searchParams.set('language', 'es');
   u.searchParams.set('key', KEY as string);
 
@@ -83,10 +92,15 @@ async function nearbySearch(lat: number, lng: number, kind: PlaceKind): Promise<
   let arr: any[] = (data.results ?? []).filter(
     (r: any) => r.business_status !== 'CLOSED_PERMANENTLY' && r.rating,
   );
+  // Descartar tipos no aptos para la categoría (p.ej. iglesias en rutas con perro)
+  if (spec.excludeTypes?.length) {
+    arr = arr.filter((r: any) => !(r.types ?? []).some((t: string) => spec.excludeTypes!.includes(t)));
+  }
   if (!arr.length) return null;
 
   // Preferimos sitios con un mínimo de reseñas; si ninguno llega, usamos todos.
-  const conReseñas = arr.filter((r) => (r.user_ratings_total ?? 0) >= cfg.minReviews);
+  const min = spec.minReviews ?? 20;
+  const conReseñas = arr.filter((r) => (r.user_ratings_total ?? 0) >= min);
   const pool = conReseñas.length ? conReseñas : arr;
   pool.sort((a, b) => score(b) - score(a));
   const r = pool[0];
@@ -104,15 +118,26 @@ async function nearbySearch(lat: number, lng: number, kind: PlaceKind): Promise<
   };
 }
 
+async function nearbySearch(lat: number, lng: number, spec: SearchSpec): Promise<PlaceHit | null> {
+  const hit = await nearbyOnce(lat, lng, spec, true);
+  if (hit) return hit;
+  // Red de seguridad: si con keyword no hubo resultado, reintentar sin él
+  if (spec.keyword && spec.softKeyword) return nearbyOnce(lat, lng, spec, false);
+  return null;
+}
+
 /**
- * Mejor sitio para comer / visitar cerca de un municipio.
+ * Mejor sitio (comer / visitar / …) cerca de un municipio según `spec`.
+ * `kind` es la clave de caché (puede llevar sufijo de categoría, p.ej.
+ * "visitar_turismo_mascotas") para no mezclar resultados entre experiencias.
  * Cachea en D1 (incluida la "ausencia de resultado") y refresca a los 30 días.
  */
 export async function getPlace(
   codigo_ine: string,
-  kind: PlaceKind,
+  kind: string,
   lat: number,
   lng: number,
+  spec: SearchSpec,
 ): Promise<PlaceHit | null> {
   if (!KEY || lat == null || lng == null) return null;
 
@@ -135,7 +160,7 @@ export async function getPlace(
   // 2) Consulta a Google
   let hit: PlaceHit | null = null;
   try {
-    hit = await nearbySearch(lat, lng, kind);
+    hit = await nearbySearch(lat, lng, spec);
   } catch {
     return null;
   }
