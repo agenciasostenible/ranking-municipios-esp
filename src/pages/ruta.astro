@@ -213,6 +213,11 @@ if (selCfgs.length && prov) {
   }
 }
 
+// Datos para el mapa (paradas en orden de ruta)
+const mapData = stops.map((s: any, i: number) => ({
+  n: i + 1, nombre: s.nombre, lat: s.latitud, lng: s.longitud,
+}));
+
 const fmtRating = (h: any) => {
   const r = Number(h?.rating ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const n = h?.reviews ? ` (${Number(h.reviews).toLocaleString('es-ES')})` : '';
@@ -274,6 +279,8 @@ const title = selCfgs.length && prov
         <div class="rrh-meta">{stops.length} paradas · {dias} {dias===1?'día':'días'} · ~{Math.round(totalKm)} km entre paradas</div>
       </div>
 
+      <div id="ruta-map" class="ruta-map"></div>
+
       {dayPlan.map((day, di) => (
         <div class="ruta-day">
           <div class="ruta-day-tag" style={`color:${headColor};background:${headColor}15`}>DÍA {di+1}</div>
@@ -319,6 +326,36 @@ const title = selCfgs.length && prov
   )}
 </div>
 
+{selCfgs.length > 0 && prov && stops.length > 0 && (
+  <Fragment>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" is:inline></script>
+    <script is:inline define:vars={{ mapData, headColor }}>
+      (function () {
+        if (!window.L || !mapData.length) return;
+        var el = document.getElementById('ruta-map');
+        if (!el) return;
+        var map = L.map(el, { scrollWheelZoom: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap', maxZoom: 18,
+        }).addTo(map);
+        var pts = mapData.map(function (p) { return [p.lat, p.lng]; });
+        L.polyline(pts, { color: headColor, weight: 3, opacity: 0.85 }).addTo(map);
+        mapData.forEach(function (p) {
+          var icon = L.divIcon({
+            className: 'ruta-marker',
+            html: '<span style="background:' + headColor + '">' + p.n + '</span>',
+            iconSize: [26, 26], iconAnchor: [13, 13],
+          });
+          L.marker([p.lat, p.lng], { icon: icon }).addTo(map)
+            .bindPopup('<b>' + p.n + '. ' + p.nombre + '</b>');
+        });
+        map.fitBounds(pts, { padding: [30, 30], maxZoom: 12 });
+      })();
+    </script>
+  </Fragment>
+)}
+
 <style>
 .ruta-page { max-width: 640px; margin: 0 auto; padding: 28px 16px 60px; }
 .ruta-hero { text-align: center; margin-bottom: 22px; }
@@ -343,6 +380,8 @@ const title = selCfgs.length && prov
 .rf-go:hover { background: var(--primary-dark); }
 .ruta-empty { text-align: center; color: var(--text-2); font-size: .92rem; padding: 20px; }
 .ruta-result { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.ruta-map { height: 300px; width: 100%; z-index: 0; background: #e8eef0; }
+:global(.ruta-marker span) { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font-weight: 700; font-size: .8rem; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
 .ruta-result-head { color: #fff; padding: 18px 20px; }
 .rrh-eyebrow { font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: .85; font-weight: 600; }
 .rrh-title { display: flex; align-items: center; gap: 9px; font-size: 1.25rem; font-weight: 800; margin-top: 3px; }
