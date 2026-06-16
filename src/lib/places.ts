@@ -224,3 +224,55 @@ export async function getLodgingPair(
   await cacheWrite(codigo_ine, kind + '#alt', alt);
   return { best, alt };
 }
+
+// Caché de una LISTA de opciones (para poder cambiar de sitio): se guarda como
+// filas kind#0, kind#1, … reutilizando la tabla columnar (sin migración).
+async function listCacheRead(codigo_ine: string, baseKind: string): Promise<PlaceHit[] | undefined> {
+  try {
+    const { results } = await DB.prepare(
+      `SELECT place_id, nombre, rating, reviews, lat, lng, direccion, foto_ref, foto_attr
+         FROM places_cache
+        WHERE codigo_ine = ? AND kind LIKE ? AND fetched_at > datetime('now', '-30 days')
+        ORDER BY kind`,
+    ).bind(codigo_ine, baseKind + '#%').all();
+    if (!results.length) return undefined;
+    return (results as any[]).filter(r => r.place_id !== '__none__') as PlaceHit[];
+  } catch {
+    return undefined;
+  }
+}
+
+async function listCacheWrite(codigo_ine: string, baseKind: string, list: PlaceHit[]): Promise<void> {
+  try {
+    await DB.prepare(`DELETE FROM places_cache WHERE codigo_ine = ? AND kind LIKE ?`)
+      .bind(codigo_ine, baseKind + '#%').run();
+    if (!list.length) { await cacheWrite(codigo_ine, baseKind + '#0', null); return; }
+    for (let i = 0; i < list.length; i++) await cacheWrite(codigo_ine, baseKind + '#' + i, list[i]);
+  } catch { /* ignore */ }
+}
+
+/** Top N opciones (comer / dormir) cerca de un municipio, cacheadas 30 días. */
+export async function getPlaceOptions(
+  codigo_ine: string, kind: string, lat: number, lng: number, spec: SearchSpec, n = 4,
+): Promise<PlaceHit[]> {
+  if (!KEY || lat == null || lng == null) return [];
+  const cached = await listCacheRead(codigo_ine, kind);
+  if (cached !== undefined) return cached;
+  let list: PlaceHit[] = [];
+  try { list = await nearbyList(lat, lng, spec); } catch { /* ignore */ }
+  list = list.slice(0, n);
+  await listCacheWrite(codigo_ine, kind, list);
+  return list;
+}
+
+/** Índice de la opción más "modesta" (proxy de más barata) dentro de la lista. */
+export function modestIndex(list: PlaceHit[]): number {
+  if (list.length < 2) return 0;
+  const best = list[0];
+  const cands = list
+    .map((h, i) => ({ h, i }))
+    .filter(x => x.i > 0 && (x.h.rating ?? 0) >= 4.0 && (x.h.reviews ?? 0) >= 30 && (x.h.reviews ?? 0) < (best.reviews ?? 0));
+  if (!cands.length) return Math.min(1, list.length - 1);
+  cands.sort((a, b) => (a.h.reviews ?? 0) - (b.h.reviews ?? 0));
+  return cands[0].i;
+}

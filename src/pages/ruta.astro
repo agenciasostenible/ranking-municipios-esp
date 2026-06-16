@@ -4,7 +4,7 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { getCatInfo } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
-import { getPlace, getLodgingPair, PLACES_ENABLED } from '../lib/places';
+import { getPlace, getPlaceOptions, modestIndex, PLACES_ENABLED } from '../lib/places';
 
 // Categorías que tienen recurso real + descripción (las que dan rutas verídicas)
 const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
@@ -53,8 +53,19 @@ cats = [...new Set(cats.filter(k => RUTA_CATS.some(c => c.key === k)))];
 let prov = url.searchParams.get('prov') ?? '';
 const dias = Math.min(3, Math.max(1, parseInt(url.searchParams.get('dias') ?? '2')));
 
+// Ajustes de la ruta (filtros que regeneran)
+const pres = url.searchParams.get('pres') ?? '';          // 'eco' = económico
+const compacta = url.searchParams.get('compacta') === '1';// paradas más cercanas
+// Enlaces de la barra de ajustes: clonan la URL actual y fijan/quitan un parámetro
+function setParam(key: string, val: string | null) {
+  const p = new URLSearchParams(url.search);
+  if (val === null) p.delete(key); else p.set(key, val);
+  return '/ruta?' + p.toString();
+}
+
 // Ruta "por la zona": anclada a un municipio, con radio compacto.
 const ZONA_RADIO_KM = 55;
+const COMPACT_RADIO_KM = 45;
 const inicioCode = url.searchParams.get('inicio') ?? '';
 let anchor: any = null;
 if (inicioCode) {
@@ -117,8 +128,10 @@ if (selCfgs.length && prov) {
     }
   }
   let pool = [...byMuni.values()].sort((a, b) => b.puntuacion - a.puntuacion);
-  // Ruta por la zona: solo lo que esté dentro del radio del municipio ancla
-  if (anchor) pool = pool.filter(p => haversine(anchor, p) <= ZONA_RADIO_KM);
+  // Centro de la ruta: el municipio ancla; o, si se pide compacta, el mejor puntuado.
+  let seed: any = anchor;
+  if (!seed && compacta && pool.length) seed = pool[0];
+  if (seed) pool = pool.filter(p => haversine(seed, p) <= (anchor ? ZONA_RADIO_KM : COMPACT_RADIO_KM));
   const nStops = Math.min(pool.length, dias * 2 + 1); // 3 / 5 / 7
   const top = pool.slice(0, nStops);
 
@@ -149,9 +162,9 @@ if (selCfgs.length && prov) {
   // cercana a ella; si no, por la mejor puntuada.
   if (top.length) {
     let startIdx = 0;
-    if (anchor) {
+    if (seed) {
       let bd = Infinity;
-      for (let i = 0; i < top.length; i++) { const d = haversine(anchor, top[i]); if (d < bd) { bd = d; startIdx = i; } }
+      for (let i = 0; i < top.length; i++) { const d = haversine(seed, top[i]); if (d < bd) { bd = d; startIdx = i; } }
     }
     const used = new Set<number>(); const order: any[] = [];
     let cur = startIdx; used.add(startIdx); order.push(top[startIdx]);
@@ -234,13 +247,13 @@ if (selCfgs.length && prov) {
       await Promise.all(stops.map(async (s: any) => {
         const prof = CAT_PROFILE[s.catKey] ?? {};
 
-        // COMER: restaurante (con preferencia de categoría + red de seguridad)
+        // COMER: lista de restaurantes (para poder cambiar de sitio)
         const comerKw = prof.comer?.keyword;
         const comerSpec = { type: 'restaurant', radius: 7000, minReviews: 30, keyword: comerKw, softKeyword: true };
         const comerKind = 'comer' + (comerKw ? '_' + s.catKey : '');
         const comerP = s.catKey === 'gastronomia'
-          ? Promise.resolve(null)
-          : getPlace(s.codigo_ine, comerKind, s.latitud, s.longitud, comerSpec);
+          ? Promise.resolve([] as any[])
+          : getPlaceOptions(s.codigo_ine, comerKind, s.latitud, s.longitud, comerSpec, 4);
 
         // VISITAR: según perfil (null = ocultar; ausente = atracción genérica)
         const visCfg = ('visitar' in prof) ? prof.visitar : { type: 'tourist_attraction' };
@@ -254,20 +267,23 @@ if (selCfgs.length && prov) {
           visitarP = getPlace(s.codigo_ine, visKind, s.latitud, s.longitud, visSpec);
         }
 
-        // DORMIR: mejor hotel + una alternativa más modesta (preferencia de
-        // categoría + red de seguridad). Si la actividad ya es turismo rural, no repetimos.
+        // DORMIR: lista de alojamientos (para poder cambiar de sitio / más barato)
         const dormirKw = prof.dormir?.keyword;
         const dormirSpec = { type: 'lodging', radius: 9000, minReviews: 15, keyword: dormirKw, softKeyword: true };
         const dormirKind = 'dormir' + (dormirKw ? '_' + s.catKey : '');
         const dormirP = s.catKey === 'TurismoRural'
-          ? Promise.resolve({ best: null, alt: null })
-          : getLodgingPair(s.codigo_ine, dormirKind, s.latitud, s.longitud, dormirSpec);
+          ? Promise.resolve([] as any[])
+          : getPlaceOptions(s.codigo_ine, dormirKind, s.latitud, s.longitud, dormirSpec, 4);
 
-        const [gcomer, gvisitar, dormirPair] = await Promise.all([comerP, visitarP, dormirP]);
-        s.gcomer = gcomer;
+        const [comerList, gvisitar, dormirList] = await Promise.all([comerP, visitarP, dormirP]);
+        s.comerList = comerList;
+        s.dormirList = dormirList;
+        // Índice inicial: en presupuesto "económico", la opción más modesta
+        s.comerIdx  = pres === 'eco' ? modestIndex(comerList) : 0;
+        s.dormirIdx = pres === 'eco' ? modestIndex(dormirList) : 0;
+        s.comerCur  = comerList[s.comerIdx] ?? null;
+        s.dormirCur = dormirList[s.dormirIdx] ?? null;
         s.gvisitar = gvisitar;
-        s.gdormir = dormirPair.best;
-        s.gdormirAlt = dormirPair.alt;
       }));
     }
 
@@ -353,6 +369,19 @@ const title = selCfgs.length && prov
         <div class="rrh-meta">{stops.length} paradas · {dias} {dias===1?'día':'días'}{driveTotalMin > 0 ? ` · 🚗 ~${fmtDur(driveTotalMin)} en coche` : ` · ~${Math.round(totalKm)} km`}</div>
       </div>
 
+      <div class="ruta-tweaks">
+        <span class="rt-grp">
+          <span class="rt-label">💶 Presupuesto</span>
+          <a class={`rt-pill${pres!=='eco'?' on':''}`} href={setParam('pres', null)}>Cualquiera</a>
+          <a class={`rt-pill${pres==='eco'?' on':''}`} href={setParam('pres', 'eco')}>Económico</a>
+        </span>
+        <span class="rt-grp">
+          <span class="rt-label">🧭 Distancia</span>
+          <a class={`rt-pill${!compacta?' on':''}`} href={setParam('compacta', null)}>Normal</a>
+          <a class={`rt-pill${compacta?' on':''}`} href={setParam('compacta', '1')}>Compacta</a>
+        </span>
+      </div>
+
       <div id="ruta-map" class="ruta-map"></div>
 
       {dayPlan.map((day, di) => (
@@ -377,24 +406,23 @@ const title = selCfgs.length && prov
                     </div>
                   </div>
                 )}
-                {s.catKey !== 'gastronomia' && (s.gcomer
-                  ? <div class="rs-place">
-                      {s.gcomer.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gcomer.foto_ref)}`} alt={s.gcomer.nombre} loading="lazy" width="56" height="56" />}
+                {s.catKey !== 'gastronomia' && (s.comerCur
+                  ? <div class="rs-place rs-swap" data-emoji="🍽️" data-label="Comer" data-places={JSON.stringify(s.comerList)} data-idx={s.comerIdx}>
+                      <img class="rs-thumb" src={s.comerCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(s.comerCur.foto_ref)}` : ''} alt={s.comerCur.nombre} loading="lazy" width="56" height="56" style={s.comerCur.foto_ref ? '' : 'display:none'} />
                       <div class="rs-place-txt">
-                        <div class="rs-line">🍽️ Comer: <strong>{s.gcomer.nombre}</strong><span class="rs-star">★ {fmtRating(s.gcomer)}</span></div>
-                        {s.gcomer.foto_attr && <div class="rs-attr" set:html={s.gcomer.foto_attr}></div>}
+                        <div class="rs-line">🍽️ Comer: <strong class="rs-pname">{s.comerCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.comerCur)}</span>{s.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                        <div class="rs-attr rs-pattr" set:html={s.comerCur.foto_attr ?? ''}></div>
                       </div>
                     </div>
                   : s.comer
                   ? <div class="rs-line">🍽️ Comer: <strong>{s.comer.rec}</strong>{s.comer.mismo ? '' : ` · ${s.comer.nombre} (a ${s.comer.km} km)`}</div>
                   : <div class="rs-line rs-none">🍽️ Sin restaurante recomendado cerca</div>)}
-                {s.catKey !== 'TurismoRural' && (s.gdormir
-                  ? <div class="rs-place">
-                      {s.gdormir.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gdormir.foto_ref)}`} alt={s.gdormir.nombre} loading="lazy" width="56" height="56" />}
+                {s.catKey !== 'TurismoRural' && (s.dormirCur
+                  ? <div class="rs-place rs-swap" data-emoji="🛏️" data-label="Dormir" data-places={JSON.stringify(s.dormirList)} data-idx={s.dormirIdx}>
+                      <img class="rs-thumb" src={s.dormirCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(s.dormirCur.foto_ref)}` : ''} alt={s.dormirCur.nombre} loading="lazy" width="56" height="56" style={s.dormirCur.foto_ref ? '' : 'display:none'} />
                       <div class="rs-place-txt">
-                        <div class="rs-line">🛏️ Dormir: <strong>{s.gdormir.nombre}</strong><span class="rs-star">★ {fmtRating(s.gdormir)}</span></div>
-                        {s.gdormirAlt && <div class="rs-alt">u opción más sencilla: <strong>{s.gdormirAlt.nombre}</strong> <span class="rs-star">★ {fmtRating(s.gdormirAlt)}</span></div>}
-                        {s.gdormir.foto_attr && <div class="rs-attr" set:html={s.gdormir.foto_attr}></div>}
+                        <div class="rs-line">🛏️ Dormir: <strong class="rs-pname">{s.dormirCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.dormirCur)}</span>{s.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                        <div class="rs-attr rs-pattr" set:html={s.dormirCur.foto_attr ?? ''}></div>
                       </div>
                     </div>
                   : s.dormir
@@ -454,6 +482,34 @@ const title = selCfgs.length && prov
   </Fragment>
 )}
 
+<script>
+  // Cambiar de sitio (comer / dormir) sin recargar
+  function rsFmt(h) {
+    var r = Number(h.rating || 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    var n = h.reviews ? ' (' + Number(h.reviews).toLocaleString('es-ES') + ')' : '';
+    return '★ ' + r + n;
+  }
+  document.querySelectorAll('.rs-swap').forEach(function (box) {
+    var list;
+    try { list = JSON.parse(box.getAttribute('data-places') || '[]'); } catch (e) { return; }
+    var btn = box.querySelector('.rs-swap-btn');
+    if (!btn || list.length < 2) return;
+    btn.addEventListener('click', function () {
+      var idx = ((parseInt(box.getAttribute('data-idx'), 10) || 0) + 1) % list.length;
+      box.setAttribute('data-idx', String(idx));
+      var it = list[idx];
+      var name = box.querySelector('.rs-pname'); if (name) name.textContent = it.nombre;
+      var rat = box.querySelector('.rs-prating'); if (rat) rat.textContent = rsFmt(it);
+      var img = box.querySelector('.rs-thumb');
+      if (img) {
+        if (it.foto_ref) { img.src = '/api/place-photo?w=200&ref=' + encodeURIComponent(it.foto_ref); img.style.display = ''; img.alt = it.nombre; }
+        else { img.style.display = 'none'; }
+      }
+      var attr = box.querySelector('.rs-pattr'); if (attr) attr.innerHTML = it.foto_attr || '';
+    });
+  });
+</script>
+
 <style>
 .ruta-page { max-width: 640px; margin: 0 auto; padding: 28px 16px 60px; }
 .ruta-hero { text-align: center; margin-bottom: 22px; }
@@ -478,6 +534,11 @@ const title = selCfgs.length && prov
 .rf-go:hover { background: var(--primary-dark); }
 .ruta-empty { text-align: center; color: var(--text-2); font-size: .92rem; padding: 20px; }
 .ruta-result { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.ruta-tweaks { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 11px 16px; background: #fafafa; border-bottom: 1px solid #f0f0f0; align-items: center; }
+.rt-grp { display: inline-flex; align-items: center; gap: 6px; }
+.rt-label { font-size: .74rem; font-weight: 700; color: var(--text-2); margin-right: 2px; }
+.rt-pill { font-size: .77rem; font-weight: 600; color: var(--text-2); padding: 5px 11px; border: 1.5px solid var(--border); border-radius: 20px; text-decoration: none; }
+.rt-pill.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
 .ruta-map { height: 300px; width: 100%; z-index: 0; background: #e8eef0; }
 :global(.ruta-marker span) { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font-weight: 700; font-size: .8rem; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
 .ruta-result-head { color: #fff; padding: 18px 20px; }
@@ -499,6 +560,8 @@ const title = selCfgs.length && prov
 .rs-line { font-size: .85rem; color: var(--text); margin-top: 4px; }
 .rs-star { color: #e8a200; font-weight: 700; margin-left: 7px; font-size: .8rem; white-space: nowrap; }
 .rs-alt { font-size: .8rem; color: var(--text-2); margin-top: 2px; }
+.rs-swap-btn { margin-left: 8px; font-size: .72rem; font-weight: 700; color: var(--primary); background: #fff1f3; border: 1px solid rgba(255,56,92,.25); border-radius: 14px; padding: 2px 9px; cursor: pointer; white-space: nowrap; }
+.rs-swap-btn:hover { background: var(--primary); color: #fff; }
 .rs-place { display: flex; gap: 10px; align-items: flex-start; margin-top: 4px; }
 .rs-thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg); }
 .rs-place-txt { flex: 1; min-width: 0; }
