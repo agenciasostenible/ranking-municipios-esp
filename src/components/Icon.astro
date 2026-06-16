@@ -3,7 +3,7 @@ import { Trophy, Landmark, PartyPopper, TreePine, Footprints, Utensils, Tent,
   Waves, Users, Mountain, House, Moon, Castle, Shovel, Building2, Building,
   Music2, Star, Droplet, Wine, Umbrella, Binoculars, Bird, Bike, Fish,
   Heart, Backpack, Diamond, Accessibility, Flower2, Bath, Church, Store,
-  ShoppingBasket, Leaf, Flame, Eye, SunMoon, Sparkles, Rainbow, PawPrint } from 'lucide-astro';
+  ShoppingBasket, Leaf, Flame, Eye, SunMoon, Sparkles, Rainbow, PawPrint, TrendingUp } from 'lucide-astro';
 
 interface Props { name: string; size?: number; class?: string; }
 const { name, size = 22, class: cls = '' } = Astro.props;
@@ -29,6 +29,7 @@ const MAP: Record<string, any> = {
   auto_awesome:    Sparkles,
   rainbow:         Rainbow,
   pets:            PawPrint,
+  trending_up:     TrendingUp,
   star:            Star,
   opacity:         Droplet,
   wine_bar:        Wine,
