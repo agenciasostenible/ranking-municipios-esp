@@ -308,9 +308,10 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
       .hamburger { display: flex; }
       .mob-search-band { display: block; }
       .header-search { display: none; }
-      /* En móvil, los enlaces van en el menú hamburguesa: ocultamos las
-         pastillas inline para que no se corten ni empujen el menú fuera. */
-      .header-nav { display: none; }
+      /* En móvil dejamos solo "Comparar municipios" (no sale en otro sitio);
+         "Rankings" y "Planifica tu ruta" van en el menú hamburguesa. */
+      .header-nav .nav-link:first-child,
+      .header-nav .nav-link:nth-child(2) { display: none; }
       .header-inner { gap: 10px; }
     }
 
