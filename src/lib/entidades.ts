@@ -17,6 +17,7 @@ export const TIPO_ICONS: Record<string, string> = {
   mascotas:   '🐾',
   activo:     '🧗',
   oleoturismo:'🫒',
+  rural:      '🏡',
 };
 
 export const TIPO_LABEL: Record<string, string> = {
@@ -38,6 +39,7 @@ export const TIPO_LABEL: Record<string, string> = {
   mascotas:   'Turismo con mascotas',
   activo:     'Turismo activo',
   oleoturismo:'Oleoturismo',
+  rural:      'Turismo rural',
 };
 
 export const SELLO_COLORS: Record<string, { bg: string; color: string }> = {
