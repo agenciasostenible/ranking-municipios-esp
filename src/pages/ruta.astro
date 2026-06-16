@@ -423,7 +423,8 @@ const title = selCfgs.length && prov
         if (!window.L || !mapData.length) return;
         var el = document.getElementById('ruta-map');
         if (!el) return;
-        var map = L.map(el, { scrollWheelZoom: false });
+        // Vista inicial razonable para que el mapa nunca arranque "perdido"
+        var map = L.map(el, { scrollWheelZoom: false }).setView([mapData[0].lat, mapData[0].lng], 9);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap', maxZoom: 18,
         }).addTo(map);
@@ -438,7 +439,16 @@ const title = selCfgs.length && prov
           L.marker([p.lat, p.lng], { icon: icon }).addTo(map)
             .bindPopup('<b>' + p.n + '. ' + p.nombre + '</b>');
         });
-        map.fitBounds(pts, { padding: [30, 30], maxZoom: 12 });
+        // Recalcular tamaño y reencuadrar: evita el render erróneo en móvil
+        // (Leaflet se inicia antes de que el contenedor/CSS tengan medidas).
+        function fit() {
+          map.invalidateSize();
+          map.fitBounds(pts, { padding: [30, 30], maxZoom: 12 });
+        }
+        fit();
+        setTimeout(fit, 250);
+        setTimeout(fit, 800);
+        window.addEventListener('load', fit);
       })();
     </script>
   </Fragment>
