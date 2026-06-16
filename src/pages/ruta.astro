@@ -4,7 +4,7 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { getCatInfo } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
-import { getPlace, PLACES_ENABLED } from '../lib/places';
+import { getPlace, getLodgingPair, PLACES_ENABLED } from '../lib/places';
 
 // Categorías que tienen recurso real + descripción (las que dan rutas verídicas)
 const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
@@ -50,8 +50,24 @@ const url = Astro.url;
 // Multi-categoría: acepta varios ?cat=... (y ?cat=a,b). Compatible con uno solo.
 let cats = url.searchParams.getAll('cat').flatMap(v => v.split(','));
 cats = [...new Set(cats.filter(k => RUTA_CATS.some(c => c.key === k)))];
-const prov = url.searchParams.get('prov') ?? '';
+let prov = url.searchParams.get('prov') ?? '';
 const dias = Math.min(3, Math.max(1, parseInt(url.searchParams.get('dias') ?? '2')));
+
+// Ruta "por la zona": anclada a un municipio, con radio compacto.
+const ZONA_RADIO_KM = 55;
+const inicioCode = url.searchParams.get('inicio') ?? '';
+let anchor: any = null;
+if (inicioCode) {
+  anchor = await DB.prepare(
+    `SELECT codigo_ine, nombre, provincia, latitud, longitud FROM municipios
+      WHERE codigo_ine=? AND latitud IS NOT NULL LIMIT 1`
+  ).bind(inicioCode).first();
+  if (anchor) {
+    prov = anchor.provincia;                       // la zona = su provincia
+    if (!cats.length) cats = RUTA_CATS.map(c => c.key); // lo mejor de todo alrededor
+  }
+}
+
 const selCfgs = RUTA_CATS.filter(c => cats.includes(c.key));
 const tipoByCat:  Record<string,string> = Object.fromEntries(selCfgs.map(c => [c.key, c.tipo]));
 const labelByCat: Record<string,string> = Object.fromEntries(selCfgs.map(c => [c.key, c.label]));
@@ -100,7 +116,9 @@ if (selCfgs.length && prov) {
       });
     }
   }
-  const pool = [...byMuni.values()].sort((a, b) => b.puntuacion - a.puntuacion);
+  let pool = [...byMuni.values()].sort((a, b) => b.puntuacion - a.puntuacion);
+  // Ruta por la zona: solo lo que esté dentro del radio del municipio ancla
+  if (anchor) pool = pool.filter(p => haversine(anchor, p) <= ZONA_RADIO_KM);
   const nStops = Math.min(pool.length, dias * 2 + 1); // 3 / 5 / 7
   const top = pool.slice(0, nStops);
 
@@ -127,10 +145,16 @@ if (selCfgs.length && prov) {
     }
   }
 
-  // Ruta por vecino más cercano partiendo del mejor puntuado
+  // Ruta por vecino más cercano. Si hay ancla, empezamos por la parada más
+  // cercana a ella; si no, por la mejor puntuada.
   if (top.length) {
+    let startIdx = 0;
+    if (anchor) {
+      let bd = Infinity;
+      for (let i = 0; i < top.length; i++) { const d = haversine(anchor, top[i]); if (d < bd) { bd = d; startIdx = i; } }
+    }
     const used = new Set<number>(); const order: any[] = [];
-    let cur = 0; used.add(0); order.push(top[0]);
+    let cur = startIdx; used.add(startIdx); order.push(top[startIdx]);
     while (order.length < top.length) {
       let best = -1, bd = Infinity;
       for (let i = 0; i < top.length; i++) {
@@ -230,19 +254,20 @@ if (selCfgs.length && prov) {
           visitarP = getPlace(s.codigo_ine, visKind, s.latitud, s.longitud, visSpec);
         }
 
-        // DORMIR: hotel/alojamiento (preferencia de categoría + red de seguridad).
-        // Si la actividad ya es turismo rural, no repetimos.
+        // DORMIR: mejor hotel + una alternativa más modesta (preferencia de
+        // categoría + red de seguridad). Si la actividad ya es turismo rural, no repetimos.
         const dormirKw = prof.dormir?.keyword;
         const dormirSpec = { type: 'lodging', radius: 9000, minReviews: 15, keyword: dormirKw, softKeyword: true };
         const dormirKind = 'dormir' + (dormirKw ? '_' + s.catKey : '');
         const dormirP = s.catKey === 'TurismoRural'
-          ? Promise.resolve(null)
-          : getPlace(s.codigo_ine, dormirKind, s.latitud, s.longitud, dormirSpec);
+          ? Promise.resolve({ best: null, alt: null })
+          : getLodgingPair(s.codigo_ine, dormirKind, s.latitud, s.longitud, dormirSpec);
 
-        const [gcomer, gvisitar, gdormir] = await Promise.all([comerP, visitarP, dormirP]);
+        const [gcomer, gvisitar, dormirPair] = await Promise.all([comerP, visitarP, dormirP]);
         s.gcomer = gcomer;
         s.gvisitar = gvisitar;
-        s.gdormir = gdormir;
+        s.gdormir = dormirPair.best;
+        s.gdormirAlt = dormirPair.alt;
       }));
     }
 
@@ -273,8 +298,10 @@ const selLabels = selCfgs.map(c => c.label);
 const catTitle = selLabels.length <= 2
   ? selLabels.join(' y ')
   : `${selLabels.slice(0, 2).join(', ')} y ${selLabels.length - 2} más`;
+// Encabezado: "por la zona de X" si hay ancla, si no "{cats} por {provincia}"
+const routeHeading = anchor ? `Lo mejor por la zona de ${anchor.nombre}` : `${catTitle} por ${prov}`;
 const title = selCfgs.length && prov
-  ? `Ruta de ${catTitle} por ${prov} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
+  ? `Ruta · ${routeHeading} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
   : 'Planifica tu ruta — Ranking Spain';
 ---
 <Base title={title} description="Genera una ruta de viaje real basada en datos verificados de Ranking Spain.">
@@ -313,14 +340,16 @@ const title = selCfgs.length && prov
   </form>
 
   {selCfgs.length > 0 && prov && stops.length === 0 && (
-    <p class="ruta-empty">No tenemos suficientes datos de {catTitle} en {prov} para montar una ruta. Prueba otra provincia o experiencia.</p>
+    <p class="ruta-empty">{anchor
+      ? `No tenemos suficientes sitios cerca de ${anchor.nombre} para montar una ruta por la zona. Prueba el planificador eligiendo provincia y experiencias.`
+      : `No tenemos suficientes datos de ${catTitle} en ${prov} para montar una ruta. Prueba otra provincia o experiencia.`}</p>
   )}
 
   {selCfgs.length > 0 && prov && stops.length > 0 && (
     <div class="ruta-result">
       <div class="ruta-result-head" style={`background:${headColor}`}>
         <div class="rrh-eyebrow">Ruta a medida · Ranking Spain</div>
-        <div class="rrh-title"><Icon name={infoByCat[selCfgs[0].key].icon} size={22} /> {catTitle} por {prov}</div>
+        <div class="rrh-title"><Icon name={anchor ? 'map' : infoByCat[selCfgs[0].key].icon} size={22} /> {routeHeading}</div>
         <div class="rrh-meta">{stops.length} paradas · {dias} {dias===1?'día':'días'}{driveTotalMin > 0 ? ` · 🚗 ~${fmtDur(driveTotalMin)} en coche` : ` · ~${Math.round(totalKm)} km`}</div>
       </div>
 
@@ -364,6 +393,7 @@ const title = selCfgs.length && prov
                       {s.gdormir.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gdormir.foto_ref)}`} alt={s.gdormir.nombre} loading="lazy" width="56" height="56" />}
                       <div class="rs-place-txt">
                         <div class="rs-line">🛏️ Dormir: <strong>{s.gdormir.nombre}</strong><span class="rs-star">★ {fmtRating(s.gdormir)}</span></div>
+                        {s.gdormirAlt && <div class="rs-alt">u opción más sencilla: <strong>{s.gdormirAlt.nombre}</strong> <span class="rs-star">★ {fmtRating(s.gdormirAlt)}</span></div>}
                         {s.gdormir.foto_attr && <div class="rs-attr" set:html={s.gdormir.foto_attr}></div>}
                       </div>
                     </div>
@@ -458,6 +488,7 @@ const title = selCfgs.length && prov
 .rs-desc { font-size: .82rem; color: var(--text-2); margin-top: 3px; line-height: 1.45; }
 .rs-line { font-size: .85rem; color: var(--text); margin-top: 4px; }
 .rs-star { color: #e8a200; font-weight: 700; margin-left: 7px; font-size: .8rem; white-space: nowrap; }
+.rs-alt { font-size: .8rem; color: var(--text-2); margin-top: 2px; }
 .rs-place { display: flex; gap: 10px; align-items: flex-start; margin-top: 4px; }
 .rs-thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg); }
 .rs-place-txt { flex: 1; min-width: 0; }

@@ -73,37 +73,7 @@ export async function fetchPlacePhoto(ref: string, maxwidth = 600): Promise<Resp
   return res;
 }
 
-async function nearbyOnce(lat: number, lng: number, spec: SearchSpec, useKeyword: boolean): Promise<PlaceHit | null> {
-  const u = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
-  u.searchParams.set('location', `${lat},${lng}`);
-  u.searchParams.set('radius', String(spec.radius ?? 9000));
-  u.searchParams.set('type', spec.type);
-  if (useKeyword && spec.keyword) u.searchParams.set('keyword', spec.keyword);
-  u.searchParams.set('language', 'es');
-  u.searchParams.set('key', KEY as string);
-
-  const res = await fetch(u.toString());
-  if (!res.ok) return null;
-  const data: any = await res.json();
-  if (data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-    // p.ej. REQUEST_DENIED / OVER_QUERY_LIMIT → no rompemos la ruta
-    return null;
-  }
-  let arr: any[] = (data.results ?? []).filter(
-    (r: any) => r.business_status !== 'CLOSED_PERMANENTLY' && r.rating,
-  );
-  // Descartar tipos no aptos para la categoría (p.ej. iglesias en rutas con perro)
-  if (spec.excludeTypes?.length) {
-    arr = arr.filter((r: any) => !(r.types ?? []).some((t: string) => spec.excludeTypes!.includes(t)));
-  }
-  if (!arr.length) return null;
-
-  // Preferimos sitios con un mínimo de reseñas; si ninguno llega, usamos todos.
-  const min = spec.minReviews ?? 20;
-  const conReseñas = arr.filter((r) => (r.user_ratings_total ?? 0) >= min);
-  const pool = conReseñas.length ? conReseñas : arr;
-  pool.sort((a, b) => score(b) - score(a));
-  const r = pool[0];
+function toHit(r: any): PlaceHit {
   const photo = r.photos?.[0];
   return {
     place_id: r.place_id,
@@ -118,12 +88,49 @@ async function nearbyOnce(lat: number, lng: number, spec: SearchSpec, useKeyword
   };
 }
 
-async function nearbySearch(lat: number, lng: number, spec: SearchSpec): Promise<PlaceHit | null> {
-  const hit = await nearbyOnce(lat, lng, spec, true);
-  if (hit) return hit;
+// Lista de candidatos ordenados por valoración ponderada (mejor primero)
+async function nearbyListOnce(lat: number, lng: number, spec: SearchSpec, useKeyword: boolean): Promise<PlaceHit[]> {
+  const u = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
+  u.searchParams.set('location', `${lat},${lng}`);
+  u.searchParams.set('radius', String(spec.radius ?? 9000));
+  u.searchParams.set('type', spec.type);
+  if (useKeyword && spec.keyword) u.searchParams.set('keyword', spec.keyword);
+  u.searchParams.set('language', 'es');
+  u.searchParams.set('key', KEY as string);
+
+  const res = await fetch(u.toString());
+  if (!res.ok) return [];
+  const data: any = await res.json();
+  if (data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+    // p.ej. REQUEST_DENIED / OVER_QUERY_LIMIT → no rompemos la ruta
+    return [];
+  }
+  let arr: any[] = (data.results ?? []).filter(
+    (r: any) => r.business_status !== 'CLOSED_PERMANENTLY' && r.rating,
+  );
+  // Descartar tipos no aptos para la categoría (p.ej. iglesias en rutas con perro)
+  if (spec.excludeTypes?.length) {
+    arr = arr.filter((r: any) => !(r.types ?? []).some((t: string) => spec.excludeTypes!.includes(t)));
+  }
+  if (!arr.length) return [];
+
+  // Preferimos sitios con un mínimo de reseñas; si ninguno llega, usamos todos.
+  const min = spec.minReviews ?? 20;
+  const conReseñas = arr.filter((r) => (r.user_ratings_total ?? 0) >= min);
+  const pool = conReseñas.length ? conReseñas : arr;
+  pool.sort((a, b) => score(b) - score(a));
+  return pool.map(toHit);
+}
+
+async function nearbyList(lat: number, lng: number, spec: SearchSpec): Promise<PlaceHit[]> {
+  let list = await nearbyListOnce(lat, lng, spec, true);
   // Red de seguridad: si con keyword no hubo resultado, reintentar sin él
-  if (spec.keyword && spec.softKeyword) return nearbyOnce(lat, lng, spec, false);
-  return null;
+  if (!list.length && spec.keyword && spec.softKeyword) list = await nearbyListOnce(lat, lng, spec, false);
+  return list;
+}
+
+async function nearbySearch(lat: number, lng: number, spec: SearchSpec): Promise<PlaceHit | null> {
+  return (await nearbyList(lat, lng, spec))[0] ?? null;
 }
 
 /**
@@ -132,40 +139,24 @@ async function nearbySearch(lat: number, lng: number, spec: SearchSpec): Promise
  * "visitar_turismo_mascotas") para no mezclar resultados entre experiencias.
  * Cachea en D1 (incluida la "ausencia de resultado") y refresca a los 30 días.
  */
-export async function getPlace(
-  codigo_ine: string,
-  kind: string,
-  lat: number,
-  lng: number,
-  spec: SearchSpec,
-): Promise<PlaceHit | null> {
-  if (!KEY || lat == null || lng == null) return null;
-
-  // 1) Caché viva (< 30 días)
+// Lee caché viva (<30d). undefined = no hay fila; null = cacheado "sin resultado".
+async function cacheRead(codigo_ine: string, kind: string): Promise<PlaceHit | null | undefined> {
   try {
-    const cached = await DB.prepare(
+    const c = await DB.prepare(
       `SELECT place_id, nombre, rating, reviews, lat, lng, direccion, foto_ref, foto_attr
          FROM places_cache
         WHERE codigo_ine = ? AND kind = ?
           AND fetched_at > datetime('now', '-30 days')
         ORDER BY fetched_at DESC LIMIT 1`,
     ).bind(codigo_ine, kind).first();
-    if (cached) {
-      return cached.place_id === '__none__' ? null : (cached as PlaceHit);
-    }
+    if (!c) return undefined;
+    return c.place_id === '__none__' ? null : (c as PlaceHit);
   } catch {
-    /* si la tabla aún no existe, seguimos a Google */
+    return undefined;
   }
+}
 
-  // 2) Consulta a Google
-  let hit: PlaceHit | null = null;
-  try {
-    hit = await nearbySearch(lat, lng, spec);
-  } catch {
-    return null;
-  }
-
-  // 3) Guardar en caché (una sola fila por municipio+kind)
+async function cacheWrite(codigo_ine: string, kind: string, hit: PlaceHit | null): Promise<void> {
   try {
     await DB.prepare(`DELETE FROM places_cache WHERE codigo_ine = ? AND kind = ?`)
       .bind(codigo_ine, kind).run();
@@ -176,18 +167,58 @@ export async function getPlace(
     ).bind(
       codigo_ine, kind,
       hit ? hit.place_id : '__none__',
-      hit?.nombre ?? null,
-      hit?.rating ?? null,
-      hit?.reviews ?? null,
-      hit?.lat ?? null,
-      hit?.lng ?? null,
-      hit?.direccion ?? null,
-      hit?.foto_ref ?? null,
-      hit?.foto_attr ?? null,
+      hit?.nombre ?? null, hit?.rating ?? null, hit?.reviews ?? null,
+      hit?.lat ?? null, hit?.lng ?? null, hit?.direccion ?? null,
+      hit?.foto_ref ?? null, hit?.foto_attr ?? null,
     ).run();
-  } catch {
-    /* si falla la escritura de caché, devolvemos igualmente el resultado */
-  }
+  } catch { /* si falla la escritura, devolvemos igual el resultado */ }
+}
 
+export async function getPlace(
+  codigo_ine: string,
+  kind: string,
+  lat: number,
+  lng: number,
+  spec: SearchSpec,
+): Promise<PlaceHit | null> {
+  if (!KEY || lat == null || lng == null) return null;
+  const cached = await cacheRead(codigo_ine, kind);
+  if (cached !== undefined) return cached;
+  let hit: PlaceHit | null = null;
+  try { hit = await nearbySearch(lat, lng, spec); } catch { return null; }
+  await cacheWrite(codigo_ine, kind, hit);
   return hit;
+}
+
+// Alternativa "más modesta": mejor valorada entre las que NO son la primera y
+// tienen menos reseñas que ella (los sitios pequeños suelen ser más asequibles).
+function pickAlt(list: PlaceHit[], best: PlaceHit | null): PlaceHit | null {
+  if (!best || list.length < 2) return null;
+  const rest = list.filter(h => h.place_id !== best.place_id && (h.rating ?? 0) >= 4.0 && (h.reviews ?? 0) >= 30);
+  const modest = rest.filter(h => (h.reviews ?? 0) < (best.reviews ?? 0));
+  const pool = modest.length ? modest : rest;
+  pool.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || (a.reviews ?? 0) - (b.reviews ?? 0));
+  return pool[0] ?? list.find(h => h.place_id !== best.place_id) ?? null;
+}
+
+/**
+ * Mejor alojamiento + una alternativa más modesta, de una sola consulta.
+ * Cachea ambas filas (kind y kind#alt) y refresca a los 30 días.
+ */
+export async function getLodgingPair(
+  codigo_ine: string, kind: string, lat: number, lng: number, spec: SearchSpec,
+): Promise<{ best: PlaceHit | null; alt: PlaceHit | null }> {
+  if (!KEY || lat == null || lng == null) return { best: null, alt: null };
+  const cb = await cacheRead(codigo_ine, kind);
+  if (cb !== undefined) {
+    const ca = await cacheRead(codigo_ine, kind + '#alt');
+    return { best: cb, alt: ca === undefined ? null : ca };
+  }
+  let list: PlaceHit[] = [];
+  try { list = await nearbyList(lat, lng, spec); } catch { /* ignore */ }
+  const best = list[0] ?? null;
+  const alt = pickAlt(list, best);
+  await cacheWrite(codigo_ine, kind, best);
+  await cacheWrite(codigo_ine, kind + '#alt', alt);
+  return { best, alt };
 }

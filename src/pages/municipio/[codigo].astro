@@ -268,6 +268,10 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
       )}
     </div>
     <div class="mun-hero-ctas">
+      <a href={`/ruta?inicio=${codigo}`} class="mun-route-cta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
+        Crear ruta por esta zona
+      </a>
       <a href={`/comparar?a=${codigo}`} class="mun-compare-cta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
         Comparar {municipio.nombre} con otro municipio
@@ -786,6 +790,15 @@ window.openSello = openSello;
   transition: transform .12s, box-shadow .12s;
 }
 .mun-compare-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.24); }
+.mun-route-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--primary); color: #fff;
+  font-weight: 700; font-size: .9rem;
+  padding: 11px 18px; border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+  transition: transform .12s, box-shadow .12s;
+}
+.mun-route-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.24); background: var(--primary-dark); }
 .mun-share-cta {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--primary); color: #fff;
