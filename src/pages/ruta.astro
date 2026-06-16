@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { getCatInfo } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
+import { getPlace, PLACES_ENABLED } from '../lib/places';
 
 // Categorías que tienen recurso real + descripción (las que dan rutas verídicas)
 const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
@@ -114,12 +115,31 @@ if (catCfg && prov) {
       s.comer  = (cat === 'gastronomia') ? null : nearestWithData(gastroOpts, s);
     }
 
+    // Enriquecimiento con Google Places: mejor sitio para comer y qué visitar
+    // en cada parada (rating + nº de reseñas). Solo si hay clave configurada.
+    if (PLACES_ENABLED) {
+      await Promise.all(stops.map(async (s: any) => {
+        const [gcomer, gvisitar] = await Promise.all([
+          cat === 'gastronomia' ? Promise.resolve(null) : getPlace(s.codigo_ine, 'comer', s.latitud, s.longitud),
+          getPlace(s.codigo_ine, 'visitar', s.latitud, s.longitud),
+        ]);
+        s.gcomer = gcomer;
+        s.gvisitar = gvisitar;
+      }));
+    }
+
     // Repartir en días (equitativo, secuencial)
     const per = Math.ceil(stops.length / dias);
     for (let d = 0; d < dias; d++) dayPlan.push(stops.slice(d*per, (d+1)*per));
     dayPlan = dayPlan.filter(d => d.length);
   }
 }
+
+const fmtRating = (h: any) => {
+  const r = Number(h?.rating ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const n = h?.reviews ? ` (${Number(h.reviews).toLocaleString('es-ES')})` : '';
+  return `${r}${n}`;
+};
 
 const title = catCfg && prov
   ? `Ruta de ${catCfg.label} por ${prov} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
@@ -129,7 +149,7 @@ const title = catCfg && prov
 <div class="ruta-page">
   <div class="ruta-hero">
     <h1>🗺️ Planifica tu ruta</h1>
-    <p>Elige <strong>qué hacer</strong> y una provincia. Te montamos una ruta <strong>real</strong> y en cada parada te decimos <strong>dónde comer</strong> (gastronomía) y <strong>dónde dormir</strong> (turismo rural). Solo sitios de nuestro inventario verificado.</p>
+    <p>Elige <strong>qué hacer</strong> y una provincia. Te montamos una ruta <strong>real</strong> y en cada parada te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google en cada sitio.</p>
   </div>
 
   <form class="ruta-form" method="get">
@@ -178,9 +198,14 @@ const title = catCfg && prov
                 <span class="rs-score" style={`color:${catColor}`}>{Math.round(s.puntuacion)}/100</span>
                 {s.recurso && <div class="rs-rec">🎯 Hacer: <strong>{s.recurso}</strong></div>}
                 {s.recurso_desc && <div class="rs-desc">{String(s.recurso_desc).slice(0,150)}{String(s.recurso_desc).length>150?'…':''}</div>}
-                {cat !== 'gastronomia' && (s.comer
+                {s.gvisitar && cat !== 'monumentos' && cat !== 'castillos' && (
+                  <div class="rs-line">👁️ Visitar: <strong>{s.gvisitar.nombre}</strong><span class="rs-star">★ {fmtRating(s.gvisitar)}</span></div>
+                )}
+                {cat !== 'gastronomia' && (s.gcomer
+                  ? <div class="rs-line">🍽️ Comer: <strong>{s.gcomer.nombre}</strong><span class="rs-star">★ {fmtRating(s.gcomer)}</span></div>
+                  : s.comer
                   ? <div class="rs-line">🍽️ Comer: <strong>{s.comer.rec}</strong>{s.comer.mismo ? '' : ` · ${s.comer.nombre} (a ${s.comer.km} km)`}</div>
-                  : <div class="rs-line rs-none">🍽️ Sin gastronomía verificada cerca</div>)}
+                  : <div class="rs-line rs-none">🍽️ Sin restaurante recomendado cerca</div>)}
                 {cat !== 'TurismoRural' && (s.dormir
                   ? <div class="rs-line">🛏️ Dormir: <strong>{s.dormir.rec}</strong>{s.dormir.mismo ? '' : ` · ${s.dormir.nombre} (a ${s.dormir.km} km)`}</div>
                   : <div class="rs-line rs-none">🛏️ Sin turismo rural verificado cerca</div>)}
@@ -189,7 +214,7 @@ const title = catCfg && prov
           ))}
         </div>
       ))}
-      <div class="ruta-foot">Todos los lugares provienen del inventario verificado de Ranking Spain. Sin datos inventados.</div>
+      <div class="ruta-foot">Ruta basada en el inventario verificado de Ranking Spain. Restaurantes y sitios para visitar, con su valoración, vía Google. Datos reales, sin inventar.</div>
     </div>
   )}
 </div>
@@ -227,6 +252,7 @@ const title = catCfg && prov
 .rs-rec { font-size: .88rem; color: var(--text); margin-top: 3px; }
 .rs-desc { font-size: .82rem; color: var(--text-2); margin-top: 3px; line-height: 1.45; }
 .rs-line { font-size: .85rem; color: var(--text); margin-top: 4px; }
+.rs-star { color: #e8a200; font-weight: 700; margin-left: 7px; font-size: .8rem; white-space: nowrap; }
 .rs-none { color: #bbb; font-style: italic; }
 .ruta-foot { background: #fafafa; padding: 11px 20px; font-size: .74rem; color: #999; }
 @media (max-width: 560px) { .rf-field { flex: 1 1 100%; } }

@@ -1,0 +1,146 @@
+/**
+ * places.ts
+ * ---------
+ * Enriquecimiento de rutas con Google Places (API legacy "Nearby Search").
+ *
+ * Reglas de uso (importante, cumple los Términos de Servicio de Google):
+ *  - Solo se consulta bajo demanda: las pocas paradas de una ruta real,
+ *    nunca se pre-puebla España entera.
+ *  - El resultado se cachea en D1 (tabla places_cache) y se REFRESCA cada
+ *    30 días. Google permite cachear place_id indefinidamente y el resto
+ *    del contenido un máximo de 30 días.
+ *
+ * Variable de entorno necesaria:
+ *   GOOGLE_PLACES_API_KEY — clave restringida solo a "Places API".
+ */
+import { DB } from './d1client';
+
+const KEY =
+  (import.meta as any).env?.GOOGLE_PLACES_API_KEY ??
+  (typeof process !== 'undefined' ? process.env.GOOGLE_PLACES_API_KEY : undefined);
+
+/** true si hay clave configurada; si es false, las rutas funcionan igual sin Google. */
+export const PLACES_ENABLED = !!KEY;
+
+export type PlaceHit = {
+  place_id: string;
+  nombre: string;
+  rating: number | null;
+  reviews: number | null;
+  lat: number | null;
+  lng: number | null;
+  direccion: string | null;
+};
+
+export type PlaceKind = 'comer' | 'visitar';
+
+// Configuración por tipo de parada
+const CFG: Record<PlaceKind, { type: string; radius: number; minReviews: number }> = {
+  comer:   { type: 'restaurant',         radius: 7000,  minReviews: 30 },
+  visitar: { type: 'tourist_attraction', radius: 12000, minReviews: 15 },
+};
+
+// Puntuación: valoración ponderada por nº de reseñas (evita 5,0 con 3 reseñas).
+function score(r: any): number {
+  const rating = r.rating ?? 0;
+  const n = r.user_ratings_total ?? 0;
+  return rating * Math.log10(n + 1);
+}
+
+async function nearbySearch(lat: number, lng: number, kind: PlaceKind): Promise<PlaceHit | null> {
+  const cfg = CFG[kind];
+  const u = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
+  u.searchParams.set('location', `${lat},${lng}`);
+  u.searchParams.set('radius', String(cfg.radius));
+  u.searchParams.set('type', cfg.type);
+  u.searchParams.set('language', 'es');
+  u.searchParams.set('key', KEY as string);
+
+  const res = await fetch(u.toString());
+  if (!res.ok) return null;
+  const data: any = await res.json();
+  if (data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+    // p.ej. REQUEST_DENIED / OVER_QUERY_LIMIT → no rompemos la ruta
+    return null;
+  }
+  let arr: any[] = (data.results ?? []).filter(
+    (r: any) => r.business_status !== 'CLOSED_PERMANENTLY' && r.rating,
+  );
+  if (!arr.length) return null;
+
+  // Preferimos sitios con un mínimo de reseñas; si ninguno llega, usamos todos.
+  const conReseñas = arr.filter((r) => (r.user_ratings_total ?? 0) >= cfg.minReviews);
+  const pool = conReseñas.length ? conReseñas : arr;
+  pool.sort((a, b) => score(b) - score(a));
+  const r = pool[0];
+  return {
+    place_id: r.place_id,
+    nombre: r.name,
+    rating: r.rating ?? null,
+    reviews: r.user_ratings_total ?? null,
+    lat: r.geometry?.location?.lat ?? null,
+    lng: r.geometry?.location?.lng ?? null,
+    direccion: r.vicinity ?? null,
+  };
+}
+
+/**
+ * Mejor sitio para comer / visitar cerca de un municipio.
+ * Cachea en D1 (incluida la "ausencia de resultado") y refresca a los 30 días.
+ */
+export async function getPlace(
+  codigo_ine: string,
+  kind: PlaceKind,
+  lat: number,
+  lng: number,
+): Promise<PlaceHit | null> {
+  if (!KEY || lat == null || lng == null) return null;
+
+  // 1) Caché viva (< 30 días)
+  try {
+    const cached = await DB.prepare(
+      `SELECT place_id, nombre, rating, reviews, lat, lng, direccion
+         FROM places_cache
+        WHERE codigo_ine = ? AND kind = ?
+          AND fetched_at > datetime('now', '-30 days')
+        ORDER BY fetched_at DESC LIMIT 1`,
+    ).bind(codigo_ine, kind).first();
+    if (cached) {
+      return cached.place_id === '__none__' ? null : (cached as PlaceHit);
+    }
+  } catch {
+    /* si la tabla aún no existe, seguimos a Google */
+  }
+
+  // 2) Consulta a Google
+  let hit: PlaceHit | null = null;
+  try {
+    hit = await nearbySearch(lat, lng, kind);
+  } catch {
+    return null;
+  }
+
+  // 3) Guardar en caché (una sola fila por municipio+kind)
+  try {
+    await DB.prepare(`DELETE FROM places_cache WHERE codigo_ine = ? AND kind = ?`)
+      .bind(codigo_ine, kind).run();
+    await DB.prepare(
+      `INSERT INTO places_cache
+         (codigo_ine, kind, place_id, nombre, rating, reviews, lat, lng, direccion)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(
+      codigo_ine, kind,
+      hit ? hit.place_id : '__none__',
+      hit?.nombre ?? null,
+      hit?.rating ?? null,
+      hit?.reviews ?? null,
+      hit?.lat ?? null,
+      hit?.lng ?? null,
+      hit?.direccion ?? null,
+    ).run();
+  } catch {
+    /* si falla la escritura de caché, devolvemos igualmente el resultado */
+  }
+
+  return hit;
+}
