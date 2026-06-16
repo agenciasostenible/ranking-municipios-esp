@@ -28,6 +28,21 @@ const { results: ccaas } = await DB.prepare(
 const totalRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios`).first();
 const total = totalRow?.n ?? 0;
 
+// Experiencias del planificador de rutas (mismas claves que /ruta)
+const ROUTE_EXP = [
+  { key: 'monumentos',        icon: 'account_balance', label: 'Monumentos' },
+  { key: 'castillos',         icon: 'castle',          label: 'Castillos' },
+  { key: 'TurismoRural',      icon: 'cottage',         label: 'Turismo rural' },
+  { key: 'oleoturismo',       icon: 'opacity',         label: 'Oleoturismo' },
+  { key: 'turismo_activo',    icon: 'mountain',        label: 'Turismo activo' },
+  { key: 'senderismo',        icon: 'hiking',          label: 'Senderismo' },
+  { key: 'turismo_religioso', icon: 'church',          label: 'Turismo religioso' },
+  { key: 'turismo_mascotas',  icon: 'pets',            label: 'Con mascotas' },
+  { key: 'turismo_lgtbi',     icon: 'rainbow',         label: 'LGTBI' },
+  { key: 'fiestas',           icon: 'celebration',     label: 'Fiestas' },
+  { key: 'festivales',        icon: 'festival',        label: 'Festivales' },
+];
+
 const municipios = (rankingGlobal as any[]).map(r => ({
   ...r,
   why: r.why_json ? (() => { try { return JSON.parse(r.why_json); } catch { return []; } })() : [],
@@ -104,6 +119,57 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     </div>
   </div>
 </section>
+
+<!-- ── PLANIFICADOR DE RUTAS (destacado) ── -->
+<section class="route-promo">
+  <form class="rp-card" method="get" action="/ruta">
+    <div class="rp-head">
+      <span class="rp-badge">Nuevo</span>
+      <span class="rp-eyebrow"><Icon name="map" size={15} /> Planifica tu ruta</span>
+    </div>
+    <h2 class="rp-title">Monta tu viaje real en 1 minuto</h2>
+    <p class="rp-sub">Elige una o varias experiencias y una provincia. Te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google en cada parada.</p>
+
+    <div class="rp-label">¿Qué quieres hacer? <span>(puedes elegir varias)</span></div>
+    <div class="rp-chips">
+      {ROUTE_EXP.map(e => (
+        <label class="rp-chip">
+          <input type="checkbox" name="cat" value={e.key} />
+          <span class="rp-chip-ic"><Icon name={e.icon} size={15} /></span>
+          {e.label}
+        </label>
+      ))}
+    </div>
+
+    <div class="rp-row">
+      <select name="prov" class="rp-prov" required>
+        <option value="">Elige provincia…</option>
+        {(provincias as any[]).map(p => <option value={p.provincia}>{p.provincia}</option>)}
+      </select>
+      <input type="hidden" name="dias" value="2" />
+      <button type="submit" class="rp-go"><Icon name="map" size={17} /> Generar ruta</button>
+    </div>
+  </form>
+</section>
+<script>
+  const rpCard = document.querySelector('.rp-card') as HTMLFormElement | null;
+  rpCard?.querySelectorAll('.rp-chip input').forEach((inp) => {
+    inp.addEventListener('change', (e) => {
+      const el = e.target as HTMLInputElement;
+      el.closest('.rp-chip')?.classList.toggle('on', el.checked);
+    });
+  });
+  rpCard?.addEventListener('submit', (e) => {
+    const any = rpCard.querySelectorAll('.rp-chip input:checked').length > 0;
+    if (!any) {
+      e.preventDefault();
+      rpCard.querySelector('.rp-label')?.animate(
+        [{ color: '#FF385C' }, { color: '' }], { duration: 1200 }
+      );
+      (rpCard.querySelector('.rp-chip') as HTMLElement)?.focus();
+    }
+  });
+</script>
 
 <!-- Paso 2 móvil: elegir zona tras pulsar categoría -->
 <div class="mcs-overlay" id="mob-cat-sheet">
@@ -484,6 +550,26 @@ function doSearch() {
 @media (min-width: 769px) { .mcs-overlay { display: none; } }
 
 /* ── Hero ── */
+.route-promo { max-width: 700px; margin: -20px auto 0; padding: 0 16px; position: relative; z-index: 2; }
+.rp-card { background: #fff; border: 2px solid var(--primary); border-radius: 18px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(255,56,92,.13); }
+.rp-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.rp-badge { font-size: .66rem; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; background: var(--primary); color: #fff; border-radius: 20px; padding: 3px 10px; }
+.rp-eyebrow { display: inline-flex; align-items: center; gap: 5px; font-size: .8rem; font-weight: 700; color: var(--primary); }
+.rp-title { font-size: 1.3rem; font-weight: 800; color: var(--text); margin: 2px 0 4px; }
+.rp-sub { font-size: .9rem; color: var(--text-2); margin: 0 0 14px; line-height: 1.5; }
+.rp-label { font-size: .78rem; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
+.rp-label span { font-weight: 500; color: #aaa; }
+.rp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.rp-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border: 1.5px solid var(--border); border-radius: 20px; font-size: .85rem; font-weight: 600; color: var(--text-2); cursor: pointer; user-select: none; transition: all .12s; }
+.rp-chip input { display: none; }
+.rp-chip-ic { display: inline-flex; }
+.rp-chip.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
+.rp-row { display: flex; gap: 10px; }
+.rp-prov { flex: 1; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: .92rem; font-family: inherit; background: #fff; color: var(--text); }
+.rp-go { display: inline-flex; align-items: center; gap: 7px; background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 12px 20px; font-size: .92rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.rp-go:hover { background: var(--primary-dark); }
+@media (max-width: 560px) { .rp-row { flex-direction: column; } .rp-go { justify-content: center; } }
+
 .hero-section {
   background: url('/hero-bg.jpg') center/cover no-repeat;
   position: relative;
