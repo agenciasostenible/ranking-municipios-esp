@@ -28,14 +28,16 @@ const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
 //                      objeto = búsqueda adaptada; ausente = atracción genérica.
 type CatProfile = {
   comer?: { keyword?: string };
+  dormir?: { keyword?: string };
   visitar?: { keyword?: string; type?: string; excludeTypes?: string[] } | null;
 };
 const CAT_PROFILE: Record<string, CatProfile> = {
   turismo_mascotas: {
     comer:   { keyword: 'pet friendly' },
+    dormir:  { keyword: 'pet friendly' },
     visitar: { keyword: 'pet friendly', excludeTypes: ['church','place_of_worship','museum','art_gallery','hindu_temple','mosque','synagogue'] },
   },
-  turismo_lgtbi:    { visitar: { keyword: 'lgtbi friendly' } },
+  turismo_lgtbi:    { dormir: { keyword: 'lgtbi friendly' }, visitar: { keyword: 'lgtbi friendly' } },
   oleoturismo:      { visitar: { keyword: 'almazara aceite de oliva' } },
   turismo_activo:   { visitar: { keyword: 'naturaleza aventura' } },
   turismo_religioso:{ visitar: null },
@@ -200,9 +202,19 @@ if (selCfgs.length && prov) {
           visitarP = getPlace(s.codigo_ine, visKind, s.latitud, s.longitud, visSpec);
         }
 
-        const [gcomer, gvisitar] = await Promise.all([comerP, visitarP]);
+        // DORMIR: hotel/alojamiento (preferencia de categoría + red de seguridad).
+        // Si la actividad ya es turismo rural, no repetimos.
+        const dormirKw = prof.dormir?.keyword;
+        const dormirSpec = { type: 'lodging', radius: 9000, minReviews: 15, keyword: dormirKw, softKeyword: true };
+        const dormirKind = 'dormir' + (dormirKw ? '_' + s.catKey : '');
+        const dormirP = s.catKey === 'TurismoRural'
+          ? Promise.resolve(null)
+          : getPlace(s.codigo_ine, dormirKind, s.latitud, s.longitud, dormirSpec);
+
+        const [gcomer, gvisitar, gdormir] = await Promise.all([comerP, visitarP, dormirP]);
         s.gcomer = gcomer;
         s.gvisitar = gvisitar;
+        s.gdormir = gdormir;
       }));
     }
 
@@ -313,9 +325,17 @@ const title = selCfgs.length && prov
                   : s.comer
                   ? <div class="rs-line">🍽️ Comer: <strong>{s.comer.rec}</strong>{s.comer.mismo ? '' : ` · ${s.comer.nombre} (a ${s.comer.km} km)`}</div>
                   : <div class="rs-line rs-none">🍽️ Sin restaurante recomendado cerca</div>)}
-                {s.catKey !== 'TurismoRural' && (s.dormir
+                {s.catKey !== 'TurismoRural' && (s.gdormir
+                  ? <div class="rs-place">
+                      {s.gdormir.foto_ref && <img class="rs-thumb" src={`/api/place-photo?w=200&ref=${encodeURIComponent(s.gdormir.foto_ref)}`} alt={s.gdormir.nombre} loading="lazy" width="56" height="56" />}
+                      <div class="rs-place-txt">
+                        <div class="rs-line">🛏️ Dormir: <strong>{s.gdormir.nombre}</strong><span class="rs-star">★ {fmtRating(s.gdormir)}</span></div>
+                        {s.gdormir.foto_attr && <div class="rs-attr" set:html={s.gdormir.foto_attr}></div>}
+                      </div>
+                    </div>
+                  : s.dormir
                   ? <div class="rs-line">🛏️ Dormir: <strong>{s.dormir.rec}</strong>{s.dormir.mismo ? '' : ` · ${s.dormir.nombre} (a ${s.dormir.km} km)`}</div>
-                  : <div class="rs-line rs-none">🛏️ Sin turismo rural verificado cerca</div>)}
+                  : <div class="rs-line rs-none">🛏️ Sin alojamiento recomendado cerca</div>)}
               </div>
             </div>
           ))}
