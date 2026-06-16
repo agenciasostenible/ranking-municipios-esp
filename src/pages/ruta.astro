@@ -16,9 +16,10 @@ const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
   { key: 'turismo_mascotas',  tipo: 'mascotas',    label: 'Turismo con mascotas' },
   { key: 'turismo_lgtbi',     tipo: 'lgtbi',       label: 'Turismo LGTBI' },
   { key: 'TurismoRural',      tipo: 'rural',       label: 'Turismo rural' },
-  { key: 'festivales',        tipo: 'festival',    label: 'Festivales' },
-  { key: 'fiestas',           tipo: 'fiesta',      label: 'Fiestas' },
   { key: 'senderismo',        tipo: 'sendero',     label: 'Senderismo' },
+  // NOTA: fiestas y festivales se excluyen a propósito del planificador: son
+  // eventos con fecha fija (y solo conocemos el mes, a veces ni eso), así que
+  // no forman un itinerario coherente de un mismo viaje. Siguen como ranking.
 ];
 
 // Perfiles de búsqueda en Google según la categoría de la parada, para que el
