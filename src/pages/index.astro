@@ -859,6 +859,18 @@ function doSearch() {
   .hsp-input { font-size: .9rem; }
   .hero-filters { flex-direction: column; gap: 8px; align-items: stretch; }
   .hf-select { width: 100%; text-align: center; }
+  /* Cada grupo = fila deslizable horizontal (compacta el alto en móvil) */
+  .hero-cats { gap: 13px; }
+  .hero-cat-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0 -16px;
+    padding: 1px 16px 3px;
+  }
+  .hero-cat-row::-webkit-scrollbar { display: none; }
+  .hero-cat-pill { flex: 0 0 auto; }
 }
 @media (max-width: 480px) {
   .mun-grid { grid-template-columns: 1fr; }
