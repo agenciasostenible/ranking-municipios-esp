@@ -47,8 +47,8 @@ export const POST: APIRoute = async ({ request }) => {
   const row = await DB.prepare(
     `INSERT INTO anuncios
        (codigo_ine, municipio, provincia, tipo, nombre, descripcion, direccion,
-        contacto, email, telefono, web, foto_data, foto_mime, token)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        contacto, email, telefono, whatsapp, web, foto_data, foto_mime, token)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING id`
   ).bind(
     body.codigo_ine || null, municipio, body.provincia || null, tipo, nombre,
@@ -57,6 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
     String(body.contacto || '').slice(0, 120) || null,
     email,
     String(body.telefono || '').slice(0, 40) || null,
+    body.whatsapp ? 1 : 0,
     String(body.web || '').slice(0, 200) || null,
     fotoData, fotoMime, token,
   ).first();

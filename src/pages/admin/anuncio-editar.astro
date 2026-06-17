@@ -66,6 +66,7 @@ const TIPOS = [
         <div class="f"><label>Teléfono</label><input id="telefono" value={a.telefono ?? ''} /></div>
         <div class="f"><label>Web</label><input id="web" value={a.web ?? ''} /></div>
       </div>
+      <label class="chk"><input type="checkbox" id="whatsapp" checked={a.whatsapp === 1} /> 💬 El teléfono tiene WhatsApp</label>
       <div class="f">
         <label>Foto</label>
         {a.foto_data && <img class="prev" id="prev" src={`/api/anuncio-foto?id=${a.id}`} alt="" />}
@@ -99,6 +100,7 @@ const TIPOS = [
             descripcion: $('descripcion').value.trim(), direccion: $('direccion').value.trim(),
             contacto: $('contacto').value.trim(), email: $('email').value.trim(),
             telefono: $('telefono').value.trim(), web: $('web').value.trim(),
+            whatsapp: $('whatsapp').checked,
             en_ficha: $('en_ficha').checked, en_ruta_mun: $('en_ruta_mun').checked, en_ruta_zona: $('en_ruta_zona').checked,
             quitar_foto: $('quitar_foto')?.checked || false,
             foto: fotoData || null,

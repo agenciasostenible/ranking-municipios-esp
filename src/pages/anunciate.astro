@@ -77,6 +77,7 @@ const TIPOS = [
         <input id="an-web" type="text" maxlength="200" placeholder="https://…" />
       </div>
     </div>
+    <label class="an-wa"><input type="checkbox" id="an-wa" /> 💬 Este teléfono tiene <strong>WhatsApp</strong> (para que los clientes te escriban directamente)</label>
 
     <div class="an-field">
       <label>1 foto (opcional pero recomendable)</label>
@@ -165,6 +166,7 @@ const TIPOS = [
           descripcion: $('an-desc').value.trim(), direccion: $('an-dir').value.trim(),
           contacto: $('an-contacto').value.trim(), email: $('an-email').value.trim(),
           telefono: $('an-tel').value.trim(), web: $('an-web').value.trim(),
+          whatsapp: $('an-wa').checked,
           foto: fotoData || null, website: $('an-website').value,
         }),
       });
@@ -198,6 +200,8 @@ const TIPOS = [
 .an-ac-wrap { position: relative; }
 .an-ac { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-top: 4px; overflow: hidden; box-shadow: 0 10px 28px rgba(0,0,0,.14); }
 .an-ac:empty { display: none; }
+.an-wa { display: flex; align-items: center; gap: 9px; font-size: .88rem; color: var(--text-2); background: #e9f9ee; border: 1.5px solid #b7e6c6; border-radius: 12px; padding: 11px 13px; cursor: pointer; }
+.an-wa input { width: auto; }
 .an-prev { display: none; max-width: 160px; border-radius: 10px; margin-top: 8px; }
 .an-go { background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 4px; }
 .an-go:hover { background: var(--primary-dark); }

@@ -18,8 +18,18 @@ export type Anuncio = {
   direccion: string | null;
   web: string | null;
   telefono: string | null;
+  wa: string | null;     // enlace wa.me si el teléfono tiene WhatsApp
   foto: string | null;   // URL servida por /api/anuncio-foto
 };
+
+/** Construye el enlace wa.me a partir de un teléfono (asume España +34 si no hay prefijo). */
+export function waLink(tel: string | null): string | null {
+  if (!tel) return null;
+  let d = String(tel).replace(/[^\d+]/g, '');
+  if (d.startsWith('+')) d = d.slice(1);
+  else if (d.length === 9) d = '34' + d;   // móvil/fijo español sin prefijo
+  return d.length >= 9 ? `https://wa.me/${d}` : null;
+}
 
 // Etiqueta legible + a qué "ranura" de la ruta pertenece cada tipo de anuncio.
 export const ANUNCIO_TIPOS: Record<string, { label: string; slot: 'comer' | 'dormir' | 'cafe' | 'copa' | 'visitar' }> = {
@@ -36,6 +46,7 @@ function toAnuncio(r: any): Anuncio {
   return {
     id: r.id, codigo_ine: r.codigo_ine, tipo: r.tipo, nombre: r.nombre,
     descripcion: r.descripcion, direccion: r.direccion, web: r.web, telefono: r.telefono,
+    wa: r.whatsapp ? waLink(r.telefono) : null,
     foto: r.foto_data ? `/api/anuncio-foto?id=${r.id}` : null,
   };
 }
@@ -49,7 +60,7 @@ export async function getAnunciosMunicipio(codigo_ine: string, surface: Surface 
   if (!codigo_ine) return [];
   try {
     const { results } = await DB.prepare(
-      `SELECT id, codigo_ine, tipo, nombre, descripcion, direccion, web, telefono,
+      `SELECT id, codigo_ine, tipo, nombre, descripcion, direccion, web, telefono, whatsapp,
               (foto_data IS NOT NULL) AS foto_data
          FROM anuncios
         WHERE codigo_ine = ? AND estado = 'aprobado' AND ${COL[surface]} = 1
@@ -68,7 +79,7 @@ export async function getAnunciosVarios(codigos: string[], surface: Surface = 'r
   if (!ids.length) return map;
   try {
     const { results } = await DB.prepare(
-      `SELECT id, codigo_ine, tipo, nombre, descripcion, direccion, web, telefono,
+      `SELECT id, codigo_ine, tipo, nombre, descripcion, direccion, web, telefono, whatsapp,
               (foto_data IS NOT NULL) AS foto_data
          FROM anuncios
         WHERE estado = 'aprobado' AND ${COL[surface]} = 1

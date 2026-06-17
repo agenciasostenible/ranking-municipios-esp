@@ -320,7 +320,8 @@ const recomendados = await getAnunciosMunicipio(codigo);
               {a.descripcion && <div class="reco-desc">{a.descripcion}</div>}
               <div class="reco-meta">
                 {a.direccion && <span>📍 {a.direccion}</span>}
-                {a.telefono && <span>📞 {a.telefono}</span>}
+                {a.telefono && <a href={`tel:${a.telefono}`} class="reco-act">📞 Llamar</a>}
+                {a.wa && <a href={a.wa} target="_blank" rel="nofollow noopener" class="reco-act reco-wa">💬 WhatsApp</a>}
                 {a.web && <a href={a.web} target="_blank" rel="nofollow noopener">🔗 Web</a>}
               </div>
             </div>
@@ -852,6 +853,8 @@ window.openSello = openSello;
 .reco-desc { font-size: .84rem; color: var(--text-2); margin-top: 4px; line-height: 1.45; }
 .reco-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: .8rem; color: var(--text-2); }
 .reco-meta a { color: var(--primary); text-decoration: none; font-weight: 600; }
+.reco-act { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px; border: 1.5px solid var(--border); }
+.reco-wa { color: #128c4b !important; border-color: #b7e6c6; background: #e9f9ee; }
 .anunciate-cta { display: block; background: #fff7e6; border: 1.5px solid #f5d28a; border-radius: 14px; padding: 14px 18px; margin: 22px 0; color: #92500a; font-size: .92rem; text-decoration: none; text-align: center; }
 .anunciate-cta strong { color: #b45309; }
 .anunciate-cta:hover { background: #fff1d6; }
