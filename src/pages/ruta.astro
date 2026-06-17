@@ -464,13 +464,15 @@ if (pueblo && selCfgs.length) {
       walkable[i].next = { ...t, to: walkable[i + 1].nombre };
     }
 
-    // Joyas lejanas: las mejor valoradas, con su distancia/tiempo en coche al centro
-    const lejos = lejosPool
+    // "Si te queda tiempo": lo que no entró en el día a pie — joyas lejanas +
+    // lo céntrico que se salió del cupo. Así no se pierde nada notable.
+    const extraPool = [...ordered.slice(walkCap), ...lejosPool];
+    const lejos = extraPool
       .sort((a: any, b: any) => (b.rating ?? 0) * Math.log10((b.reviews ?? 0) + 1) - (a.rating ?? 0) * Math.log10((a.reviews ?? 0) + 1))
       .slice(0, lejosCap)
       .map((v: any) => {
         const t = legTimes(center, { latitud: v.lat, longitud: v.lng });
-        return { ...v, carDist: t.dist, carMin: t.driveMin };
+        return { ...v, far: v.distCentro > WALK_FAR_KM, carDist: t.dist, carMin: t.driveMin, walkMin: t.walkMin };
       });
 
     // Repartir lo caminable en mañana / tarde
@@ -800,16 +802,16 @@ const title = hasDia
         </div>
       )}
 
-      {/* JOYAS LEJANAS — fuera del centro, mejor en coche */}
+      {/* SI TE QUEDA TIEMPO — lo que no entra en el día a pie */}
       {diaPlan.lejos && diaPlan.lejos.length > 0 && (
         <div class="dia-block">
-          <div class="dia-tag dia-tag-soft">🚗 Si te queda tiempo · mejor en coche</div>
+          <div class="dia-tag dia-tag-soft">✨ Si te queda tiempo · más que ver</div>
           {diaPlan.lejos.map((v: any) => (
             <div class="rs-place dia-vis">
               <img class="rs-thumb" src={v.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(v.foto_ref)}` : ''} alt={v.nombre} loading="lazy" width="56" height="56" style={v.foto_ref ? '' : 'display:none'} />
               <div class="rs-place-txt">
                 <div class="rs-line">👁️ <strong>{v.nombre}</strong><span class="rs-star">★ {fmtRating(v)}</span></div>
-                <div class="rs-loc">🚗 a ~{fmtDur(v.carMin)} · {v.carDist} del centro{v.locLabel && v.locLabel !== pueblo.nombre ? ` · 📍 ${v.locLabel}` : ''}</div>
+                <div class="rs-loc">{v.far ? `🚗 a ~${fmtDur(v.carMin)} · ${v.carDist} del centro` : `🚶 a ~${fmtDur(v.walkMin)} del centro`}</div>
                 <div class="rs-attr" set:html={v.foto_attr ?? ''}></div>
               </div>
             </div>
