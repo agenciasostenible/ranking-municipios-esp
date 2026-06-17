@@ -268,7 +268,11 @@ const fotoUrl = municipio.foto_url && municipio.foto_url !== 'NONE'
       )}
     </div>
     <div class="mun-hero-ctas">
-      <a href={`/ruta?inicio=${codigo}`} class="mun-route-cta">
+      <a href={`/ruta?pueblo=${codigo}`} class="mun-route-cta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/></svg>
+        Plan de un día en {municipio.nombre}
+      </a>
+      <a href={`/ruta?inicio=${codigo}`} class="mun-route-cta mun-route-cta-alt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>
         Crear ruta por esta zona
       </a>
@@ -799,6 +803,8 @@ window.openSello = openSello;
   transition: transform .12s, box-shadow .12s;
 }
 .mun-route-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.24); background: var(--primary-dark); }
+.mun-route-cta-alt { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.mun-route-cta-alt:hover { background: #fff1f3; color: var(--primary); }
 .mun-share-cta {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--primary); color: #fff;

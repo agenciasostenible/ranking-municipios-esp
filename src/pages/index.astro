@@ -120,15 +120,20 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 
 <!-- ── PLANIFICADOR DE RUTAS (destacado) ── -->
 <section class="route-promo">
-  <form class="rp-card" method="get" action="/ruta">
+  <form class="rp-card" method="get" action="/ruta" id="rp-card" data-mode="zona">
     <div class="rp-head">
       <span class="rp-badge">Nuevo</span>
       <span class="rp-eyebrow"><Icon name="map" size={15} /> Planifica tu ruta</span>
     </div>
     <h2 class="rp-title">Monta tu viaje real en 1 minuto</h2>
-    <p class="rp-sub">Elige una o varias experiencias y una provincia. Te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google en cada parada.</p>
+    <p class="rp-sub">Te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google. Elige una <strong>zona</strong>… o el <strong>plan de un día</strong> dentro de un solo pueblo.</p>
 
-    <div class="rp-label">¿Qué quieres hacer? <span>(puedes elegir varias)</span></div>
+    <div class="rp-modes" role="tablist">
+      <button type="button" class="rp-mode on" data-mode="zona">🧭 Por la zona</button>
+      <button type="button" class="rp-mode" data-mode="pueblo">📍 Un día en un pueblo</button>
+    </div>
+
+    <div class="rp-label">¿Qué quieres hacer? <span class="rp-hint-zona">(puedes elegir varias)</span><span class="rp-hint-pueblo">(opcional: enfoca el día)</span></div>
     <div class="rp-chips">
       {ROUTE_EXP.map(e => (
         <label class="rp-chip">
@@ -139,13 +144,20 @@ const municipios = (rankingGlobal as any[]).map(r => ({
       ))}
     </div>
 
-    <div class="rp-row">
-      <select name="prov" class="rp-prov" required>
+    <div class="rp-row rp-block-zona">
+      <select name="prov" class="rp-prov">
         <option value="">Elige provincia…</option>
         {(provincias as any[]).map(p => <option value={p.provincia}>{p.provincia}</option>)}
       </select>
       <input type="hidden" name="dias" value="2" />
       <button type="submit" class="rp-go"><Icon name="map" size={17} /> Generar ruta</button>
+    </div>
+
+    <div class="rp-block-pueblo">
+      <div class="rp-ac-wrap">
+        <input type="text" id="rp-pueblo-input" class="rp-prov" placeholder="Escribe un municipio… (Granada, Alcalá la Real…)" autocomplete="off" />
+        <div class="rp-ac" id="rp-pueblo-ac"></div>
+      </div>
     </div>
   </form>
 </section>
@@ -158,6 +170,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     });
   });
   rpCard?.addEventListener('submit', (e) => {
+    if (rpCard.getAttribute('data-mode') !== 'zona') { e.preventDefault(); return; }
     const any = rpCard.querySelectorAll('.rp-chip input:checked').length > 0;
     if (!any) {
       e.preventDefault();
@@ -166,6 +179,44 @@ const municipios = (rankingGlobal as any[]).map(r => ({
       );
       (rpCard.querySelector('.rp-chip') as HTMLElement)?.focus();
     }
+  });
+
+  // Conmutador de modo: "Por la zona" / "Un día en un pueblo"
+  rpCard?.querySelectorAll('.rp-mode').forEach((b) => {
+    b.addEventListener('click', () => {
+      const m = b.getAttribute('data-mode') || 'zona';
+      rpCard.setAttribute('data-mode', m);
+      rpCard.querySelectorAll('.rp-mode').forEach((x) => x.classList.toggle('on', x === b));
+      if (m === 'pueblo') (document.getElementById('rp-pueblo-input') as HTMLInputElement | null)?.focus();
+    });
+  });
+
+  // Autocompletado de municipio para el modo "un día en un pueblo"
+  const rpInput = document.getElementById('rp-pueblo-input') as HTMLInputElement | null;
+  const rpAc = document.getElementById('rp-pueblo-ac');
+  const rpCats = () => {
+    const ks = Array.from(rpCard?.querySelectorAll('.rp-chip input:checked') ?? [])
+      .map((i) => (i as HTMLInputElement).value);
+    return ks.length ? '&' + ks.map((k) => 'cat=' + encodeURIComponent(k)).join('&') : '';
+  };
+  let rpTimer: any;
+  rpInput?.addEventListener('input', () => {
+    const q = rpInput.value.trim();
+    clearTimeout(rpTimer);
+    if (q.length < 2) { if (rpAc) rpAc.innerHTML = ''; return; }
+    rpTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/search?q=' + encodeURIComponent(q));
+        const data = await res.json();
+        const muns = ((data as any[]) || []).filter((d) => d.tipo === 'municipio').slice(0, 6);
+        if (rpAc) rpAc.innerHTML = muns.map((m) =>
+          `<a href="/ruta?pueblo=${m.codigo_ine}${rpCats()}">${m.nombre} <small>· ${m.provincia || ''}</small></a>`
+        ).join('');
+      } catch (e) { if (rpAc) rpAc.innerHTML = ''; }
+    }, 180);
+  });
+  document.addEventListener('click', (e) => {
+    if (rpAc && !rpAc.contains(e.target as Node) && e.target !== rpInput) rpAc.innerHTML = '';
   });
 </script>
 
@@ -566,6 +617,20 @@ function doSearch() {
 .rp-prov { flex: 1; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: .92rem; font-family: inherit; background: #fff; color: var(--text); }
 .rp-go { display: inline-flex; align-items: center; gap: 7px; background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 12px 20px; font-size: .92rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .rp-go:hover { background: var(--primary-dark); }
+.rp-modes { display: flex; gap: 8px; margin-bottom: 14px; }
+.rp-mode { flex: 1; padding: 10px; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; font-size: .85rem; font-weight: 700; color: var(--text-2); cursor: pointer; transition: all .12s; }
+.rp-mode.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
+.rp-card[data-mode="zona"] .rp-block-pueblo,
+.rp-card[data-mode="zona"] .rp-hint-pueblo,
+.rp-card[data-mode="pueblo"] .rp-block-zona,
+.rp-card[data-mode="pueblo"] .rp-hint-zona { display: none; }
+.rp-ac-wrap { position: relative; }
+.rp-ac { position: absolute; top: 100%; left: 0; right: 0; z-index: 30; background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-top: 4px; overflow: hidden; box-shadow: 0 10px 28px rgba(0,0,0,.14); }
+.rp-ac:empty { display: none; }
+.rp-ac a { display: block; padding: 11px 14px; font-size: .9rem; color: var(--text); text-decoration: none; border-bottom: 1px solid #f2f2f2; }
+.rp-ac a:last-child { border-bottom: none; }
+.rp-ac a:hover { background: #fff1f3; color: var(--primary); }
+.rp-ac small { color: var(--text-2); font-weight: 500; }
 @media (max-width: 560px) { .rp-row { flex-direction: column; } .rp-go { justify-content: center; } }
 
 .hero-section {
