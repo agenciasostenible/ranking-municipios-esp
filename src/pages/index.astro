@@ -72,7 +72,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 <section class="hero-section">
   <div class="hero-inner">
     <h1 class="hero-title">El ranking de los municipios de España</h1>
-    <p class="hero-sub">Ordenados con datos verificados, no opiniones. Elige una experiencia:</p>
+    <p class="hero-sub">Ordenados con datos verificados, no opiniones.<br /><strong class="hero-sub-cta">Elige una experiencia:</strong></p>
 
     <!-- Paso 1: Categorías -->
     <div class="hero-cats-wrap">
@@ -689,6 +689,13 @@ function doSearch() {
   color: rgba(255,255,255,.7);
   font-size: .95rem;
   margin-bottom: 28px;
+}
+.hero-sub-cta {
+  display: inline-block;
+  margin-top: 7px;
+  font-weight: 800;
+  font-size: 1.02rem;
+  color: #fff;
 }
 
 /* Hero search */
