@@ -11,6 +11,19 @@ import { getAnunciosMunicipio, ANUNCIO_TIPOS } from '../../lib/anuncios';
 const { codigo } = Astro.params;
 const desde = Astro.url.searchParams.get('desde') ?? '';
 
+// Dedup por nombre: una misma entidad puede existir en varios tipos (p.ej. la
+// Fortaleza de la Mota como 'fortaleza' y como 'monumento'), y como una categoría
+// agrupa varios tipos, saldría DOS veces en la misma lista. Nos quedamos con la
+// mejor (con sello oficial / descripción más completa) y conservamos el orden.
+const _norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+function dedupByName<T extends { nombre: string; nivel_sello?: any; descripcion?: any }>(rows: T[]): T[] {
+  const score = (e: T) => (e.nivel_sello && !['Normal', '—', ''].includes(String(e.nivel_sello)) ? 1000 : 0) + (e.descripcion ? String(e.descripcion).length : 0);
+  const best = new Map<string, T>();
+  for (const e of rows) { const k = _norm(e.nombre); const cur = best.get(k); if (!cur || score(e) > score(cur)) best.set(k, e); }
+  const chosen = new Set(best.values());
+  return rows.filter((e) => chosen.has(e));
+}
+
 const municipio = await DB.prepare(`SELECT * FROM municipios WHERE codigo_ine = ?`).bind(codigo).first();
 if (!municipio) return Astro.redirect('/');
 
@@ -22,7 +35,7 @@ const { results: puntuaciones } = await DB.prepare(
 const totalNacionalRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios`).first();
 const totalNacional = totalNacionalRow?.n ?? 0;
 
-const { results: entidades } = await DB.prepare(
+let { results: entidades } = await DB.prepare(
   `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
    WHERE e.codigo_ine = ?
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
@@ -37,6 +50,7 @@ const { results: entidades } = await DB.prepare(
      END, tipo, nombre
    LIMIT 40`
 ).bind(codigo).all();
+entidades = dedupByName(entidades as any[]);
 
 const totalProvRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios WHERE provincia = ?`).bind(municipio.provincia).first();
 const totalProv = totalProvRow?.n ?? 0;
@@ -130,7 +144,7 @@ if (desde && desde !== 'ranking_global') {
          ) <= 8)
        ORDER BY CASE nivel_sello WHEN 'UNESCO' THEN 1 WHEN 'Parque Nacional' THEN 2 WHEN 'BIC Nacional' THEN 3 ELSE 4 END, nombre LIMIT 12`
     ).bind(codigo, ...tiposDesde).all();
-    desdeEntidades = de as any[];
+    desdeEntidades = dedupByName(de as any[]);
   }
 }
 
