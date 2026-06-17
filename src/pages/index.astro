@@ -209,9 +209,11 @@ const municipios = (rankingGlobal as any[]).map(r => ({
         const res = await fetch('/api/search?q=' + encodeURIComponent(q));
         const data = await res.json();
         const muns = ((data as any[]) || []).filter((d) => d.tipo === 'municipio').slice(0, 6);
-        if (rpAc) rpAc.innerHTML = muns.map((m) =>
-          `<a href="/ruta?pueblo=${m.codigo_ine}${rpCats()}">${m.nombre} <small>· ${m.provincia || ''}</small></a>`
-        ).join('');
+        if (rpAc) rpAc.innerHTML = muns.map((m) => {
+          const nom = String(m.nombre || '').replace(/[&<>]/g, '');
+          const prov = String(m.provincia || '').replace(/[&<>]/g, '');
+          return `<a href="/ruta?pueblo=${m.codigo_ine}${rpCats()}" style="display:flex;align-items:center;gap:10px;padding:11px 15px;text-decoration:none;border-bottom:1px solid #f2f2f2;background:#fff;cursor:pointer" onmouseover="this.style.background='#fff1f3'" onmouseout="this.style.background='#fff'"><span style="flex-shrink:0">📍</span><span style="flex:1;min-width:0;font-size:.92rem;font-weight:700;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}<span style="font-weight:400;color:#888;font-size:.82rem;margin-left:7px">${prov}</span></span></a>`;
+        }).join('');
       } catch (e) { if (rpAc) rpAc.innerHTML = ''; }
     }, 180);
   });
