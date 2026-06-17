@@ -432,11 +432,29 @@ if (pueblo && selCfgs.length) {
 
     // Fusionar las visitas de todas las experiencias, deduplicando por place_id
     const visSeen = new Set<string>();
-    const visRaw: any[] = [];
+    const visMerged: any[] = [];
     for (const list of visLists) for (const v of (list as any[])) {
       const k = String(v.place_id ?? (v.nombre + '|' + v.lat + '|' + v.lng));
       if (visSeen.has(k)) continue;
-      visSeen.add(k); visRaw.push(v);
+      visSeen.add(k); visMerged.push(v);
+    }
+
+    // Quitar casi-duplicados del "qué ver": el mismo conjunto que Google devuelve
+    // dos veces (p.ej. la iglesia que está DENTRO de la fortaleza). Criterio:
+    // un nombre contiene al otro, o están a < 120 m. Nos quedamos con el mejor valorado.
+    const normName = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9 ]/g, ' ').replace(/\b(el|la|los|las|de|del|y|en)\b/g, ' ').replace(/\s+/g, ' ').trim();
+    visMerged.sort((a, b) => (b.rating ?? 0) * Math.log10((b.reviews ?? 0) + 1) - (a.rating ?? 0) * Math.log10((a.reviews ?? 0) + 1));
+    const visRaw: any[] = [];
+    for (const v of visMerged) {
+      const nv = normName(v.nombre);
+      const dup = visRaw.some((k) => {
+        const nk = normName(k.nombre);
+        if (nv && nk && nv.length >= 5 && nk.length >= 5 && (nk.includes(nv) || nv.includes(nk))) return true;
+        if (v.lat != null && k.lat != null && haversine({ latitud: v.lat, longitud: v.lng }, { latitud: k.lat, longitud: k.lng }) < 0.12) return true;
+        return false;
+      });
+      if (!dup) visRaw.push(v);
     }
 
     decoratePlaces(visRaw, center);
