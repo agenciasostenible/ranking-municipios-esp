@@ -104,8 +104,9 @@ if (puebloCode) {
       ).bind(puebloCode, ...RUTA_CATS.map(c => c.key)).first();
       cats = [best ? (best as any).categoria : 'monumentos'];
     }
-    // Si eligió varias experiencias, las mantenemos todas: el plan del día
-    // combina las visitas de cada una (y los chips quedan marcados).
+    // Si eligió varias experiencias, las mantenemos: el plan del día combina
+    // las visitas de cada una. Tope de 3 para controlar el gasto en Google.
+    if (cats.length > 3) cats = cats.slice(0, 3);
   }
 }
 
@@ -1109,10 +1110,21 @@ const title = hasDia
 @media (max-width: 560px) { .rf-field { flex: 1 1 100%; } }
 </style>
 <script>
-  // Marca/desmarca visualmente los chips de categoría al pulsarlos
+  // Marca/desmarca visualmente los chips de categoría al pulsarlos.
+  // En modo "un día en un pueblo" topamos a 3 experiencias (control de gasto Google).
+  const PUEBLO_MAX = 3;
   document.querySelectorAll('.rf-chip input').forEach((inp) => {
     inp.addEventListener('change', (e) => {
       const el = e.target as HTMLInputElement;
+      const esPueblo = document.getElementById('ruta-form')?.getAttribute('data-mode') === 'pueblo';
+      if (esPueblo && el.checked) {
+        const n = document.querySelectorAll('.rf-chip input:checked').length;
+        if (n > PUEBLO_MAX) {
+          el.checked = false;
+          alert(`Puedes elegir hasta ${PUEBLO_MAX} experiencias para el plan de un día.`);
+          return;
+        }
+      }
       el.closest('.rf-chip')?.classList.toggle('on', el.checked);
     });
   });
