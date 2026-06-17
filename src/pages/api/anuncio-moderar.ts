@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ url }) => {
   const id = url.searchParams.get('id');
   const token = url.searchParams.get('token') ?? '';
   const accion = url.searchParams.get('accion');
-  if (!id || !token || (accion !== 'aprobar' && accion !== 'rechazar')) {
+  if (!id || !token || !['aprobar', 'rechazar', 'quitar'].includes(accion ?? '')) {
     return page('ℹ️ Enlace no válido', 'Faltan datos en el enlace.');
   }
 
@@ -31,10 +31,18 @@ export const GET: APIRoute = async ({ url }) => {
   ).bind(id).first();
 
   if (!row || row.token !== token) return page('ℹ️ Enlace no válido', 'El enlace ha caducado o no es correcto.');
+
+  // Quitar / despublicar un anuncio ya aprobado (o cualquiera): deja de mostrarse.
+  if (accion === 'quitar') {
+    if (row.estado === 'rechazado') return page('ℹ️ Ya retirado', `<b>${esc(row.nombre)}</b> ya no se mostraba.`);
+    await DB.prepare(`UPDATE anuncios SET estado = 'rechazado', moderado_at = datetime('now') WHERE id = ?`).bind(id).run();
+    return page('✅ Retirado', `<b>${esc(row.nombre)}</b> ya no aparece publicado.`);
+  }
+
+  // Aprobar / rechazar: solo desde "pendiente"
   if (row.estado !== 'pendiente') {
     return page('ℹ️ Ya gestionado', `Este anuncio ya estaba <b>${row.estado}</b>.`);
   }
-
   const nuevo = accion === 'aprobar' ? 'aprobado' : 'rechazado';
   await DB.prepare(
     `UPDATE anuncios SET estado = ?, moderado_at = datetime('now') WHERE id = ?`

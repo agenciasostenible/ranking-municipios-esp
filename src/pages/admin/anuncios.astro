@@ -11,14 +11,16 @@ const ADMIN_KEY = env('ADMIN_KEY');
 const ok = ADMIN_KEY && key === ADMIN_KEY;
 
 let pendientes: any[] = [];
-let aprobados = 0;
+let aprobados: any[] = [];
 if (ok) {
-  const { results } = await DB.prepare(
+  const p = await DB.prepare(
     `SELECT * FROM anuncios WHERE estado='pendiente' ORDER BY creado_at DESC`
   ).all();
-  pendientes = results as any[];
-  const c = await DB.prepare(`SELECT COUNT(*) n FROM anuncios WHERE estado='aprobado'`).first();
-  aprobados = c?.n ?? 0;
+  pendientes = p.results as any[];
+  const a = await DB.prepare(
+    `SELECT * FROM anuncios WHERE estado='aprobado' ORDER BY moderado_at DESC`
+  ).all();
+  aprobados = a.results as any[];
 }
 const mlink = (a: any, accion: string) => `/api/anuncio-moderar?id=${a.id}&token=${encodeURIComponent(a.token)}&accion=${accion}`;
 ---
@@ -34,13 +36,14 @@ const mlink = (a: any, accion: string) => `/api/anuncio-moderar?id=${a.id}&token
   .meta { font-size: .85rem; color: #555; margin: 6px 0; line-height: 1.5; }
   .acts a { display: inline-block; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: .85rem; margin-right: 8px; }
   .ap { background: #16a34a; color: #fff; } .re { background: #dc2626; color: #fff; }
+  .qu { background: #fff; color: #dc2626; border: 1.5px solid #dc2626; }
+  h2 { font-size: 1.1rem; margin-top: 30px; border-top: 1px solid #e5e5e5; padding-top: 18px; }
 </style></head>
 <body>
   {!ok && <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>}
   {ok && (
     <>
       <h1>Anuncios pendientes <span class="muted">({pendientes.length})</span></h1>
-      <p class="muted">{aprobados} aprobados en total.</p>
       {pendientes.length === 0 && <p class="muted">No hay nada pendiente. 🎉</p>}
       {pendientes.map((a) => (
         <div class="card">
@@ -56,6 +59,25 @@ const mlink = (a: any, accion: string) => `/api/anuncio-moderar?id=${a.id}&token
             <div class="acts">
               <a class="ap" href={mlink(a, 'aprobar')}>✅ Aprobar</a>
               <a class="re" href={mlink(a, 'rechazar')}>❌ Rechazar</a>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      <h2>Publicados <span class="muted">({aprobados.length})</span></h2>
+      {aprobados.length === 0 && <p class="muted">Todavía no hay ninguno publicado.</p>}
+      {aprobados.map((a) => (
+        <div class="card">
+          {a.foto_data && <img src={`/api/anuncio-foto?id=${a.id}`} alt="" />}
+          <div>
+            <h3>{a.nombre} <span class="tag">{a.tipo}</span></h3>
+            <div class="meta">
+              📍 {a.municipio}{a.provincia ? ` (${a.provincia})` : ''}{a.direccion ? ` · ${a.direccion}` : ''}<br />
+              ✉️ {a.email} · 📞 {a.telefono || '—'}{a.web ? <> · 🔗 <a href={a.web}>{a.web}</a></> : ''}
+            </div>
+            <div class="acts">
+              {a.codigo_ine && <a class="ap" href={`/municipio/${a.codigo_ine}`} target="_blank">👁️ Ver publicado</a>}
+              <a class="qu" href={mlink(a, 'quitar')}>🗑️ Quitar</a>
             </div>
           </div>
         </div>
