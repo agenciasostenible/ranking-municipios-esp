@@ -6,6 +6,7 @@ interface Props {
   ogDescription?: string;
   ogImage?: string;
   canonical?: string;
+  noindex?: boolean;
 }
 const {
   title = 'Ranking Municipios España',
@@ -14,6 +15,7 @@ const {
   ogDescription = description,
   ogImage = '/og-default.png',
   canonical,
+  noindex = false,
 } = Astro.props;
 const rawUrl = canonical ?? Astro.url.href;
 const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://rankingspain.com');
@@ -28,6 +30,7 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
   <meta name="google-site-verification" content="LJaZJ65Yddnp_SSi5h4BXIFe78t0lBH9Nnj-XGhGcTI" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  {noindex && <meta name="robots" content="noindex,follow" />}
   <link rel="canonical" href={url} />
 
   <!-- OG -->

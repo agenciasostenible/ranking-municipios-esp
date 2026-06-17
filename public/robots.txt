@@ -4,6 +4,10 @@ Allow: /municipio/
 Allow: /ranking/
 Allow: /provincia/
 
+# El generador de rutas llama a Google Places (de pago) en cada carga.
+# Bloqueamos a los rastreadores para que no generen rutas y disparen el gasto.
+Disallow: /ruta
 Disallow: /api/
+Disallow: /admin/
 
 Sitemap: https://rankingspain.com/sitemap.xml
