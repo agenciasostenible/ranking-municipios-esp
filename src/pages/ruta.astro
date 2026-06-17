@@ -604,11 +604,12 @@ const title = hasDia
       <div class="rf-field rf-pueblo-field">
         <label>¿Qué pueblo?</label>
         <div class="rf-ac-wrap">
-          <input type="text" id="rf-pueblo-input" placeholder="Escribe un municipio…" autocomplete="off" value={pueblo ? pueblo.nombre : ''} />
+          <input type="text" id="rf-pueblo-input" placeholder="Escribe un municipio…" autocomplete="off" value={pueblo ? pueblo.nombre : ''} data-name={pueblo ? pueblo.nombre : ''} data-code={puebloCode || ''} />
           <div class="rf-ac" id="rf-pueblo-ac"></div>
         </div>
         <p class="rf-pueblo-hint">Te montamos el <strong>plan del día completo</strong> dentro del pueblo: qué ver a pie, dónde comer, un café, una copa, cenar y dormir.</p>
       </div>
+      <button type="button" class="rf-go rf-go-pueblo" id="rf-go-pueblo">Generar plan</button>
     </div>
   </form>
 
@@ -1148,6 +1149,33 @@ const title = hasDia
   });
   document.addEventListener('click', (e) => {
     if (pAc && !pAc.contains(e.target as Node) && e.target !== pInput) pAc.innerHTML = '';
+  });
+
+  // Botón "Generar plan": relanza con el pueblo actual (o el escrito) + las experiencias marcadas
+  const pGo = document.getElementById('rf-go-pueblo') as HTMLButtonElement | null;
+  async function lanzarPueblo() {
+    const typed = (pInput?.value || '').trim();
+    if (!typed) { pInput?.focus(); return; }
+    const curName = pInput?.getAttribute('data-name') || '';
+    const curCode = pInput?.getAttribute('data-code') || '';
+    // Si no ha cambiado el municipio, reutiliza el código actual (evita una búsqueda)
+    if (curCode && typed.toLowerCase() === curName.toLowerCase()) {
+      window.location.href = '/ruta?pueblo=' + encodeURIComponent(curCode) + catsQS();
+      return;
+    }
+    // Si escribió otro municipio, resuelve el código con la API y navega
+    try {
+      const res = await fetch('/api/search?q=' + encodeURIComponent(typed));
+      const data = await res.json();
+      const m = ((data as any[]) || []).find((d) => d.tipo === 'municipio');
+      if (m) { window.location.href = '/ruta?pueblo=' + m.codigo_ine + catsQS(); return; }
+    } catch (e) {}
+    pInput?.focus();
+  }
+  pGo?.addEventListener('click', lanzarPueblo);
+  // Enter en el campo de pueblo también lanza el plan
+  pInput?.addEventListener('keydown', (e) => {
+    if ((e as KeyboardEvent).key === 'Enter') { e.preventDefault(); lanzarPueblo(); }
   });
 </script>
 </Base>
