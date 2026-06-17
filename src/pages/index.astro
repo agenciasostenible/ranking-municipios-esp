@@ -106,6 +106,15 @@ const municipios = (rankingGlobal as any[]).map(r => ({
       </div>
     </div>
 
+    <!-- Acceso directo al ranking completo -->
+    <div class="hero-all-wrap">
+      <a href="/ranking/ranking_global" class="hero-all-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        Ver toda España
+      </a>
+      <span class="hero-all-hint">o busca tu municipio, provincia o comunidad arriba ↑</span>
+    </div>
+
     <!-- Paso 2: Zona opcional + CTA (solo desktop) -->
     <div class="hero-search-wrap hero-search-desktop">
       <div class="hero-search-pill">
@@ -608,6 +617,10 @@ function doSearch() {
   cursor: pointer; font-family: inherit; transition: all .18s;
 }
 .hero-cat-more:hover { background: rgba(255,255,255,0.4); transform: translateY(-1px); }
+.hero-all-wrap { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.hero-all-btn { display: inline-flex; align-items: center; gap: 9px; padding: 12px 24px; background: rgba(255,255,255,0.95); color: var(--primary); border-radius: 40px; font-weight: 800; font-size: .95rem; text-decoration: none; box-shadow: 0 4px 16px rgba(0,0,0,.18); transition: all .18s; }
+.hero-all-btn:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.hero-all-hint { font-size: .8rem; color: rgba(255,255,255,.75); text-align: center; }
 
 /* Paso 2 móvil: hoja de selección de zona */
 .mcs-overlay {
