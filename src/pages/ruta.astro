@@ -573,6 +573,10 @@ const catTitle = selLabels.length <= 2
 // Encabezado: "por la zona de X" si hay ancla, si no "{cats} por {provincia}"
 const routeHeading = anchor ? `Lo mejor por la zona de ${anchor.nombre}` : `${catTitle} por ${prov}`;
 const diaHeading = pueblo ? `Un día en ${pueblo.nombre}` : '';
+
+// Compartir por WhatsApp: la URL actual ya reproduce la ruta exacta (lleva a la web)
+const shareUrl = url.href;
+const waShare = (msg: string) => `https://wa.me/?text=${encodeURIComponent(msg + '\n' + shareUrl)}`;
 const title = hasDia
   ? `Ruta · ${diaHeading} — Ranking Spain`
   : (selCfgs.length && prov
@@ -652,6 +656,7 @@ const title = hasDia
         <div class="rrh-eyebrow">Ruta a medida · Ranking Spain</div>
         <div class="rrh-title"><Icon name={anchor ? 'map' : infoByCat[selCfgs[0].key].icon} size={22} /> {routeHeading}</div>
         <div class="rrh-meta">{stops.length} paradas · {dias} {dias===1?'día':'días'}{driveTotalMin > 0 ? ` · 🚗 ~${fmtDur(driveTotalMin)} en coche` : ` · ~${Math.round(totalKm)} km`}</div>
+        <a class="rrh-share" href={waShare(`🗺️ Mira esta ruta de ${routeHeading} en Ranking Spain:`)} target="_blank" rel="noopener">💬 Compartir por WhatsApp</a>
       </div>
 
       <div class="ruta-tweaks">
@@ -752,6 +757,7 @@ const title = hasDia
         <div class="rrh-eyebrow">Plan de un día · Ranking Spain</div>
         <div class="rrh-title"><Icon name={diaPlan.icon} size={22} /> {diaHeading}</div>
         <div class="rrh-meta">{pueblo.provincia} · {diaPlan.catLabel}{diaVisitas.length ? ` · ${diaVisitas.length} para ver a pie` : ''}{diaPlan.planMin > 0 ? ` · ⏱️ ~${fmtDur(diaPlan.planMin)} de plan` : ''}</div>
+        <a class="rrh-share" href={waShare(`🗺️ Un día en ${pueblo.nombre} — mira el plan que he montado en Ranking Spain:`)} target="_blank" rel="noopener">💬 Compartir por WhatsApp</a>
       </div>
 
       <div class="ruta-tweaks">
@@ -1079,6 +1085,8 @@ const title = hasDia
 .rrh-eyebrow { font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: .85; font-weight: 600; }
 .rrh-title { display: flex; align-items: center; gap: 9px; font-size: 1.25rem; font-weight: 800; margin-top: 3px; }
 .rrh-meta { font-size: .82rem; opacity: .92; margin-top: 5px; }
+.rrh-share { display: inline-flex; align-items: center; gap: 7px; margin-top: 13px; background: rgba(255,255,255,.95); color: #128c4b; font-weight: 800; font-size: .85rem; text-decoration: none; padding: 9px 16px; border-radius: 24px; transition: background .15s; }
+.rrh-share:hover { background: #fff; }
 .ruta-day { padding: 16px 20px; border-bottom: 1px solid #f2f2f2; }
 .ruta-day-tag { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .5px; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; }
 .ruta-stop { display: flex; gap: 12px; padding: 8px 0; }
