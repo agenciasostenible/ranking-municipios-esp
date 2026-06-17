@@ -1,0 +1,117 @@
+---
+import { DB } from '../../lib/d1client';
+
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+
+const key = Astro.url.searchParams.get('key') ?? '';
+const id = Astro.url.searchParams.get('id') ?? '';
+const ADMIN_KEY = env('ADMIN_KEY');
+const ok = ADMIN_KEY && key === ADMIN_KEY;
+
+let a: any = null;
+if (ok && id) {
+  a = await DB.prepare(`SELECT * FROM anuncios WHERE id = ? LIMIT 1`).bind(id).first();
+}
+
+const TIPOS = [
+  ['gastronomia', 'Restaurante'], ['rural', 'Alojamiento rural'], ['hotel', 'Hotel / alojamiento'],
+  ['cafe', 'Cafetería'], ['bar', 'Bar / copas'], ['activo', 'Actividad'], ['otro', 'Otro'],
+];
+---
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Editar anuncio</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px 16px; color: #222; background: #fafafa; }
+  h1 { font-size: 1.3rem; } a.back { color: #FF385C; text-decoration: none; font-weight: 700; }
+  .f { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  label { font-size: .82rem; font-weight: 700; color: #555; }
+  input, select, textarea { padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 10px; font-size: .92rem; font-family: inherit; width: 100%; box-sizing: border-box; }
+  .place { background: #fff7e6; border: 1.5px solid #f5d28a; border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+  .place .ph { font-weight: 800; color: #92500a; margin-bottom: 8px; }
+  .chk { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-weight: 600; font-size: .9rem; }
+  .chk input { width: auto; }
+  .row { display: flex; gap: 12px; } .row .f { flex: 1; }
+  .save { background: #FF385C; color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; }
+  .prev { max-width: 140px; border-radius: 8px; margin-top: 6px; }
+  .muted { color: #888; font-size: .8rem; }
+</style></head>
+<body>
+  {!ok && <p>🔒 Acceso restringido. Falta la clave correcta.</p>}
+  {ok && !a && <p>No se encontró el anuncio. <a class="back" href={`/admin/anuncios?key=${key}`}>← Volver</a></p>}
+  {ok && a && (
+    <>
+      <p><a class="back" href={`/admin/anuncios?key=${key}`}>← Volver al panel</a></p>
+      <h1>Editar: {a.nombre}</h1>
+      <p class="muted">Estado: <b>{a.estado}</b> · {a.municipio}{a.provincia ? ` (${a.provincia})` : ''}</p>
+
+      <div class="place">
+        <div class="ph">📍 ¿Dónde se muestra este anuncio?</div>
+        <label class="chk"><input type="checkbox" id="en_ficha" checked={a.en_ficha === 1} /> Ficha del municipio</label>
+        <label class="chk"><input type="checkbox" id="en_ruta_mun" checked={a.en_ruta_mun === 1} /> Plan de un día (ruta del municipio)</label>
+        <label class="chk"><input type="checkbox" id="en_ruta_zona" checked={a.en_ruta_zona === 1} /> Rutas por zona / generales (cuando su pueblo sea parada)</label>
+      </div>
+
+      <div class="f"><label>Nombre</label><input id="nombre" value={a.nombre} /></div>
+      <div class="f"><label>Tipo</label>
+        <select id="tipo">{TIPOS.map(([v, t]) => <option value={v} selected={a.tipo === v}>{t}</option>)}</select>
+      </div>
+      <div class="f"><label>Descripción</label><textarea id="descripcion" rows="3">{a.descripcion ?? ''}</textarea></div>
+      <div class="f"><label>Dirección</label><input id="direccion" value={a.direccion ?? ''} /></div>
+      <div class="row">
+        <div class="f"><label>Contacto</label><input id="contacto" value={a.contacto ?? ''} /></div>
+        <div class="f"><label>Email</label><input id="email" value={a.email ?? ''} /></div>
+      </div>
+      <div class="row">
+        <div class="f"><label>Teléfono</label><input id="telefono" value={a.telefono ?? ''} /></div>
+        <div class="f"><label>Web</label><input id="web" value={a.web ?? ''} /></div>
+      </div>
+      <div class="f">
+        <label>Foto</label>
+        {a.foto_data && <img class="prev" id="prev" src={`/api/anuncio-foto?id=${a.id}`} alt="" />}
+        <input type="file" id="foto" accept="image/*" />
+        {a.foto_data && <label class="chk"><input type="checkbox" id="quitar_foto" /> Quitar la foto actual</label>}
+      </div>
+
+      <button class="save" id="save">💾 Guardar cambios</button>
+
+      <script is:inline define:vars={{ id: a.id, key }}>
+        const $ = (i) => document.getElementById(i);
+        let fotoData = '';
+        $('foto')?.addEventListener('change', (e) => {
+          const file = e.target.files?.[0]; if (!file) return;
+          const img = new Image();
+          img.onload = () => {
+            const max = 1000; let w = img.width, h = img.height;
+            if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            fotoData = c.toDataURL('image/jpeg', 0.78);
+            const p = $('prev'); if (p) { p.src = fotoData; }
+          };
+          img.src = URL.createObjectURL(file);
+        });
+        $('save').addEventListener('click', async () => {
+          $('save').disabled = true; $('save').textContent = 'Guardando…';
+          const body = {
+            key, id,
+            nombre: $('nombre').value.trim(), tipo: $('tipo').value,
+            descripcion: $('descripcion').value.trim(), direccion: $('direccion').value.trim(),
+            contacto: $('contacto').value.trim(), email: $('email').value.trim(),
+            telefono: $('telefono').value.trim(), web: $('web').value.trim(),
+            en_ficha: $('en_ficha').checked, en_ruta_mun: $('en_ruta_mun').checked, en_ruta_zona: $('en_ruta_zona').checked,
+            quitar_foto: $('quitar_foto')?.checked || false,
+            foto: fotoData || null,
+          };
+          try {
+            const r = await fetch('/api/anuncio-editar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const jj = await r.json();
+            if (jj.ok) { window.location.href = '/admin/anuncios?key=' + encodeURIComponent(key); }
+            else { alert('No se pudo guardar: ' + (jj.error || '')); $('save').disabled = false; $('save').textContent = '💾 Guardar cambios'; }
+          } catch { alert('Error de conexión.'); $('save').disabled = false; $('save').textContent = '💾 Guardar cambios'; }
+        });
+      </script>
+    </>
+  )}
+</body>
+</html>

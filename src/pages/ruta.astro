@@ -5,7 +5,7 @@ import Icon from '../components/Icon.astro';
 import { getCatInfo } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
 import { getPlace, getPlaceOptions, modestIndex, PLACES_ENABLED } from '../lib/places';
-import { getAnunciosMunicipio } from '../lib/anuncios';
+import { getAnunciosMunicipio, getAnunciosVarios } from '../lib/anuncios';
 
 // Categorías que tienen recurso real + descripción (las que dan rutas verídicas)
 const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
@@ -355,6 +355,10 @@ if (selCfgs.length && prov && !pueblo) {
       }));
     }
 
+    // Recomendados (publicidad) de cada parada que se hayan marcado para rutas por zona
+    const anunMap = await getAnunciosVarios(stops.map((s: any) => s.codigo_ine), 'ruta_zona');
+    for (const s of stops) s.anuncios = anunMap.get(s.codigo_ine) ?? [];
+
     // Repartir en días (equitativo, secuencial)
     const per = Math.ceil(stops.length / dias);
     for (let d = 0; d < dias; d++) dayPlan.push(stops.slice(d*per, (d+1)*per));
@@ -518,7 +522,7 @@ if (pueblo && selCfgs.length) {
 const diaVisitas: any[] = diaPlan ? [...diaPlan.manana, ...diaPlan.tarde] : [];
 const hasDia = !!(pueblo && diaPlan && (diaVisitas.length || diaPlan.star));
 // Establecimientos anunciados y aprobados en este municipio (sello "Recomendado")
-const diaAnuncios = pueblo ? await getAnunciosMunicipio(puebloCode) : [];
+const diaAnuncios = pueblo ? await getAnunciosMunicipio(puebloCode, 'ruta_mun') : [];
 
 // Datos para el mapa (paradas en orden de ruta, o visitas del día a pie)
 const mapData = hasDia
@@ -687,6 +691,9 @@ const title = hasDia
                   : s.dormir
                   ? <div class="rs-line">🛏️ Dormir: <strong>{s.dormir.rec}</strong>{s.dormir.mismo ? '' : ` · ${s.dormir.nombre} (a ${s.dormir.km} km)`}</div>
                   : <div class="rs-line rs-none">🛏️ Sin alojamiento recomendado cerca</div>)}
+                {s.anuncios && s.anuncios.length > 0 && s.anuncios.map((a: any) => (
+                  <div class="rs-line rs-reco-line">⭐ <strong>{a.nombre}</strong><span class="rs-reco-badge">Recomendado</span>{a.web ? <> · <a href={a.web} target="_blank" rel="nofollow noopener">web</a></> : ''}</div>
+                ))}
               </div>
             </div>
             {idx < day.length - 1 && s.driveNext && (
@@ -1058,6 +1065,8 @@ const title = hasDia
 .dia-vis { margin-top: 6px; }
 .dia-rural { color: var(--text); margin-top: 6px; }
 .dia-tag-reco { color: #b45309; background: #fff7e6; }
+.rs-reco-line { color: #92500a; }
+.rs-reco-line a { color: #b45309; font-weight: 700; }
 .rs-reco-badge { display: inline-block; margin-left: 8px; font-size: .64rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: #b45309; background: #fff7e6; border: 1px solid #f5d28a; border-radius: 10px; padding: 1px 7px; white-space: nowrap; }
 .dia-anunciate { background: #fff7e6; padding: 12px 20px; font-size: .82rem; color: #92500a; border-top: 1px solid #f3e2c0; }
 .dia-anunciate a { color: #b45309; font-weight: 800; text-decoration: none; }

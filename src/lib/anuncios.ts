@@ -40,15 +40,19 @@ function toAnuncio(r: any): Anuncio {
   };
 }
 
-/** Anuncios aprobados de un municipio (ordenados: con foto primero, luego recientes). */
-export async function getAnunciosMunicipio(codigo_ine: string): Promise<Anuncio[]> {
+// Superficie donde se muestra → columna de colocación que debe estar a 1.
+export type Surface = 'ficha' | 'ruta_mun' | 'ruta_zona';
+const COL: Record<Surface, string> = { ficha: 'en_ficha', ruta_mun: 'en_ruta_mun', ruta_zona: 'en_ruta_zona' };
+
+/** Anuncios aprobados de un municipio, visibles en la superficie indicada. */
+export async function getAnunciosMunicipio(codigo_ine: string, surface: Surface = 'ficha'): Promise<Anuncio[]> {
   if (!codigo_ine) return [];
   try {
     const { results } = await DB.prepare(
       `SELECT id, codigo_ine, tipo, nombre, descripcion, direccion, web, telefono,
               (foto_data IS NOT NULL) AS foto_data
          FROM anuncios
-        WHERE codigo_ine = ? AND estado = 'aprobado'
+        WHERE codigo_ine = ? AND estado = 'aprobado' AND ${COL[surface]} = 1
         ORDER BY (foto_data IS NOT NULL) DESC, creado_at DESC`
     ).bind(codigo_ine).all();
     return (results as any[]).map(toAnuncio);
@@ -57,8 +61,8 @@ export async function getAnunciosMunicipio(codigo_ine: string): Promise<Anuncio[
   }
 }
 
-/** Anuncios aprobados de varios municipios, agrupados por codigo_ine (para rutas). */
-export async function getAnunciosVarios(codigos: string[]): Promise<Map<string, Anuncio[]>> {
+/** Anuncios aprobados de varios municipios (para rutas), agrupados por codigo_ine. */
+export async function getAnunciosVarios(codigos: string[], surface: Surface = 'ruta_zona'): Promise<Map<string, Anuncio[]>> {
   const map = new Map<string, Anuncio[]>();
   const ids = [...new Set(codigos.filter(Boolean))];
   if (!ids.length) return map;
@@ -67,7 +71,8 @@ export async function getAnunciosVarios(codigos: string[]): Promise<Map<string, 
       `SELECT id, codigo_ine, tipo, nombre, descripcion, direccion, web, telefono,
               (foto_data IS NOT NULL) AS foto_data
          FROM anuncios
-        WHERE estado = 'aprobado' AND codigo_ine IN (${ids.map(() => '?').join(',')})
+        WHERE estado = 'aprobado' AND ${COL[surface]} = 1
+          AND codigo_ine IN (${ids.map(() => '?').join(',')})
         ORDER BY (foto_data IS NOT NULL) DESC, creado_at DESC`
     ).bind(...ids).all();
     for (const r of results as any[]) {
