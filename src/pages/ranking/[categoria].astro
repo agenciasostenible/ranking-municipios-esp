@@ -66,6 +66,16 @@ const { results: ccaas }     = await DB.prepare(`SELECT DISTINCT comunidad FROM 
 
 const maxPts: number = ranking.length ? Math.max(...(ranking as any[]).map((r: any) => r.puntuacion ?? 0)) : 100;
 
+// Datos para "Compartir ranking" (imagen Stories/cuadrada). Solo en la 1ª página
+// (es donde está el Top real). Top 10 con su puesto, nombre, provincia y nota.
+const scopeLabel = prov ? `de ${prov}` : ccaa ? `de ${ccaa}` : comarca ? `de ${comarca}` : 'de España';
+const shareTop = (ranking as any[]).slice(0, 10).map((r: any, i: number) => ({
+  rank: offset + i + 1, nombre: r.nombre, prov: r.provincia, pts: Number(r.puntuacion ?? 0).toFixed(1),
+}));
+const canShareRanking = page === 1 && shareTop.length >= 3;
+const shareCatLabel = catInfo.label;
+const shareUrl = url.href.replace('https://ranking-municipios-esp.pages.dev', 'https://rankingspain.com');
+
 function buildUrl(overrides: Record<string, string | number>) {
   const p: Record<string, string> = { provincia: prov, ccaa, comarca, tamano: tam };
   Object.assign(p, Object.fromEntries(Object.entries(overrides).map(([k,v]) => [k, String(v)])));
@@ -222,6 +232,9 @@ function buildUrl(overrides: Record<string, string | number>) {
         {prov ? ` en ${prov}` : ccaa ? ` en ${ccaa}` : ''}
       </div>
     </div>
+    {canShareRanking && (
+      <button type="button" class="rank-share-btn" id="rank-share-btn" style={`--rc:${catColor}`}>📲 Compartir ranking</button>
+    )}
     {totalPages > 1 && (
       <div class="pg">
         {page > 1 && <a href={buildUrl({ page: page - 1 })} class="pgb">‹</a>}
@@ -590,7 +603,118 @@ document.head.appendChild(thumbStyle);
 
 </script>
 
+{canShareRanking && (
+<div class="rks-overlay" id="rks-overlay">
+  <div class="rks-modal">
+    <button class="rks-close" id="rks-close" aria-label="Cerrar">✕</button>
+    <div class="rks-preview" id="rks-preview"></div>
+    <div class="rks-actions">
+      <button class="rks-net st" id="rks-stories"><span>⬇ Imagen para Stories</span></button>
+      <button class="rks-net wa" id="rks-wa"><span>💬 WhatsApp</span></button>
+      <button class="rks-net cp" id="rks-copy"><span>🔗 Copiar enlace</span></button>
+    </div>
+    <p class="rks-hint">Para <strong>Instagram</strong>: pulsa <strong>Imagen para Stories</strong> → en el móvil se abre el menú de compartir (elige Instagram) o se descarga para subirla a tu historia 📸</p>
+  </div>
+</div>
+)}
+
+{canShareRanking && (
+<script define:vars={{ TOP: shareTop, CATL: shareCatLabel, SCOPE: scopeLabel, RC: catColor, PAGEURL: shareUrl }}>
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function buildVertical(){
+    var titleLen = (CATL||'').length;
+    var titleSize = titleLen>22?56:titleLen>16?70:84;
+    var startY = 600, rowH = 124, body = '';
+    TOP.forEach(function(it, i){
+      var cy = startY + i*rowH;
+      var pos = it.rank;
+      var badgeFill = pos===1?'#F5C518':pos===2?'#B9C0C7':pos===3?'#CD8B45':'#FFF1F3';
+      var badgeTxt = pos<=3?'#ffffff':RC;
+      var nm = (it.nombre||'').length>20 ? (it.nombre.slice(0,19)+'…') : it.nombre;
+      body += '<circle cx="150" cy="'+cy+'" r="46" fill="'+badgeFill+'"/>'
+        + '<text x="150" y="'+(cy+16)+'" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="800" fill="'+badgeTxt+'">'+pos+'</text>'
+        + '<text x="232" y="'+(cy-2)+'" font-family="Arial, sans-serif" font-size="44" font-weight="800" fill="#222">'+esc(nm)+'</text>'
+        + '<text x="232" y="'+(cy+40)+'" font-family="Arial, sans-serif" font-size="28" font-weight="500" fill="#888">'+esc(it.prov||'')+'</text>'
+        + '<rect x="852" y="'+(cy-34)+'" width="150" height="68" rx="34" fill="'+RC+'"/>'
+        + '<text x="927" y="'+(cy+12)+'" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#fff">'+esc(it.pts)+'</text>';
+    });
+    return '<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">'
+      + '<rect width="1080" height="1920" fill="#fff"/>'
+      + '<rect width="1080" height="26" fill="'+RC+'"/>'
+      + '<text x="540" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" font-weight="800" letter-spacing="2"><tspan fill="'+RC+'">Ranking </tspan><tspan fill="#222">Spain</tspan></text>'
+      + '<text x="540" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="6" fill="#888">TOP '+TOP.length+'</text>'
+      + '<text x="540" y="392" text-anchor="middle" font-family="Arial, sans-serif" font-size="'+titleSize+'" font-weight="800" fill="'+RC+'">'+esc(CATL)+'</text>'
+      + '<text x="540" y="452" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="600" fill="#717171">'+esc(SCOPE)+'</text>'
+      + '<line x1="90" y1="510" x2="990" y2="510" stroke="#EBEBEB" stroke-width="3"/>'
+      + body
+      + '<text x="540" y="1865" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="600" letter-spacing="1" fill="#717171">rankingspain.com</text>'
+      + '</svg>';
+  }
+
+  function shareText(){ return '🏆 Top '+TOP.length+' '+CATL+' '+SCOPE+' según Ranking Spain 👇'; }
+
+  function rasterize(svgStr, w, h){
+    var url = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'}));
+    return new Promise(function(res){
+      var img = new Image();
+      img.onload = function(){
+        var c = document.createElement('canvas'); c.width=w; c.height=h;
+        var ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
+        c.toBlob(function(b){ res(b); },'image/png');
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); res(null); };
+      img.src = url;
+    });
+  }
+
+  async function deliverStories(span, orig){
+    var blob = await rasterize(buildVertical(), 1080, 1920);
+    var fname = 'ranking-spain-'+(CATL||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.png';
+    if (blob && navigator.canShare && navigator.canShare({ files:[new File([blob],fname,{type:'image/png'})] })){
+      try { await navigator.share({ files:[new File([blob],fname,{type:'image/png'})], text: shareText()+'\n'+PAGEURL }); span.textContent=orig; return; } catch(_){}
+    }
+    if (blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); },3000); }
+    span.textContent=orig;
+  }
+
+  var overlay = document.getElementById('rks-overlay');
+  function openRks(){ document.getElementById('rks-preview').innerHTML = buildVertical(); overlay.classList.add('open'); }
+  function closeRks(){ overlay.classList.remove('open'); }
+
+  document.getElementById('rank-share-btn').addEventListener('click', openRks);
+  document.getElementById('rks-close').addEventListener('click', closeRks);
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) closeRks(); });
+
+  document.getElementById('rks-stories').addEventListener('click', function(){
+    var span = this.querySelector('span'); var orig = span.textContent; span.textContent='Preparando…';
+    deliverStories(span, orig);
+  });
+  document.getElementById('rks-wa').addEventListener('click', function(){
+    window.open('https://wa.me/?text='+encodeURIComponent(shareText()+'\n'+PAGEURL), '_blank');
+  });
+  document.getElementById('rks-copy').addEventListener('click', function(){
+    var span = this.querySelector('span'); var orig = span.textContent;
+    navigator.clipboard.writeText(PAGEURL).then(function(){ span.textContent='✓ Copiado'; setTimeout(function(){ span.textContent=orig; },1500); });
+  });
+</script>
+)}
+
 <style>
+.rank-share-btn { align-self: center; flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: var(--rc, #FF385C); color: #fff; border: none; border-radius: 24px; padding: 10px 18px; font-size: .88rem; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.rank-share-btn:hover { filter: brightness(.95); }
+.rks-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000; align-items: center; justify-content: center; padding: 18px; }
+.rks-overlay.open { display: flex; }
+.rks-modal { background: #fff; border-radius: 18px; max-width: 360px; width: 100%; padding: 18px; position: relative; max-height: 94vh; overflow: auto; }
+.rks-close { position: absolute; top: 8px; right: 12px; border: none; background: none; font-size: 1.4rem; line-height: 1; cursor: pointer; color: #999; }
+.rks-preview { display: flex; justify-content: center; }
+.rks-preview svg { width: auto; max-height: 60vh; max-width: 100%; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.rks-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.rks-net { padding: 12px; border: 1.5px solid #e3e3e3; border-radius: 12px; background: #fff; font-weight: 700; font-size: .85rem; cursor: pointer; }
+.rks-net:hover { background: #fafafa; }
+.rks-net.st { grid-column: 1 / -1; background: #FF385C; color: #fff; border-color: #FF385C; }
+.rks-hint { font-size: .76rem; color: #888; margin: 12px 0 0; line-height: 1.45; text-align: center; }
 .desde-block-inline {
   background: #fffbf0;
   border: 1.5px solid #ffe082;
