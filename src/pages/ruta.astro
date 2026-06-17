@@ -5,7 +5,7 @@ import Icon from '../components/Icon.astro';
 import { getCatInfo } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
 import { getPlace, getPlaceOptions, modestIndex, PLACES_ENABLED } from '../lib/places';
-import { getAnunciosMunicipio, getAnunciosVarios } from '../lib/anuncios';
+import { getAnunciosMunicipio, getAnunciosProvincia } from '../lib/anuncios';
 
 // Categorías que tienen recurso real + descripción (las que dan rutas verídicas)
 const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
@@ -164,6 +164,7 @@ function decoratePlaces(list: any[], stop: any) {
 
 let dayPlan: any[][] = [];
 let stops: any[] = [];
+let zonaAnuncios: any[] = [];   // publicidad a nivel provincia en rutas por zona
 let totalKm = 0;
 let driveTotalMin = 0;
 
@@ -355,9 +356,9 @@ if (selCfgs.length && prov && !pueblo) {
       }));
     }
 
-    // Recomendados (publicidad) de cada parada que se hayan marcado para rutas por zona
-    const anunMap = await getAnunciosVarios(stops.map((s: any) => s.codigo_ine), 'ruta_zona');
-    for (const s of stops) s.anuncios = anunMap.get(s.codigo_ine) ?? [];
+    // Recomendados (publicidad) a nivel PROVINCIA: salen en cualquier ruta de la provincia,
+    // aunque su municipio no sea una de las paradas.
+    zonaAnuncios = await getAnunciosProvincia(prov, 'ruta_zona');
 
     // Repartir en días (equitativo, secuencial)
     const per = Math.ceil(stops.length / dias);
@@ -691,9 +692,6 @@ const title = hasDia
                   : s.dormir
                   ? <div class="rs-line">🛏️ Dormir: <strong>{s.dormir.rec}</strong>{s.dormir.mismo ? '' : ` · ${s.dormir.nombre} (a ${s.dormir.km} km)`}</div>
                   : <div class="rs-line rs-none">🛏️ Sin alojamiento recomendado cerca</div>)}
-                {s.anuncios && s.anuncios.length > 0 && s.anuncios.map((a: any) => (
-                  <div class="rs-line rs-reco-line">⭐ <strong>{a.nombre}</strong><span class="rs-reco-badge">Recomendado</span>{a.telefono && <> · <a href={`tel:${a.telefono}`}>📞 Llamar</a></>}{a.wa && <> · <a href={a.wa} target="_blank" rel="nofollow noopener" class="rs-wa">💬 WhatsApp</a></>}{a.web && <> · <a href={a.web} target="_blank" rel="nofollow noopener">web</a></>}</div>
-                ))}
               </div>
             </div>
             {idx < day.length - 1 && s.driveNext && (
@@ -703,6 +701,23 @@ const title = hasDia
           ))}
         </div>
       ))}
+
+      {zonaAnuncios.length > 0 && (
+        <div class="ruta-day reco-zona">
+          <div class="dia-tag dia-tag-reco">⭐ Recomendados en {prov}</div>
+          {zonaAnuncios.map((a: any) => (
+            <div class="rs-place dia-vis">
+              <img class="rs-thumb" src={a.foto ?? ''} alt={a.nombre} loading="lazy" width="56" height="56" style={a.foto ? '' : 'display:none'} />
+              <div class="rs-place-txt">
+                <div class="rs-line">⭐ <strong>{a.nombre}</strong><span class="rs-reco-badge">Recomendado</span></div>
+                <div class="rs-loc">📍 {a.municipio}{a.direccion ? ` · ${a.direccion}` : ''}{a.codigo_ine ? <> · <a href={`/municipio/${a.codigo_ine}`}>ver pueblo</a></> : ''}</div>
+                <div class="rs-loc rs-reco-acts">{a.telefono && <a href={`tel:${a.telefono}`}>📞 Llamar</a>}{a.wa && <a href={a.wa} target="_blank" rel="nofollow noopener" class="rs-wa">💬 WhatsApp</a>}{a.web && <a href={a.web} target="_blank" rel="nofollow noopener">🔗 web</a>}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div class="ruta-foot">Ruta basada en el inventario verificado de Ranking Spain. Restaurantes y sitios para visitar, con su valoración, vía Google. Datos reales, sin inventar.</div>
     </div>
   )}

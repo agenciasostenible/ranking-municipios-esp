@@ -76,7 +76,7 @@ const mlink = (a: any, accion: string) => `/api/anuncio-moderar?id=${a.id}&token
             <div class="meta">
               📍 {a.municipio}{a.provincia ? ` (${a.provincia})` : ''}{a.direccion ? ` · ${a.direccion}` : ''}<br />
               ✉️ {a.email} · 📞 {a.telefono || '—'}{a.web ? <> · 🔗 <a href={a.web}>{a.web}</a></> : ''}<br />
-              <span class="muted">Sale en: {[a.en_ficha && 'ficha', a.en_ruta_mun && 'ruta del municipio', a.en_ruta_zona && 'rutas por zona'].filter(Boolean).join(' · ') || '— (en ningún sitio)'}</span>
+              <span class="muted">Sale en: {[a.en_ficha && 'ficha', a.en_ruta_mun && 'ruta del municipio', a.en_ruta_zona && 'rutas de la provincia'].filter(Boolean).join(' · ') || '— (en ningún sitio)'}</span>
             </div>
             <div class="acts">
               {a.codigo_ine && <a class="ap" href={`/municipio/${a.codigo_ine}`} target="_blank">👁️ Ver publicado</a>}

@@ -12,6 +12,7 @@ import { DB } from './d1client';
 export type Anuncio = {
   id: number;
   codigo_ine: string | null;
+  municipio: string | null;
   tipo: string;
   nombre: string;
   descripcion: string | null;
@@ -44,7 +45,7 @@ export const ANUNCIO_TIPOS: Record<string, { label: string; slot: 'comer' | 'dor
 
 function toAnuncio(r: any): Anuncio {
   return {
-    id: r.id, codigo_ine: r.codigo_ine, tipo: r.tipo, nombre: r.nombre,
+    id: r.id, codigo_ine: r.codigo_ine, municipio: r.municipio, tipo: r.tipo, nombre: r.nombre,
     descripcion: r.descripcion, direccion: r.direccion, web: r.web, telefono: r.telefono,
     wa: r.whatsapp ? waLink(r.telefono) : null,
     foto: r.foto_data ? `/api/anuncio-foto?id=${r.id}` : null,
@@ -60,7 +61,7 @@ export async function getAnunciosMunicipio(codigo_ine: string, surface: Surface 
   if (!codigo_ine) return [];
   try {
     const { results } = await DB.prepare(
-      `SELECT id, codigo_ine, tipo, nombre, descripcion, direccion, web, telefono, whatsapp,
+      `SELECT id, codigo_ine, municipio, tipo, nombre, descripcion, direccion, web, telefono, whatsapp,
               (foto_data IS NOT NULL) AS foto_data
          FROM anuncios
         WHERE codigo_ine = ? AND estado = 'aprobado' AND ${COL[surface]} = 1
@@ -72,6 +73,23 @@ export async function getAnunciosMunicipio(codigo_ine: string, surface: Surface 
   }
 }
 
+/** Anuncios aprobados de TODA una provincia (publicidad a nivel provincia en rutas por zona). */
+export async function getAnunciosProvincia(provincia: string, surface: Surface = 'ruta_zona'): Promise<Anuncio[]> {
+  if (!provincia) return [];
+  try {
+    const { results } = await DB.prepare(
+      `SELECT id, codigo_ine, municipio, tipo, nombre, descripcion, direccion, web, telefono, whatsapp,
+              (foto_data IS NOT NULL) AS foto_data
+         FROM anuncios
+        WHERE provincia = ? AND estado = 'aprobado' AND ${COL[surface]} = 1
+        ORDER BY (foto_data IS NOT NULL) DESC, creado_at DESC`
+    ).bind(provincia).all();
+    return (results as any[]).map(toAnuncio);
+  } catch {
+    return [];
+  }
+}
+
 /** Anuncios aprobados de varios municipios (para rutas), agrupados por codigo_ine. */
 export async function getAnunciosVarios(codigos: string[], surface: Surface = 'ruta_zona'): Promise<Map<string, Anuncio[]>> {
   const map = new Map<string, Anuncio[]>();
@@ -79,7 +97,7 @@ export async function getAnunciosVarios(codigos: string[], surface: Surface = 'r
   if (!ids.length) return map;
   try {
     const { results } = await DB.prepare(
-      `SELECT id, codigo_ine, tipo, nombre, descripcion, direccion, web, telefono, whatsapp,
+      `SELECT id, codigo_ine, municipio, tipo, nombre, descripcion, direccion, web, telefono, whatsapp,
               (foto_data IS NOT NULL) AS foto_data
          FROM anuncios
         WHERE estado = 'aprobado' AND ${COL[surface]} = 1

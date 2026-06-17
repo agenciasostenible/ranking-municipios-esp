@@ -49,7 +49,7 @@ const TIPOS = [
         <div class="ph">📍 ¿Dónde se muestra este anuncio?</div>
         <label class="chk"><input type="checkbox" id="en_ficha" checked={a.en_ficha === 1} /> Ficha del municipio</label>
         <label class="chk"><input type="checkbox" id="en_ruta_mun" checked={a.en_ruta_mun === 1} /> Plan de un día (ruta del municipio)</label>
-        <label class="chk"><input type="checkbox" id="en_ruta_zona" checked={a.en_ruta_zona === 1} /> Rutas por zona / generales (cuando su pueblo sea parada)</label>
+        <label class="chk"><input type="checkbox" id="en_ruta_zona" checked={a.en_ruta_zona === 1} /> Rutas de su provincia (sale en CUALQUIER ruta por zona de {a.provincia || 'su provincia'}, aunque su pueblo no sea parada)</label>
       </div>
 
       <div class="f"><label>Nombre</label><input id="nombre" value={a.nombre} /></div>
