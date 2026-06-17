@@ -182,11 +182,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     </div>
   </form>
 </section>
-
-<!-- CTA establecimientos -->
-<div class="home-anunciate-wrap">
-  <a href="/anunciate" class="home-anunciate">🏪 Soy un establecimiento</a>
-</div>
 <script>
   const rpCard = document.querySelector('.rp-card') as HTMLFormElement | null;
   // Desplegable de experiencias (compacto): abrir/cerrar + contador
@@ -685,9 +680,6 @@ function doSearch() {
 
 /* ── Hero ── */
 .route-promo { max-width: 700px; margin: -20px auto 0; padding: 0 16px; position: relative; z-index: 2; }
-.home-anunciate-wrap { max-width: 700px; margin: 14px auto 0; padding: 0 16px; text-align: center; }
-.home-anunciate { display: inline-flex; align-items: center; gap: 7px; font-size: .9rem; font-weight: 700; color: var(--primary); text-decoration: none; padding: 9px 18px; border: 1.5px solid rgba(255,56,92,.3); border-radius: 30px; background: #fff1f3; transition: all .15s; }
-.home-anunciate:hover { background: var(--primary); color: #fff; }
 .rp-card { background: #fff; border: 2px solid var(--primary); border-radius: 18px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(255,56,92,.13); }
 .rp-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .rp-badge { font-size: .66rem; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; background: var(--primary); color: #fff; border-radius: 20px; padding: 3px 10px; }
