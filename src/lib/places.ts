@@ -19,8 +19,14 @@ const KEY =
   (import.meta as any).env?.GOOGLE_PLACES_API_KEY ??
   (typeof process !== 'undefined' ? process.env.GOOGLE_PLACES_API_KEY : undefined);
 
-/** true si hay clave configurada; si es false, las rutas funcionan igual sin Google. */
-export const PLACES_ENABLED = !!KEY;
+// BOTÓN DE PÁNICO: pon la variable de entorno PLACES_PAUSED=1 en Vercel para
+// cortar AL INSTANTE todo gasto de Google (la web sigue, solo sin sus extras).
+const PAUSED =
+  ((import.meta as any).env?.PLACES_PAUSED ??
+   (typeof process !== 'undefined' ? process.env.PLACES_PAUSED : undefined)) === '1';
+
+/** true si hay clave y no está en pausa; si es false, las rutas funcionan igual sin Google. */
+export const PLACES_ENABLED = !!KEY && !PAUSED;
 
 export type PlaceHit = {
   place_id: string;
