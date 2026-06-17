@@ -10,4 +10,19 @@ Disallow: /ruta
 Disallow: /api/
 Disallow: /admin/
 
+# Rastreadores de previsualización de enlaces: SÍ pueden leer /ruta (para que la
+# tarjeta de WhatsApp/redes se vea bien). Solo cargan rutas ya generadas → caché,
+# sin coste extra. Seguimos bloqueando /api y /admin.
+User-agent: WhatsApp
+Disallow: /api/
+Disallow: /admin/
+
+User-agent: facebookexternalhit
+Disallow: /api/
+Disallow: /admin/
+
+User-agent: Twitterbot
+Disallow: /api/
+Disallow: /admin/
+
 Sitemap: https://rankingspain.com/sitemap.xml

@@ -582,8 +582,18 @@ const title = hasDia
   : (selCfgs.length && prov
     ? `Ruta · ${routeHeading} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
     : 'Planifica tu ruta — Ranking Spain');
+
+// Previsualización al compartir (WhatsApp/redes): título y descripción según la ruta
+const ogTitle = hasDia
+  ? `🗺️ ${diaHeading} — Ranking Spain`
+  : (selCfgs.length && prov ? `🗺️ ${routeHeading} — Ranking Spain` : 'Planifica tu ruta — Ranking Spain');
+const ogDescription = hasDia
+  ? `Plan del día en ${pueblo.nombre}: qué ver a pie, dónde comer, un café, una copa y dónde dormir — con valoraciones reales.`
+  : (selCfgs.length && prov
+    ? `Ruta real por ${prov}: qué visitar, dónde comer y dónde dormir en cada parada, con valoraciones reales.`
+    : 'Monta tu viaje real: qué visitar, dónde comer y dónde dormir, con datos verificados de Ranking Spain.');
 ---
-<Base title={title} description="Genera una ruta de viaje real basada en datos verificados de Ranking Spain." noindex={true}>
+<Base title={title} description="Genera una ruta de viaje real basada en datos verificados de Ranking Spain." ogTitle={ogTitle} ogDescription={ogDescription} noindex={true}>
 <div class="ruta-page">
   <div class="ruta-hero">
     <h1>🗺️ Planifica tu ruta</h1>
