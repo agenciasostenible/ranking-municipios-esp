@@ -28,6 +28,21 @@ const PAUSED =
 /** true si hay clave y no está en pausa; si es false, las rutas funcionan igual sin Google. */
 export const PLACES_ENABLED = !!KEY && !PAUSED;
 
+// FOTOS DE GOOGLE DESACTIVADAS: Google retiró la API "legacy" de fotos (la
+// redirección a googleusercontent devuelve 403) y la "Places API (New)" no está
+// habilitada. Cada intento cuesta dinero, así que no pedimos ni mostramos fotos
+// de Google. (Las fotos de los ANUNCIOS son propias y no se ven afectadas.)
+// Para reactivarlas habría que migrar a Places API (New) → ver handoff.
+const PHOTOS_ENABLED = false;
+function stripPhoto<T extends PlaceHit | null>(h: T): T {
+  if (h && !PHOTOS_ENABLED) { h.foto_ref = null; h.foto_attr = null; }
+  return h;
+}
+function stripPhotos(list: PlaceHit[]): PlaceHit[] {
+  if (!PHOTOS_ENABLED) for (const h of list) { h.foto_ref = null; h.foto_attr = null; }
+  return list;
+}
+
 export type PlaceHit = {
   place_id: string;
   nombre: string;
@@ -69,7 +84,7 @@ function score(r: any): number {
  * La usa el endpoint /api/place-photo para que la clave nunca llegue al navegador.
  */
 export async function fetchPlacePhoto(ref: string, maxwidth = 600): Promise<Response | null> {
-  if (!KEY) return null;
+  if (!KEY || !PHOTOS_ENABLED) return null;   // fotos de Google desactivadas (coste)
   const u = new URL('https://maps.googleapis.com/maps/api/place/photo');
   u.searchParams.set('maxwidth', String(maxwidth));
   u.searchParams.set('photo_reference', ref);
@@ -189,11 +204,11 @@ export async function getPlace(
 ): Promise<PlaceHit | null> {
   if (!KEY || lat == null || lng == null) return null;
   const cached = await cacheRead(codigo_ine, kind);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) return stripPhoto(cached);
   let hit: PlaceHit | null = null;
   try { hit = await nearbySearch(lat, lng, spec); } catch { return null; }
   await cacheWrite(codigo_ine, kind, hit);
-  return hit;
+  return stripPhoto(hit);
 }
 
 // Alternativa "más modesta": mejor valorada entre las que NO son la primera y
@@ -220,7 +235,7 @@ export async function getLodgingPair(
     const ca = await cacheRead(codigo_ine, kind + '#alt');
     // Si hay mejor cacheado y alternativa (o no hay alojamiento), servimos caché.
     // Si el mejor existe pero falta la fila de alternativa, recalculamos.
-    if (ca !== undefined || cb === null) return { best: cb, alt: ca === undefined ? null : ca };
+    if (ca !== undefined || cb === null) return { best: stripPhoto(cb), alt: stripPhoto(ca === undefined ? null : ca) };
   }
   let list: PlaceHit[] = [];
   try { list = await nearbyList(lat, lng, spec); } catch { /* ignore */ }
@@ -228,7 +243,7 @@ export async function getLodgingPair(
   const alt = pickAlt(list, best);
   await cacheWrite(codigo_ine, kind, best);
   await cacheWrite(codigo_ine, kind + '#alt', alt);
-  return { best, alt };
+  return { best: stripPhoto(best), alt: stripPhoto(alt) };
 }
 
 // Caché de una LISTA de opciones (para poder cambiar de sitio): se guarda como
@@ -263,12 +278,12 @@ export async function getPlaceOptions(
 ): Promise<PlaceHit[]> {
   if (!KEY || lat == null || lng == null) return [];
   const cached = await listCacheRead(codigo_ine, kind);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) return stripPhotos(cached);
   let list: PlaceHit[] = [];
   try { list = await nearbyList(lat, lng, spec); } catch { /* ignore */ }
   list = list.slice(0, n);
   await listCacheWrite(codigo_ine, kind, list);
-  return list;
+  return stripPhotos(list);
 }
 
 /** Índice de la opción más "modesta" (proxy de más barata) dentro de la lista. */
