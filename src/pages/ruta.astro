@@ -79,6 +79,33 @@ if (inicioCode) {
   }
 }
 
+// ── MODO "UN DÍA EN UN PUEBLO" ────────────────────────────────────────────
+// Itinerario de un solo día DENTRO de un municipio (no por la zona): visitas a
+// pie encadenadas + café, comer, copa, cenar y dormir, todo en el mismo pueblo.
+const puebloCode = url.searchParams.get('pueblo') ?? '';
+let pueblo: any = null;
+if (puebloCode) {
+  pueblo = await DB.prepare(
+    `SELECT codigo_ine, nombre, provincia, latitud, longitud FROM municipios
+      WHERE codigo_ine=? AND latitud IS NOT NULL LIMIT 1`
+  ).bind(puebloCode).first();
+  if (pueblo) {
+    prov = pueblo.provincia;               // la provincia se deriva del pueblo
+    if (!cats.length) {
+      // sin experiencia elegida → la mejor puntuada del pueblo (o monumentos)
+      const ph = RUTA_CATS.map(() => '?').join(',');
+      const best = await DB.prepare(
+        `SELECT categoria FROM puntuaciones
+          WHERE codigo_ine=? AND categoria IN (${ph}) AND puntuacion>0
+          ORDER BY puntuacion DESC LIMIT 1`
+      ).bind(puebloCode, ...RUTA_CATS.map(c => c.key)).first();
+      cats = [best ? (best as any).categoria : 'monumentos'];
+    } else {
+      cats = [cats[0]];                    // el día gira en torno a UNA experiencia
+    }
+  }
+}
+
 const selCfgs = RUTA_CATS.filter(c => cats.includes(c.key));
 const tipoByCat:  Record<string,string> = Object.fromEntries(selCfgs.map(c => [c.key, c.tipo]));
 const labelByCat: Record<string,string> = Object.fromEntries(selCfgs.map(c => [c.key, c.label]));
@@ -137,7 +164,7 @@ let stops: any[] = [];
 let totalKm = 0;
 let driveTotalMin = 0;
 
-if (selCfgs.length && prov) {
+if (selCfgs.length && prov && !pueblo) {
   // Todas las puntuaciones de las categorías elegidas en la provincia
   const catPh = cats.map(() => '?').join(',');
   const { results } = await DB.prepare(
@@ -332,10 +359,141 @@ if (selCfgs.length && prov) {
   }
 }
 
-// Datos para el mapa (paradas en orden de ruta)
-const mapData = stops.map((s: any, i: number) => ({
-  n: i + 1, nombre: s.nombre, lat: s.latitud, lng: s.longitud,
-}));
+// ── Construcción del itinerario de un día dentro de un solo municipio ──────
+// Tiempos a pie / en coche estimados entre dos puntos (urbano, con rodeo).
+function legTimes(a: any, b: any) {
+  const km = haversine(a, b);
+  return {
+    dist: km < 1 ? `${Math.round(km * 1000)} m` : `${(Math.round(km * 10) / 10).toLocaleString('es-ES')} km`,
+    walkMin: Math.max(1, Math.round((km / 4.5) * 60 * 1.25)),
+    driveMin: Math.max(1, Math.round((km / 28) * 60 * 1.25)),
+  };
+}
+
+let diaPlan: any = null;
+if (pueblo && selCfgs.length) {
+  const primaryCat = cats[0];
+  const tipo = tipoByCat[primaryCat];
+  const center = { latitud: pueblo.latitud, longitud: pueblo.longitud, nombre: pueblo.nombre };
+
+  // Recurso "estrella" verificado de nuestro inventario (lo que hace destacar al pueblo)
+  const starRow = await DB.prepare(
+    `SELECT nombre, descripcion FROM entidades
+      WHERE codigo_ine=? AND tipo=? ORDER BY length(COALESCE(descripcion,'')) DESC LIMIT 1`
+  ).bind(puebloCode, tipo).first();
+
+  // Alojamiento rural propio (respaldo local de "dormir")
+  const ruralRow = await DB.prepare(
+    `SELECT descripcion FROM entidades WHERE codigo_ine=? AND tipo='rural'
+      ORDER BY length(COALESCE(descripcion,'')) DESC LIMIT 1`
+  ).bind(puebloCode).first();
+  let ruralTxt: string | null = null;
+  if (ruralRow) {
+    const md = /Alojamientos rurales:\s*(.+?)(?:\.\s*Entorno|\.$|$)/i.exec((ruralRow as any).descripcion || '');
+    let a = (md ? md[1] : ((ruralRow as any).descripcion || '')).trim().replace(/\.$/, '');
+    if (a.length > 90) a = a.slice(0, 90).replace(/,?\s*\S*$/, '') + '…';
+    ruralTxt = a || null;
+  }
+
+  if (PLACES_ENABLED) {
+    const prof = CAT_PROFILE[primaryCat] ?? {};
+    // En el día SÍ queremos puntos que visitar aunque la categoría los oculte en la zona
+    const visCfg = (prof.visitar && typeof prof.visitar === 'object') ? prof.visitar : { type: 'tourist_attraction' };
+    const visSpec = {
+      type: visCfg.type ?? 'tourist_attraction', radius: 5000, minReviews: 10,
+      keyword: visCfg.keyword, excludeTypes: visCfg.excludeTypes,
+    };
+    const visKind = 'diavis' + (visCfg.keyword || visCfg.excludeTypes ? '_' + primaryCat : '');
+    const comerKw = prof.comer?.keyword;
+    const dormirKw = prof.dormir?.keyword;
+
+    const [visRaw, cafeList, comerList, copaList, dormirList] = await Promise.all([
+      getPlaceOptions(puebloCode, visKind, pueblo.latitud, pueblo.longitud, visSpec, 6),
+      getPlaceOptions(puebloCode, 'cafe', pueblo.latitud, pueblo.longitud, { type: 'cafe', radius: 4000, minReviews: 20 }, 2),
+      getPlaceOptions(puebloCode, 'comer' + (comerKw ? '_' + primaryCat : ''), pueblo.latitud, pueblo.longitud, { type: 'restaurant', radius: 7000, minReviews: 30, keyword: comerKw, softKeyword: true }, 4),
+      getPlaceOptions(puebloCode, 'copa', pueblo.latitud, pueblo.longitud, { type: 'bar', radius: 4000, minReviews: 20 }, 2),
+      getPlaceOptions(puebloCode, 'dormir' + (dormirKw ? '_' + primaryCat : ''), pueblo.latitud, pueblo.longitud, { type: 'lodging', radius: 9000, minReviews: 15, keyword: dormirKw, softKeyword: true }, 4),
+    ]);
+
+    decoratePlaces(visRaw, center);
+    decoratePlaces(cafeList, center);
+    decoratePlaces(comerList, center);
+    decoratePlaces(copaList, center);
+    decoratePlaces(dormirList, center);
+
+    // Ordenar las visitas a pie: vecino más cercano empezando por la más céntrica
+    const visPool = visRaw.filter((v: any) => v.lat != null && v.lng != null);
+    const ordered: any[] = [];
+    if (visPool.length) {
+      const used = new Set<number>();
+      let cur = 0, bd = Infinity;
+      for (let i = 0; i < visPool.length; i++) {
+        const d = haversine(center, { latitud: visPool[i].lat, longitud: visPool[i].lng });
+        if (d < bd) { bd = d; cur = i; }
+      }
+      used.add(cur); ordered.push(visPool[cur]);
+      while (ordered.length < visPool.length) {
+        const a = { latitud: ordered[ordered.length - 1].lat, longitud: ordered[ordered.length - 1].lng };
+        let best = -1; bd = Infinity;
+        for (let i = 0; i < visPool.length; i++) {
+          if (used.has(i)) continue;
+          const d = haversine(a, { latitud: visPool[i].lat, longitud: visPool[i].lng });
+          if (d < bd) { bd = d; best = i; }
+        }
+        used.add(best); ordered.push(visPool[best]);
+      }
+    }
+    // Tiempo a la siguiente visita (a pie / en coche)
+    for (let i = 0; i < ordered.length - 1; i++) {
+      const t = legTimes(
+        { latitud: ordered[i].lat, longitud: ordered[i].lng },
+        { latitud: ordered[i + 1].lat, longitud: ordered[i + 1].lng },
+      );
+      ordered[i].next = { ...t, to: ordered[i + 1].nombre };
+    }
+
+    // Repartir visitas en mañana / tarde
+    const half = Math.max(1, Math.ceil(ordered.length / 2));
+    const manana = ordered.slice(0, half);
+    const tarde = ordered.slice(half);
+
+    const comerIdx = pres === 'eco' ? modestIndex(comerList) : 0;
+    const dormirIdx = pres === 'eco' ? modestIndex(dormirList) : 0;
+    // Cenar = una opción distinta de la comida (o la modesta en económico)
+    const cenarIdx = pres === 'eco' ? modestIndex(comerList) : (comerList.length > 1 ? 1 : 0);
+
+    diaPlan = {
+      star: starRow ? { nombre: (starRow as any).nombre, desc: (starRow as any).descripcion } : null,
+      manana, tarde,
+      cafe: cafeList[0] ?? null,
+      comerList, comerCur: comerList[comerIdx] ?? null, comerIdx,
+      copa: copaList[0] ?? null,
+      cenarList: comerList, cenarIdx, cenarCur: comerList[cenarIdx] ?? null,
+      dormirList, dormirCur: dormirList[dormirIdx] ?? null, dormirIdx,
+      rural: ruralTxt,
+      catLabel: labelByCat[primaryCat], catKey: primaryCat,
+      icon: infoByCat[primaryCat].icon, color: colorByCat[primaryCat],
+    };
+  } else {
+    // Sin Google: al menos mostramos el recurso estrella y el alojamiento rural
+    diaPlan = {
+      star: starRow ? { nombre: (starRow as any).nombre, desc: (starRow as any).descripcion } : null,
+      manana: [], tarde: [], cafe: null, comerList: [], comerCur: null,
+      copa: null, cenarList: [], cenarCur: null, dormirList: [], dormirCur: null,
+      rural: ruralTxt, catLabel: labelByCat[primaryCat], catKey: primaryCat,
+      icon: infoByCat[primaryCat].icon, color: colorByCat[primaryCat],
+    };
+  }
+}
+const diaVisitas: any[] = diaPlan ? [...diaPlan.manana, ...diaPlan.tarde] : [];
+const hasDia = !!(pueblo && diaPlan && (diaVisitas.length || diaPlan.star));
+
+// Datos para el mapa (paradas en orden de ruta, o visitas del día a pie)
+const mapData = hasDia
+  ? diaVisitas.map((v: any, i: number) => ({ n: i + 1, nombre: v.nombre, lat: v.lat, lng: v.lng }))
+  : stops.map((s: any, i: number) => ({
+      n: i + 1, nombre: s.nombre, lat: s.latitud, lng: s.longitud,
+    }));
 
 const fmtDur = (min: number) => {
   if (min >= 60) { const h = Math.floor(min / 60), m = min % 60; return m ? `${h} h ${m} min` : `${h} h`; }
@@ -354,9 +512,12 @@ const catTitle = selLabels.length <= 2
   : `${selLabels.slice(0, 2).join(', ')} y ${selLabels.length - 2} más`;
 // Encabezado: "por la zona de X" si hay ancla, si no "{cats} por {provincia}"
 const routeHeading = anchor ? `Lo mejor por la zona de ${anchor.nombre}` : `${catTitle} por ${prov}`;
-const title = selCfgs.length && prov
-  ? `Ruta · ${routeHeading} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
-  : 'Planifica tu ruta — Ranking Spain';
+const diaHeading = pueblo ? `Un día en ${pueblo.nombre}` : '';
+const title = hasDia
+  ? `Ruta · ${diaHeading} — Ranking Spain`
+  : (selCfgs.length && prov
+    ? `Ruta · ${routeHeading} · ${dias} ${dias===1?'día':'días'} — Ranking Spain`
+    : 'Planifica tu ruta — Ranking Spain');
 ---
 <Base title={title} description="Genera una ruta de viaje real basada en datos verificados de Ranking Spain.">
 <div class="ruta-page">
@@ -365,9 +526,14 @@ const title = selCfgs.length && prov
     <p>Elige <strong>una o varias experiencias</strong> y una provincia. Te montamos una ruta <strong>real</strong> y en cada parada te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google en cada sitio.</p>
   </div>
 
-  <form class="ruta-form" method="get">
+  <form class="ruta-form" method="get" id="ruta-form" data-mode={pueblo ? 'pueblo' : 'zona'}>
+    <div class="rf-modes" role="tablist">
+      <button type="button" class={`rf-mode${pueblo?'':' on'}`} data-mode="zona">🧭 Por la zona</button>
+      <button type="button" class={`rf-mode${pueblo?' on':''}`} data-mode="pueblo">📍 Un día en un pueblo</button>
+    </div>
+
     <div class="rf-field rf-cats">
-      <label>¿Qué quieres hacer? <span class="rf-hint">(puedes elegir varias)</span></label>
+      <label>¿Qué quieres hacer? <span class="rf-hint rf-hint-zona">(puedes elegir varias)</span><span class="rf-hint rf-hint-pueblo">(opcional: enfoca el día)</span></label>
       <div class="rf-chips">
         {RUTA_CATS.map(c => (
           <label class={`rf-chip${cats.includes(c.key)?' on':''}`}>
@@ -377,26 +543,46 @@ const title = selCfgs.length && prov
         ))}
       </div>
     </div>
-    <div class="rf-field">
-      <label>Provincia</label>
-      <select name="prov">
-        <option value="">Elige provincia…</option>
-        {provincias.map(p => <option value={p} selected={p===prov}>{p}</option>)}
-      </select>
+
+    <!-- MODO POR LA ZONA -->
+    <div class="rf-block rf-block-zona">
+      <div class="rf-field">
+        <label>Provincia</label>
+        <select name="prov">
+          <option value="">Elige provincia…</option>
+          {provincias.map(p => <option value={p} selected={p===prov}>{p}</option>)}
+        </select>
+      </div>
+      <div class="rf-field rf-dias">
+        <label>Días</label>
+        <div class="rf-dias-btns">
+          {[1,2,3].map(d => <label class={`rf-day${d===dias?' on':''}`}><input type="radio" name="dias" value={d} checked={d===dias} />{d}</label>)}
+        </div>
+      </div>
+      <button type="submit" class="rf-go">Generar ruta</button>
     </div>
-    <div class="rf-field rf-dias">
-      <label>Días</label>
-      <div class="rf-dias-btns">
-        {[1,2,3].map(d => <label class={`rf-day${d===dias?' on':''}`}><input type="radio" name="dias" value={d} checked={d===dias} />{d}</label>)}
+
+    <!-- MODO UN DÍA EN UN PUEBLO -->
+    <div class="rf-block rf-block-pueblo">
+      <div class="rf-field rf-pueblo-field">
+        <label>¿Qué pueblo?</label>
+        <div class="rf-ac-wrap">
+          <input type="text" id="rf-pueblo-input" placeholder="Escribe un municipio…" autocomplete="off" value={pueblo ? pueblo.nombre : ''} />
+          <div class="rf-ac" id="rf-pueblo-ac"></div>
+        </div>
+        <p class="rf-pueblo-hint">Te montamos el <strong>plan del día completo</strong> dentro del pueblo: qué ver a pie, dónde comer, un café, una copa, cenar y dormir.</p>
       </div>
     </div>
-    <button type="submit" class="rf-go">Generar ruta</button>
   </form>
 
-  {selCfgs.length > 0 && prov && stops.length === 0 && (
+  {!pueblo && selCfgs.length > 0 && prov && stops.length === 0 && (
     <p class="ruta-empty">{anchor
       ? `No tenemos suficientes sitios cerca de ${anchor.nombre} para montar una ruta por la zona. Prueba el planificador eligiendo provincia y experiencias.`
       : `No tenemos suficientes datos de ${catTitle} en ${prov} para montar una ruta. Prueba otra provincia o experiencia.`}</p>
+  )}
+
+  {pueblo && !hasDia && (
+    <p class="ruta-empty">No hemos podido montar un plan de un día en {pueblo.nombre} ahora mismo. Prueba con otra experiencia u otro municipio.</p>
   )}
 
   {selCfgs.length > 0 && prov && stops.length > 0 && (
@@ -481,9 +667,163 @@ const title = selCfgs.length && prov
       <div class="ruta-foot">Ruta basada en el inventario verificado de Ranking Spain. Restaurantes y sitios para visitar, con su valoración, vía Google. Datos reales, sin inventar.</div>
     </div>
   )}
+
+  {hasDia && (
+    <div class="ruta-result dia-result">
+      <div class="ruta-result-head" style={`background:${diaPlan.color}`}>
+        <div class="rrh-eyebrow">Plan de un día · Ranking Spain</div>
+        <div class="rrh-title"><Icon name={diaPlan.icon} size={22} /> {diaHeading}</div>
+        <div class="rrh-meta">{pueblo.provincia} · {diaPlan.catLabel}{diaVisitas.length ? ` · ${diaVisitas.length} sitios que ver` : ''}</div>
+      </div>
+
+      <div class="ruta-tweaks">
+        <span class="rt-grp">
+          <span class="rt-label">💶 Presupuesto</span>
+          <a class={`rt-pill${pres!=='eco'?' on':''}`} href={setParam('pres', null)}>Cualquiera</a>
+          <a class={`rt-pill${pres==='eco'?' on':''}`} href={setParam('pres', 'eco')}>Económico</a>
+        </span>
+      </div>
+
+      {diaVisitas.length > 0 && <div id="ruta-map" class="ruta-map"></div>}
+
+      {diaPlan.star && (
+        <div class="dia-star" style={`border-color:${diaPlan.color}`}>
+          <div class="dia-star-tag" style={`color:${diaPlan.color}`}><Icon name={diaPlan.icon} size={15} /> Lo que hace destacar a {pueblo.nombre}</div>
+          <div class="dia-star-name">{diaPlan.star.nombre}</div>
+          {diaPlan.star.desc && <div class="rs-desc">{String(diaPlan.star.desc).slice(0,200)}{String(diaPlan.star.desc).length>200?'…':''}</div>}
+        </div>
+      )}
+
+      {/* MAÑANA — qué ver a pie */}
+      {diaPlan.manana.length > 0 && (
+        <div class="dia-block">
+          <div class="dia-tag" style={`color:${diaPlan.color};background:${diaPlan.color}15`}>🌅 Por la mañana · qué ver</div>
+          {diaPlan.manana.map((v: any, i: number) => (
+            <Fragment>
+              <div class="rs-place dia-vis">
+                <img class="rs-thumb" src={v.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(v.foto_ref)}` : ''} alt={v.nombre} loading="lazy" width="56" height="56" style={v.foto_ref ? '' : 'display:none'} />
+                <div class="rs-place-txt">
+                  <div class="rs-line">👁️ <strong>{v.nombre}</strong><span class="rs-star">★ {fmtRating(v)}</span></div>
+                  {v.locLabel && <div class="rs-loc">📍 {v.locLabel}</div>}
+                  <div class="rs-attr" set:html={v.foto_attr ?? ''}></div>
+                </div>
+              </div>
+              {i < diaPlan.manana.length - 1 && v.next && (
+                <div class="dia-leg">🚶 {fmtDur(v.next.walkMin)} · 🚗 {fmtDur(v.next.driveMin)} · {v.next.dist} hasta {v.next.to}</div>
+              )}
+            </Fragment>
+          ))}
+        </div>
+      )}
+
+      {/* CAFÉ */}
+      {diaPlan.cafe && (
+        <div class="dia-block">
+          <div class="dia-tag dia-tag-soft">☕ Para reponer fuerzas</div>
+          <div class="rs-place">
+            <img class="rs-thumb" src={diaPlan.cafe.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.cafe.foto_ref)}` : ''} alt={diaPlan.cafe.nombre} loading="lazy" width="56" height="56" style={diaPlan.cafe.foto_ref ? '' : 'display:none'} />
+            <div class="rs-place-txt">
+              <div class="rs-line">☕ Un café en <strong>{diaPlan.cafe.nombre}</strong><span class="rs-star">★ {fmtRating(diaPlan.cafe)}</span></div>
+              {diaPlan.cafe.locLabel && <div class="rs-loc">📍 {diaPlan.cafe.locLabel}</div>}
+              <div class="rs-attr" set:html={diaPlan.cafe.foto_attr ?? ''}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* COMER */}
+      {diaPlan.comerCur && (
+        <div class="dia-block">
+          <div class="dia-tag dia-tag-soft">🍽️ Comer</div>
+          <div class="rs-place rs-swap" data-places={JSON.stringify(diaPlan.comerList)} data-idx={diaPlan.comerIdx}>
+            <img class="rs-thumb" src={diaPlan.comerCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.comerCur.foto_ref)}` : ''} alt={diaPlan.comerCur.nombre} loading="lazy" width="56" height="56" style={diaPlan.comerCur.foto_ref ? '' : 'display:none'} />
+            <div class="rs-place-txt">
+              <div class="rs-line">🍽️ <strong class="rs-pname">{diaPlan.comerCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.comerCur)}</span>{diaPlan.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+              {diaPlan.comerCur.locLabel && <div class="rs-loc">📍 {diaPlan.comerCur.locLabel}</div>}
+              <div class="rs-attr rs-pattr" set:html={diaPlan.comerCur.foto_attr ?? ''}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TARDE — más que ver */}
+      {diaPlan.tarde.length > 0 && (
+        <div class="dia-block">
+          <div class="dia-tag" style={`color:${diaPlan.color};background:${diaPlan.color}15`}>☀️ Por la tarde · más que ver</div>
+          {diaPlan.tarde.map((v: any, i: number) => (
+            <Fragment>
+              <div class="rs-place dia-vis">
+                <img class="rs-thumb" src={v.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(v.foto_ref)}` : ''} alt={v.nombre} loading="lazy" width="56" height="56" style={v.foto_ref ? '' : 'display:none'} />
+                <div class="rs-place-txt">
+                  <div class="rs-line">👁️ <strong>{v.nombre}</strong><span class="rs-star">★ {fmtRating(v)}</span></div>
+                  {v.locLabel && <div class="rs-loc">📍 {v.locLabel}</div>}
+                  <div class="rs-attr" set:html={v.foto_attr ?? ''}></div>
+                </div>
+              </div>
+              {i < diaPlan.tarde.length - 1 && v.next && (
+                <div class="dia-leg">🚶 {fmtDur(v.next.walkMin)} · 🚗 {fmtDur(v.next.driveMin)} · {v.next.dist} hasta {v.next.to}</div>
+              )}
+            </Fragment>
+          ))}
+        </div>
+      )}
+
+      {/* COPA */}
+      {diaPlan.copa && (
+        <div class="dia-block">
+          <div class="dia-tag dia-tag-soft">🍷 Una copa</div>
+          <div class="rs-place">
+            <img class="rs-thumb" src={diaPlan.copa.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.copa.foto_ref)}` : ''} alt={diaPlan.copa.nombre} loading="lazy" width="56" height="56" style={diaPlan.copa.foto_ref ? '' : 'display:none'} />
+            <div class="rs-place-txt">
+              <div class="rs-line">🍷 Una copa en <strong>{diaPlan.copa.nombre}</strong><span class="rs-star">★ {fmtRating(diaPlan.copa)}</span></div>
+              {diaPlan.copa.locLabel && <div class="rs-loc">📍 {diaPlan.copa.locLabel}</div>}
+              <div class="rs-attr" set:html={diaPlan.copa.foto_attr ?? ''}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CENAR */}
+      {diaPlan.cenarCur && (
+        <div class="dia-block">
+          <div class="dia-tag dia-tag-soft">🌆 Cenar</div>
+          <div class="rs-place rs-swap" data-places={JSON.stringify(diaPlan.cenarList)} data-idx={diaPlan.cenarIdx}>
+            <img class="rs-thumb" src={diaPlan.cenarCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.cenarCur.foto_ref)}` : ''} alt={diaPlan.cenarCur.nombre} loading="lazy" width="56" height="56" style={diaPlan.cenarCur.foto_ref ? '' : 'display:none'} />
+            <div class="rs-place-txt">
+              <div class="rs-line">🌆 <strong class="rs-pname">{diaPlan.cenarCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.cenarCur)}</span>{diaPlan.cenarList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+              {diaPlan.cenarCur.locLabel && <div class="rs-loc">📍 {diaPlan.cenarCur.locLabel}</div>}
+              <div class="rs-attr rs-pattr" set:html={diaPlan.cenarCur.foto_attr ?? ''}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DORMIR */}
+      {(diaPlan.dormirCur || diaPlan.rural) && (
+        <div class="dia-block">
+          <div class="dia-tag dia-tag-soft">🛏️ Dónde dormir</div>
+          {diaPlan.dormirCur && (
+            <div class="rs-place rs-swap" data-places={JSON.stringify(diaPlan.dormirList)} data-idx={diaPlan.dormirIdx}>
+              <img class="rs-thumb" src={diaPlan.dormirCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.dormirCur.foto_ref)}` : ''} alt={diaPlan.dormirCur.nombre} loading="lazy" width="56" height="56" style={diaPlan.dormirCur.foto_ref ? '' : 'display:none'} />
+              <div class="rs-place-txt">
+                <div class="rs-line">🛏️ <strong class="rs-pname">{diaPlan.dormirCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.dormirCur)}</span>{diaPlan.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                {diaPlan.dormirCur.locLabel && <div class="rs-loc">📍 {diaPlan.dormirCur.locLabel}</div>}
+                <div class="rs-attr rs-pattr" set:html={diaPlan.dormirCur.foto_attr ?? ''}></div>
+              </div>
+            </div>
+          )}
+          {diaPlan.rural && (
+            <div class="rs-line dia-rural">🏡 Opción rural en el pueblo: <strong>{diaPlan.rural}</strong></div>
+          )}
+        </div>
+      )}
+
+      <div class="ruta-foot">Plan basado en el inventario verificado de Ranking Spain. Sitios para ver, comer, café, copa y dormir, con su valoración, vía Google. Tiempos a pie/en coche estimados.</div>
+    </div>
+  )}
 </div>
 
-{selCfgs.length > 0 && prov && stops.length > 0 && (
+{mapData.length > 0 && (
   <Fragment>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" is:inline></script>
@@ -614,6 +954,37 @@ const title = selCfgs.length && prov
 .rs-attr :global(a) { color: #aaa; }
 .rs-none { color: #bbb; font-style: italic; }
 .ruta-foot { background: #fafafa; padding: 11px 20px; font-size: .74rem; color: #999; }
+
+/* Conmutador de modo del formulario */
+.rf-modes { flex: 1 1 100%; display: flex; gap: 8px; }
+.rf-mode { flex: 1; padding: 10px; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; font-size: .85rem; font-weight: 700; color: var(--text-2); cursor: pointer; transition: all .12s; }
+.rf-mode.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
+.rf-block { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.ruta-form[data-mode="zona"] .rf-block-pueblo,
+.ruta-form[data-mode="zona"] .rf-hint-pueblo,
+.ruta-form[data-mode="pueblo"] .rf-block-zona,
+.ruta-form[data-mode="pueblo"] .rf-hint-zona { display: none; }
+.rf-pueblo-field { flex: 1 1 100%; }
+.rf-ac-wrap { position: relative; }
+.rf-pueblo-field input { padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 12px; font-size: .92rem; font-family: inherit; width: 100%; box-sizing: border-box; }
+.rf-ac { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-top: 4px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.rf-ac:empty { display: none; }
+.rf-ac a { display: block; padding: 10px 13px; font-size: .9rem; color: var(--text); text-decoration: none; border-bottom: 1px solid #f2f2f2; }
+.rf-ac a:last-child { border-bottom: none; }
+.rf-ac a:hover { background: #fff1f3; color: var(--primary); }
+.rf-ac small { color: var(--text-2); font-weight: 500; }
+.rf-pueblo-hint { flex: 1 1 100%; font-size: .8rem; color: var(--text-2); margin: 8px 0 0; line-height: 1.45; }
+
+/* Plan de un día (línea de tiempo) */
+.dia-star { margin: 14px 20px 4px; padding: 12px 14px; border: 1.5px solid; border-radius: 12px; background: #fff; }
+.dia-star-tag { display: inline-flex; align-items: center; gap: 6px; font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; }
+.dia-star-name { font-size: 1.02rem; font-weight: 800; color: var(--text); margin-top: 3px; }
+.dia-block { padding: 13px 20px; border-bottom: 1px solid #f4f4f4; }
+.dia-tag { display: inline-block; font-size: .74rem; font-weight: 800; letter-spacing: .3px; padding: 4px 12px; border-radius: 20px; margin-bottom: 8px; }
+.dia-tag-soft { color: var(--text-2); background: var(--bg); }
+.dia-leg { display: flex; align-items: center; gap: 6px; margin: 3px 0 3px 18px; padding-left: 18px; border-left: 2px dashed var(--border); font-size: .76rem; color: var(--text-2); font-weight: 600; }
+.dia-vis { margin-top: 6px; }
+.dia-rural { color: var(--text); margin-top: 6px; }
 @media (max-width: 560px) { .rf-field { flex: 1 1 100%; } }
 </style>
 <script>
@@ -631,6 +1002,45 @@ const title = selCfgs.length && prov
       document.querySelectorAll('.rf-day').forEach((d) => d.classList.remove('on'));
       (inp as HTMLElement).closest('.rf-day')?.classList.add('on');
     });
+  });
+
+  // Conmutador de modo: "Por la zona" / "Un día en un pueblo"
+  const rutaForm = document.getElementById('ruta-form');
+  document.querySelectorAll('.rf-mode').forEach((b) => {
+    b.addEventListener('click', () => {
+      const m = b.getAttribute('data-mode') || 'zona';
+      rutaForm?.setAttribute('data-mode', m);
+      document.querySelectorAll('.rf-mode').forEach((x) => x.classList.toggle('on', x === b));
+      if (m === 'pueblo') (document.getElementById('rf-pueblo-input') as HTMLInputElement | null)?.focus();
+    });
+  });
+
+  // Autocompletado de municipio (modo "un día en un pueblo") usando /api/search
+  const pInput = document.getElementById('rf-pueblo-input') as HTMLInputElement | null;
+  const pAc = document.getElementById('rf-pueblo-ac');
+  const catsQS = () => {
+    const ks = Array.from(document.querySelectorAll('.rf-chip input:checked'))
+      .map((i) => (i as HTMLInputElement).value);
+    return ks.length ? '&' + ks.map((k) => 'cat=' + encodeURIComponent(k)).join('&') : '';
+  };
+  let pTimer: any;
+  pInput?.addEventListener('input', () => {
+    const q = pInput.value.trim();
+    clearTimeout(pTimer);
+    if (q.length < 2) { if (pAc) pAc.innerHTML = ''; return; }
+    pTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/search?q=' + encodeURIComponent(q));
+        const data = await res.json();
+        const muns = ((data as any[]) || []).filter((d) => d.tipo === 'municipio').slice(0, 6);
+        if (pAc) pAc.innerHTML = muns.map((m) =>
+          `<a href="/ruta?pueblo=${m.codigo_ine}${catsQS()}">${m.nombre} <small>· ${m.provincia || ''}</small></a>`
+        ).join('');
+      } catch (e) { if (pAc) pAc.innerHTML = ''; }
+    }, 180);
+  });
+  document.addEventListener('click', (e) => {
+    if (pAc && !pAc.contains(e.target as Node) && e.target !== pInput) pAc.innerHTML = '';
   });
 </script>
 </Base>
