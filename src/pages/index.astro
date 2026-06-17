@@ -79,28 +79,30 @@ const municipios = (rankingGlobal as any[]).map(r => ({
       <div class="hero-cats" id="hero-cats">
         {[
           {key:'senderismo',        icon:'hiking',          label:'Senderismo'},
-          {key:'turismo_activo',    icon:'mountain',        label:'Turismo activo'},
-          {key:'Campings',          icon:'camping',         label:'Camping'},
-          {key:'Playas',            icon:'beach_access',    label:'Playas'},
           {key:'monumentos',        icon:'account_balance', label:'Monumentos'},
           {key:'castillos',         icon:'castle',          label:'Castillos'},
-          {key:'pueblo_bonito',     icon:'auto_awesome',    label:'Pueblos bonitos'},
           {key:'gastronomia',       icon:'restaurant',      label:'Gastronomía'},
+          {key:'TurismoRural',      icon:'cottage',         label:'Turismo Rural'},
+          // --- el resto se despliega con "Ver más" ---
+          {key:'pueblo_bonito',     icon:'auto_awesome',    label:'Pueblos bonitos'},
+          {key:'turismo_activo',    icon:'mountain',        label:'Turismo activo'},
+          {key:'Playas',            icon:'beach_access',    label:'Playas'},
+          {key:'Campings',          icon:'camping',         label:'Camping'},
           {key:'vinos',             icon:'wine_bar',        label:'Vinos'},
           {key:'oleoturismo',       icon:'opacity',         label:'Oleoturismo'},
           {key:'fiestas',           icon:'celebration',     label:'Fiestas'},
           {key:'festivales',        icon:'festival',        label:'Festivales'},
           {key:'turismo_religioso', icon:'church',          label:'Turismo religioso'},
-          {key:'TurismoRural',      icon:'cottage',         label:'Turismo Rural'},
           {key:'turismo_mascotas',  icon:'pets',            label:'Turismo con mascotas'},
           {key:'turismo_lgtbi',     icon:'rainbow',         label:'Turismo LGTBI'},
           {key:'notoriedad_instagram', icon:'trending_up',  label:'Popularidad en redes'},
-        ].map(c => (
-          <button class="hero-cat-pill" data-key={c.key}>
+        ].map((c, i) => (
+          <button class={`hero-cat-pill${i >= 5 ? ' hero-cat-extra' : ''}`} data-key={c.key}>
             <span class="hero-cat-ic"><Icon name={c.icon} size={17} /></span>
             <span class="hero-cat-label">{c.label}</span>
           </button>
         ))}
+        <button type="button" class="hero-cat-more" id="hero-cat-more">Ver más ▾</button>
       </div>
     </div>
 
@@ -133,7 +135,10 @@ const municipios = (rankingGlobal as any[]).map(r => ({
       <button type="button" class="rp-mode" data-mode="pueblo">📍 Un día en un pueblo</button>
     </div>
 
-    <div class="rp-label">¿Qué quieres hacer? <span class="rp-hint-zona">(puedes elegir varias)</span><span class="rp-hint-pueblo">(opcional: enfoca el día)</span></div>
+    <button type="button" class="rp-label rp-chips-toggle" id="rp-chips-toggle">
+      <span>¿Qué quieres hacer? <span class="rp-hint-zona">(elige una o varias)</span><span class="rp-hint-pueblo">(opcional)</span> <span class="rp-pick-count" id="rp-pick-count"></span></span>
+      <span class="rp-chev">▾</span>
+    </button>
     <div class="rp-chips">
       {ROUTE_EXP.map(e => (
         <label class="rp-chip">
@@ -163,10 +168,19 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 </section>
 <script>
   const rpCard = document.querySelector('.rp-card') as HTMLFormElement | null;
+  // Desplegable de experiencias (compacto): abrir/cerrar + contador
+  const rpToggle = document.getElementById('rp-chips-toggle');
+  const rpCount = document.getElementById('rp-pick-count');
+  rpToggle?.addEventListener('click', () => rpCard?.classList.toggle('chips-open'));
+  function rpUpdateCount() {
+    const n = rpCard?.querySelectorAll('.rp-chip input:checked').length || 0;
+    if (rpCount) rpCount.textContent = n ? `· ${n} elegida${n > 1 ? 's' : ''}` : '';
+  }
   rpCard?.querySelectorAll('.rp-chip input').forEach((inp) => {
     inp.addEventListener('change', (e) => {
       const el = e.target as HTMLInputElement;
       el.closest('.rp-chip')?.classList.toggle('on', el.checked);
+      rpUpdateCount();
     });
   });
   rpCard?.addEventListener('submit', (e) => {
@@ -174,6 +188,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     const any = rpCard.querySelectorAll('.rp-chip input:checked').length > 0;
     if (!any) {
       e.preventDefault();
+      rpCard.classList.add('chips-open');   // abre el desplegable para que elija
       rpCard.querySelector('.rp-label')?.animate(
         [{ color: '#FF385C' }, { color: '' }], { duration: 1200 }
       );
@@ -483,6 +498,14 @@ document.querySelectorAll('.hero-cat-pill').forEach(pill => {
   });
 });
 
+// "Ver más / Ver menos" de las categorías del hero
+const heroMore = document.getElementById('hero-cat-more');
+const heroCats = document.getElementById('hero-cats');
+heroMore?.addEventListener('click', () => {
+  const exp = heroCats!.classList.toggle('expanded');
+  heroMore.textContent = exp ? 'Ver menos ▴' : 'Ver más ▾';
+});
+
 // ── Paso 2 móvil: hoja de selección de zona ──
 const mcs = document.getElementById('mob-cat-sheet')!;
 const mcsInput = document.getElementById('mcs-input') as HTMLInputElement;
@@ -577,6 +600,14 @@ function doSearch() {
 }
 .hero-cat-ic { display: inline-flex; align-items: center; line-height: 0; opacity: .92; }
 .hero-cat-label { white-space: nowrap; }
+.hero-cats:not(.expanded) .hero-cat-extra { display: none; }
+.hero-cat-more {
+  display: inline-flex; align-items: center; padding: 9px 16px;
+  background: rgba(255,255,255,0.22); border: 2px solid rgba(255,255,255,0.6);
+  border-radius: 40px; color: #fff; font-size: .88rem; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all .18s;
+}
+.hero-cat-more:hover { background: rgba(255,255,255,0.4); transform: translateY(-1px); }
 
 /* Paso 2 móvil: hoja de selección de zona */
 .mcs-overlay {
@@ -610,6 +641,11 @@ function doSearch() {
 .rp-sub { font-size: .9rem; color: var(--text-2); margin: 0 0 14px; line-height: 1.5; }
 .rp-label { font-size: .78rem; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
 .rp-label span { font-weight: 500; color: #aaa; }
+.rp-chips-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 11px 13px; cursor: pointer; font-family: inherit; text-align: left; }
+.rp-chips-toggle .rp-chev { color: var(--primary); font-weight: 800; transition: transform .18s; flex-shrink: 0; }
+.rp-card.chips-open .rp-chev { transform: rotate(180deg); }
+.rp-card:not(.chips-open) .rp-chips { display: none; }
+.rp-pick-count { color: var(--primary) !important; font-weight: 800 !important; }
 .rp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .rp-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border: 1.5px solid var(--border); border-radius: 20px; font-size: .85rem; font-weight: 600; color: var(--text-2); cursor: pointer; user-select: none; transition: all .12s; }
 .rp-chip input { display: none; }
