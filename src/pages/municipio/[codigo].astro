@@ -303,6 +303,45 @@ const recomendados = await getAnunciosMunicipio(codigo);
 <!-- ── BODY ── -->
 <div class="page-content">
 
+  <!-- Rankings por categoría (lo más importante: arriba del todo) -->
+  <section class="mun-section">
+    <h2 class="mun-section-title">📊 Rankings por categoría</h2>
+    <div class="rankings-grid">
+      {fichaScores.map((p: any) => {
+        const info = getCatInfo(p.categoria);
+        const color = CAT_COLORS[p.categoria] ?? '#6366f1';
+        const posNum = p.ranking_provincial;
+        const medal = posNum === 1 ? '🥇' : posNum === 2 ? '🥈' : posNum === 3 ? '🥉' : null;
+        return (
+          <a href={`/ranking/${p.categoria}`} class="ranking-metric-card card">
+            <div class="rmc-cat" style={`color:${color}`}><Icon name={info.icon} size={16} /> {info.label}</div>
+            <div class="rmc-pos" style={`color:${color}`}>
+              {medal ? medal : (posNum ? `#${posNum}` : '—')}
+            </div>
+            <div class="rmc-sub">de {totalProv} en {municipio.provincia}</div>
+            {p.ranking_nacional && (
+              <div class="rmc-nacional">
+                <span style={`color:${color};font-weight:700`}>#{p.ranking_nacional}</span>
+                <span class="rmc-nacional-lbl"> España 🇪🇸</span>
+              </div>
+            )}
+            <div class="rmc-pts">{Number(p.puntuacion).toFixed(1)} pts</div>
+            <button class="rmc-share" type="button"
+              data-cat={info.label}
+              data-nac={p.ranking_nacional ?? ''}
+              data-prov={p.ranking_provincial ?? ''}
+              data-pts={Number(p.puntuacion).toFixed(0)}
+              onclick="event.preventDefault();event.stopPropagation();openSello(this)"
+              aria-label={`Compartir el puesto en ${info.label}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Compartir</span>
+            </button>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
   <!-- Recomendados (establecimientos anunciados y aprobados) -->
   {recomendados.length > 0 && (
     <section class="mun-section">
@@ -439,45 +478,6 @@ const recomendados = await getAnunciosMunicipio(codigo);
       </div>
     </section>
   )}
-
-  <!-- Rankings grid (metric cards) -->
-  <section class="mun-section">
-    <h2 class="mun-section-title">📊 Rankings por categoría</h2>
-    <div class="rankings-grid">
-      {fichaScores.map((p: any) => {
-        const info = getCatInfo(p.categoria);
-        const color = CAT_COLORS[p.categoria] ?? '#6366f1';
-        const posNum = p.ranking_provincial;
-        const medal = posNum === 1 ? '🥇' : posNum === 2 ? '🥈' : posNum === 3 ? '🥉' : null;
-        return (
-          <a href={`/ranking/${p.categoria}`} class="ranking-metric-card card">
-            <div class="rmc-cat" style={`color:${color}`}><Icon name={info.icon} size={16} /> {info.label}</div>
-            <div class="rmc-pos" style={`color:${color}`}>
-              {medal ? medal : (posNum ? `#${posNum}` : '—')}
-            </div>
-            <div class="rmc-sub">de {totalProv} en {municipio.provincia}</div>
-            {p.ranking_nacional && (
-              <div class="rmc-nacional">
-                <span style={`color:${color};font-weight:700`}>#{p.ranking_nacional}</span>
-                <span class="rmc-nacional-lbl"> España 🇪🇸</span>
-              </div>
-            )}
-            <div class="rmc-pts">{Number(p.puntuacion).toFixed(1)} pts</div>
-            <button class="rmc-share" type="button"
-              data-cat={info.label}
-              data-nac={p.ranking_nacional ?? ''}
-              data-prov={p.ranking_provincial ?? ''}
-              data-pts={Number(p.puntuacion).toFixed(0)}
-              onclick="event.preventDefault();event.stopPropagation();openSello(this)"
-              aria-label={`Compartir el puesto en ${info.label}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-              <span>Compartir</span>
-            </button>
-          </a>
-        );
-      })}
-    </div>
-  </section>
 
   <!-- Bar chart -->
   <section class="mun-section">
