@@ -56,6 +56,8 @@ const dias = Math.min(3, Math.max(1, parseInt(url.searchParams.get('dias') ?? '2
 // Ajustes de la ruta (filtros que regeneran)
 const pres = url.searchParams.get('pres') ?? '';          // 'eco' = económico
 const compacta = url.searchParams.get('compacta') === '1';// paradas más cercanas
+// Ritmo del plan de un día: 'relajado' (pocas visitas, caminable) o 'completo'
+const ritmo = url.searchParams.get('ritmo') === 'completo' ? 'completo' : 'relajado';
 // Enlaces de la barra de ajustes: clonan la URL actual y fijan/quitan un parámetro
 function setParam(key: string, val: string | null) {
   const p = new URLSearchParams(url.search);
@@ -408,7 +410,7 @@ if (pueblo && selCfgs.length) {
     const dormirKw = prof.dormir?.keyword;
 
     const [visRaw, cafeList, comerList, copaList, dormirList] = await Promise.all([
-      getPlaceOptions(puebloCode, visKind, pueblo.latitud, pueblo.longitud, visSpec, 6),
+      getPlaceOptions(puebloCode, visKind, pueblo.latitud, pueblo.longitud, visSpec, 10),
       getPlaceOptions(puebloCode, 'cafe', pueblo.latitud, pueblo.longitud, { type: 'cafe', radius: 4000, minReviews: 20 }, 2),
       getPlaceOptions(puebloCode, 'comer' + (comerKw ? '_' + primaryCat : ''), pueblo.latitud, pueblo.longitud, { type: 'restaurant', radius: 7000, minReviews: 30, keyword: comerKw, softKeyword: true }, 4),
       getPlaceOptions(puebloCode, 'copa', pueblo.latitud, pueblo.longitud, { type: 'bar', radius: 4000, minReviews: 20 }, 2),
@@ -421,56 +423,81 @@ if (pueblo && selCfgs.length) {
     decoratePlaces(copaList, center);
     decoratePlaces(dormirList, center);
 
-    // Ordenar las visitas a pie: vecino más cercano empezando por la más céntrica
-    const visPool = visRaw.filter((v: any) => v.lat != null && v.lng != null);
+    // Un día caben pocas cosas. Separamos lo CAMINABLE (cerca del centro) de las
+    // joyas LEJANAS (que rompen el ritmo a pie → van aparte, "en coche").
+    const WALK_FAR_KM = 1.6;                 // > 1,6 km del centro = lejano
+    const walkCap = ritmo === 'completo' ? 6 : 4;   // nº de visitas a pie en el día
+    const lejosCap = ritmo === 'completo' ? 3 : 2;  // joyas lejanas que sugerimos
+
+    const visGeo = visRaw.filter((v: any) => v.lat != null && v.lng != null);
+    for (const v of visGeo) v.distCentro = haversine(center, { latitud: v.lat, longitud: v.lng });
+    let cerca = visGeo.filter((v: any) => v.distCentro <= WALK_FAR_KM);
+    let lejosPool = visGeo.filter((v: any) => v.distCentro > WALK_FAR_KM);
+    // Si el centroide está descolocado y nada cae "cerca", no dejamos el día vacío
+    if (!cerca.length && visGeo.length) { cerca = visGeo; lejosPool = []; }
+
+    // Ordenar lo caminable por vecino más cercano empezando por lo más céntrico
     const ordered: any[] = [];
-    if (visPool.length) {
+    if (cerca.length) {
       const used = new Set<number>();
       let cur = 0, bd = Infinity;
-      for (let i = 0; i < visPool.length; i++) {
-        const d = haversine(center, { latitud: visPool[i].lat, longitud: visPool[i].lng });
-        if (d < bd) { bd = d; cur = i; }
-      }
-      used.add(cur); ordered.push(visPool[cur]);
-      while (ordered.length < visPool.length) {
+      for (let i = 0; i < cerca.length; i++) { if (cerca[i].distCentro < bd) { bd = cerca[i].distCentro; cur = i; } }
+      used.add(cur); ordered.push(cerca[cur]);
+      while (ordered.length < cerca.length) {
         const a = { latitud: ordered[ordered.length - 1].lat, longitud: ordered[ordered.length - 1].lng };
         let best = -1; bd = Infinity;
-        for (let i = 0; i < visPool.length; i++) {
+        for (let i = 0; i < cerca.length; i++) {
           if (used.has(i)) continue;
-          const d = haversine(a, { latitud: visPool[i].lat, longitud: visPool[i].lng });
+          const d = haversine(a, { latitud: cerca[i].lat, longitud: cerca[i].lng });
           if (d < bd) { bd = d; best = i; }
         }
-        used.add(best); ordered.push(visPool[best]);
+        used.add(best); ordered.push(cerca[best]);
       }
     }
+    const walkable = ordered.slice(0, walkCap);   // tope realista para un día
     // Tiempo a la siguiente visita (a pie / en coche)
-    for (let i = 0; i < ordered.length - 1; i++) {
+    for (let i = 0; i < walkable.length - 1; i++) {
       const t = legTimes(
-        { latitud: ordered[i].lat, longitud: ordered[i].lng },
-        { latitud: ordered[i + 1].lat, longitud: ordered[i + 1].lng },
+        { latitud: walkable[i].lat, longitud: walkable[i].lng },
+        { latitud: walkable[i + 1].lat, longitud: walkable[i + 1].lng },
       );
-      ordered[i].next = { ...t, to: ordered[i + 1].nombre };
+      walkable[i].next = { ...t, to: walkable[i + 1].nombre };
     }
 
-    // Repartir visitas en mañana / tarde
-    const half = Math.max(1, Math.ceil(ordered.length / 2));
-    const manana = ordered.slice(0, half);
-    const tarde = ordered.slice(half);
+    // Joyas lejanas: las mejor valoradas, con su distancia/tiempo en coche al centro
+    const lejos = lejosPool
+      .sort((a: any, b: any) => (b.rating ?? 0) * Math.log10((b.reviews ?? 0) + 1) - (a.rating ?? 0) * Math.log10((a.reviews ?? 0) + 1))
+      .slice(0, lejosCap)
+      .map((v: any) => {
+        const t = legTimes(center, { latitud: v.lat, longitud: v.lng });
+        return { ...v, carDist: t.dist, carMin: t.driveMin };
+      });
+
+    // Repartir lo caminable en mañana / tarde
+    const half = Math.max(1, Math.ceil(walkable.length / 2));
+    const manana = walkable.slice(0, half);
+    const tarde = walkable.slice(half);
 
     const comerIdx = pres === 'eco' ? modestIndex(comerList) : 0;
     const dormirIdx = pres === 'eco' ? modestIndex(dormirList) : 0;
     // Cenar = una opción distinta de la comida (o la modesta en económico)
     const cenarIdx = pres === 'eco' ? modestIndex(comerList) : (comerList.length > 1 ? 1 : 0);
 
+    // Duración aproximada del plan a pie: ~50 min por visita + caminatas + comidas
+    const walkLegs = walkable.reduce((a: number, s: any) => a + (s.next?.walkMin ?? 0), 0);
+    const planMin = walkable.length * 50 + walkLegs
+      + (cafeList[0] ? 30 : 0) + (comerList.length ? 75 : 0)
+      + (copaList[0] ? 45 : 0) + (comerList.length ? 75 : 0);
+
     diaPlan = {
       star: starRow ? { nombre: (starRow as any).nombre, desc: (starRow as any).descripcion } : null,
-      manana, tarde,
+      manana, tarde, lejos,
       cafe: cafeList[0] ?? null,
       comerList, comerCur: comerList[comerIdx] ?? null, comerIdx,
       copa: copaList[0] ?? null,
       cenarList: comerList, cenarIdx, cenarCur: comerList[cenarIdx] ?? null,
       dormirList, dormirCur: dormirList[dormirIdx] ?? null, dormirIdx,
-      rural: ruralTxt,
+      rural: ruralTxt, planMin,
       catLabel: labelByCat[primaryCat], catKey: primaryCat,
       icon: infoByCat[primaryCat].icon, color: colorByCat[primaryCat],
     };
@@ -478,9 +505,9 @@ if (pueblo && selCfgs.length) {
     // Sin Google: al menos mostramos el recurso estrella y el alojamiento rural
     diaPlan = {
       star: starRow ? { nombre: (starRow as any).nombre, desc: (starRow as any).descripcion } : null,
-      manana: [], tarde: [], cafe: null, comerList: [], comerCur: null,
+      manana: [], tarde: [], lejos: [], cafe: null, comerList: [], comerCur: null,
       copa: null, cenarList: [], cenarCur: null, dormirList: [], dormirCur: null,
-      rural: ruralTxt, catLabel: labelByCat[primaryCat], catKey: primaryCat,
+      rural: ruralTxt, planMin: 0, catLabel: labelByCat[primaryCat], catKey: primaryCat,
       icon: infoByCat[primaryCat].icon, color: colorByCat[primaryCat],
     };
   }
@@ -673,10 +700,15 @@ const title = hasDia
       <div class="ruta-result-head" style={`background:${diaPlan.color}`}>
         <div class="rrh-eyebrow">Plan de un día · Ranking Spain</div>
         <div class="rrh-title"><Icon name={diaPlan.icon} size={22} /> {diaHeading}</div>
-        <div class="rrh-meta">{pueblo.provincia} · {diaPlan.catLabel}{diaVisitas.length ? ` · ${diaVisitas.length} sitios que ver` : ''}</div>
+        <div class="rrh-meta">{pueblo.provincia} · {diaPlan.catLabel}{diaVisitas.length ? ` · ${diaVisitas.length} para ver a pie` : ''}{diaPlan.planMin > 0 ? ` · ⏱️ ~${fmtDur(diaPlan.planMin)} de plan` : ''}</div>
       </div>
 
       <div class="ruta-tweaks">
+        <span class="rt-grp">
+          <span class="rt-label">🚶 Ritmo</span>
+          <a class={`rt-pill${ritmo!=='completo'?' on':''}`} href={setParam('ritmo', null)} title="Pocas visitas, todo a pie y céntrico">Relajado</a>
+          <a class={`rt-pill${ritmo==='completo'?' on':''}`} href={setParam('ritmo', 'completo')} title="Más visitas (mejor con coche)">Completo</a>
+        </span>
         <span class="rt-grp">
           <span class="rt-label">💶 Presupuesto</span>
           <a class={`rt-pill${pres!=='eco'?' on':''}`} href={setParam('pres', null)}>Cualquiera</a>
@@ -764,6 +796,23 @@ const title = hasDia
                 <div class="dia-leg">🚶 {fmtDur(v.next.walkMin)} · 🚗 {fmtDur(v.next.driveMin)} · {v.next.dist} hasta {v.next.to}</div>
               )}
             </Fragment>
+          ))}
+        </div>
+      )}
+
+      {/* JOYAS LEJANAS — fuera del centro, mejor en coche */}
+      {diaPlan.lejos && diaPlan.lejos.length > 0 && (
+        <div class="dia-block">
+          <div class="dia-tag dia-tag-soft">🚗 Si te queda tiempo · mejor en coche</div>
+          {diaPlan.lejos.map((v: any) => (
+            <div class="rs-place dia-vis">
+              <img class="rs-thumb" src={v.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(v.foto_ref)}` : ''} alt={v.nombre} loading="lazy" width="56" height="56" style={v.foto_ref ? '' : 'display:none'} />
+              <div class="rs-place-txt">
+                <div class="rs-line">👁️ <strong>{v.nombre}</strong><span class="rs-star">★ {fmtRating(v)}</span></div>
+                <div class="rs-loc">🚗 a ~{fmtDur(v.carMin)} · {v.carDist} del centro{v.locLabel && v.locLabel !== pueblo.nombre ? ` · 📍 ${v.locLabel}` : ''}</div>
+                <div class="rs-attr" set:html={v.foto_attr ?? ''}></div>
+              </div>
+            </div>
           ))}
         </div>
       )}
