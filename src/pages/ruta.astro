@@ -103,9 +103,9 @@ if (puebloCode) {
           ORDER BY puntuacion DESC LIMIT 1`
       ).bind(puebloCode, ...RUTA_CATS.map(c => c.key)).first();
       cats = [best ? (best as any).categoria : 'monumentos'];
-    } else {
-      cats = [cats[0]];                    // el día gira en torno a UNA experiencia
     }
+    // Si eligió varias experiencias, las mantenemos todas: el plan del día
+    // combina las visitas de cada una (y los chips quedan marcados).
   }
 }
 
@@ -405,23 +405,38 @@ if (pueblo && selCfgs.length) {
 
   if (PLACES_ENABLED) {
     const prof = CAT_PROFILE[primaryCat] ?? {};
-    // En el día SÍ queremos puntos que visitar aunque la categoría los oculte en la zona
-    const visCfg = (prof.visitar && typeof prof.visitar === 'object') ? prof.visitar : { type: 'tourist_attraction' };
-    const visSpec = {
-      type: visCfg.type ?? 'tourist_attraction', radius: 5000, minReviews: 10,
-      keyword: visCfg.keyword, excludeTypes: visCfg.excludeTypes,
-    };
-    const visKind = 'diavis' + (visCfg.keyword || visCfg.excludeTypes ? '_' + primaryCat : '');
+    // En el día SÍ queremos puntos que visitar aunque la categoría los oculte en la zona.
+    // Una búsqueda por cada experiencia elegida (categorías sin keyword comparten
+    // la misma búsqueda genérica, así que getPlaceOptions las cachea como una sola).
+    const visSearches = selCfgs.map((c) => {
+      const p = CAT_PROFILE[c.key] ?? {};
+      const visCfg = (p.visitar && typeof p.visitar === 'object') ? p.visitar : { type: 'tourist_attraction' };
+      const spec = {
+        type: visCfg.type ?? 'tourist_attraction', radius: 5000, minReviews: 10,
+        keyword: visCfg.keyword, excludeTypes: visCfg.excludeTypes,
+      };
+      const kind = 'diavis' + (visCfg.keyword || visCfg.excludeTypes ? '_' + c.key : '');
+      return getPlaceOptions(puebloCode, kind, pueblo.latitud, pueblo.longitud, spec, 10);
+    });
     const comerKw = prof.comer?.keyword;
     const dormirKw = prof.dormir?.keyword;
 
-    const [visRaw, cafeList, comerList, copaList, dormirList] = await Promise.all([
-      getPlaceOptions(puebloCode, visKind, pueblo.latitud, pueblo.longitud, visSpec, 10),
+    const [visLists, cafeList, comerList, copaList, dormirList] = await Promise.all([
+      Promise.all(visSearches),
       getPlaceOptions(puebloCode, 'cafe', pueblo.latitud, pueblo.longitud, { type: 'cafe', radius: 4000, minReviews: 20 }, 2),
       getPlaceOptions(puebloCode, 'comer' + (comerKw ? '_' + primaryCat : ''), pueblo.latitud, pueblo.longitud, { type: 'restaurant', radius: 7000, minReviews: 30, keyword: comerKw, softKeyword: true }, 4),
       getPlaceOptions(puebloCode, 'copa', pueblo.latitud, pueblo.longitud, { type: 'bar', radius: 4000, minReviews: 20 }, 2),
       getPlaceOptions(puebloCode, 'dormir' + (dormirKw ? '_' + primaryCat : ''), pueblo.latitud, pueblo.longitud, { type: 'lodging', radius: 9000, minReviews: 15, keyword: dormirKw, softKeyword: true }, 4),
     ]);
+
+    // Fusionar las visitas de todas las experiencias, deduplicando por place_id
+    const visSeen = new Set<string>();
+    const visRaw: any[] = [];
+    for (const list of visLists) for (const v of (list as any[])) {
+      const k = String(v.place_id ?? (v.nombre + '|' + v.lat + '|' + v.lng));
+      if (visSeen.has(k)) continue;
+      visSeen.add(k); visRaw.push(v);
+    }
 
     decoratePlaces(visRaw, center);
     decoratePlaces(cafeList, center);
@@ -506,7 +521,7 @@ if (pueblo && selCfgs.length) {
       cenarList: comerList, cenarIdx, cenarCur: comerList[cenarIdx] ?? null,
       dormirList, dormirCur: dormirList[dormirIdx] ?? null, dormirIdx,
       rural: ruralTxt, planMin,
-      catLabel: labelByCat[primaryCat], catKey: primaryCat,
+      catLabel: selCfgs.map(c => c.label).join(' · '), catKey: primaryCat,
       icon: infoByCat[primaryCat].icon, color: colorByCat[primaryCat],
     };
   } else {
@@ -515,7 +530,7 @@ if (pueblo && selCfgs.length) {
       star: starRow ? { nombre: (starRow as any).nombre, desc: (starRow as any).descripcion } : null,
       manana: [], tarde: [], lejos: [], cafe: null, comerList: [], comerCur: null,
       copa: null, cenarList: [], cenarCur: null, dormirList: [], dormirCur: null,
-      rural: ruralTxt, planMin: 0, catLabel: labelByCat[primaryCat], catKey: primaryCat,
+      rural: ruralTxt, planMin: 0, catLabel: selCfgs.map(c => c.label).join(' · '), catKey: primaryCat,
       icon: infoByCat[primaryCat].icon, color: colorByCat[primaryCat],
     };
   }
