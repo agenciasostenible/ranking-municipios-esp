@@ -15,13 +15,23 @@ const desde = Astro.url.searchParams.get('desde') ?? '';
 // Fortaleza de la Mota como 'fortaleza' y como 'monumento'), y como una categoría
 // agrupa varios tipos, saldría DOS veces en la misma lista. Nos quedamos con la
 // mejor (con sello oficial / descripción más completa) y conservamos el orden.
-const _norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+const _norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 function dedupByName<T extends { nombre: string; nivel_sello?: any; descripcion?: any }>(rows: T[]): T[] {
   const score = (e: T) => (e.nivel_sello && !['Normal', '—', ''].includes(String(e.nivel_sello)) ? 1000 : 0) + (e.descripcion ? String(e.descripcion).length : 0);
-  const best = new Map<string, T>();
-  for (const e of rows) { const k = _norm(e.nombre); const cur = best.get(k); if (!cur || score(e) > score(cur)) best.set(k, e); }
-  const chosen = new Set(best.values());
-  return rows.filter((e) => chosen.has(e));
+  // Mejor primero, para quedarnos con el de más sello/descripción al colapsar.
+  const ranked = [...rows].sort((a, b) => score(b) - score(a));
+  const kept: T[] = [];
+  for (const e of ranked) {
+    const ne = _norm(e.nombre);
+    // Mismo nombre, o uno contiene al otro (p.ej. "Etnosur" ⊂ "Festival Etnosur").
+    const dup = kept.some((k) => {
+      const nk = _norm(k.nombre);
+      return ne === nk || (ne.length >= 6 && nk.length >= 6 && (nk.includes(ne) || ne.includes(nk)));
+    });
+    if (!dup) kept.push(e);
+  }
+  const chosen = new Set(kept);
+  return rows.filter((e) => chosen.has(e)); // conserva el orden original de visualización
 }
 
 const municipio = await DB.prepare(`SELECT * FROM municipios WHERE codigo_ine = ?`).bind(codigo).first();
