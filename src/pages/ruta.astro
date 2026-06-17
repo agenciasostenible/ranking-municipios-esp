@@ -5,6 +5,7 @@ import Icon from '../components/Icon.astro';
 import { getCatInfo } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
 import { getPlace, getPlaceOptions, modestIndex, PLACES_ENABLED } from '../lib/places';
+import { getAnunciosMunicipio } from '../lib/anuncios';
 
 // Categorías que tienen recurso real + descripción (las que dan rutas verídicas)
 const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
@@ -516,6 +517,8 @@ if (pueblo && selCfgs.length) {
 }
 const diaVisitas: any[] = diaPlan ? [...diaPlan.manana, ...diaPlan.tarde] : [];
 const hasDia = !!(pueblo && diaPlan && (diaVisitas.length || diaPlan.star));
+// Establecimientos anunciados y aprobados en este municipio (sello "Recomendado")
+const diaAnuncios = pueblo ? await getAnunciosMunicipio(puebloCode) : [];
 
 // Datos para el mapa (paradas en orden de ruta, o visitas del día a pie)
 const mapData = hasDia
@@ -728,6 +731,23 @@ const title = hasDia
         </div>
       )}
 
+      {/* RECOMENDADOS — establecimientos anunciados y aprobados en el pueblo */}
+      {diaAnuncios.length > 0 && (
+        <div class="dia-block">
+          <div class="dia-tag dia-tag-reco">⭐ Recomendados en {pueblo.nombre}</div>
+          {diaAnuncios.map((a: any) => (
+            <div class="rs-place dia-vis">
+              <img class="rs-thumb" src={a.foto ?? ''} alt={a.nombre} loading="lazy" width="56" height="56" style={a.foto ? '' : 'display:none'} />
+              <div class="rs-place-txt">
+                <div class="rs-line">⭐ <strong>{a.nombre}</strong><span class="rs-reco-badge">Recomendado</span></div>
+                {a.descripcion && <div class="rs-desc">{String(a.descripcion).slice(0,140)}{String(a.descripcion).length>140?'…':''}</div>}
+                <div class="rs-loc">{a.direccion ? `📍 ${a.direccion}` : ''}{a.web ? <> · <a href={a.web} target="_blank" rel="nofollow noopener">web</a></> : ''}{a.telefono ? ` · 📞 ${a.telefono}` : ''}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* MAÑANA — qué ver a pie */}
       {diaPlan.manana.length > 0 && (
         <div class="dia-block">
@@ -869,6 +889,7 @@ const title = hasDia
         </div>
       )}
 
+      <div class="dia-anunciate">¿Tienes un negocio en {pueblo.nombre}? <a href={`/anunciate?muni=${encodeURIComponent(pueblo.nombre)}&codigo=${puebloCode}&prov=${encodeURIComponent(pueblo.provincia)}`}>📢 Anúncialo gratis</a> y aparece aquí como recomendado.</div>
       <div class="ruta-foot">Plan basado en el inventario verificado de Ranking Spain. Sitios para ver, comer, café, copa y dormir, con su valoración, vía Google. Tiempos a pie/en coche estimados.</div>
     </div>
   )}
@@ -1036,6 +1057,10 @@ const title = hasDia
 .dia-leg { display: flex; align-items: center; gap: 6px; margin: 3px 0 3px 18px; padding-left: 18px; border-left: 2px dashed var(--border); font-size: .76rem; color: var(--text-2); font-weight: 600; }
 .dia-vis { margin-top: 6px; }
 .dia-rural { color: var(--text); margin-top: 6px; }
+.dia-tag-reco { color: #b45309; background: #fff7e6; }
+.rs-reco-badge { display: inline-block; margin-left: 8px; font-size: .64rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: #b45309; background: #fff7e6; border: 1px solid #f5d28a; border-radius: 10px; padding: 1px 7px; white-space: nowrap; }
+.dia-anunciate { background: #fff7e6; padding: 12px 20px; font-size: .82rem; color: #92500a; border-top: 1px solid #f3e2c0; }
+.dia-anunciate a { color: #b45309; font-weight: 800; text-decoration: none; }
 @media (max-width: 560px) { .rf-field { flex: 1 1 100%; } }
 </style>
 <script>

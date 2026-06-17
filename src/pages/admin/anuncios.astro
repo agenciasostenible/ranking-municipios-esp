@@ -1,0 +1,66 @@
+---
+import { DB } from '../../lib/d1client';
+
+// Panel de respaldo para moderar anuncios (por si el email aún no está montado).
+// Protegido por una clave: /admin/anuncios?key=XXXX  (env ADMIN_KEY)
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+
+const key = Astro.url.searchParams.get('key') ?? '';
+const ADMIN_KEY = env('ADMIN_KEY');
+const ok = ADMIN_KEY && key === ADMIN_KEY;
+
+let pendientes: any[] = [];
+let aprobados = 0;
+if (ok) {
+  const { results } = await DB.prepare(
+    `SELECT * FROM anuncios WHERE estado='pendiente' ORDER BY creado_at DESC`
+  ).all();
+  pendientes = results as any[];
+  const c = await DB.prepare(`SELECT COUNT(*) n FROM anuncios WHERE estado='aprobado'`).first();
+  aprobados = c?.n ?? 0;
+}
+const mlink = (a: any, accion: string) => `/api/anuncio-moderar?id=${a.id}&token=${encodeURIComponent(a.token)}&accion=${accion}`;
+---
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Moderar anuncios</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 16px; color: #222; background: #fafafa; }
+  h1 { font-size: 1.4rem; } .muted { color: #777; }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px; margin-bottom: 14px; display: flex; gap: 14px; }
+  .card img { width: 110px; height: 110px; object-fit: cover; border-radius: 10px; flex-shrink: 0; background: #eee; }
+  .card h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .tag { display: inline-block; background: #f0f0f0; border-radius: 8px; padding: 1px 8px; font-size: .75rem; font-weight: 700; }
+  .meta { font-size: .85rem; color: #555; margin: 6px 0; line-height: 1.5; }
+  .acts a { display: inline-block; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: .85rem; margin-right: 8px; }
+  .ap { background: #16a34a; color: #fff; } .re { background: #dc2626; color: #fff; }
+</style></head>
+<body>
+  {!ok && <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>}
+  {ok && (
+    <>
+      <h1>Anuncios pendientes <span class="muted">({pendientes.length})</span></h1>
+      <p class="muted">{aprobados} aprobados en total.</p>
+      {pendientes.length === 0 && <p class="muted">No hay nada pendiente. 🎉</p>}
+      {pendientes.map((a) => (
+        <div class="card">
+          {a.foto_data && <img src={`/api/anuncio-foto?id=${a.id}`} alt="" />}
+          <div>
+            <h3>{a.nombre} <span class="tag">{a.tipo}</span></h3>
+            <div class="meta">
+              📍 {a.municipio}{a.provincia ? ` (${a.provincia})` : ''}{a.direccion ? ` · ${a.direccion}` : ''}<br />
+              {a.descripcion && <>{a.descripcion}<br /></>}
+              ✉️ {a.email} · 📞 {a.telefono || '—'}{a.web ? <> · 🔗 <a href={a.web}>{a.web}</a></> : ''}<br />
+              👤 {a.contacto || '—'} · <span class="muted">{a.creado_at}</span>
+            </div>
+            <div class="acts">
+              <a class="ap" href={mlink(a, 'aprobar')}>✅ Aprobar</a>
+              <a class="re" href={mlink(a, 'rechazar')}>❌ Rechazar</a>
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  )}
+</body>
+</html>

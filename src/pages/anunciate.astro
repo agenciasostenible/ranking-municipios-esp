@@ -1,0 +1,213 @@
+---
+import Base from '../layouts/Base.astro';
+
+const muniPre = Astro.url.searchParams.get('muni') ?? '';
+const codigoPre = Astro.url.searchParams.get('codigo') ?? '';
+const provPre = Astro.url.searchParams.get('prov') ?? '';
+
+const TIPOS = [
+  { v: 'gastronomia', t: '🍽️ Restaurante' },
+  { v: 'rural',       t: '🏡 Alojamiento rural' },
+  { v: 'hotel',       t: '🛏️ Hotel / alojamiento' },
+  { v: 'cafe',        t: '☕ Cafetería' },
+  { v: 'bar',         t: '🍷 Bar / copas' },
+  { v: 'activo',      t: '🧗 Actividad / experiencia' },
+  { v: 'otro',        t: '✨ Otro' },
+];
+---
+<Base title="Anuncia tu negocio gratis — Ranking Spain" description="¿Tienes un restaurante, alojamiento rural, hotel o negocio turístico? Anúncialo gratis y aparece recomendado en Ranking Spain.">
+<div class="an-page">
+  <div class="an-hero">
+    <h1>📢 Anuncia tu negocio <span>gratis</span></h1>
+    <p>¿Tienes un restaurante, alojamiento, café o experiencia? Envíanoslo y, tras revisarlo, aparecerá como <strong>⭐ Recomendado</strong> en la ficha de tu municipio y dentro de nuestras rutas. <strong>Ahora es gratis.</strong></p>
+  </div>
+
+  <form class="an-form" id="an-form">
+    <div class="an-field">
+      <label>Tipo de establecimiento *</label>
+      <select id="an-tipo" required>
+        <option value="">Elige…</option>
+        {TIPOS.map(o => <option value={o.v}>{o.t}</option>)}
+      </select>
+    </div>
+
+    <div class="an-field">
+      <label>Nombre del establecimiento *</label>
+      <input id="an-nombre" type="text" maxlength="120" placeholder="Ej. Casa Rural El Olivar" required />
+    </div>
+
+    <div class="an-field">
+      <label>Municipio *</label>
+      <div class="an-ac-wrap">
+        <input id="an-muni-input" type="text" autocomplete="off" placeholder="Escribe tu municipio…" value={muniPre} required />
+        <div class="an-ac" id="an-muni-ac"></div>
+      </div>
+      <input id="an-codigo" type="hidden" value={codigoPre} />
+      <input id="an-provincia" type="hidden" value={provPre} />
+    </div>
+
+    <div class="an-field">
+      <label>Descripción breve</label>
+      <textarea id="an-desc" maxlength="600" rows="3" placeholder="Cuéntanos en pocas líneas qué ofreces…"></textarea>
+    </div>
+
+    <div class="an-field">
+      <label>Dirección</label>
+      <input id="an-dir" type="text" maxlength="200" placeholder="Calle, número…" />
+    </div>
+
+    <div class="an-row">
+      <div class="an-field">
+        <label>Tu nombre</label>
+        <input id="an-contacto" type="text" maxlength="120" />
+      </div>
+      <div class="an-field">
+        <label>Email de contacto *</label>
+        <input id="an-email" type="email" maxlength="160" required />
+      </div>
+    </div>
+
+    <div class="an-row">
+      <div class="an-field">
+        <label>Teléfono</label>
+        <input id="an-tel" type="tel" maxlength="40" />
+      </div>
+      <div class="an-field">
+        <label>Web o redes</label>
+        <input id="an-web" type="text" maxlength="200" placeholder="https://…" />
+      </div>
+    </div>
+
+    <div class="an-field">
+      <label>1 foto (opcional pero recomendable)</label>
+      <input id="an-foto" type="file" accept="image/*" />
+      <img id="an-foto-prev" class="an-prev" alt="" />
+    </div>
+
+    <!-- honeypot anti-spam (oculto) -->
+    <input id="an-website" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
+
+    <button type="submit" class="an-go" id="an-go">Enviar para revisión</button>
+    <p class="an-note">Revisamos cada solicitud manualmente (24-48 h). Tus datos de contacto no se publican; solo los usamos para avisarte.</p>
+  </form>
+
+  <div class="an-ok" id="an-ok" hidden>
+    <div class="an-ok-ic">🎉</div>
+    <h2>¡Gracias! Lo hemos recibido</h2>
+    <p>Vamos a revisar <strong id="an-ok-name"></strong> y, si todo está correcto, aparecerá como recomendado muy pronto. Te avisaremos por email.</p>
+    <a href="/" class="an-ok-home">Volver al inicio</a>
+  </div>
+</div>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as any;
+
+  // ── Buscador de municipio (reutiliza /api/search) ──
+  const mi = $('an-muni-input'), mac = $('an-muni-ac');
+  let mt: any;
+  mi?.addEventListener('input', () => {
+    $('an-codigo').value = ''; $('an-provincia').value = '';
+    const q = mi.value.trim();
+    clearTimeout(mt);
+    if (q.length < 2) { mac.innerHTML = ''; return; }
+    mt = setTimeout(async () => {
+      try {
+        const r = await fetch('/api/search?q=' + encodeURIComponent(q));
+        const data = await r.json();
+        const muns = ((data as any[]) || []).filter(d => d.tipo === 'municipio').slice(0, 6);
+        mac.innerHTML = muns.map(m => {
+          const nom = String(m.nombre || '').replace(/[&<>]/g, '');
+          const prov = String(m.provincia || '').replace(/[&<>]/g, '');
+          return `<a href="#" data-c="${m.codigo_ine}" data-n="${nom}" data-p="${prov}" style="display:flex;align-items:center;gap:10px;padding:11px 15px;text-decoration:none;border-bottom:1px solid #f2f2f2;background:#fff;cursor:pointer"><span>📍</span><span style="flex:1;font-size:.92rem;font-weight:700;color:#222">${nom}<span style="font-weight:400;color:#888;font-size:.82rem;margin-left:7px">${prov}</span></span></a>`;
+        }).join('');
+      } catch { mac.innerHTML = ''; }
+    }, 180);
+  });
+  mac?.addEventListener('click', (e: any) => {
+    const a = e.target.closest('a'); if (!a) return;
+    e.preventDefault();
+    mi.value = a.dataset.n; $('an-codigo').value = a.dataset.c; $('an-provincia').value = a.dataset.p;
+    mac.innerHTML = '';
+  });
+  document.addEventListener('click', (e: any) => { if (mac && !mac.contains(e.target) && e.target !== mi) mac.innerHTML = ''; });
+
+  // ── Foto: redimensionar en el navegador a ≤1000px y guardar como JPEG ──
+  let fotoData = '';
+  $('an-foto')?.addEventListener('change', (e: any) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+      const max = 1000;
+      let { width: w, height: h } = img;
+      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+      fotoData = c.toDataURL('image/jpeg', 0.78);
+      const prev = $('an-foto-prev'); prev.src = fotoData; prev.style.display = 'block';
+    };
+    img.src = URL.createObjectURL(file);
+  });
+
+  // ── Envío ──
+  $('an-form')?.addEventListener('submit', async (e: any) => {
+    e.preventDefault();
+    if (!$('an-tipo').value || !$('an-nombre').value.trim() || !$('an-email').value.trim() || !$('an-muni-input').value.trim()) {
+      alert('Por favor, rellena el tipo, el nombre, el municipio y el email.'); return;
+    }
+    const btn = $('an-go'); btn.disabled = true; btn.textContent = 'Enviando…';
+    try {
+      const r = await fetch('/api/anuncios', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo: $('an-tipo').value, nombre: $('an-nombre').value.trim(),
+          municipio: $('an-muni-input').value.trim(), codigo_ine: $('an-codigo').value || null,
+          provincia: $('an-provincia').value || null,
+          descripcion: $('an-desc').value.trim(), direccion: $('an-dir').value.trim(),
+          contacto: $('an-contacto').value.trim(), email: $('an-email').value.trim(),
+          telefono: $('an-tel').value.trim(), web: $('an-web').value.trim(),
+          foto: fotoData || null, website: $('an-website').value,
+        }),
+      });
+      const j = await r.json();
+      if (j.ok) {
+        $('an-ok-name').textContent = $('an-nombre').value.trim();
+        $('an-form').style.display = 'none';
+        $('an-ok').hidden = false;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else { alert('No se pudo enviar. Revisa los datos e inténtalo de nuevo.'); btn.disabled = false; btn.textContent = 'Enviar para revisión'; }
+    } catch { alert('Error de conexión. Inténtalo de nuevo.'); btn.disabled = false; btn.textContent = 'Enviar para revisión'; }
+  });
+</script>
+
+<style>
+.an-page { max-width: 600px; margin: 0 auto; padding: 28px 16px 60px; }
+.an-hero { text-align: center; margin-bottom: 22px; }
+.an-hero h1 { font-size: 1.7rem; font-weight: 800; color: var(--text); margin: 0 0 8px; }
+.an-hero h1 span { color: var(--primary); }
+.an-hero p { color: var(--text-2); font-size: .95rem; max-width: 520px; margin: 0 auto; line-height: 1.5; }
+.an-form { display: flex; flex-direction: column; gap: 14px; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+.an-row { display: flex; gap: 14px; }
+.an-row .an-field { flex: 1; }
+.an-field { display: flex; flex-direction: column; gap: 6px; }
+.an-field label { font-size: .8rem; font-weight: 700; color: var(--text-2); }
+.an-field input, .an-field select, .an-field textarea {
+  padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 12px;
+  font-size: .92rem; font-family: inherit; background: #fff; color: var(--text); width: 100%; box-sizing: border-box;
+}
+.an-field textarea { resize: vertical; }
+.an-ac-wrap { position: relative; }
+.an-ac { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-top: 4px; overflow: hidden; box-shadow: 0 10px 28px rgba(0,0,0,.14); }
+.an-ac:empty { display: none; }
+.an-prev { display: none; max-width: 160px; border-radius: 10px; margin-top: 8px; }
+.an-go { background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 4px; }
+.an-go:hover { background: var(--primary-dark); }
+.an-go:disabled { opacity: .6; cursor: default; }
+.an-note { font-size: .76rem; color: #999; text-align: center; margin: 4px 0 0; line-height: 1.4; }
+.an-ok { text-align: center; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 40px 24px; }
+.an-ok-ic { font-size: 3rem; }
+.an-ok h2 { font-size: 1.3rem; margin: 8px 0; }
+.an-ok p { color: var(--text-2); }
+.an-ok-home { display: inline-block; margin-top: 14px; color: var(--primary); font-weight: 700; text-decoration: none; }
+@media (max-width: 480px) { .an-row { flex-direction: column; } }
+</style>
+</Base>
