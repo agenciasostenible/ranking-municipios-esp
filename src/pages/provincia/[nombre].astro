@@ -2,6 +2,7 @@
 import { DB } from '../../lib/d1client';
 import Base from '../../layouts/Base.astro';
 import { getCatInfo, formatPob, TABS, LABELS } from '../../lib/db';
+import { getAnunciosProvincia, ANUNCIO_TIPOS } from '../../lib/anuncios';
 // @ts-ignore
 
 const { nombre } = Astro.params;
@@ -35,6 +36,9 @@ const sinDatos    = (allRanking as any[]).filter(r => r.puntuacion <= 0).length;
 const totalMunis  = (allRanking as any[]).length;
 
 const maxPts: number = ranking.length ? Math.max(...ranking.map((r: any) => r.puntuacion ?? 0)) : 100;
+
+// Negocios recomendados (publicidad) marcados para salir arriba del ranking provincial
+const recomProv = await getAnunciosProvincia(provincia, 'ranking_prov');
 ---
 <Base
   title={`Mejores pueblos de ${provincia} ${new Date().getFullYear()} — Ranking turístico`}
@@ -109,6 +113,31 @@ const maxPts: number = ranking.length ? Math.max(...ranking.map((r: any) => r.pu
       </div>
     </div>
   </div>
+
+  {recomProv.length > 0 && (
+    <div class="prov-reco">
+      <div class="prov-reco-tag">⭐ Recomendados en {provincia}</div>
+      {recomProv.map((a: any) => (
+        <div class="prov-reco-card">
+          {a.foto && <img class="prov-reco-foto" src={a.foto} alt={a.nombre} loading="lazy" />}
+          <div class="prov-reco-body">
+            <div class="prov-reco-headline">
+              <span class="prov-reco-tipo">{ANUNCIO_TIPOS[a.tipo]?.label ?? 'Negocio'}</span>
+              <span class="prov-reco-badge">⭐ Recomendado</span>
+            </div>
+            <div class="prov-reco-name">{a.nombre}</div>
+            <div class="prov-reco-muni">📍 {a.municipio}{a.codigo_ine ? <> · <a href={`/municipio/${a.codigo_ine}`}>ver pueblo</a></> : ''}</div>
+            {a.descripcion && <div class="prov-reco-desc">{a.descripcion}</div>}
+            <div class="prov-reco-acts">
+              {a.telefono && <a href={`tel:${a.telefono}`}>📞 Llamar</a>}
+              {a.wa && <a href={a.wa} target="_blank" rel="nofollow noopener" class="prov-reco-wa">💬 WhatsApp</a>}
+              {a.web && <a href={a.web} target="_blank" rel="nofollow noopener">🔗 Web</a>}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
 
   {ranking.length === 0 && (
     <div class="empty-state">
@@ -262,6 +291,24 @@ const maxPts: number = ranking.length ? Math.max(...ranking.map((r: any) => r.pu
 .prov-cats-extra { margin-top: 8px; }
 
 .sin-datos-note { color: var(--text-2); font-style: italic; }
+
+/* Recomendados (publicidad) arriba del ranking provincial */
+.prov-reco { margin: 4px 0 20px; }
+.prov-reco-tag { display: inline-block; font-size: .74rem; font-weight: 800; letter-spacing: .3px; color: #b45309; background: #fff7e6; border-radius: 20px; padding: 4px 12px; margin-bottom: 10px; }
+.prov-reco-card { display: flex; gap: 14px; background: #fffdf8; border: 1.5px solid #f5d28a; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.prov-reco-foto { width: 110px; height: 110px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+.prov-reco-body { flex: 1; min-width: 0; }
+.prov-reco-headline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prov-reco-tipo { font-size: .74rem; font-weight: 700; color: #92500a; }
+.prov-reco-badge { font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: #b45309; background: #fff7e6; border: 1px solid #f5d28a; border-radius: 10px; padding: 1px 7px; }
+.prov-reco-name { font-size: 1.05rem; font-weight: 800; color: var(--text); margin-top: 2px; }
+.prov-reco-muni { font-size: .8rem; color: var(--text-2); margin-top: 2px; }
+.prov-reco-muni a { color: var(--primary); text-decoration: none; }
+.prov-reco-desc { font-size: .85rem; color: var(--text-2); margin-top: 5px; line-height: 1.45; }
+.prov-reco-acts { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: .82rem; }
+.prov-reco-acts a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.prov-reco-wa { color: #128c4b !important; }
+@media (max-width: 480px) { .prov-reco-foto { width: 84px; height: 84px; } }
 
 .empty-state {
   text-align: center;

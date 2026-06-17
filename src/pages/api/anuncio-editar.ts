@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
   // Construimos el UPDATE; la foto solo se toca si llega una nueva o se pide quitar.
   const sets: string[] = [
     'tipo = ?', 'nombre = ?', 'descripcion = ?', 'direccion = ?', 'contacto = ?',
-    'email = ?', 'telefono = ?', 'whatsapp = ?', 'web = ?', 'en_ficha = ?', 'en_ruta_mun = ?', 'en_ruta_zona = ?',
+    'email = ?', 'telefono = ?', 'whatsapp = ?', 'web = ?', 'en_ficha = ?', 'en_ruta_mun = ?', 'en_ruta_zona = ?', 'en_ranking_prov = ?',
   ];
   const vals: any[] = [
     tipo, nombre,
@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
     String(b.telefono || '').slice(0, 40) || null,
     bit(b.whatsapp),
     String(b.web || '').slice(0, 200) || null,
-    bit(b.en_ficha), bit(b.en_ruta_mun), bit(b.en_ruta_zona),
+    bit(b.en_ficha), bit(b.en_ruta_mun), bit(b.en_ruta_zona), bit(b.en_ranking_prov),
   ];
 
   if (b.quitar_foto) {

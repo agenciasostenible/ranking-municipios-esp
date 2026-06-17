@@ -53,8 +53,8 @@ function toAnuncio(r: any): Anuncio {
 }
 
 // Superficie donde se muestra → columna de colocación que debe estar a 1.
-export type Surface = 'ficha' | 'ruta_mun' | 'ruta_zona';
-const COL: Record<Surface, string> = { ficha: 'en_ficha', ruta_mun: 'en_ruta_mun', ruta_zona: 'en_ruta_zona' };
+export type Surface = 'ficha' | 'ruta_mun' | 'ruta_zona' | 'ranking_prov';
+const COL: Record<Surface, string> = { ficha: 'en_ficha', ruta_mun: 'en_ruta_mun', ruta_zona: 'en_ruta_zona', ranking_prov: 'en_ranking_prov' };
 
 /** Anuncios aprobados de un municipio, visibles en la superficie indicada. */
 export async function getAnunciosMunicipio(codigo_ine: string, surface: Surface = 'ficha'): Promise<Anuncio[]> {

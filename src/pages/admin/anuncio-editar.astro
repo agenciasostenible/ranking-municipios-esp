@@ -50,6 +50,7 @@ const TIPOS = [
         <label class="chk"><input type="checkbox" id="en_ficha" checked={a.en_ficha === 1} /> Ficha del municipio</label>
         <label class="chk"><input type="checkbox" id="en_ruta_mun" checked={a.en_ruta_mun === 1} /> Plan de un día (ruta del municipio)</label>
         <label class="chk"><input type="checkbox" id="en_ruta_zona" checked={a.en_ruta_zona === 1} /> Rutas de su provincia (sale en CUALQUIER ruta por zona de {a.provincia || 'su provincia'}, aunque su pueblo no sea parada)</label>
+        <label class="chk"><input type="checkbox" id="en_ranking_prov" checked={a.en_ranking_prov === 1} /> Ranking provincial (arriba del ranking de {a.provincia || 'su provincia'})</label>
       </div>
 
       <div class="f"><label>Nombre</label><input id="nombre" value={a.nombre} /></div>
@@ -102,6 +103,7 @@ const TIPOS = [
             telefono: $('telefono').value.trim(), web: $('web').value.trim(),
             whatsapp: $('whatsapp').checked,
             en_ficha: $('en_ficha').checked, en_ruta_mun: $('en_ruta_mun').checked, en_ruta_zona: $('en_ruta_zona').checked,
+            en_ranking_prov: $('en_ranking_prov').checked,
             quitar_foto: $('quitar_foto')?.checked || false,
             foto: fotoData || null,
           };
