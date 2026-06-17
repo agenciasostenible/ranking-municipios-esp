@@ -106,13 +106,20 @@ const municipios = (rankingGlobal as any[]).map(r => ({
       </div>
     </div>
 
-    <!-- Acceso directo al ranking completo -->
+    <!-- Buscar por categoría + acceso al ranking completo -->
     <div class="hero-all-wrap">
-      <a href="/ranking/ranking_global" class="hero-all-btn">
+      <div class="hero-find-label">¿Dónde quieres buscar? <span class="hero-find-cat" id="hero-find-cat"></span></div>
+      <div class="hero-find-box">
+        <div class="hero-find-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="hf-input" type="text" placeholder="Comunidad, provincia o municipio…" autocomplete="off" />
+        </div>
+        <div id="hf-ac" class="hero-find-ac"></div>
+      </div>
+      <a href="/ranking/ranking_global" id="hero-all-btn" class="hero-all-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         Ver toda España
       </a>
-      <span class="hero-all-hint">o busca tu municipio, provincia o comunidad arriba ↑</span>
     </div>
 
     <!-- Paso 2: Zona opcional + CTA (solo desktop) -->
@@ -487,24 +494,43 @@ document.addEventListener('click', (e) => {
   if (!(e.target as Element)?.closest?.('.hero-search-wrap')) ac.classList.remove('open');
 });
 
-// ── Category pills ──
+// ── Category pills → eligen categoría y enfocan el buscador "por categoría" ──
 let selectedCat = '';
+const heroAllBtn = document.getElementById('hero-all-btn') as HTMLAnchorElement | null;
+const heroFindCat = document.getElementById('hero-find-cat');
+const heroAllWrap = document.querySelector('.hero-all-wrap');
+function setHeroCat(cat: string, label: string) {
+  selectedCat = cat;
+  if (heroAllBtn) heroAllBtn.href = `/ranking/${cat || 'ranking_global'}`;
+  if (heroFindCat) heroFindCat.textContent = label ? `en ${label}` : '';
+}
 document.querySelectorAll('.hero-cat-pill').forEach(pill => {
   pill.addEventListener('click', () => {
     const cat = (pill as HTMLElement).dataset.key || '';
-
-    // En móvil: abrir paso 2 (elegir zona) en vez de navegar directo
-    if (window.innerWidth <= 768) {
-      const label = (pill.querySelector('.hero-cat-label') as HTMLElement)?.textContent || '';
-      const ic = (pill.querySelector('.hero-cat-ic') as HTMLElement)?.innerHTML || '';
-      openCatSheet(cat, label, ic);
-      return;
-    }
+    const label = (pill.querySelector('.hero-cat-label') as HTMLElement)?.textContent?.trim() || '';
     document.querySelectorAll('.hero-cat-pill').forEach(p => p.classList.remove('selected'));
     pill.classList.add('selected');
-    selectedCat = cat;
-    si.focus();
+    setHeroCat(cat, label);
+    heroAllWrap?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => (document.getElementById('hf-input') as HTMLInputElement)?.focus(), 300);
   });
+});
+
+// Buscador "por categoría" (inline): autocompletado que respeta la categoría elegida
+const hfInput = document.getElementById('hf-input') as HTMLInputElement | null;
+const hfAc = document.getElementById('hf-ac');
+let hfTimer: ReturnType<typeof setTimeout>;
+hfInput?.addEventListener('input', () => {
+  const q = hfInput.value.trim();
+  clearTimeout(hfTimer);
+  if (q.length < 2) { if (hfAc) hfAc.innerHTML = ''; return; }
+  hfTimer = setTimeout(async () => {
+    const data = await fetchResults(q);
+    if (hfAc) renderItems(hfAc, data, q);
+  }, 200);
+});
+document.addEventListener('click', (e) => {
+  if (hfAc && !(e.target as Element)?.closest?.('.hero-all-wrap')) hfAc.innerHTML = '';
 });
 
 // "Ver más / Ver menos" de las categorías del hero
@@ -617,10 +643,18 @@ function doSearch() {
   cursor: pointer; font-family: inherit; transition: all .18s;
 }
 .hero-cat-more:hover { background: rgba(255,255,255,0.4); transform: translateY(-1px); }
-.hero-all-wrap { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.hero-all-wrap { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.hero-find-label { font-size: .82rem; font-weight: 700; color: rgba(255,255,255,.9); text-align: center; }
+.hero-find-cat { color: #fff; }
+.hero-find-box { position: relative; width: 100%; max-width: 440px; }
+.hero-find-pill { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 40px; padding: 12px 18px; box-shadow: 0 4px 16px rgba(0,0,0,.18); }
+.hero-find-pill input { flex: 1; border: none; outline: none; font-size: .95rem; font-family: inherit; background: transparent; color: var(--text); min-width: 0; }
+.hero-find-ac { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,.2); text-align: left; }
+.hero-find-ac:empty { display: none; }
 .hero-all-btn { display: inline-flex; align-items: center; gap: 9px; padding: 12px 24px; background: rgba(255,255,255,0.95); color: var(--primary); border-radius: 40px; font-weight: 800; font-size: .95rem; text-decoration: none; box-shadow: 0 4px 16px rgba(0,0,0,.18); transition: all .18s; }
 .hero-all-btn:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
-.hero-all-hint { font-size: .8rem; color: rgba(255,255,255,.75); text-align: center; }
+/* El buscador "Paso 2" antiguo se sustituye por el buscador inline por categoría */
+.hero-search-desktop { display: none !important; }
 
 /* Paso 2 móvil: hoja de selección de zona */
 .mcs-overlay {
