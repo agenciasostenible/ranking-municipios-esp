@@ -91,6 +91,7 @@ export const CAT_COLORS: Record<string, string> = {
   cuevas:            '#4e342e',
   semana_santa:      '#6d4c41',
   lujo:              '#f9a825',
+  solteros:          '#d81b60',
   festivales:        '#e65100',
   productos_locales: '#558b2f',
   mercados:          '#795548',

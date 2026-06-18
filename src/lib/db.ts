@@ -44,6 +44,7 @@ export const ICONS: Record<string, string> = {
   notoriedad_instagram: 'trending_up',
 
   miradores:         'binoculars',
+  solteros:          'nightlife',
   birdwatching:      'flutter_dash',
   cuevas:            'mountain',
   ciclismo:          'pedal_bike',
@@ -89,6 +90,7 @@ export const LABELS: Record<string, string> = {
   notoriedad_instagram: 'Popularidad en redes',
 
   miradores:         'Miradores',
+  solteros:          'Para solteros',
   cuevas:            'Cuevas',
   escalada:          'Escalada',
   pesca:             'Pesca',
@@ -122,6 +124,9 @@ export const TABS = [
   { key: 'castillos',        label: 'Castillos',   icon: 'castle' },
   { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
   { key: 'vinos',            label: 'Vinos',       icon: 'wine_bar' },
+  { key: 'miradores',        label: 'Miradores',   icon: 'binoculars' },
+  { key: 'lujo',             label: 'Lujo',        icon: 'diamond' },
+  { key: 'solteros',         label: 'Solteros',    icon: 'nightlife' },
   { key: 'pueblo_bonito',    label: 'Pueblos bonitos', icon: 'auto_awesome' },
   { key: 'turismo_religioso',label: 'Religioso',   icon: 'church' },
   { key: 'turismo_activo',   label: 'Activo',      icon: 'mountain' },
@@ -172,6 +177,15 @@ export const SIDEBAR_GROUPS = [
     icon: 'park',
     items: [
       { key: 'playas',       label: 'Playas',         icon: 'beach_access' },
+      { key: 'miradores',    label: 'Miradores',      icon: 'binoculars' },
+    ],
+  },
+  {
+    title: 'Lujo y lifestyle',
+    icon: 'diamond',
+    items: [
+      { key: 'lujo',         label: 'Turismo de lujo', icon: 'diamond' },
+      { key: 'solteros',     label: 'Para solteros',   icon: 'nightlife' },
     ],
   },
   {
@@ -203,6 +217,7 @@ export const FICHA_CATS = [
   'gastronomia','Campings','TurismoRural',
   'castillos',
   'Playas',
+  'vinos','miradores','lujo','solteros',
   'pueblo_bonito',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
   'notoriedad_instagram',
@@ -212,7 +227,7 @@ export const FICHA_CATS = [
 // Solo las categorías confirmadas / en uso.
 export const DETAIL_CATS = [
   'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
-  'senderismo','TurismoRural','Campings','vinos',
+  'senderismo','TurismoRural','Campings','vinos','miradores','lujo','solteros',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
   'pueblo_bonito','notoriedad_instagram',
 ];

@@ -125,7 +125,10 @@ const CAT_TIPOS: Record<string, string[]> = {
   escapada_rural:['espacio', 'mirador'],
   retiros:       ['balneario', 'espacio'],
   aceite:        ['producto'],
-  vinos:         ['producto'],
+  vinos:         ['vino', 'producto'],
+  miradores:     ['mirador'],
+  lujo:          ['lujo'],
+  solteros:      ['soltero'],
 };
 
 // Entidades relevantes para la categoría de entrada
@@ -450,6 +453,12 @@ const creadores = await getCreadores(
                 <span class="desde-item-name">{e.nombre}</span>
                 {e.descripcion && (
                   <div class="desde-item-desc">{e.descripcion}</div>
+                )}
+                {e.tipo === 'mirador' && (
+                  <a class="desde-maps" target="_blank" rel="noopener"
+                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${e.nombre}, ${municipio.nombre}, ${municipio.provincia}`)}`}>
+                    🗺️ Ver en Google Maps
+                  </a>
                 )}
               </div>
               {e.nivel_sello && e.nivel_sello !== 'Normal' && (
@@ -985,6 +994,21 @@ window.openSello = openSello;
   line-height: 1.3;
   opacity: 0.85;
 }
+.desde-maps {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  margin-top: .4rem;
+  padding: .28rem .6rem;
+  font-size: .76rem;
+  font-weight: 700;
+  color: #1a73e8;
+  background: #e8f0fe;
+  border-radius: 999px;
+  text-decoration: none;
+  width: fit-content;
+}
+.desde-maps:hover { background: #d2e3fc; }
 .desde-sello {
   font-size: .68rem;
   font-weight: 700;
