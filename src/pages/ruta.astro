@@ -46,6 +46,9 @@ const CAT_PROFILE: Record<string, CatProfile> = {
   turismo_religioso:{ visitar: null },
   monumentos:       { visitar: null },
   castillos:        { visitar: null },
+  // Lujo: comer y dormir de gama alta (un plan de lujo no manda a un sitio básico).
+  lujo:             { comer: { keyword: 'restaurante gourmet alta cocina' },
+                      dormir: { keyword: 'hotel 5 estrellas lujo' } },
 };
 
 const url = Astro.url;
@@ -349,8 +352,10 @@ if (selCfgs.length && prov && !pueblo) {
         s.dormirList = dormirList;
         s.visitarList = visitarList;
         // Índice inicial: en presupuesto "económico", la opción más modesta
-        s.comerIdx  = pres === 'eco' ? modestIndex(comerList) : 0;
-        s.dormirIdx = pres === 'eco' ? modestIndex(dormirList) : 0;
+        // (salvo en lujo: ahí siempre la mejor/gama alta, aunque marquen económico).
+        const ecoStop = pres === 'eco' && s.catKey !== 'lujo';
+        s.comerIdx  = ecoStop ? modestIndex(comerList) : 0;
+        s.dormirIdx = ecoStop ? modestIndex(dormirList) : 0;
         s.visitarIdx = 0; // el presupuesto no aplica a "qué visitar"
         s.comerCur   = comerList[s.comerIdx] ?? null;
         s.dormirCur  = dormirList[s.dormirIdx] ?? null;
@@ -528,10 +533,12 @@ if (pueblo && selCfgs.length) {
     for (const v of [...walkable, ...visGeo]) if (v.place_id && !visPoolMap.has(v.place_id)) visPoolMap.set(v.place_id, slimVis(v));
     const visPool = [...visPoolMap.values()].slice(0, 12);
 
-    const comerIdx = pres === 'eco' ? modestIndex(comerList) : 0;
-    const dormirIdx = pres === 'eco' ? modestIndex(dormirList) : 0;
+    // En lujo siempre la mejor opción, aunque marquen "económico".
+    const ecoDia = pres === 'eco' && primaryCat !== 'lujo';
+    const comerIdx = ecoDia ? modestIndex(comerList) : 0;
+    const dormirIdx = ecoDia ? modestIndex(dormirList) : 0;
     // Cenar = una opción distinta de la comida (o la modesta en económico)
-    const cenarIdx = pres === 'eco' ? modestIndex(comerList) : (comerList.length > 1 ? 1 : 0);
+    const cenarIdx = ecoDia ? modestIndex(comerList) : (comerList.length > 1 ? 1 : 0);
 
     // Duración aproximada del plan a pie: ~50 min por visita + caminatas + comidas
     const walkLegs = walkable.reduce((a: number, s: any) => a + (s.next?.walkMin ?? 0), 0);
