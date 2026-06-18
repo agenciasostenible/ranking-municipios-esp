@@ -1062,15 +1062,18 @@ const ogDescription = hasDia
     document.addEventListener('click', function (e) {
       var a = e.target.closest && e.target.closest('.rs-gmaps');
       if (!a) return;
-      if (!KEY) return; // sin clave Embed: deja que abra Google en pestaña nueva
       e.preventDefault();
       var href = a.getAttribute('href') || '';
       var pid = '', name = '';
       try { var u = new URL(href); pid = u.searchParams.get('query_place_id') || ''; name = u.searchParams.get('query') || ''; } catch (_) {}
-      if (!pid) { window.open(href, '_blank'); return; }
+      if (!pid && !name) { window.open(href, '_blank'); return; }
       titleEl.textContent = name || 'Google Maps';
       openEl.href = href;
-      frame.src = 'https://www.google.com/maps/embed/v1/place?key=' + encodeURIComponent(KEY) + '&q=place_id:' + encodeURIComponent(pid);
+      // Con clave Embed → tarjeta enriquecida del sitio. Sin clave → mapa incrustable
+      // de Google (gratis, sin configuración) centrado en el sitio por nombre.
+      frame.src = (KEY && pid)
+        ? 'https://www.google.com/maps/embed/v1/place?key=' + encodeURIComponent(KEY) + '&q=place_id:' + encodeURIComponent(pid)
+        : 'https://www.google.com/maps?q=' + encodeURIComponent(name || pid) + '&z=16&output=embed';
       drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false');
     });
   })();
