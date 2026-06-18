@@ -24,7 +24,7 @@ function toCreador(r: any): Creador {
     nombre: r.nombre,
     handle: String(r.handle || '').replace(/^@/, ''),
     url: `https://instagram.com/${String(r.handle || '').replace(/^@/, '')}`,
-    avatar_url: r.avatar_url || null,
+    avatar_url: r.has_avatar ? `/api/creador-foto?id=${r.id}` : (r.avatar_url || null),
     bio: r.bio || null,
     especialidades: String(r.especialidades || '').split(',').map((s) => s.trim()).filter(Boolean),
     destacado: r.destacado ? 1 : 0,
@@ -52,7 +52,9 @@ export async function getCreadores(categoria: string, prov = '', ccaa = '', limi
   try {
     const binds: any[] = conTema ? [categoria, prov, ccaa, limit] : [prov, ccaa, limit];
     const { results } = await DB.prepare(
-      `SELECT * FROM creadores
+      `SELECT id, nombre, handle, avatar_url, bio, especialidades, destacado,
+              (avatar_data IS NOT NULL) AS has_avatar
+         FROM creadores
         WHERE aprobado = 1 ${temaOk} AND ${zonaOk}
         ORDER BY destacado DESC, seguidores DESC, creado_at DESC
         LIMIT ?`

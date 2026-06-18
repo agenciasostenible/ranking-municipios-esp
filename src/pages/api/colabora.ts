@@ -24,11 +24,17 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response('faltan campos', { status: 400 });
   }
 
+  // Foto de perfil: data URL base64 (resize en el navegador), máx ~900 KB.
+  let avatarData: string | null = null, avatarMime: string | null = null;
+  const foto = typeof b.avatar === 'string' ? b.avatar : '';
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,/.exec(foto);
+  if (m && foto.length <= 900_000) { avatarData = foto; avatarMime = m[1]; }
+
   try {
     await DB.prepare(
-      `INSERT INTO creadores (nombre, handle, especialidades, ambito_tipo, ambito_valor, bio, email, aprobado)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0)`
-    ).bind(nombre, handle, especialidades, ambito_tipo, ambito_valor, bio, email).run();
+      `INSERT INTO creadores (nombre, handle, especialidades, ambito_tipo, ambito_valor, bio, email, avatar_data, avatar_mime, aprobado)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
+    ).bind(nombre, handle, especialidades, ambito_tipo, ambito_valor, bio, email, avatarData, avatarMime).run();
   } catch {
     return new Response('error', { status: 500 });
   }

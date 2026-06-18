@@ -10,11 +10,15 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 let pendientes: any[] = [];
 let aprobados: any[] = [];
 let provincias: string[] = [];
+let editing: any = null;
+const editId = Astro.url.searchParams.get('edit');
 if (ok) {
-  pendientes = (await DB.prepare(`SELECT * FROM creadores WHERE aprobado=0 ORDER BY creado_at DESC`).all()).results as any[];
-  aprobados = (await DB.prepare(`SELECT * FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, creado_at DESC`).all()).results as any[];
+  pendientes = (await DB.prepare(`SELECT id,nombre,handle,bio,especialidades,ambito_tipo,ambito_valor,email,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE aprobado=0 ORDER BY creado_at DESC`).all()).results as any[];
+  aprobados = (await DB.prepare(`SELECT id,nombre,handle,bio,especialidades,ambito_tipo,ambito_valor,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, creado_at DESC`).all()).results as any[];
   provincias = ((await DB.prepare(`SELECT DISTINCT provincia FROM municipios WHERE COALESCE(es_duplicado,0)=0 ORDER BY provincia`).all()).results as any[]).map((r) => r.provincia);
+  if (editId) editing = await DB.prepare(`SELECT id,nombre,handle,avatar_url,bio,especialidades,ambito_tipo,ambito_valor,seguidores,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE id=?`).bind(editId).first();
 }
+const ev = (k: string) => (editing ? (editing[k] ?? '') : '');
 const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURIComponent(key)}&id=${c.id}&accion=${accion}`;
 ---
 <html lang="es">
@@ -31,6 +35,7 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
   .acts a { display: inline-block; padding: 7px 14px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: .82rem; margin-right: 6px; }
   .ap { background: #16a34a; color: #fff; } .re { background: #dc2626; color: #fff; }
   .de { background: #fff; color: #e8a200; border: 1.5px solid #e8a200; } .qu { background: #fff; color: #dc2626; border: 1.5px solid #dc2626; }
+  .ed { background: #fff; color: #2563eb; border: 1.5px solid #2563eb; }
   form.add { background: #fff; border: 1px dashed #d63384; border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
   form.add input, form.add select { padding: 9px 11px; border: 1.5px solid #ddd; border-radius: 8px; font-size: .9rem; }
   form.add button { padding: 11px; background: #d63384; color: #fff; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; }
@@ -44,33 +49,60 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
   <>
     <h1>📸 Creadores</h1>
 
-    <h2>Añadir (editorial)</h2>
-    <form class="add" method="POST" action="/api/creador-moderar">
+    <h2 id="form">{editing ? `✏️ Editar: ${editing.nombre}` : 'Añadir (editorial)'}</h2>
+    <form class="add" method="POST" action="/api/creador-moderar" id="cre-form">
       <input type="hidden" name="key" value={key} />
-      <input type="hidden" name="accion" value="add" />
+      {editing && <input type="hidden" name="id" value={editing.id} />}
+      <input type="hidden" name="avatar" id="f-avatar" />
       <div class="row">
-        <input name="nombre" placeholder="Nombre / marca *" required />
-        <input name="handle" placeholder="@instagram *" required />
+        <input name="nombre" placeholder="Nombre / marca *" value={ev('nombre')} required />
+        <input name="handle" placeholder="@instagram *" value={ev('handle')} required />
       </div>
-      <input name="especialidades" placeholder="Temas csv: senderismo,gastronomia,general" />
+      <input name="especialidades" placeholder="Temas csv: senderismo,gastronomia,general" value={ev('especialidades')} />
       <div class="row">
         <select name="ambito_tipo">
-          <option value="nacional">Toda España</option>
-          <option value="provincia">Provincia</option>
+          <option value="nacional" selected={ev('ambito_tipo') === 'nacional'}>Toda España</option>
+          <option value="provincia" selected={ev('ambito_tipo') === 'provincia'}>Provincia</option>
         </select>
         <select name="ambito_valor">
           <option value="">(provincia, si aplica)</option>
-          {provincias.map((p) => <option value={p}>{p}</option>)}
+          {provincias.map((p) => <option value={p} selected={ev('ambito_valor') === p}>{p}</option>)}
         </select>
       </div>
-      <input name="bio" placeholder="Bio (una línea)" />
-      <input name="avatar_url" placeholder="URL foto de perfil (opcional)" />
-      <div class="row">
-        <input name="seguidores" type="number" placeholder="Seguidores (opcional)" />
-        <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="destacado" /> Destacado ★</label>
+      <input name="bio" placeholder="Bio (una línea)" value={ev('bio')} />
+      <div>
+        <label style="font-size:.8rem;color:#555">Foto de perfil {editing && editing.has_avatar ? '(ya tiene una; sube otra para cambiarla)' : '(opcional)'}</label>
+        <input type="file" accept="image/*" id="f-foto" style="display:block;margin-top:4px" />
+        {editing && editing.has_avatar && <img src={`/api/creador-foto?id=${editing.id}`} alt="" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:6px" />}
+        <img id="f-prev" alt="" style="display:none;width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:6px" />
       </div>
-      <button type="submit">Añadir creador (aprobado)</button>
+      <input name="avatar_url" placeholder="o URL de foto externa (opcional)" value={ev('avatar_url')} />
+      <div class="row">
+        <input name="seguidores" type="number" placeholder="Seguidores (opcional)" value={ev('seguidores')} />
+        <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="destacado" checked={!!editing && !!editing.destacado} /> Destacado ★</label>
+      </div>
+      <button type="submit">{editing ? 'Guardar cambios' : 'Añadir creador (aprobado)'}</button>
+      {editing && <a href={`/admin/creadores?key=${key}`} style="text-align:center;color:#777;font-size:.85rem">Cancelar edición</a>}
     </form>
+    <script is:inline>
+      (function () {
+        var inp = document.getElementById('f-foto'); if (!inp) return;
+        inp.addEventListener('change', function (e) {
+          var file = e.target.files && e.target.files[0]; if (!file) return;
+          var img = new Image();
+          img.onload = function () {
+            var max = 400, w = img.width, h = img.height;
+            if (w > max || h > max) { var r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+            var c = document.createElement('canvas'); c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            var data = c.toDataURL('image/jpeg', 0.8);
+            document.getElementById('f-avatar').value = data;
+            var prev = document.getElementById('f-prev'); prev.src = data; prev.style.display = 'block';
+          };
+          img.src = URL.createObjectURL(file);
+        });
+      })();
+    </script>
 
     <h2>Pendientes ({pendientes.length})</h2>
     {pendientes.length === 0 && <p class="muted">Nada pendiente.</p>}
@@ -78,7 +110,7 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
       <div class="card">
         <h3>{c.nombre} <a class="h" href={`https://instagram.com/${c.handle}`} target="_blank">@{c.handle} ↗</a></h3>
         <div class="meta">{c.especialidades && c.especialidades.split(',').map((t: string) => <span class="tag">{t}</span>)} · {c.ambito_tipo}{c.ambito_valor ? ` (${c.ambito_valor})` : ''}{c.bio ? ` · ${c.bio}` : ''}<br />✉️ {c.email}</div>
-        <div class="acts"><a class="ap" href={link(c, 'aprobar')}>✓ Aprobar</a><a class="re" href={link(c, 'borrar')}>🗑 Borrar</a></div>
+        <div class="acts"><a class="ap" href={link(c, 'aprobar')}>✓ Aprobar</a><a class="ed" href={`/admin/creadores?key=${encodeURIComponent(key)}&edit=${c.id}#form`}>✏️ Editar</a><a class="re" href={link(c, 'borrar')}>🗑 Borrar</a></div>
       </div>
     ))}
 
@@ -89,6 +121,7 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
         <div class="meta">{c.especialidades && c.especialidades.split(',').map((t: string) => <span class="tag">{t}</span>)} · {c.ambito_tipo}{c.ambito_valor ? ` (${c.ambito_valor})` : ''}</div>
         <div class="acts">
           {c.destacado ? <a class="de" href={link(c, 'undestacar')}>quitar ★</a> : <a class="de" href={link(c, 'destacar')}>★ Destacar</a>}
+          <a class="ed" href={`/admin/creadores?key=${encodeURIComponent(key)}&edit=${c.id}#form`}>✏️ Editar</a>
           <a class="qu" href={link(c, 'quitar')}>Despublicar</a>
           <a class="re" href={link(c, 'borrar')}>🗑 Borrar</a>
         </div>

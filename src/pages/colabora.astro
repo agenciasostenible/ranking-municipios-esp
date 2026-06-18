@@ -71,6 +71,11 @@ const TEMAS = [
       <input id="c-bio" type="text" maxlength="120" placeholder="Una línea sobre tu contenido" />
     </div>
     <div class="col-field">
+      <label>Tu foto de perfil (opcional pero recomendable)</label>
+      <input id="c-foto" type="file" accept="image/*" />
+      <img id="c-foto-prev" alt="" style="display:none;width:72px;height:72px;border-radius:50%;object-fit:cover;margin-top:8px" />
+    </div>
+    <div class="col-field">
       <label>Email de contacto *</label>
       <input id="c-email" type="email" maxlength="160" required />
     </div>
@@ -93,6 +98,22 @@ const TEMAS = [
   $('c-ambito').addEventListener('change', () => {
     $('c-prov-wrap').style.display = $('c-ambito').value === 'provincia' ? '' : 'none';
   });
+
+  // Foto: redimensiona en el navegador a ≤400px y guarda como JPEG (avatar pequeño)
+  let fotoData = '';
+  $('c-foto').addEventListener('change', (e: any) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+      const max = 400; let { width: w, height: h } = img;
+      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+      fotoData = c.toDataURL('image/jpeg', 0.8);
+      const prev = $('c-foto-prev'); prev.src = fotoData; prev.style.display = 'block';
+    };
+    img.src = URL.createObjectURL(file);
+  });
   $('col-form').addEventListener('submit', async (e: any) => {
     e.preventDefault();
     const temas = Array.from(document.querySelectorAll('input[name="tema"]:checked')).map((i) => (i as HTMLInputElement).value);
@@ -109,6 +130,7 @@ const TEMAS = [
       ambito_valor: ambito === 'provincia' ? $('c-prov').value : '',
       bio: $('c-bio').value.trim(),
       email: $('c-email').value.trim(),
+      avatar: fotoData,
       website: $('c-website').value, // honeypot
     };
     $('c-go').disabled = true; $('c-go').textContent = 'Enviando…';
