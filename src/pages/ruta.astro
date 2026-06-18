@@ -561,6 +561,10 @@ if (pueblo && selCfgs.length) {
     };
   }
 }
+// Clave del Maps Embed API (gratis, restringida por dominio) para el panel inferior.
+// Si no está, el botón "Ver en Google" abre Google en pestaña nueva (fallback).
+const EMBED_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_EMBED_KEY ?? '';
+
 // Enlace a la ficha del sitio en Google Maps (valoraciones, fotos, cómo llegar)
 const gmaps = (p: any) => p && p.place_id
   ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nombre || '')}&query_place_id=${encodeURIComponent(p.place_id)}`
@@ -1031,6 +1035,47 @@ const ogDescription = hasDia
   </Fragment>
 )}
 
+<!-- Panel inferior: ficha del sitio en Google Maps (sin salir de la web) -->
+<div id="gmaps-drawer" class="gmaps-drawer" data-key={EMBED_KEY} aria-hidden="true">
+  <div class="gmaps-bar">
+    <span class="gmaps-grip"></span>
+    <span class="gmaps-title" id="gmaps-title">Google Maps</span>
+    <a class="gmaps-open" id="gmaps-open" href="#" target="_blank" rel="noopener">Abrir ↗</a>
+    <button type="button" class="gmaps-close" id="gmaps-close" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="gmaps-frame-wrap"><iframe id="gmaps-frame" title="Ficha en Google Maps" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
+</div>
+
+<script>
+  // Panel inferior con la ficha de Google (Maps Embed API). Si no hay clave,
+  // el enlace abre Google en pestaña nueva (comportamiento por defecto).
+  (function () {
+    var drawer = document.getElementById('gmaps-drawer');
+    if (!drawer) return;
+    var KEY = drawer.getAttribute('data-key') || '';
+    var frame = document.getElementById('gmaps-frame');
+    var titleEl = document.getElementById('gmaps-title');
+    var openEl = document.getElementById('gmaps-open');
+    function cerrar() { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); frame.src = 'about:blank'; }
+    document.getElementById('gmaps-close').addEventListener('click', cerrar);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrar(); });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('.rs-gmaps');
+      if (!a) return;
+      if (!KEY) return; // sin clave Embed: deja que abra Google en pestaña nueva
+      e.preventDefault();
+      var href = a.getAttribute('href') || '';
+      var pid = '', name = '';
+      try { var u = new URL(href); pid = u.searchParams.get('query_place_id') || ''; name = u.searchParams.get('query') || ''; } catch (_) {}
+      if (!pid) { window.open(href, '_blank'); return; }
+      titleEl.textContent = name || 'Google Maps';
+      openEl.href = href;
+      frame.src = 'https://www.google.com/maps/embed/v1/place?key=' + encodeURIComponent(KEY) + '&q=place_id:' + encodeURIComponent(pid);
+      drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false');
+    });
+  })();
+</script>
+
 <script>
   // Cambiar de sitio (comer / dormir) sin recargar
   function rsFmt(h) {
@@ -1154,6 +1199,16 @@ const ogDescription = hasDia
 .rs-loc { font-size: .76rem; color: var(--text-2); margin-top: 2px; }
 .rs-gmaps { display: inline-block; margin-top: 4px; font-size: .76rem; font-weight: 700; color: #1a73e8; text-decoration: none; }
 .rs-gmaps:hover { text-decoration: underline; }
+/* Panel inferior con la ficha de Google */
+.gmaps-drawer { position: fixed; left: 0; right: 0; bottom: 0; height: 55vh; background: #fff; box-shadow: 0 -10px 36px rgba(0,0,0,.28); border-radius: 18px 18px 0 0; transform: translateY(100%); transition: transform .26s ease; z-index: 1200; display: flex; flex-direction: column; }
+.gmaps-drawer.open { transform: translateY(0); }
+.gmaps-bar { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px 14px 10px; border-bottom: 1px solid var(--border); }
+.gmaps-grip { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; border-radius: 3px; background: #d8d8d8; }
+.gmaps-title { flex: 1; font-weight: 800; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gmaps-open { font-size: .82rem; font-weight: 700; color: #1a73e8; text-decoration: none; white-space: nowrap; }
+.gmaps-close { border: none; background: var(--bg); border-radius: 50%; width: 30px; height: 30px; font-size: 1rem; line-height: 1; cursor: pointer; color: #555; flex-shrink: 0; }
+.gmaps-frame-wrap { flex: 1; min-height: 0; }
+#gmaps-frame { width: 100%; height: 100%; border: 0; display: block; }
 .rs-swap-btn { margin-left: 8px; font-size: .72rem; font-weight: 700; color: var(--primary); background: #fff1f3; border: 1px solid rgba(255,56,92,.25); border-radius: 14px; padding: 2px 9px; cursor: pointer; white-space: nowrap; }
 .rs-swap-btn:hover { background: var(--primary); color: #fff; }
 .rs-place { display: flex; gap: 10px; align-items: flex-start; margin-top: 4px; }
