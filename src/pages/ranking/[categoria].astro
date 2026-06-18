@@ -4,6 +4,7 @@ import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import { TABS, SIDEBAR_GROUPS, ALL_CATS, getCatInfo, LABELS, formatPob } from '../../lib/db';
 import { CAT_COLORS } from '../../lib/utils';
+import { getCreadores } from '../../lib/creadores';
 // @ts-ignore
 
 let { categoria } = Astro.params;
@@ -23,6 +24,7 @@ const perPage = 50;
 const offset  = (page - 1) * perPage;
 
 const catLabel = LABELS[categoria!] ?? categoria!;
+const creadores = await getCreadores(categoria!, prov, ccaa);
 const catInfo  = getCatInfo(categoria!);
 const catColor = CAT_COLORS[categoria!] ?? '#FF385C';
 
@@ -341,6 +343,32 @@ function buildUrl(overrides: Record<string, string | number>) {
       {page < totalPages && <a href={buildUrl({ page: page + 1 })} class="pgb">Siguiente ›</a>}
     </div>
   )}
+
+  {creadores.length > 0 && (
+    <div class="cre-block">
+      <div class="cre-head">
+        <h3>📸 Síguelos · expertos en {catLabel.toLowerCase()}{prov ? ` por ${prov}` : ccaa ? ` por ${ccaa}` : ''}</h3>
+        <p class="cre-sub">Creadores que conocen la zona y comparten planes en Instagram.</p>
+      </div>
+      <div class="cre-grid">
+        {creadores.map((c) => (
+          <a class="cre-card" href={c.url} target="_blank" rel="nofollow noopener">
+            {c.avatar_url
+              ? <img class="cre-av" src={c.avatar_url} alt={c.nombre} loading="lazy" width="52" height="52" />
+              : <span class="cre-av cre-av-ph">{c.nombre.charAt(0)}</span>}
+            <span class="cre-info">
+              <span class="cre-nombre">{c.nombre}{c.destacado ? <span class="cre-dest">★</span> : ''}</span>
+              <span class="cre-handle">@{c.handle}</span>
+              {c.bio && <span class="cre-bio">{c.bio}</span>}
+            </span>
+            <span class="cre-ig">Ver en Instagram ↗</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <p class="cre-cta">¿Eres creador de turismo y quieres aparecer? <a href="/colabora">Propón tu cuenta →</a></p>
 </div>
 
 <script define:vars={{ categoria }}>
@@ -753,5 +781,22 @@ document.head.appendChild(thumbStyle);
   max-width: 1100px;
   margin: 0 auto;
 }
+/* Creadores recomendados */
+.cre-block { margin: 28px 0 6px; padding-top: 20px; border-top: 1px solid #eee; }
+.cre-head h3 { margin: 0 0 3px; font-size: 1.05rem; font-weight: 800; color: #222; }
+.cre-sub { margin: 0 0 14px; font-size: .85rem; color: #777; }
+.cre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.cre-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #eee; border-radius: 14px; background: #fff; text-decoration: none; transition: border-color .15s, box-shadow .15s; }
+.cre-card:hover { border-color: #d63384; box-shadow: 0 4px 14px rgba(214,51,132,.12); }
+.cre-av { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.cre-av-ph { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#f58529,#dd2a7b); color: #fff; font-weight: 800; font-size: 1.3rem; }
+.cre-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.cre-nombre { font-weight: 800; font-size: .92rem; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cre-dest { color: #e8a200; margin-left: 5px; }
+.cre-handle { font-size: .8rem; color: #d63384; font-weight: 700; }
+.cre-bio { font-size: .78rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cre-ig { font-size: .74rem; font-weight: 700; color: #d63384; white-space: nowrap; flex-shrink: 0; }
+.cre-cta { max-width: 1100px; margin: 16px auto 0; font-size: .82rem; color: #888; }
+.cre-cta a { color: #d63384; font-weight: 700; text-decoration: none; }
 </style>
 </Base>

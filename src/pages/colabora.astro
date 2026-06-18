@@ -1,0 +1,149 @@
+---
+import Base from '../layouts/Base.astro';
+import { DB } from '../lib/d1client';
+
+const { results: provRows } = await DB.prepare(
+  `SELECT DISTINCT provincia FROM municipios WHERE COALESCE(es_duplicado,0)=0 AND provincia IS NOT NULL ORDER BY provincia`
+).all();
+const provincias = (provRows as any[]).map((r) => r.provincia);
+
+// Temas (coinciden con las claves de categoría de los rankings)
+const TEMAS = [
+  { v: 'general', t: '🌍 Turismo en general' },
+  { v: 'senderismo', t: '🥾 Senderismo' },
+  { v: 'gastronomia', t: '🍽️ Gastronomía' },
+  { v: 'pueblo_bonito', t: '🏘️ Pueblos bonitos' },
+  { v: 'castillos', t: '🏰 Castillos' },
+  { v: 'monumentos', t: '🏛️ Monumentos' },
+  { v: 'Playas', t: '🏖️ Playas' },
+  { v: 'vinos', t: '🍷 Vinos' },
+  { v: 'oleoturismo', t: '🫒 Oleoturismo' },
+  { v: 'museos', t: '🖼️ Museos' },
+  { v: 'turismo_activo', t: '🧗 Turismo activo' },
+  { v: 'TurismoRural', t: '🏡 Turismo rural' },
+];
+---
+<Base title="Colabora — recomienda tu Instagram de turismo — Ranking Spain" description="¿Creas contenido de turismo, senderismo o gastronomía en Instagram? Propón tu cuenta para aparecer recomendado en Ranking Spain.">
+<div class="col-page">
+  <div class="col-hero">
+    <h1>📸 ¿Eres creador de turismo en Instagram?</h1>
+    <p>Si compartes <strong>senderismo, gastronomía, pueblos o viajes</strong> de una zona, propón tu cuenta. Si encaja, te recomendaremos en las páginas de ranking de tu tema y tu zona. Revisamos cada propuesta a mano.</p>
+  </div>
+
+  <form class="col-form" id="col-form">
+    <div class="col-field">
+      <label>Nombre o marca *</label>
+      <input id="c-nombre" type="text" maxlength="80" placeholder="Ej. Rutas por Sierra Nevada" required />
+    </div>
+    <div class="col-field">
+      <label>Usuario de Instagram *</label>
+      <input id="c-handle" type="text" maxlength="60" placeholder="@tucuenta" required />
+    </div>
+
+    <div class="col-field">
+      <label>¿De qué eres experto/a? * (elige uno o varios)</label>
+      <div class="col-chips">
+        {TEMAS.map((t) => (
+          <label class="col-chip"><input type="checkbox" name="tema" value={t.v} />{t.t}</label>
+        ))}
+      </div>
+    </div>
+
+    <div class="col-row">
+      <div class="col-field">
+        <label>Ámbito *</label>
+        <select id="c-ambito">
+          <option value="nacional">Toda España</option>
+          <option value="provincia">Una provincia</option>
+        </select>
+      </div>
+      <div class="col-field" id="c-prov-wrap" style="display:none">
+        <label>Provincia</label>
+        <select id="c-prov">
+          <option value="">Elige provincia…</option>
+          {provincias.map((p) => <option value={p}>{p}</option>)}
+        </select>
+      </div>
+    </div>
+
+    <div class="col-field">
+      <label>Descripción breve</label>
+      <input id="c-bio" type="text" maxlength="120" placeholder="Una línea sobre tu contenido" />
+    </div>
+    <div class="col-field">
+      <label>Email de contacto *</label>
+      <input id="c-email" type="email" maxlength="160" required />
+    </div>
+
+    <input id="c-website" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
+    <button type="submit" class="col-go" id="c-go">Enviar propuesta</button>
+    <p class="col-note">No publicamos tu email; solo lo usamos para avisarte. Aprobación manual.</p>
+  </form>
+
+  <div class="col-ok" id="col-ok" hidden>
+    <div class="col-ok-ic">🎉</div>
+    <h2>¡Gracias! Lo revisamos</h2>
+    <p>Echaremos un vistazo a tu cuenta y, si encaja, la añadiremos pronto.</p>
+    <a href="/" class="col-ok-home">Volver al inicio</a>
+  </div>
+</div>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as any;
+  $('c-ambito').addEventListener('change', () => {
+    $('c-prov-wrap').style.display = $('c-ambito').value === 'provincia' ? '' : 'none';
+  });
+  $('col-form').addEventListener('submit', async (e: any) => {
+    e.preventDefault();
+    const temas = Array.from(document.querySelectorAll('input[name="tema"]:checked')).map((i) => (i as HTMLInputElement).value);
+    if (!$('c-nombre').value.trim() || !$('c-handle').value.trim() || !$('c-email').value.trim() || !temas.length) {
+      alert('Completa nombre, Instagram, email y al menos un tema.');
+      return;
+    }
+    const ambito = $('c-ambito').value;
+    const payload = {
+      nombre: $('c-nombre').value.trim(),
+      handle: $('c-handle').value.trim().replace(/^@/, ''),
+      especialidades: temas.join(','),
+      ambito_tipo: ambito,
+      ambito_valor: ambito === 'provincia' ? $('c-prov').value : '',
+      bio: $('c-bio').value.trim(),
+      email: $('c-email').value.trim(),
+      website: $('c-website').value, // honeypot
+    };
+    $('c-go').disabled = true; $('c-go').textContent = 'Enviando…';
+    try {
+      const r = await fetch('/api/colabora', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error();
+      $('col-form').hidden = true; $('col-ok').hidden = false;
+    } catch {
+      $('c-go').disabled = false; $('c-go').textContent = 'Enviar propuesta';
+      alert('No se pudo enviar. Inténtalo de nuevo.');
+    }
+  });
+</script>
+
+<style>
+  .col-page { max-width: 600px; margin: 0 auto; padding: 28px 16px 60px; }
+  .col-hero h1 { font-size: 1.5rem; font-weight: 800; color: #222; margin: 0 0 8px; }
+  .col-hero p { color: #555; font-size: .95rem; line-height: 1.55; margin: 0 0 22px; }
+  .col-form { display: flex; flex-direction: column; gap: 16px; }
+  .col-field { display: flex; flex-direction: column; gap: 6px; }
+  .col-field label { font-size: .85rem; font-weight: 700; color: #333; }
+  .col-field input, .col-field select { padding: 11px 12px; border: 1.5px solid #ddd; border-radius: 12px; font-size: .95rem; font-family: inherit; }
+  .col-row { display: flex; gap: 12px; }
+  .col-row .col-field { flex: 1; }
+  .col-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .col-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 20px; font-size: .85rem; cursor: pointer; }
+  .col-chip:has(input:checked) { border-color: #d63384; background: #fdf0f6; color: #d63384; font-weight: 700; }
+  .col-chip input { accent-color: #d63384; }
+  .col-go { padding: 14px; background: #d63384; color: #fff; border: none; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; }
+  .col-go:disabled { opacity: .6; }
+  .col-note { font-size: .78rem; color: #999; text-align: center; margin: 0; }
+  .col-ok { text-align: center; padding: 40px 0; }
+  .col-ok-ic { font-size: 3rem; }
+  .col-ok h2 { font-size: 1.3rem; color: #222; }
+  .col-ok p { color: #666; }
+  .col-ok-home { display: inline-block; margin-top: 12px; color: #d63384; font-weight: 800; text-decoration: none; }
+</style>
+</Base>

@@ -1,0 +1,100 @@
+---
+import { DB } from '../../lib/d1client';
+
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+
+let pendientes: any[] = [];
+let aprobados: any[] = [];
+let provincias: string[] = [];
+if (ok) {
+  pendientes = (await DB.prepare(`SELECT * FROM creadores WHERE aprobado=0 ORDER BY creado_at DESC`).all()).results as any[];
+  aprobados = (await DB.prepare(`SELECT * FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, creado_at DESC`).all()).results as any[];
+  provincias = ((await DB.prepare(`SELECT DISTINCT provincia FROM municipios WHERE COALESCE(es_duplicado,0)=0 ORDER BY provincia`).all()).results as any[]).map((r) => r.provincia);
+}
+const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURIComponent(key)}&id=${c.id}&accion=${accion}`;
+---
+<html lang="es">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>Moderar creadores</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 24px 16px; color: #222; background: #fafafa; }
+  h1 { font-size: 1.4rem; } h2 { font-size: 1.1rem; margin-top: 28px; }
+  .muted { color: #777; }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card h3 { margin: 0 0 2px; font-size: 1.05rem; }
+  .h { color: #d63384; font-weight: 700; }
+  .meta { font-size: .85rem; color: #555; margin: 6px 0; line-height: 1.5; }
+  .tag { display: inline-block; background: #f0f0f0; border-radius: 8px; padding: 1px 8px; font-size: .72rem; font-weight: 700; margin-right: 4px; }
+  .acts a { display: inline-block; padding: 7px 14px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: .82rem; margin-right: 6px; }
+  .ap { background: #16a34a; color: #fff; } .re { background: #dc2626; color: #fff; }
+  .de { background: #fff; color: #e8a200; border: 1.5px solid #e8a200; } .qu { background: #fff; color: #dc2626; border: 1.5px solid #dc2626; }
+  form.add { background: #fff; border: 1px dashed #d63384; border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
+  form.add input, form.add select { padding: 9px 11px; border: 1.5px solid #ddd; border-radius: 8px; font-size: .9rem; }
+  form.add button { padding: 11px; background: #d63384; color: #fff; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+</style>
+</head>
+<body>
+{!ok ? (
+  <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>
+) : (
+  <>
+    <h1>📸 Creadores</h1>
+
+    <h2>Añadir (editorial)</h2>
+    <form class="add" method="POST" action="/api/creador-moderar">
+      <input type="hidden" name="key" value={key} />
+      <input type="hidden" name="accion" value="add" />
+      <div class="row">
+        <input name="nombre" placeholder="Nombre / marca *" required />
+        <input name="handle" placeholder="@instagram *" required />
+      </div>
+      <input name="especialidades" placeholder="Temas csv: senderismo,gastronomia,general" />
+      <div class="row">
+        <select name="ambito_tipo">
+          <option value="nacional">Toda España</option>
+          <option value="provincia">Provincia</option>
+        </select>
+        <select name="ambito_valor">
+          <option value="">(provincia, si aplica)</option>
+          {provincias.map((p) => <option value={p}>{p}</option>)}
+        </select>
+      </div>
+      <input name="bio" placeholder="Bio (una línea)" />
+      <input name="avatar_url" placeholder="URL foto de perfil (opcional)" />
+      <div class="row">
+        <input name="seguidores" type="number" placeholder="Seguidores (opcional)" />
+        <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="destacado" /> Destacado ★</label>
+      </div>
+      <button type="submit">Añadir creador (aprobado)</button>
+    </form>
+
+    <h2>Pendientes ({pendientes.length})</h2>
+    {pendientes.length === 0 && <p class="muted">Nada pendiente.</p>}
+    {pendientes.map((c) => (
+      <div class="card">
+        <h3>{c.nombre} <a class="h" href={`https://instagram.com/${c.handle}`} target="_blank">@{c.handle} ↗</a></h3>
+        <div class="meta">{c.especialidades && c.especialidades.split(',').map((t: string) => <span class="tag">{t}</span>)} · {c.ambito_tipo}{c.ambito_valor ? ` (${c.ambito_valor})` : ''}{c.bio ? ` · ${c.bio}` : ''}<br />✉️ {c.email}</div>
+        <div class="acts"><a class="ap" href={link(c, 'aprobar')}>✓ Aprobar</a><a class="re" href={link(c, 'borrar')}>🗑 Borrar</a></div>
+      </div>
+    ))}
+
+    <h2>Publicados ({aprobados.length})</h2>
+    {aprobados.map((c) => (
+      <div class="card">
+        <h3>{c.destacado ? '★ ' : ''}{c.nombre} <a class="h" href={`https://instagram.com/${c.handle}`} target="_blank">@{c.handle} ↗</a></h3>
+        <div class="meta">{c.especialidades && c.especialidades.split(',').map((t: string) => <span class="tag">{t}</span>)} · {c.ambito_tipo}{c.ambito_valor ? ` (${c.ambito_valor})` : ''}</div>
+        <div class="acts">
+          {c.destacado ? <a class="de" href={link(c, 'undestacar')}>quitar ★</a> : <a class="de" href={link(c, 'destacar')}>★ Destacar</a>}
+          <a class="qu" href={link(c, 'quitar')}>Despublicar</a>
+          <a class="re" href={link(c, 'borrar')}>🗑 Borrar</a>
+        </div>
+      </div>
+    ))}
+  </>
+)}
+</body>
+</html>
