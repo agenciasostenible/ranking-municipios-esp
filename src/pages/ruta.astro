@@ -6,6 +6,7 @@ import { getCatInfo } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
 import { getPlace, getPlaceOptions, modestIndex, PLACES_ENABLED } from '../lib/places';
 import { getAnunciosMunicipio, getAnunciosProvincia } from '../lib/anuncios';
+import { getCreadores } from '../lib/creadores';
 
 // Categorías que tienen recurso real + descripción (las que dan rutas verídicas)
 const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
@@ -571,6 +572,9 @@ const gmaps = (p: any) => p && p.place_id
   ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nombre || '')}&query_place_id=${encodeURIComponent(p.place_id)}`
   : '';
 
+// Creadores de Instagram de la zona (provincia de la ruta/pueblo + tema elegido)
+const creadoresRuta = prov ? await getCreadores((cats && cats[0]) ? cats[0] : '', prov, '') : [];
+
 const diaVisitas: any[] = diaPlan ? [...diaPlan.manana, ...diaPlan.tarde] : [];
 const hasDia = !!(pueblo && diaPlan && (diaVisitas.length || diaPlan.star));
 // Establecimientos anunciados y aprobados en este municipio (sello "Recomendado")
@@ -994,6 +998,28 @@ const ogDescription = hasDia
       <div class="ruta-foot">Plan basado en el inventario verificado de Ranking Spain. Sitios para ver, comer, café, copa y dormir, con su valoración, vía Google. Tiempos a pie/en coche estimados.</div>
     </div>
   )}
+
+  {creadoresRuta.length > 0 && (selCfgs.length > 0 || hasDia) && (
+    <div class="ruta-result cre-result">
+      <div class="cre-head"><h3>📸 Sigue en Instagram para descubrir {pueblo ? pueblo.provincia : prov}</h3>
+        <p class="cre-sub">Creadores que conocen la zona y comparten planes.</p></div>
+      <div class="cre-grid">
+        {creadoresRuta.map((c) => (
+          <a class="cre-card" href={c.url} target="_blank" rel="nofollow noopener">
+            {c.avatar_url
+              ? <img class="cre-av" src={c.avatar_url} alt={c.nombre} loading="lazy" width="50" height="50" />
+              : <span class="cre-av cre-av-ph">{c.nombre.charAt(0)}</span>}
+            <span class="cre-info">
+              <span class="cre-nombre">{c.nombre}{c.destacado ? <span class="cre-dest">★</span> : ''}</span>
+              <span class="cre-handle">@{c.handle}</span>
+              {c.bio && <span class="cre-bio">{c.bio}</span>}
+            </span>
+            <span class="cre-ig">Ver ↗</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
 </div>
 
 {mapData.length > 0 && (
@@ -1201,6 +1227,21 @@ const ogDescription = hasDia
 .rs-star { color: #e8a200; font-weight: 700; margin-left: 7px; font-size: .8rem; white-space: nowrap; }
 .rs-alt { font-size: .8rem; color: var(--text-2); margin-top: 2px; }
 .rs-loc { font-size: .76rem; color: var(--text-2); margin-top: 2px; }
+/* Creadores de Instagram en la ruta */
+.cre-result { border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; margin-top: 16px; }
+.cre-head h3 { margin: 0 0 2px; font-size: 1.02rem; font-weight: 800; color: var(--text); }
+.cre-sub { margin: 0 0 12px; font-size: .82rem; color: var(--text-2); }
+.cre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.cre-card { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: #fff; text-decoration: none; transition: border-color .15s; }
+.cre-card:hover { border-color: #d63384; }
+.cre-av { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.cre-av-ph { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#f58529,#dd2a7b); color: #fff; font-weight: 800; font-size: 1.25rem; }
+.cre-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.cre-nombre { font-weight: 800; font-size: .9rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cre-dest { color: #e8a200; margin-left: 5px; }
+.cre-handle { font-size: .8rem; color: #d63384; font-weight: 700; }
+.cre-bio { font-size: .77rem; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cre-ig { font-size: .76rem; font-weight: 800; color: #d63384; white-space: nowrap; flex-shrink: 0; }
 .rs-gmaps { display: inline-block; margin-top: 4px; font-size: .76rem; font-weight: 700; color: #1a73e8; text-decoration: none; }
 .rs-gmaps:hover { text-decoration: underline; }
 /* Panel inferior con la ficha de Google */
