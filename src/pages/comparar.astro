@@ -23,6 +23,8 @@ import Base from '../layouts/Base.astro';
       <div class="slot-search">
         <input id="input-0" type="text" placeholder="🔍 Busca un municipio..." autocomplete="off">
         <div class="slot-ac" id="ac-0"></div>
+        <button type="button" class="slot-near hidden" id="near-0">📍 Sugerir cercanos</button>
+        <div class="slot-suggest hidden" id="suggest-0"></div>
       </div>
       <div class="slot-card hidden" id="card-0"></div>
     </div>
@@ -31,6 +33,8 @@ import Base from '../layouts/Base.astro';
       <div class="slot-search">
         <input id="input-1" type="text" placeholder="🔍 Busca un municipio..." autocomplete="off">
         <div class="slot-ac" id="ac-1"></div>
+        <button type="button" class="slot-near hidden" id="near-1">📍 Sugerir cercanos</button>
+        <div class="slot-suggest hidden" id="suggest-1"></div>
       </div>
       <div class="slot-card hidden" id="card-1"></div>
     </div>
@@ -39,6 +43,8 @@ import Base from '../layouts/Base.astro';
       <div class="slot-search">
         <input id="input-2" type="text" placeholder="🔍 Añadir tercero (opcional)..." autocomplete="off">
         <div class="slot-ac" id="ac-2"></div>
+        <button type="button" class="slot-near hidden" id="near-2">📍 Sugerir cercanos</button>
+        <div class="slot-suggest hidden" id="suggest-2"></div>
       </div>
       <div class="slot-card hidden" id="card-2"></div>
     </div>
@@ -93,7 +99,49 @@ let debounceTimers = [null, null, null];
   if (!input) return;
   input.addEventListener('input', () => slotSearch(i, input.value));
   input.addEventListener('keydown', (e) => { if (e.key === 'Escape') clearSlot(i); });
+  document.getElementById(`near-${i}`)?.addEventListener('click', () => loadNear(i));
 });
+
+// Muestra el botón "Sugerir cercanos" en los huecos vacíos cuando ya hay
+// al menos un municipio elegido en el que anclarse.
+function refreshNear() {
+  const hayAncla = state.some(Boolean);
+  [0, 1, 2].forEach(i => {
+    const btn = document.getElementById(`near-${i}`);
+    const sug = document.getElementById(`suggest-${i}`);
+    if (!btn) return;
+    if (state[i] == null && hayAncla) {
+      btn.classList.remove('hidden');
+    } else {
+      btn.classList.add('hidden');
+      if (sug) { sug.classList.add('hidden'); sug.innerHTML = ''; }
+    }
+  });
+}
+
+async function loadNear(i: number) {
+  const ancla = state.find(Boolean) as any;
+  if (!ancla) return;
+  const sug = document.getElementById(`suggest-${i}`)!;
+  sug.innerHTML = '<div class="sug-loading">Buscando municipios cercanos…</div>';
+  sug.classList.remove('hidden');
+  const list: any[] = await fetch(`/api/municipio-cercanos/${ancla.codigo}`).then(r => r.json()).catch(() => []);
+  const elegidos = new Set(state.filter(Boolean).map((s: any) => s.codigo));
+  const cercanos = list.filter((m: any) => !elegidos.has(m.codigo_ine)).slice(0, 6);
+  if (!cercanos.length) { sug.innerHTML = '<div class="sug-loading">No hay cercanos con datos.</div>'; return; }
+  sug.innerHTML = `<div class="sug-title">Cerca de ${ancla.nombre}:</div>`;
+  const wrap = document.createElement('div');
+  wrap.className = 'sug-chips';
+  cercanos.forEach((m: any) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sug-chip';
+    b.innerHTML = `<strong>${m.nombre}</strong><span>${m.provincia}</span>`;
+    b.addEventListener('click', () => selectMun(i, m.codigo_ine, m.nombre, m.provincia));
+    wrap.append(b);
+  });
+  sug.append(wrap);
+}
 
 document.getElementById('comparar-btn')?.addEventListener('click', () => {
   document.getElementById('comparar-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -141,6 +189,7 @@ async function selectMun(i: number, codigo: string, nombre: string, provincia: s
   if (search) search.classList.add('hidden');
   renderCard(i);
   renderComparison();
+  refreshNear();
 }
 
 function clearSlot(i: number) {
@@ -153,6 +202,7 @@ function clearSlot(i: number) {
   const input = document.getElementById(`input-${i}`) as HTMLInputElement;
   if (input) { input.value = ''; input.readOnly = false; input.classList.remove('selected'); input.focus(); }
   renderComparison();
+  refreshNear();
 }
 
 function renderCard(i: number) {
@@ -377,6 +427,28 @@ preloadFromParams();
 .comparar-page .sac-item:hover, .comparar-page .sac-item:active { background: #fff5f6; }
 .comparar-page .sac-item strong { font-weight: 600; }
 .comparar-page .sac-item span { color: #999; font-size: .82rem; white-space: nowrap; margin-left: 8px; }
+
+/* Sugerir cercanos */
+.comparar-page .slot-near {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+  background: #fff0f3; color: var(--primary); border: 1px solid rgba(255,56,92,.28);
+  border-radius: 999px; padding: 8px 14px; font-size: .82rem; font-weight: 600;
+  font-family: inherit; cursor: pointer; transition: background .15s;
+}
+.comparar-page .slot-near:hover { background: var(--primary); color: #fff; }
+.comparar-page .slot-suggest { margin-top: 10px; }
+.comparar-page .sug-title { font-size: .78rem; font-weight: 600; color: #888; margin-bottom: 7px; }
+.comparar-page .sug-loading { font-size: .82rem; color: #999; padding: 4px 0; }
+.comparar-page .sug-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.comparar-page .sug-chip {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  background: #fff; border: 1.5px solid #e6e6e9; border-radius: 999px;
+  padding: 7px 13px; font-family: inherit; cursor: pointer; text-align: left;
+  transition: border-color .15s, background .15s;
+}
+.comparar-page .sug-chip:hover { border-color: var(--primary); background: rgba(255,56,92,.05); }
+.comparar-page .sug-chip strong { font-size: .85rem; font-weight: 600; color: var(--text); }
+.comparar-page .sug-chip span { font-size: .74rem; color: #aaa; }
 
 .comparar-page .comparar-btn-wrap { text-align: center; margin: 8px 0 32px; }
 .comparar-page .comparar-btn {
