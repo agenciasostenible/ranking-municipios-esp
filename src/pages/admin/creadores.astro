@@ -13,12 +13,37 @@ let provincias: string[] = [];
 let editing: any = null;
 const editId = Astro.url.searchParams.get('edit');
 if (ok) {
-  pendientes = (await DB.prepare(`SELECT id,nombre,handle,bio,especialidades,ambito_tipo,ambito_valor,email,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE aprobado=0 ORDER BY creado_at DESC`).all()).results as any[];
-  aprobados = (await DB.prepare(`SELECT id,nombre,handle,bio,especialidades,ambito_tipo,ambito_valor,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, creado_at DESC`).all()).results as any[];
+  pendientes = (await DB.prepare(`SELECT id,nombre,handle,bio,especialidades,nacional,provincias,municipios,email,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE aprobado=0 ORDER BY creado_at DESC`).all()).results as any[];
+  aprobados = (await DB.prepare(`SELECT id,nombre,handle,bio,especialidades,nacional,provincias,municipios,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, creado_at DESC`).all()).results as any[];
   provincias = ((await DB.prepare(`SELECT DISTINCT provincia FROM municipios WHERE COALESCE(es_duplicado,0)=0 ORDER BY provincia`).all()).results as any[]).map((r) => r.provincia);
-  if (editId) editing = await DB.prepare(`SELECT id,nombre,handle,avatar_url,bio,especialidades,ambito_tipo,ambito_valor,seguidores,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE id=?`).bind(editId).first();
+  if (editId) editing = await DB.prepare(`SELECT id,nombre,handle,avatar_url,bio,especialidades,provincias,municipios,nacional,seguidores,destacado,(avatar_data IS NOT NULL) AS has_avatar FROM creadores WHERE id=?`).bind(editId).first();
 }
 const ev = (k: string) => (editing ? (editing[k] ?? '') : '');
+const scopeLabel = (c: any) => [
+  c.nacional ? '🌍 Toda España' : '',
+  c.provincias ? `📍 ${c.provincias}` : '',
+  c.municipios ? `🏘️ ${String(c.municipios).split(',').filter(Boolean).length} municipio(s)` : '',
+].filter(Boolean).join(' · ') || '—';
+
+const TEMAS = [
+  { v: 'general', t: 'Turismo general' }, { v: 'senderismo', t: 'Senderismo' },
+  { v: 'gastronomia', t: 'Gastronomía' }, { v: 'pueblo_bonito', t: 'Pueblos bonitos' },
+  { v: 'castillos', t: 'Castillos' }, { v: 'monumentos', t: 'Monumentos' },
+  { v: 'Playas', t: 'Playas' }, { v: 'vinos', t: 'Vinos' },
+  { v: 'oleoturismo', t: 'Oleoturismo' }, { v: 'museos', t: 'Museos' },
+  { v: 'turismo_activo', t: 'Turismo activo' }, { v: 'TurismoRural', t: 'Turismo rural' },
+];
+const evTemas = String(ev('especialidades')).split(',').map((s) => s.trim()).filter(Boolean);
+const evProvs = String(ev('provincias')).split(',').map((s) => s.trim()).filter(Boolean);
+// Nombres de los municipios ya seleccionados (para mostrar los chips al editar)
+let editMunis: any[] = [];
+if (ok && editing && editing.municipios) {
+  const codes = String(editing.municipios).split(',').map((s: string) => s.trim()).filter(Boolean);
+  if (codes.length) {
+    const ph = codes.map(() => '?').join(',');
+    editMunis = ((await DB.prepare(`SELECT codigo_ine AS codigo, nombre, provincia FROM municipios WHERE codigo_ine IN (${ph})`).bind(...codes).all()).results as any[]);
+  }
+}
 const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURIComponent(key)}&id=${c.id}&accion=${accion}`;
 ---
 <html lang="es">
@@ -40,6 +65,21 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
   form.add input, form.add select { padding: 9px 11px; border: 1.5px solid #ddd; border-radius: 8px; font-size: .9rem; }
   form.add button { padding: 11px; background: #d63384; color: #fff; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; }
   .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+  .fl { font-size: .8rem; font-weight: 700; color: #444; margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 16px; font-size: .82rem; cursor: pointer; background: #fff; }
+  .chip.big { font-size: .88rem; }
+  .chip.sm { font-size: .78rem; padding: 4px 8px; }
+  .chip:has(input:checked) { border-color: #d63384; background: #fdf0f6; color: #d63384; font-weight: 700; }
+  details summary { cursor: pointer; font-size: .85rem; color: #2563eb; font-weight: 700; }
+  .provbox { display: flex; flex-wrap: wrap; gap: 6px; max-height: 180px; overflow: auto; border: 1px solid #eee; border-radius: 10px; padding: 8px; margin-top: 8px; }
+  .ac { position: relative; }
+  .ac a { display: block; padding: 8px 10px; border: 1px solid #eee; border-top: none; text-decoration: none; color: #222; font-size: .88rem; background: #fff; }
+  .ac a:hover { background: #fdf0f6; }
+  .ac small { color: #888; }
+  .munichips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .mchip { background: #fdf0f6; color: #d63384; border: 1.5px solid #f3b6d3; border-radius: 14px; padding: 4px 10px; font-size: .82rem; font-weight: 700; cursor: pointer; }
+  .mchip b { margin-left: 4px; }
 </style>
 </head>
 <body>
@@ -49,45 +89,62 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
   <>
     <h1>📸 Creadores</h1>
 
-    <h2 id="form">{editing ? `✏️ Editar: ${editing.nombre}` : 'Añadir (editorial)'}</h2>
+    <h2 id="form">{editing ? `✏️ Editar: ${editing.nombre}` : '➕ Añadir creador'}</h2>
     <form class="add" method="POST" action="/api/creador-moderar" id="cre-form">
       <input type="hidden" name="key" value={key} />
       {editing && <input type="hidden" name="id" value={editing.id} />}
       <input type="hidden" name="avatar" id="f-avatar" />
-      <div class="row">
-        <input name="nombre" placeholder="Nombre / marca *" value={ev('nombre')} required />
-        <input name="handle" placeholder="@instagram *" value={ev('handle')} required />
+      <input type="hidden" name="especialidades" id="f-especialidades" />
+      <input type="hidden" name="provincias" id="f-provincias" />
+      <input type="hidden" name="municipios" id="f-municipios" />
+
+      <label class="fl">Nombre / marca *</label>
+      <input name="nombre" value={ev('nombre')} required />
+      <label class="fl">Usuario de Instagram * (solo el nombre, ej. rutasgranada)</label>
+      <input name="handle" placeholder="rutasgranada" value={ev('handle')} required />
+
+      <label class="fl">¿De qué es experto/a? (uno o varios temas)</label>
+      <div class="chips">
+        {TEMAS.map((t) => <label class="chip"><input type="checkbox" class="t-tema" value={t.v} checked={evTemas.includes(t.v)} /> {t.t}</label>)}
       </div>
-      <input name="especialidades" placeholder="Temas csv: senderismo,gastronomia,general" value={ev('especialidades')} />
-      <div class="row">
-        <select name="ambito_tipo">
-          <option value="nacional" selected={ev('ambito_tipo') === 'nacional'}>Toda España</option>
-          <option value="provincia" selected={ev('ambito_tipo') === 'provincia'}>Provincia</option>
-        </select>
-        <select name="ambito_valor">
-          <option value="">(provincia, si aplica)</option>
-          {provincias.map((p) => <option value={p} selected={ev('ambito_valor') === p}>{p}</option>)}
-        </select>
+
+      <label class="fl">¿Dónde debe aparecer?</label>
+      <label class="chip big"><input type="checkbox" name="nacional" id="f-nacional" checked={!!editing && !!editing.nacional} /> 🌍 Toda España (sale en cualquier provincia)</label>
+      <details>
+        <summary>Provincias concretas ({evProvs.length} elegidas)</summary>
+        <div class="provbox">
+          {provincias.map((p) => <label class="chip sm"><input type="checkbox" class="t-prov" value={p} checked={evProvs.includes(p)} /> {p}</label>)}
+        </div>
+      </details>
+      <label class="fl">Municipios concretos (busca y añade los que quieras)</label>
+      <input id="f-muni-input" placeholder="Escribe un municipio…" autocomplete="off" />
+      <div id="f-muni-ac" class="ac"></div>
+      <div id="f-muni-chips" class="munichips">
+        {editMunis.map((m) => <span class="mchip" data-code={m.codigo}>{m.nombre} <b>×</b></span>)}
       </div>
-      <input name="bio" placeholder="Bio (una línea)" value={ev('bio')} />
-      <div>
-        <label style="font-size:.8rem;color:#555">Foto de perfil {editing && editing.has_avatar ? '(ya tiene una; sube otra para cambiarla)' : '(opcional)'}</label>
-        <input type="file" accept="image/*" id="f-foto" style="display:block;margin-top:4px" />
-        {editing && editing.has_avatar && <img src={`/api/creador-foto?id=${editing.id}`} alt="" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:6px" />}
-        <img id="f-prev" alt="" style="display:none;width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:6px" />
-      </div>
-      <input name="avatar_url" placeholder="o URL de foto externa (opcional)" value={ev('avatar_url')} />
-      <div class="row">
-        <input name="seguidores" type="number" placeholder="Seguidores (opcional)" value={ev('seguidores')} />
-        <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="destacado" checked={!!editing && !!editing.destacado} /> Destacado ★</label>
-      </div>
-      <button type="submit">{editing ? 'Guardar cambios' : 'Añadir creador (aprobado)'}</button>
+
+      <label class="fl">Bio (una línea, opcional)</label>
+      <input name="bio" value={ev('bio')} />
+
+      <label class="fl">Foto de perfil {editing && editing.has_avatar ? '(ya tiene; sube otra para cambiarla)' : '(opcional)'}</label>
+      <input type="file" accept="image/*" id="f-foto" />
+      {editing && editing.has_avatar && <img src={`/api/creador-foto?id=${editing.id}`} alt="" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:6px" />}
+      <img id="f-prev" alt="" style="display:none;width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:6px" />
+      <input name="avatar_url" placeholder="o pega una URL de foto externa (opcional)" value={ev('avatar_url')} />
+
+      <label class="fl">Seguidores (opcional, solo para ordenar)</label>
+      <input name="seguidores" type="number" value={ev('seguidores')} />
+      <label class="chip big"><input type="checkbox" name="destacado" checked={!!editing && !!editing.destacado} /> ★ Destacado (sale el primero)</label>
+
+      <button type="submit">{editing ? 'Guardar cambios' : 'Añadir creador'}</button>
       {editing && <a href={`/admin/creadores?key=${key}`} style="text-align:center;color:#777;font-size:.85rem">Cancelar edición</a>}
     </form>
     <script is:inline>
       (function () {
-        var inp = document.getElementById('f-foto'); if (!inp) return;
-        inp.addEventListener('change', function (e) {
+        var form = document.getElementById('cre-form'); if (!form) return;
+        // Foto: redimensiona a ≤400px
+        var fIn = document.getElementById('f-foto');
+        fIn.addEventListener('change', function (e) {
           var file = e.target.files && e.target.files[0]; if (!file) return;
           var img = new Image();
           img.onload = function () {
@@ -101,6 +158,38 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
           };
           img.src = URL.createObjectURL(file);
         });
+        // Municipios: autocompletar y añadir chips
+        var mInput = document.getElementById('f-muni-input');
+        var mAc = document.getElementById('f-muni-ac');
+        var mChips = document.getElementById('f-muni-chips');
+        function addChip(code, name) {
+          if ([].some.call(mChips.children, function (c) { return c.getAttribute('data-code') === code; })) return;
+          var s = document.createElement('span'); s.className = 'mchip'; s.setAttribute('data-code', code);
+          s.innerHTML = name + ' <b>×</b>'; mChips.appendChild(s);
+        }
+        mChips.addEventListener('click', function (e) { var t = e.target.closest('.mchip'); if (t) t.remove(); });
+        var tmr;
+        mInput.addEventListener('input', function () {
+          clearTimeout(tmr); var q = mInput.value.trim();
+          if (q.length < 2) { mAc.innerHTML = ''; return; }
+          tmr = setTimeout(function () {
+            fetch('/api/search?q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (d) {
+              var muns = (d || []).filter(function (x) { return x.tipo === 'municipio'; }).slice(0, 6);
+              mAc.innerHTML = muns.map(function (m) { return '<a href="#" data-c="' + m.codigo_ine + '" data-n="' + (m.nombre || '').replace(/"/g, '') + '">' + m.nombre + ' <small>' + (m.provincia || '') + '</small></a>'; }).join('');
+            }).catch(function () {});
+          }, 200);
+        });
+        mAc.addEventListener('click', function (e) {
+          e.preventDefault(); var a = e.target.closest('a'); if (!a) return;
+          addChip(a.getAttribute('data-c'), a.getAttribute('data-n'));
+          mInput.value = ''; mAc.innerHTML = '';
+        });
+        // Al enviar: volcar checkboxes/chips a los campos ocultos
+        form.addEventListener('submit', function () {
+          document.getElementById('f-especialidades').value = [].filter.call(document.querySelectorAll('.t-tema'), function (i) { return i.checked; }).map(function (i) { return i.value; }).join(',');
+          document.getElementById('f-provincias').value = [].filter.call(document.querySelectorAll('.t-prov'), function (i) { return i.checked; }).map(function (i) { return i.value; }).join(',');
+          document.getElementById('f-municipios').value = [].map.call(mChips.children, function (c) { return c.getAttribute('data-code'); }).join(',');
+        });
       })();
     </script>
 
@@ -109,7 +198,7 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
     {pendientes.map((c) => (
       <div class="card">
         <h3>{c.nombre} <a class="h" href={`https://instagram.com/${c.handle}`} target="_blank">@{c.handle} ↗</a></h3>
-        <div class="meta">{c.especialidades && c.especialidades.split(',').map((t: string) => <span class="tag">{t}</span>)} · {c.ambito_tipo}{c.ambito_valor ? ` (${c.ambito_valor})` : ''}{c.bio ? ` · ${c.bio}` : ''}<br />✉️ {c.email}</div>
+        <div class="meta">{c.especialidades && c.especialidades.split(',').map((t: string) => <span class="tag">{t}</span>)} · {scopeLabel(c)}{c.bio ? ` · ${c.bio}` : ''}<br />✉️ {c.email}</div>
         <div class="acts"><a class="ap" href={link(c, 'aprobar')}>✓ Aprobar</a><a class="ed" href={`/admin/creadores?key=${encodeURIComponent(key)}&edit=${c.id}#form`}>✏️ Editar</a><a class="re" href={link(c, 'borrar')}>🗑 Borrar</a></div>
       </div>
     ))}
@@ -118,7 +207,7 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
     {aprobados.map((c) => (
       <div class="card">
         <h3>{c.destacado ? '★ ' : ''}{c.nombre} <a class="h" href={`https://instagram.com/${c.handle}`} target="_blank">@{c.handle} ↗</a></h3>
-        <div class="meta">{c.especialidades && c.especialidades.split(',').map((t: string) => <span class="tag">{t}</span>)} · {c.ambito_tipo}{c.ambito_valor ? ` (${c.ambito_valor})` : ''}</div>
+        <div class="meta">{c.especialidades && c.especialidades.split(',').map((t: string) => <span class="tag">{t}</span>)} · {scopeLabel(c)}</div>
         <div class="acts">
           {c.destacado ? <a class="de" href={link(c, 'undestacar')}>quitar ★</a> : <a class="de" href={link(c, 'destacar')}>★ Destacar</a>}
           <a class="ed" href={`/admin/creadores?key=${encodeURIComponent(key)}&edit=${c.id}#form`}>✏️ Editar</a>

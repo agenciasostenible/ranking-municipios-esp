@@ -16,8 +16,10 @@ export const POST: APIRoute = async ({ request }) => {
   const handle = String(b.handle || '').trim().replace(/^@/, '').slice(0, 60);
   const especialidades = String(b.especialidades || '').trim().slice(0, 200);
   const email = String(b.email || '').trim().slice(0, 160);
-  const ambito_tipo = ['nacional', 'provincia', 'comunidad', 'municipio'].includes(b.ambito_tipo) ? b.ambito_tipo : 'nacional';
-  const ambito_valor = String(b.ambito_valor || '').trim().slice(0, 80);
+  const provincias = String(b.provincias || '').trim().slice(0, 600);
+  const municipios = String(b.municipios || '').trim().slice(0, 600);
+  // Nacional si lo marca, o si no concretó ni provincias ni municipios.
+  const nacional = (b.nacional || (!provincias && !municipios)) ? 1 : 0;
   const bio = String(b.bio || '').trim().slice(0, 120);
 
   if (!nombre || !handle || !email || !especialidades) {
@@ -32,9 +34,9 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     await DB.prepare(
-      `INSERT INTO creadores (nombre, handle, especialidades, ambito_tipo, ambito_valor, bio, email, avatar_data, avatar_mime, aprobado)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
-    ).bind(nombre, handle, especialidades, ambito_tipo, ambito_valor, bio, email, avatarData, avatarMime).run();
+      `INSERT INTO creadores (nombre, handle, especialidades, provincias, municipios, nacional, bio, email, avatar_data, avatar_mime, aprobado)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
+    ).bind(nombre, handle, especialidades, provincias, municipios, nacional, bio, email, avatarData, avatarMime).run();
   } catch {
     return new Response('error', { status: 500 });
   }

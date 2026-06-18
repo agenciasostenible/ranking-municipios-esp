@@ -207,6 +207,7 @@ const creadores = await getCreadores(
   desde && desde !== 'ranking_global' ? desde : '',
   municipio.provincia as string,
   (municipio.comunidad as string) ?? '',
+  codigo as string,
 );
 ---
 <Base title={titleSeo} description={descSeo}

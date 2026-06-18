@@ -35,8 +35,9 @@ export const POST: APIRoute = async ({ request }) => {
   const nombre = g('nombre').slice(0, 80);
   const handle = g('handle').replace(/^@/, '').slice(0, 60);
   if (!nombre || !handle) return back(key);
-  const ambito_tipo = ['nacional', 'provincia', 'comunidad', 'municipio'].includes(g('ambito_tipo')) ? g('ambito_tipo') : 'nacional';
-  const ambito_valor = g('ambito_valor').slice(0, 80);
+  const provincias = g('provincias').slice(0, 600);
+  const municipios = g('municipios').slice(0, 600);
+  const nacional = (form.get('nacional') || (!provincias && !municipios)) ? 1 : 0;
   const bio = g('bio').slice(0, 120) || null;
   const especialidades = g('especialidades').slice(0, 200);
   const seguidores = parseInt(g('seguidores')) || 0;
@@ -52,18 +53,18 @@ export const POST: APIRoute = async ({ request }) => {
   if (id) {
     if (newAvatar) {
       await DB.prepare(
-        `UPDATE creadores SET nombre=?, handle=?, avatar_url=?, bio=?, especialidades=?, ambito_tipo=?, ambito_valor=?, seguidores=?, destacado=?, avatar_data=?, avatar_mime=? WHERE id=?`
-      ).bind(nombre, handle, avatar_url, bio, especialidades, ambito_tipo, ambito_valor, seguidores, destacado, newAvatar.data, newAvatar.mime, id).run();
+        `UPDATE creadores SET nombre=?, handle=?, avatar_url=?, bio=?, especialidades=?, provincias=?, municipios=?, nacional=?, seguidores=?, destacado=?, avatar_data=?, avatar_mime=? WHERE id=?`
+      ).bind(nombre, handle, avatar_url, bio, especialidades, provincias, municipios, nacional, seguidores, destacado, newAvatar.data, newAvatar.mime, id).run();
     } else {
       await DB.prepare(
-        `UPDATE creadores SET nombre=?, handle=?, avatar_url=?, bio=?, especialidades=?, ambito_tipo=?, ambito_valor=?, seguidores=?, destacado=? WHERE id=?`
-      ).bind(nombre, handle, avatar_url, bio, especialidades, ambito_tipo, ambito_valor, seguidores, destacado, id).run();
+        `UPDATE creadores SET nombre=?, handle=?, avatar_url=?, bio=?, especialidades=?, provincias=?, municipios=?, nacional=?, seguidores=?, destacado=? WHERE id=?`
+      ).bind(nombre, handle, avatar_url, bio, especialidades, provincias, municipios, nacional, seguidores, destacado, id).run();
     }
   } else {
     await DB.prepare(
-      `INSERT INTO creadores (nombre, handle, avatar_url, bio, especialidades, ambito_tipo, ambito_valor, seguidores, destacado, avatar_data, avatar_mime, aprobado)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`
-    ).bind(nombre, handle, avatar_url, bio, especialidades, ambito_tipo, ambito_valor, seguidores, destacado, newAvatar?.data ?? null, newAvatar?.mime ?? null).run();
+      `INSERT INTO creadores (nombre, handle, avatar_url, bio, especialidades, provincias, municipios, nacional, seguidores, destacado, avatar_data, avatar_mime, aprobado)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`
+    ).bind(nombre, handle, avatar_url, bio, especialidades, provincias, municipios, nacional, seguidores, destacado, newAvatar?.data ?? null, newAvatar?.mime ?? null).run();
   }
   return back(key);
 };

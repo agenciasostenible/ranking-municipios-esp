@@ -573,7 +573,7 @@ const gmaps = (p: any) => p && p.place_id
   : '';
 
 // Creadores de Instagram de la zona (provincia de la ruta/pueblo + tema elegido)
-const creadoresRuta = prov ? await getCreadores((cats && cats[0]) ? cats[0] : '', prov, '') : [];
+const creadoresRuta = (prov || puebloCode) ? await getCreadores((cats && cats[0]) ? cats[0] : '', prov, '', puebloCode || '') : [];
 
 const diaVisitas: any[] = diaPlan ? [...diaPlan.manana, ...diaPlan.tarde] : [];
 const hasDia = !!(pueblo && diaPlan && (diaVisitas.length || diaPlan.star));

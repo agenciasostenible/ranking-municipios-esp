@@ -49,20 +49,20 @@ const TEMAS = [
       </div>
     </div>
 
-    <div class="col-row">
-      <div class="col-field">
-        <label>Ámbito *</label>
-        <select id="c-ambito">
-          <option value="nacional">Toda España</option>
-          <option value="provincia">Una provincia</option>
-        </select>
-      </div>
-      <div class="col-field" id="c-prov-wrap" style="display:none">
-        <label>Provincia</label>
-        <select id="c-prov">
-          <option value="">Elige provincia…</option>
-          {provincias.map((p) => <option value={p}>{p}</option>)}
-        </select>
+    <div class="col-field">
+      <label>¿Dónde conoces bien? * (toda España, o las provincias/municipios que quieras)</label>
+      <label class="col-chip big"><input type="checkbox" id="c-nacional" /> 🌍 Toda España</label>
+      <details>
+        <summary>Elegir provincias concretas</summary>
+        <div class="col-provbox">
+          {provincias.map((p) => <label class="col-chip sm"><input type="checkbox" class="c-prov" value={p} /> {p}</label>)}
+        </div>
+      </details>
+      <div style="margin-top:8px">
+        <span style="font-size:.82rem;color:#555">…y/o municipios concretos (puedes ser experto en varios):</span>
+        <input id="c-muni-input" placeholder="Escribe un municipio…" autocomplete="off" style="margin-top:4px" />
+        <div id="c-muni-ac" class="col-ac"></div>
+        <div id="c-muni-chips" class="col-munichips"></div>
       </div>
     </div>
 
@@ -95,9 +95,28 @@ const TEMAS = [
 
 <script>
   const $ = (id: string) => document.getElementById(id) as any;
-  $('c-ambito').addEventListener('change', () => {
-    $('c-prov-wrap').style.display = $('c-ambito').value === 'provincia' ? '' : 'none';
+
+  // Municipios: autocompletar y añadir chips
+  const mChips = $('c-muni-chips'), mAc = $('c-muni-ac'), mInput = $('c-muni-input');
+  function addChip(code: string, name: string) {
+    if ([].some.call(mChips.children, (c: any) => c.getAttribute('data-code') === code)) return;
+    const s = document.createElement('span'); s.className = 'col-mchip'; s.setAttribute('data-code', code);
+    s.innerHTML = name + ' <b>×</b>'; mChips.appendChild(s);
+  }
+  mChips.addEventListener('click', (e: any) => { const t = e.target.closest('.col-mchip'); if (t) t.remove(); });
+  let mtmr: any;
+  mInput.addEventListener('input', () => {
+    clearTimeout(mtmr); const q = mInput.value.trim();
+    if (q.length < 2) { mAc.innerHTML = ''; return; }
+    mtmr = setTimeout(async () => {
+      try {
+        const r = await fetch('/api/search?q=' + encodeURIComponent(q)); const d = await r.json();
+        const muns = ((d as any[]) || []).filter((x) => x.tipo === 'municipio').slice(0, 6);
+        mAc.innerHTML = muns.map((m) => `<a href="#" data-c="${m.codigo_ine}" data-n="${String(m.nombre || '').replace(/"/g, '')}">${m.nombre} <small>${m.provincia || ''}</small></a>`).join('');
+      } catch {}
+    }, 200);
   });
+  mAc.addEventListener('click', (e: any) => { e.preventDefault(); const a = e.target.closest('a'); if (!a) return; addChip(a.getAttribute('data-c'), a.getAttribute('data-n')); mInput.value = ''; mAc.innerHTML = ''; });
 
   // Foto: redimensiona en el navegador a ≤400px y guarda como JPEG (avatar pequeño)
   let fotoData = '';
@@ -121,13 +140,15 @@ const TEMAS = [
       alert('Completa nombre, Instagram, email y al menos un tema.');
       return;
     }
-    const ambito = $('c-ambito').value;
+    const provs = Array.from(document.querySelectorAll('.c-prov:checked')).map((i) => (i as HTMLInputElement).value);
+    const munis = Array.from(mChips.children).map((c: any) => c.getAttribute('data-code'));
     const payload = {
       nombre: $('c-nombre').value.trim(),
       handle: $('c-handle').value.trim().replace(/^@/, ''),
       especialidades: temas.join(','),
-      ambito_tipo: ambito,
-      ambito_valor: ambito === 'provincia' ? $('c-prov').value : '',
+      nacional: $('c-nacional').checked,
+      provincias: provs.join(','),
+      municipios: munis.join(','),
       bio: $('c-bio').value.trim(),
       email: $('c-email').value.trim(),
       avatar: fotoData,
@@ -159,6 +180,15 @@ const TEMAS = [
   .col-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 20px; font-size: .85rem; cursor: pointer; }
   .col-chip:has(input:checked) { border-color: #d63384; background: #fdf0f6; color: #d63384; font-weight: 700; }
   .col-chip input { accent-color: #d63384; }
+  .col-chip.big { font-size: .9rem; }
+  .col-chip.sm { font-size: .8rem; padding: 5px 9px; }
+  details summary { cursor: pointer; font-size: .85rem; color: #d63384; font-weight: 700; margin: 8px 0; }
+  .col-provbox { display: flex; flex-wrap: wrap; gap: 6px; max-height: 180px; overflow: auto; border: 1px solid #eee; border-radius: 10px; padding: 8px; }
+  .col-ac a { display: block; padding: 8px 11px; border: 1px solid #eee; border-top: none; text-decoration: none; color: #222; font-size: .9rem; }
+  .col-ac a:hover { background: #fdf0f6; }
+  .col-ac small { color: #888; }
+  .col-munichips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .col-mchip { background: #fdf0f6; color: #d63384; border: 1.5px solid #f3b6d3; border-radius: 14px; padding: 4px 10px; font-size: .82rem; font-weight: 700; cursor: pointer; }
   .col-go { padding: 14px; background: #d63384; color: #fff; border: none; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; }
   .col-go:disabled { opacity: .6; }
   .col-note { font-size: .78rem; color: #999; text-align: center; margin: 0; }

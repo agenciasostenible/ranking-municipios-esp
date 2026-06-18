@@ -32,30 +32,35 @@ function toCreador(r: any): Creador {
 }
 
 /**
- * Creadores aprobados para una página de ranking.
- * @param categoria  tema del ranking (senderismo, gastronomia, castillos…)
- * @param prov       provincia activa en el filtro (o '')
- * @param ccaa       comunidad activa en el filtro (o '')
+ * Creadores aprobados para una superficie (ficha, ruta o ranking).
+ * @param categoria  tema (senderismo, gastronomia…). '' = no filtra por tema.
+ * @param prov       provincia del contexto (o '')
+ * @param ccaa       comunidad (no usado por ahora; reservado)
+ * @param codigo     codigo_ine del municipio del contexto (ficha/ruta de pueblo) o ''
+ *
+ * Aparece si: nacional=1, O su provincia incluye `prov`, O sus municipios incluyen `codigo`.
+ * El admin (o el propio creador) define ese alcance: toda España, varias provincias
+ * y/o varios municipios concretos.
  */
-export async function getCreadores(categoria: string, prov = '', ccaa = '', limit = 8): Promise<Creador[]> {
-  // Tema: si se pasa categoría, filtra por ella (o 'general'/sin tema). Si no, no filtra.
+export async function getCreadores(categoria: string, prov = '', ccaa = '', codigo = '', limit = 8): Promise<Creador[]> {
   const conTema = !!categoria;
   const temaOk = conTema
     ? `AND ((',' || COALESCE(especialidades,'') || ',') LIKE '%,' || ? || ',%'
             OR (',' || COALESCE(especialidades,'') || ',') LIKE '%,general,%'
             OR COALESCE(TRIM(especialidades),'') = '')`
     : '';
-  // Zona: nacional siempre; provincia/comunidad si coinciden con el filtro.
-  const zonaOk = `(ambito_tipo = 'nacional'
-                  OR (ambito_tipo = 'provincia' AND ambito_valor = ?)
-                  OR (ambito_tipo = 'comunidad' AND ambito_valor = ?))`;
+  // Zona: nacional; o la provincia está en su lista; o el municipio está en su lista.
+  const zonas: string[] = [`nacional = 1`];
+  const zonaBinds: any[] = [];
+  if (prov) { zonas.push(`(',' || COALESCE(provincias,'') || ',') LIKE '%,' || ? || ',%'`); zonaBinds.push(prov); }
+  if (codigo) { zonas.push(`(',' || COALESCE(municipios,'') || ',') LIKE '%,' || ? || ',%'`); zonaBinds.push(codigo); }
   try {
-    const binds: any[] = conTema ? [categoria, prov, ccaa, limit] : [prov, ccaa, limit];
+    const binds: any[] = [...(conTema ? [categoria] : []), ...zonaBinds, limit];
     const { results } = await DB.prepare(
       `SELECT id, nombre, handle, avatar_url, bio, especialidades, destacado,
               (avatar_data IS NOT NULL) AS has_avatar
          FROM creadores
-        WHERE aprobado = 1 ${temaOk} AND ${zonaOk}
+        WHERE aprobado = 1 ${temaOk} AND (${zonas.join(' OR ')})
         ORDER BY destacado DESC, seguidores DESC, creado_at DESC
         LIMIT ?`
     ).bind(...binds).all();
