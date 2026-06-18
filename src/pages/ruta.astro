@@ -561,6 +561,11 @@ if (pueblo && selCfgs.length) {
     };
   }
 }
+// Enlace a la ficha del sitio en Google Maps (valoraciones, fotos, cómo llegar)
+const gmaps = (p: any) => p && p.place_id
+  ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nombre || '')}&query_place_id=${encodeURIComponent(p.place_id)}`
+  : '';
+
 const diaVisitas: any[] = diaPlan ? [...diaPlan.manana, ...diaPlan.tarde] : [];
 const hasDia = !!(pueblo && diaPlan && (diaVisitas.length || diaPlan.star));
 // Establecimientos anunciados y aprobados en este municipio (sello "Recomendado")
@@ -721,6 +726,7 @@ const ogDescription = hasDia
                     <div class="rs-place-txt">
                       <div class="rs-line">👁️ Visitar: <strong class="rs-pname">{s.visitarCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.visitarCur)}</span>{s.visitarList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                       {s.visitarCur.locLabel && <div class="rs-loc">📍 {s.visitarCur.locLabel}</div>}
+                      <a class="rs-gmaps" href={gmaps(s.visitarCur)} target="_blank" rel="nofollow noopener" style={s.visitarCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
                       <div class="rs-attr rs-pattr" set:html={s.visitarCur.foto_attr ?? ''}></div>
                     </div>
                   </div>
@@ -731,6 +737,7 @@ const ogDescription = hasDia
                       <div class="rs-place-txt">
                         <div class="rs-line">🍽️ Comer: <strong class="rs-pname">{s.comerCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.comerCur)}</span>{s.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                         {s.comerCur.locLabel && <div class="rs-loc">📍 {s.comerCur.locLabel}</div>}
+                        <a class="rs-gmaps" href={gmaps(s.comerCur)} target="_blank" rel="nofollow noopener" style={s.comerCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
                         <div class="rs-attr rs-pattr" set:html={s.comerCur.foto_attr ?? ''}></div>
                       </div>
                     </div>
@@ -743,6 +750,7 @@ const ogDescription = hasDia
                       <div class="rs-place-txt">
                         <div class="rs-line">🛏️ Dormir: <strong class="rs-pname">{s.dormirCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.dormirCur)}</span>{s.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                         {s.dormirCur.locLabel && <div class="rs-loc">📍 {s.dormirCur.locLabel}</div>}
+                        <a class="rs-gmaps" href={gmaps(s.dormirCur)} target="_blank" rel="nofollow noopener" style={s.dormirCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
                         <div class="rs-attr rs-pattr" set:html={s.dormirCur.foto_attr ?? ''}></div>
                       </div>
                     </div>
@@ -839,6 +847,7 @@ const ogDescription = hasDia
                 <div class="rs-place-txt">
                   <div class="rs-line">👁️ <strong class="rs-pname">{v.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(v)}</span>{diaPlan.visPool.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                   <div class="rs-loc" style={v.locLabel ? '' : 'display:none'}>📍 {v.locLabel}</div>
+                  <a class="rs-gmaps" href={gmaps(v)} target="_blank" rel="nofollow noopener" style={v.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
                   <div class="rs-attr rs-pattr" set:html={v.foto_attr ?? ''}></div>
                 </div>
               </div>
@@ -859,6 +868,7 @@ const ogDescription = hasDia
             <div class="rs-place-txt">
               <div class="rs-line">☕ Un café en <strong class="rs-pname">{diaPlan.cafe.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.cafe)}</span>{diaPlan.cafeList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
               <div class="rs-loc" style={diaPlan.cafe.locLabel ? '' : 'display:none'}>📍 {diaPlan.cafe.locLabel}</div>
+              <a class="rs-gmaps" href={gmaps(diaPlan.cafe)} target="_blank" rel="nofollow noopener" style={diaPlan.cafe.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.cafe.foto_attr ?? ''}></div>
             </div>
           </div>
@@ -874,6 +884,7 @@ const ogDescription = hasDia
             <div class="rs-place-txt">
               <div class="rs-line">🍽️ <strong class="rs-pname">{diaPlan.comerCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.comerCur)}</span>{diaPlan.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
               {diaPlan.comerCur.locLabel && <div class="rs-loc">📍 {diaPlan.comerCur.locLabel}</div>}
+              <a class="rs-gmaps" href={gmaps(diaPlan.comerCur)} target="_blank" rel="nofollow noopener" style={diaPlan.comerCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.comerCur.foto_attr ?? ''}></div>
             </div>
           </div>
@@ -891,6 +902,7 @@ const ogDescription = hasDia
                 <div class="rs-place-txt">
                   <div class="rs-line">👁️ <strong class="rs-pname">{v.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(v)}</span>{diaPlan.visPool.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                   <div class="rs-loc" style={v.locLabel ? '' : 'display:none'}>📍 {v.locLabel}</div>
+                  <a class="rs-gmaps" href={gmaps(v)} target="_blank" rel="nofollow noopener" style={v.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
                   <div class="rs-attr rs-pattr" set:html={v.foto_attr ?? ''}></div>
                 </div>
               </div>
@@ -912,6 +924,7 @@ const ogDescription = hasDia
               <div class="rs-place-txt">
                 <div class="rs-line">👁️ <strong>{v.nombre}</strong><span class="rs-star">★ {fmtRating(v)}</span></div>
                 <div class="rs-loc">{v.far ? `🚗 a ~${fmtDur(v.carMin)} · ${v.carDist} del centro` : `🚶 a ~${fmtDur(v.walkMin)} del centro`}</div>
+                {v.place_id && <a class="rs-gmaps" href={gmaps(v)} target="_blank" rel="nofollow noopener">🔎 Ver en Google</a>}
                 <div class="rs-attr" set:html={v.foto_attr ?? ''}></div>
               </div>
             </div>
@@ -928,6 +941,7 @@ const ogDescription = hasDia
             <div class="rs-place-txt">
               <div class="rs-line">🍷 Una copa en <strong class="rs-pname">{diaPlan.copa.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.copa)}</span>{diaPlan.copaList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
               <div class="rs-loc" style={diaPlan.copa.locLabel ? '' : 'display:none'}>📍 {diaPlan.copa.locLabel}</div>
+              <a class="rs-gmaps" href={gmaps(diaPlan.copa)} target="_blank" rel="nofollow noopener" style={diaPlan.copa.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.copa.foto_attr ?? ''}></div>
             </div>
           </div>
@@ -943,6 +957,7 @@ const ogDescription = hasDia
             <div class="rs-place-txt">
               <div class="rs-line">🌆 <strong class="rs-pname">{diaPlan.cenarCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.cenarCur)}</span>{diaPlan.cenarList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
               {diaPlan.cenarCur.locLabel && <div class="rs-loc">📍 {diaPlan.cenarCur.locLabel}</div>}
+              <a class="rs-gmaps" href={gmaps(diaPlan.cenarCur)} target="_blank" rel="nofollow noopener" style={diaPlan.cenarCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.cenarCur.foto_attr ?? ''}></div>
             </div>
           </div>
@@ -959,7 +974,8 @@ const ogDescription = hasDia
               <div class="rs-place-txt">
                 <div class="rs-line">🛏️ <strong class="rs-pname">{diaPlan.dormirCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.dormirCur)}</span>{diaPlan.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                 {diaPlan.dormirCur.locLabel && <div class="rs-loc">📍 {diaPlan.dormirCur.locLabel}</div>}
-                <div class="rs-attr rs-pattr" set:html={diaPlan.dormirCur.foto_attr ?? ''}></div>
+                <a class="rs-gmaps" href={gmaps(diaPlan.dormirCur)} target="_blank" rel="nofollow noopener" style={diaPlan.dormirCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+              <div class="rs-attr rs-pattr" set:html={diaPlan.dormirCur.foto_attr ?? ''}></div>
               </div>
             </div>
           )}
@@ -1041,6 +1057,11 @@ const ogDescription = hasDia
       var attr = box.querySelector('.rs-pattr'); if (attr) attr.innerHTML = it.foto_attr || '';
       var loc = box.querySelector('.rs-loc');
       if (loc) { if (it.locLabel) { loc.textContent = '📍 ' + it.locLabel; loc.style.display = ''; } else { loc.style.display = 'none'; } }
+      var gm = box.querySelector('.rs-gmaps');
+      if (gm) {
+        if (it.place_id) { gm.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(it.nombre || '') + '&query_place_id=' + encodeURIComponent(it.place_id); gm.style.display = ''; }
+        else { gm.style.display = 'none'; }
+      }
     });
   });
 
@@ -1131,6 +1152,8 @@ const ogDescription = hasDia
 .rs-star { color: #e8a200; font-weight: 700; margin-left: 7px; font-size: .8rem; white-space: nowrap; }
 .rs-alt { font-size: .8rem; color: var(--text-2); margin-top: 2px; }
 .rs-loc { font-size: .76rem; color: var(--text-2); margin-top: 2px; }
+.rs-gmaps { display: inline-block; margin-top: 4px; font-size: .76rem; font-weight: 700; color: #1a73e8; text-decoration: none; }
+.rs-gmaps:hover { text-decoration: underline; }
 .rs-swap-btn { margin-left: 8px; font-size: .72rem; font-weight: 700; color: var(--primary); background: #fff1f3; border: 1px solid rgba(255,56,92,.25); border-radius: 14px; padding: 2px 9px; cursor: pointer; white-space: nowrap; }
 .rs-swap-btn:hover { background: var(--primary); color: #fff; }
 .rs-place { display: flex; gap: 10px; align-items: flex-start; margin-top: 4px; }
