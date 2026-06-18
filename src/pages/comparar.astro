@@ -242,16 +242,22 @@ function getScore(scores, key) {
   return s ? Math.round(s.puntuacion) : 0;
 }
 
+// Solo las categorías en las que al menos uno de los municipios tiene dato (>0).
+function visibleCats(active) {
+  return CATS.filter(cat => active.some(m => getScore(m.scores, cat.key) > 0));
+}
+
 function renderTable(active) {
   const head = document.getElementById('table-head');
   const body = document.getElementById('table-body');
+  const cats = visibleCats(active);
 
   head.innerHTML = `<tr>
     <th>Categoría</th>
     ${active.map((m, i) => `<th style="color:${COLORS[i]}">${m.nombre}</th>`).join('')}
   </tr>`;
 
-  body.innerHTML = CATS.map(cat => {
+  body.innerHTML = cats.map(cat => {
     const vals = active.map(m => getScore(m.scores, cat.key));
     const max = Math.max(...vals);
     return `<tr>
@@ -259,7 +265,7 @@ function renderTable(active) {
       ${vals.map((v, i) => {
         const isBest = v === max && max > 0;
         if (v <= 0) {
-          return `<td class="score-cell"><div class="sc-nodata">Sin datos</div></td>`;
+          return `<td class="score-cell"><div class="sc-dash">—</div></td>`;
         }
         return `
         <td class="score-cell ${isBest ? 'best' : ''}">
@@ -272,12 +278,18 @@ function renderTable(active) {
 }
 
 function renderRadar(active) {
+  const cats = visibleCats(active);
+  const radarWrap = document.querySelector('.radar-wrap');
+  // El radar necesita al menos 3 ejes para tener forma; si no, se oculta.
+  if (radarWrap) radarWrap.classList.toggle('hidden', cats.length < 3);
+  if (cats.length < 3) return;
+
   const canvas = document.getElementById('radar-canvas');
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   const cx = W / 2, cy = H / 2;
   const R = Math.min(W, H) * 0.38;
-  const N = CATS.length;
+  const N = cats.length;
 
   ctx.clearRect(0, 0, W, H);
 
@@ -316,12 +328,12 @@ function renderRadar(active) {
   ctx.textAlign = 'center';
   for (let i = 0; i < N; i++) {
     const p = pt(i, R + 22);
-    ctx.fillText(CATS[i].label, p.x, p.y + 4);
+    ctx.fillText(cats[i].label, p.x, p.y + 4);
   }
 
   // Data polygons
   active.forEach((m, mi) => {
-    const vals = CATS.map(c => getScore(m.scores, c.key));
+    const vals = cats.map(c => getScore(m.scores, c.key));
     ctx.beginPath();
     for (let i = 0; i < N; i++) {
       const p = pt(i, R * vals[i] / 100);
@@ -516,6 +528,7 @@ preloadFromParams();
 .comparar-page .score-cell.best { background: #fffaf0; }
 .comparar-page .sc-num { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 7px; }
 .comparar-page .sc-nodata { font-size: .82rem; font-weight: 600; color: #bbb; font-style: italic; }
+.comparar-page .sc-dash { font-size: 1.1rem; color: #d8d8dd; line-height: 1; }
 .comparar-page .score-cell.best .sc-num { font-weight: 800; }
 .comparar-page .sc-track {
   height: 7px; width: 100%; max-width: 180px; margin: 0 auto;
