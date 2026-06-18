@@ -1001,7 +1001,7 @@ const ogDescription = hasDia
 
   {creadoresRuta.length > 0 && (selCfgs.length > 0 || hasDia) && (
     <div class="ruta-result cre-result">
-      <div class="cre-head"><h3>📸 Sigue en Instagram para descubrir {pueblo ? pueblo.provincia : prov}</h3>
+      <div class="cre-head"><h3>📸 Sigue en Instagram {creadoresRuta.length === 1 ? 'esta cuenta' : 'estas cuentas'} para descubrir {pueblo ? pueblo.provincia : prov}</h3>
         <p class="cre-sub">Creadores que conocen la zona y comparten planes.</p></div>
       <div class="cre-grid">
         {creadoresRuta.map((c) => (

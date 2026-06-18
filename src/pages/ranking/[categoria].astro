@@ -347,7 +347,7 @@ function buildUrl(overrides: Record<string, string | number>) {
   {creadores.length > 0 && (
     <div class="cre-block">
       <div class="cre-head">
-        <h3>📸 Síguelos · expertos en {catLabel.toLowerCase()}{prov ? ` por ${prov}` : ccaa ? ` por ${ccaa}` : ''}</h3>
+        <h3>📸 Sigue en Instagram {creadores.length === 1 ? 'esta cuenta' : 'estas cuentas'} para descubrir {prov || ccaa || 'España'} · {catLabel.toLowerCase()}</h3>
         <p class="cre-sub">Creadores que conocen la zona y comparten planes en Instagram.</p>
       </div>
       <div class="cre-grid">

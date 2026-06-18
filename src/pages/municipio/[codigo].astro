@@ -377,7 +377,7 @@ const creadores = await getCreadores(
   <!-- Creadores de Instagram de la zona -->
   {creadores.length > 0 && (
     <section class="mun-section">
-      <h2 class="mun-section-title">📸 Sigue en Instagram para descubrir {municipio.provincia}{desdeInfo ? ` · ${desdeInfo.label}` : ''}</h2>
+      <h2 class="mun-section-title">📸 Sigue en Instagram {creadores.length === 1 ? 'esta cuenta' : 'estas cuentas'} para descubrir {municipio.provincia}{desdeInfo ? ` · ${desdeInfo.label}` : ''}</h2>
       <div class="cre-grid">
         {creadores.map((c) => (
           <a class="cre-card" href={c.url} target="_blank" rel="nofollow noopener">
