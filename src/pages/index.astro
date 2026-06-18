@@ -143,10 +143,12 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 <section class="route-promo">
   <form class="rp-card" method="get" action="/ruta" id="rp-card" data-mode="zona">
     <div class="rp-head">
-      <span class="rp-badge">Nuevo</span>
-      <span class="rp-eyebrow"><Icon name="map" size={15} /> Planifica tu ruta</span>
+      <span class="rp-ic"><Icon name="map" size={21} /></span>
+      <div>
+        <span class="rp-eyebrow">Nuevo · Planifica tu ruta</span>
+        <h2 class="rp-title">Monta tu viaje real en 1 minuto</h2>
+      </div>
     </div>
-    <h2 class="rp-title">Monta tu viaje real en 1 minuto</h2>
     <p class="rp-sub">Te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google. Elige una <strong>zona</strong>… o el <strong>plan de un día</strong> dentro de un solo pueblo.</p>
 
     <div class="rp-modes" role="tablist">
@@ -616,11 +618,11 @@ function doSearch() {
   padding: 9px 15px;
   background: rgba(255,255,255,0.15);
   backdrop-filter: blur(8px);
-  border: 2px solid rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.32);
   border-radius: 40px;
   color: #fff;
-  font-size: .9rem;
-  font-weight: 600;
+  font-size: .88rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all .18s;
   font-family: inherit;
@@ -682,13 +684,13 @@ function doSearch() {
 @media (min-width: 769px) { .mcs-overlay { display: none; } }
 
 /* ── Hero ── */
-.route-promo { max-width: 700px; margin: -20px auto 0; padding: 0 16px; position: relative; z-index: 2; }
-.rp-card { background: #fff; border: 2px solid var(--primary); border-radius: 18px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(255,56,92,.13); }
-.rp-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.rp-badge { font-size: .66rem; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; background: var(--primary); color: #fff; border-radius: 20px; padding: 3px 10px; }
-.rp-eyebrow { display: inline-flex; align-items: center; gap: 5px; font-size: .8rem; font-weight: 700; color: var(--primary); }
-.rp-title { font-size: 1.3rem; font-weight: 800; color: var(--text); margin: 2px 0 4px; }
-.rp-sub { font-size: .9rem; color: var(--text-2); margin: 0 0 14px; line-height: 1.5; }
+.route-promo { max-width: 700px; margin: 14px auto 0; padding: 0 16px; position: relative; z-index: 2; }
+.rp-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; box-shadow: 0 6px 22px rgba(0,0,0,.06); }
+.rp-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.rp-ic { width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; background: #fff0f3; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; }
+.rp-eyebrow { display: block; font-size: .68rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--primary); margin-bottom: 1px; }
+.rp-title { font-size: 1.18rem; font-weight: 700; letter-spacing: -0.015em; color: var(--text); line-height: 1.2; margin: 0; }
+.rp-sub { font-size: .9rem; color: var(--text-2); margin: 0 0 14px; line-height: 1.55; }
 .rp-label { font-size: .78rem; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
 .rp-label span { font-weight: 500; color: #aaa; }
 .rp-chips-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 11px 13px; cursor: pointer; font-family: inherit; text-align: left; }
@@ -703,8 +705,8 @@ function doSearch() {
 .rp-chip.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
 .rp-row { display: flex; gap: 10px; }
 .rp-prov { flex: 1; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: .92rem; font-family: inherit; background: #fff; color: var(--text); }
-.rp-go { display: inline-flex; align-items: center; gap: 7px; background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 12px 20px; font-size: .92rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
-.rp-go:hover { background: var(--primary-dark); }
+.rp-go { display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(90deg, #E61E4D, #D70466); color: #fff; border: none; border-radius: 12px; padding: 12px 22px; font-size: .92rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: filter .15s; }
+.rp-go:hover { filter: brightness(1.07); }
 .rp-modes { display: flex; gap: 8px; margin-bottom: 14px; }
 .rp-mode { flex: 1; padding: 10px; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; font-size: .85rem; font-weight: 700; color: var(--text-2); cursor: pointer; transition: all .12s; }
 .rp-mode.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
@@ -722,21 +724,22 @@ function doSearch() {
 @media (max-width: 560px) { .rp-row { flex-direction: column; } .rp-go { justify-content: center; } }
 
 .hero-section {
-  background: url('/hero-bg.jpg') center/cover no-repeat;
+  background: linear-gradient(180deg, rgba(17,12,24,.34) 0%, rgba(17,12,24,0) 40%, rgba(17,12,24,.52) 100%), url('/hero-bg.jpg') center/cover no-repeat;
   position: relative;
-  padding: 50px 24px 44px;
+  padding: 50px 24px 48px;
   text-align: center;
 }
 .hero-inner { max-width: 700px; margin: 0 auto; position: relative; z-index: 1; }
 .hero-title {
-  font-size: clamp(1.5rem, 4vw, 2.2rem);
-  font-weight: 800;
+  font-size: clamp(1.55rem, 4vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.022em;
   color: #fff;
-  line-height: 1.2;
+  line-height: 1.14;
   margin-bottom: 12px;
 }
 .hero-sub {
-  color: rgba(255,255,255,.7);
+  color: rgba(255,255,255,.82);
   font-size: .95rem;
   margin-bottom: 28px;
 }
