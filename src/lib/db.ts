@@ -90,7 +90,7 @@ export const LABELS: Record<string, string> = {
   notoriedad_instagram: 'Popularidad en redes',
 
   miradores:         'Miradores',
-  solteros:          'Para solteros',
+  solteros:          'Solteros',
   cuevas:            'Cuevas',
   escalada:          'Escalada',
   pesca:             'Pesca',
@@ -185,7 +185,7 @@ export const SIDEBAR_GROUPS = [
     icon: 'diamond',
     items: [
       { key: 'lujo',         label: 'Turismo de lujo', icon: 'diamond' },
-      { key: 'solteros',     label: 'Para solteros',   icon: 'nightlife' },
+      { key: 'solteros',     label: 'Solteros',        icon: 'nightlife' },
     ],
   },
   {
