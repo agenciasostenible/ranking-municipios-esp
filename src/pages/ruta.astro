@@ -20,6 +20,9 @@ const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
   { key: 'TurismoRural',      tipo: 'rural',       label: 'Turismo rural' },
   { key: 'senderismo',        tipo: 'sendero',     label: 'Senderismo' },
   { key: 'lujo',              tipo: 'lujo',        label: 'Turismo de lujo' },
+  { key: 'vinos',             tipo: 'vino',        label: 'Vinos y bodegas' },
+  { key: 'miradores',         tipo: 'mirador',     label: 'Miradores' },
+  { key: 'solteros',          tipo: 'soltero',     label: 'Para solteros' },
   // NOTA: fiestas y festivales se excluyen a propósito del planificador: son
   // eventos con fecha fija (y solo conocemos el mes, a veces ni eso), así que
   // no forman un itinerario coherente de un mismo viaje. Siguen como ranking.
@@ -50,6 +53,10 @@ const CAT_PROFILE: Record<string, CatProfile> = {
   // Lujo: comer y dormir de gama alta (un plan de lujo no manda a un sitio básico).
   lujo:             { comer: { keyword: 'restaurante gourmet alta cocina' },
                       dormir: { keyword: 'hotel 5 estrellas lujo' } },
+  // Vinos: lo que se visita son bodegas / enoturismo.
+  vinos:            { visitar: { keyword: 'bodega enoturismo visita' } },
+  // Miradores: lo que se visita son los miradores y puntos panorámicos.
+  miradores:        { visitar: { keyword: 'mirador panorámica vistas' } },
 };
 
 const url = Astro.url;
@@ -1185,7 +1192,7 @@ const ogDescription = hasDia
 <style>
 .ruta-page { max-width: 640px; margin: 0 auto; padding: 28px 16px 60px; }
 .ruta-hero { text-align: center; margin-bottom: 22px; }
-.ruta-hero h1 { font-size: 1.7rem; font-weight: 800; color: var(--text); margin: 0 0 8px; }
+.ruta-hero h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0 0 8px; }
 .ruta-hero p { color: var(--text-2); font-size: .95rem; max-width: 520px; margin: 0 auto; }
 .ruta-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 24px; }
 .rf-field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 180px; }
