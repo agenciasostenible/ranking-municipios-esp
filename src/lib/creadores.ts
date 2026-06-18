@@ -38,21 +38,25 @@ function toCreador(r: any): Creador {
  * @param ccaa       comunidad activa en el filtro (o '')
  */
 export async function getCreadores(categoria: string, prov = '', ccaa = '', limit = 8): Promise<Creador[]> {
-  // Tema: especialidad que incluya la categoría, o 'general', o sin especialidad.
-  const temaOk = `(',' || COALESCE(especialidades,'') || ',') LIKE '%,' || ? || ',%'
-                  OR (',' || COALESCE(especialidades,'') || ',') LIKE '%,general,%'
-                  OR COALESCE(TRIM(especialidades),'') = ''`;
+  // Tema: si se pasa categoría, filtra por ella (o 'general'/sin tema). Si no, no filtra.
+  const conTema = !!categoria;
+  const temaOk = conTema
+    ? `AND ((',' || COALESCE(especialidades,'') || ',') LIKE '%,' || ? || ',%'
+            OR (',' || COALESCE(especialidades,'') || ',') LIKE '%,general,%'
+            OR COALESCE(TRIM(especialidades),'') = '')`
+    : '';
   // Zona: nacional siempre; provincia/comunidad si coinciden con el filtro.
-  const zonaOk = `ambito_tipo = 'nacional'
+  const zonaOk = `(ambito_tipo = 'nacional'
                   OR (ambito_tipo = 'provincia' AND ambito_valor = ?)
-                  OR (ambito_tipo = 'comunidad' AND ambito_valor = ?)`;
+                  OR (ambito_tipo = 'comunidad' AND ambito_valor = ?))`;
   try {
+    const binds: any[] = conTema ? [categoria, prov, ccaa, limit] : [prov, ccaa, limit];
     const { results } = await DB.prepare(
       `SELECT * FROM creadores
-        WHERE aprobado = 1 AND (${temaOk}) AND (${zonaOk})
+        WHERE aprobado = 1 ${temaOk} AND ${zonaOk}
         ORDER BY destacado DESC, seguidores DESC, creado_at DESC
         LIMIT ?`
-    ).bind(categoria, prov, ccaa, limit).all();
+    ).bind(...binds).all();
     return (results as any[]).map(toCreador);
   } catch {
     return []; // si la tabla aún no existe en algún entorno, no rompemos la página
