@@ -47,6 +47,7 @@ const TEMAS = [
           <label class="col-chip"><input type="checkbox" name="tema" value={t.v} />{t.t}</label>
         ))}
       </div>
+      <input id="c-otra" maxlength="80" placeholder="¿Otra? Escríbela (ej. fotografía, astroturismo)" style="margin-top:8px" />
     </div>
 
     <div class="col-field">
@@ -136,7 +137,9 @@ const TEMAS = [
   $('col-form').addEventListener('submit', async (e: any) => {
     e.preventDefault();
     const temas = Array.from(document.querySelectorAll('input[name="tema"]:checked')).map((i) => (i as HTMLInputElement).value);
-    if (!$('c-nombre').value.trim() || !$('c-handle').value.trim() || !$('c-email').value.trim() || !temas.length) {
+    const otras = ($('c-otra').value || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+    const allTemas = temas.concat(otras);
+    if (!$('c-nombre').value.trim() || !$('c-handle').value.trim() || !$('c-email').value.trim() || !allTemas.length) {
       alert('Completa nombre, Instagram, email y al menos un tema.');
       return;
     }
@@ -145,7 +148,7 @@ const TEMAS = [
     const payload = {
       nombre: $('c-nombre').value.trim(),
       handle: $('c-handle').value.trim().replace(/^@/, ''),
-      especialidades: temas.join(','),
+      especialidades: allTemas.join(','),
       nacional: $('c-nacional').checked,
       provincias: provs.join(','),
       municipios: munis.join(','),

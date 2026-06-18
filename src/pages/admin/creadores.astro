@@ -34,6 +34,7 @@ const TEMAS = [
   { v: 'turismo_activo', t: 'Turismo activo' }, { v: 'TurismoRural', t: 'Turismo rural' },
 ];
 const evTemas = String(ev('especialidades')).split(',').map((s) => s.trim()).filter(Boolean);
+const evOtras = evTemas.filter((t) => !TEMAS.some((x) => x.v === t)).join(', ');
 const evProvs = String(ev('provincias')).split(',').map((s) => s.trim()).filter(Boolean);
 // Nombres de los municipios ya seleccionados (para mostrar los chips al editar)
 let editMunis: any[] = [];
@@ -107,6 +108,8 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
       <div class="chips">
         {TEMAS.map((t) => <label class="chip"><input type="checkbox" class="t-tema" value={t.v} checked={evTemas.includes(t.v)} /> {t.t}</label>)}
       </div>
+      <label class="fl">¿Otra categoría? (escríbela; separa varias con comas)</label>
+      <input id="f-otra" placeholder="ej. fotografía, astroturismo" value={evOtras} />
 
       <label class="fl">¿Dónde debe aparecer?</label>
       <label class="chip big"><input type="checkbox" name="nacional" id="f-nacional" checked={!!editing && !!editing.nacional} /> 🌍 Toda España (sale en cualquier provincia)</label>
@@ -186,7 +189,9 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
         });
         // Al enviar: volcar checkboxes/chips a los campos ocultos
         form.addEventListener('submit', function () {
-          document.getElementById('f-especialidades').value = [].filter.call(document.querySelectorAll('.t-tema'), function (i) { return i.checked; }).map(function (i) { return i.value; }).join(',');
+          var temas = [].filter.call(document.querySelectorAll('.t-tema'), function (i) { return i.checked; }).map(function (i) { return i.value; });
+          var otras = (document.getElementById('f-otra').value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+          document.getElementById('f-especialidades').value = temas.concat(otras).join(',');
           document.getElementById('f-provincias').value = [].filter.call(document.querySelectorAll('.t-prov'), function (i) { return i.checked; }).map(function (i) { return i.value; }).join(',');
           document.getElementById('f-municipios').value = [].map.call(mChips.children, function (c) { return c.getAttribute('data-code'); }).join(',');
         });
