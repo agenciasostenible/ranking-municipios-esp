@@ -563,7 +563,8 @@ if (pueblo && selCfgs.length) {
 }
 // Clave del Maps Embed API (gratis, restringida por dominio) para el panel inferior.
 // Si no está, el botón "Ver en Google" abre Google en pestaña nueva (fallback).
-const EMBED_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_EMBED_KEY ?? '';
+// Clave restringida a Maps Embed API + referrer rankingspain.com (segura en cliente).
+const EMBED_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_EMBED_KEY || 'AIzaSyBzJ77nQCGDMpD8ad1lbWvFe6mZXadn2wU';
 
 // Enlace a la ficha del sitio en Google Maps (valoraciones, fotos, cómo llegar)
 const gmaps = (p: any) => p && p.place_id
