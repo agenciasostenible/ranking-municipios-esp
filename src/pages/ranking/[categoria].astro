@@ -269,11 +269,11 @@ function buildUrl(overrides: Record<string, string | number>) {
         const pos = offset + i + 1;
         const pct = maxPts > 0 ? Math.round((r.puntuacion / maxPts) * 100) : 0;
         const cls = pos === 1 ? 'pos g' : pos === 2 ? 'pos s' : pos === 3 ? 'pos b' : 'pos';
-        const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
+        const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '';
         return (
           <>
             <tr class="rank-row" data-codigo={r.codigo_ine}>
-              <td><span class={cls}>{med}</span></td>
+              <td><span class={cls}>{med && <span class="pos-medal">{med}</span>}<span class="pos-num">{pos}</span></span></td>
               <td>
                 <div style="display:flex;align-items:center;gap:10px">
                   <div class="row-thumb"

@@ -596,10 +596,15 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
     .bar-fill { height: 6px; border-radius: 4px; background: var(--primary); }
 
     /* Position badges */
-    .pos { font-weight: 700; color: var(--text); text-align: center; min-width: 30px; font-size: .9rem; }
-    .pos.g { color: #B8860A; }
-    .pos.s { color: #8E9BA8; }
-    .pos.b { color: #A0623A; }
+    .pos { display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-weight: 800; color: var(--text); text-align: center; min-width: 30px; }
+    .pos .pos-medal { font-size: 1.25rem; line-height: 1; }
+    /* puestos 4+: número en badge circular para que se identifique bien */
+    .pos .pos-num { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 50%; background: #f0f0f0; color: var(--text); font-size: 1rem; font-weight: 800; }
+    /* top 3: junto a la medalla, número un poco más grande y con el color del metal */
+    .pos.g .pos-num, .pos.s .pos-num, .pos.b .pos-num { background: transparent; font-size: 1.18rem; min-width: 0; height: auto; padding: 0; }
+    .pos.g .pos-num { color: #B8860A; }
+    .pos.s .pos-num { color: #8E9BA8; }
+    .pos.b .pos-num { color: #A0623A; }
 
     /* Expand panel */
     .expand-panel {
