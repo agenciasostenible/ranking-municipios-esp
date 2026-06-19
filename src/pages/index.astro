@@ -126,10 +126,16 @@ const municipios = (rankingGlobal as any[]).map(r => ({
         </div>
         <div id="hf-ac" class="hero-find-ac"></div>
       </div>
-      <a href="/ranking/ranking_global" id="hero-all-btn" class="hero-all-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-        Ver toda España
-      </a>
+      <div class="hero-btn-row">
+        <a href="/cerca" class="hero-cerca-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+          Lo mejor cerca de ti
+        </a>
+        <a href="/ranking/ranking_global" id="hero-all-btn" class="hero-all-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          Ver toda España
+        </a>
+      </div>
     </div>
 
     <!-- Paso 2: Zona opcional + CTA (solo desktop) -->
@@ -695,6 +701,9 @@ function doSearch() {
 .hero-find-pill input { flex: 1; border: none; outline: none; font-size: .95rem; font-family: inherit; background: transparent; color: var(--text); min-width: 0; }
 .hero-find-ac { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,.2); text-align: left; }
 .hero-find-ac:empty { display: none; }
+.hero-btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.hero-cerca-btn { display: inline-flex; align-items: center; gap: 9px; padding: 12px 24px; background: var(--primary); color: #fff; border-radius: 40px; font-weight: 800; font-size: .95rem; text-decoration: none; box-shadow: 0 4px 16px rgba(255,56,92,.4); transition: all .18s; }
+.hero-cerca-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,56,92,.5); }
 .hero-all-btn { display: inline-flex; align-items: center; gap: 9px; padding: 12px 24px; background: rgba(255,255,255,0.95); color: var(--primary); border-radius: 40px; font-weight: 800; font-size: .95rem; text-decoration: none; box-shadow: 0 4px 16px rgba(0,0,0,.18); transition: all .18s; }
 .hero-all-btn:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
 /* El buscador "Paso 2" antiguo se sustituye por el buscador inline por categoría */
