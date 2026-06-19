@@ -168,11 +168,11 @@ const recomProv = await getAnunciosProvincia(provincia, 'ranking_prov');
           const pos = i + 1;
           const pct = maxPts > 0 ? Math.round((r.puntuacion / maxPts) * 100) : 0;
           const cls = pos === 1 ? 'pos g' : pos === 2 ? 'pos s' : pos === 3 ? 'pos b' : 'pos';
-          const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
+          const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '';
           const whyChips = (r.why as string[]).slice(0, 3);
           return (
             <tr class="rank-row" data-href={`/municipio/${r.codigo_ine}${catParam !== 'ranking_global' ? `?desde=${catParam}` : ''}`} style="cursor:pointer">
-              <td><span class={cls}>{med}</span></td>
+              <td><span class={cls}>{med && <span class="pos-medal">{med}</span>}<span class="pos-num">{pos}</span></span></td>
               <td>
                 <div style="display:flex;align-items:center;gap:10px">
                   <div class="row-thumb"
@@ -214,10 +214,10 @@ const recomProv = await getAnunciosProvincia(provincia, 'ranking_prov');
       {ranking.map((r: any, i: number) => {
         const pos = i + 1;
         const pct = maxPts > 0 ? Math.round((r.puntuacion / maxPts) * 100) : 0;
-        const med: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `#${pos}`;
+        const medal: any = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : null;
         return (
           <a href={`/municipio/${r.codigo_ine}${catParam !== 'ranking_global' ? `?desde=${catParam}` : ''}`} class="prov-card">
-            <span class="prov-card-pos">{med}</span>
+            <span class="prov-card-pos">{medal && <span class="pcp-medal">{medal}</span>}{medal ? pos : `#${pos}`}</span>
             <span class="prov-card-info">
               <span class="prov-card-name">{r.nombre}</span>
               <span class="prov-card-sub">{r.comarca ?? ''}{r.comarca && r.poblacion ? ' · ' : ''}{r.poblacion ? formatPob(r.poblacion) + ' hab.' : ''}</span>
@@ -336,13 +336,18 @@ const recomProv = await getAnunciosProvincia(provincia, 'ranking_prov');
 }
 .prov-card:active { background: #f7f7f7; }
 .prov-card-pos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 800;
   min-width: 32px;
   text-align: center;
-  color: #888;
+  color: #555;
   flex-shrink: 0;
 }
+.pcp-medal { font-size: 1.3rem; line-height: 1; }
 .prov-card-info {
   flex: 1;
   min-width: 0;

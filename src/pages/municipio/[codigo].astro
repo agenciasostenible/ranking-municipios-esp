@@ -353,7 +353,9 @@ const creadores = await getCreadores(
           <a href={`/ranking/${p.categoria}`} class="ranking-metric-card card">
             <div class="rmc-cat" style={`color:${color}`}><Icon name={info.icon} size={16} /> {info.label}</div>
             <div class="rmc-pos" style={`color:${color}`}>
-              {medal ? medal : (posNum ? `#${posNum}` : '—')}
+              {medal
+                ? <><span class="rmc-medal">{medal}</span>{posNum}</>
+                : (posNum ? `#${posNum}` : '—')}
             </div>
             <div class="rmc-sub">de {totalProv} en {municipio.provincia}</div>
             {p.ranking_nacional && (
@@ -1231,7 +1233,8 @@ window.openSello = openSello;
 .sello-net:hover { opacity: .9; }
 .sello-hint { text-align: center; font-size: .78rem; color: var(--text-2); margin: 12px 0 2px; }
 .rmc-cat { font-size: .72rem; font-weight: 600; margin-bottom: 6px; }
-.rmc-pos { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.rmc-pos { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; display: inline-flex; align-items: center; gap: 6px; }
+.rmc-medal { font-size: 1.5rem; line-height: 1; }
 .rmc-sub { font-size: .68rem; color: var(--text-2); margin-bottom: 8px; }
 .rmc-nacional { font-size: .82rem; margin-bottom: 4px; }
 .rmc-nacional-lbl { font-size: .72rem; color: var(--text-2); }
