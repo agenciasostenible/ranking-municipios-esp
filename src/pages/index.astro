@@ -2,7 +2,7 @@
 import { DB } from '../lib/d1client';
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
-import { TABS, SIDEBAR_GROUPS, formatPob } from '../lib/db';
+import { TABS, SIDEBAR_GROUPS, formatPob, getSubtitle } from '../lib/db';
 import { getProvGradient } from '../lib/utils';
 // @ts-ignore
 
@@ -306,6 +306,27 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   document.getElementById('chips-prev')?.addEventListener('click', () => bar?.scrollBy({ left: -300, behavior: 'smooth' }));
   document.getElementById('chips-next')?.addEventListener('click', () => bar?.scrollBy({ left: 300, behavior: 'smooth' }));
 </script>
+
+<!-- ── EXPLORAR POR CATEGORÍA (agrupado) ── -->
+<section class="cat-explore">
+  <h2 class="cx-title">Explora por categoría</h2>
+  {SIDEBAR_GROUPS.map((g) => (
+    <div class="cx-group">
+      <div class="cx-group-title"><Icon name={g.icon} size={15} /> {g.title}</div>
+      <div class="cx-cards">
+        {g.items.map((it) => (
+          <a href={`/ranking/${it.key}`} class="cx-card">
+            <span class="cx-ic"><Icon name={it.icon} size={20} /></span>
+            <span class="cx-text">
+              <span class="cx-label">{it.label}</span>
+              {getSubtitle(it.key) && <span class="cx-sub">{getSubtitle(it.key)}</span>}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  ))}
+</section>
 
 <!-- ── TOP MUNICIPIOS GRID ── -->
 <div class="page-content">
@@ -728,6 +749,20 @@ function doSearch() {
 .rp-ac a:hover { background: #fff1f3; color: var(--primary); }
 .rp-ac small { color: var(--text-2); font-weight: 500; }
 @media (max-width: 560px) { .rp-row { flex-direction: column; } .rp-go { justify-content: center; } }
+
+/* Explorar por categoría (agrupado, con microdescripción) */
+.cat-explore { max-width: 1100px; margin: 18px auto 0; padding: 0 16px; }
+.cx-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0 0 16px; }
+.cx-group { margin-bottom: 22px; }
+.cx-group-title { display: flex; align-items: center; gap: 7px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-2); margin: 0 0 9px; }
+.cx-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.cx-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 14px; text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .12s; }
+.cx-card:hover { border-color: var(--primary); box-shadow: 0 4px 14px rgba(0,0,0,.06); transform: translateY(-1px); }
+.cx-ic { width: 40px; height: 40px; flex-shrink: 0; border-radius: 11px; background: var(--bg); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; }
+.cx-text { display: flex; flex-direction: column; min-width: 0; }
+.cx-label { font-size: .94rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.cx-sub { font-size: .79rem; color: var(--text-2); line-height: 1.3; }
+@media (max-width: 560px) { .cx-cards { grid-template-columns: 1fr; } }
 
 .hero-section {
   background: linear-gradient(180deg, rgba(17,12,24,.34) 0%, rgba(17,12,24,0) 40%, rgba(17,12,24,.52) 100%), url('/hero-bg.jpg') center/cover no-repeat;
