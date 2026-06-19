@@ -315,8 +315,8 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     <span class="jp-eyebrow">Nuevo · Antimasificación</span>
     <span class="jp-title">Joyas sin masificar</span>
     <span class="jp-sub">Lo que de verdad merece la pena y <strong>aún puedes disfrutar sin colas</strong>. ¿Ese destino famoso lo vale… o hay algo mejor al lado?</span>
+    <span class="jp-cta">Descubrir joyas →</span>
   </span>
-  <span class="jp-arrow">→</span>
 </a>
 
 <!-- ── EXPLORAR POR CATEGORÍA (agrupado) ── -->
@@ -773,8 +773,11 @@ function doSearch() {
 .jp-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 2px 0 4px; }
 .jp-sub { font-size: .9rem; color: var(--text-2); line-height: 1.45; }
 .jp-sub strong { color: var(--text); font-weight: 700; }
-.jp-arrow { font-size: 1.4rem; color: #2e7d32; font-weight: 700; flex-shrink: 0; }
-@media (max-width: 560px) { .joyas-promo { padding: 16px; gap: 12px; } .jp-arrow { display: none; } }
+.jp-cta { display: inline-flex; align-items: center; align-self: flex-start; margin-top: 12px; padding: 10px 18px;
+  background: #2e7d32; color: #fff; font-size: .9rem; font-weight: 700; border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(46,125,50,.28); transition: background .12s; }
+.joyas-promo:hover .jp-cta { background: #256628; }
+@media (max-width: 560px) { .joyas-promo { padding: 16px; gap: 12px; } .jp-cta { align-self: stretch; justify-content: center; } }
 
 /* Explorar por categoría (agrupado, con microdescripción) */
 .cat-explore { max-width: 1100px; margin: 18px auto 0; padding: 0 16px; }
