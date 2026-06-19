@@ -650,55 +650,59 @@ document.head.appendChild(thumbStyle);
 <script define:vars={{ TOP: shareTop, CATL: shareCatLabel, SCOPE: scopeLabel, RC: catColor, PAGEURL: shareUrl }}>
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function buildVertical(){
-    var titleLen = (CATL||'').length;
-    var titleSize = titleLen>22?56:titleLen>16?70:84;
-    var startY = 600, rowH = 124, body = '';
-    TOP.forEach(function(it, i){
-      var cy = startY + i*rowH;
-      var pos = it.rank;
-      var badgeFill = pos===1?'#F5C518':pos===2?'#B9C0C7':pos===3?'#CD8B45':'#FFF1F3';
-      var badgeTxt = pos<=3?'#ffffff':RC;
-      var nm = (it.nombre||'').length>20 ? (it.nombre.slice(0,19)+'…') : it.nombre;
-      body += '<circle cx="150" cy="'+cy+'" r="46" fill="'+badgeFill+'"/>'
-        + '<text x="150" y="'+(cy+16)+'" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="800" fill="'+badgeTxt+'">'+pos+'</text>'
-        + '<text x="232" y="'+(cy-2)+'" font-family="Arial, sans-serif" font-size="44" font-weight="800" fill="#222">'+esc(nm)+'</text>'
-        + '<text x="232" y="'+(cy+40)+'" font-family="Arial, sans-serif" font-size="28" font-weight="500" fill="#888">'+esc(it.prov||'')+'</text>'
-        + '<rect x="852" y="'+(cy-34)+'" width="150" height="68" rx="34" fill="'+RC+'"/>'
-        + '<text x="927" y="'+(cy+12)+'" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#fff">'+esc(it.pts)+'</text>';
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath(); ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+
+  // Imagen vertical (Stories) dibujada DIRECTAMENTE en canvas. No usamos SVG
+  // rasterizado porque iOS Safari descarta texto al convertir SVG->PNG.
+  function makeCanvas(){
+    var W=1080, H=1920, F="Arial, Helvetica, sans-serif";
+    var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    var ctx=cv.getContext('2d'); ctx.textBaseline='alphabetic';
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=RC; ctx.fillRect(0,0,W,26);
+
+    ctx.font='700 46px '+F;
+    var w1=ctx.measureText('Ranking ').width, w2=ctx.measureText('Spain').width;
+    var sx=540-(w1+w2)/2; ctx.textAlign='left';
+    ctx.fillStyle=RC; ctx.fillText('Ranking ', sx, 150);
+    ctx.fillStyle='#222'; ctx.fillText('Spain', sx+w1, 150);
+
+    ctx.textAlign='center';
+    ctx.font='700 30px '+F; ctx.fillStyle='#888'; ctx.fillText('TOP '+TOP.length, 540, 300);
+    var titleLen=(CATL||'').length, titleSize=titleLen>22?56:titleLen>16?70:84;
+    ctx.font='800 '+titleSize+'px '+F; ctx.fillStyle=RC; ctx.fillText(CATL||'', 540, 392);
+    ctx.font='600 34px '+F; ctx.fillStyle='#717171'; ctx.fillText(SCOPE||'', 540, 452);
+    ctx.strokeStyle='#EBEBEB'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(90,510); ctx.lineTo(990,510); ctx.stroke();
+
+    var startY=600, rowH=124;
+    TOP.forEach(function(it,i){
+      var cy=startY+i*rowH, pos=it.rank;
+      var badgeFill=pos===1?'#F5C518':pos===2?'#B9C0C7':pos===3?'#CD8B45':'#FFF1F3';
+      var badgeTxt=pos<=3?'#ffffff':RC;
+      var nm=(it.nombre||''); if(nm.length>20) nm=nm.slice(0,19)+'…';
+      ctx.beginPath(); ctx.arc(150,cy,46,0,Math.PI*2); ctx.fillStyle=badgeFill; ctx.fill();
+      ctx.textAlign='center'; ctx.font='800 42px '+F; ctx.fillStyle=badgeTxt; ctx.fillText(String(pos),150,cy+15);
+      ctx.textAlign='left'; ctx.font='800 44px '+F; ctx.fillStyle='#222'; ctx.fillText(nm,232,cy+4);
+      ctx.font='500 28px '+F; ctx.fillStyle='#888'; ctx.fillText(it.prov||'',232,cy+42);
+      roundRect(ctx,852,cy-34,150,68,34); ctx.fillStyle=RC; ctx.fill();
+      ctx.textAlign='center'; ctx.font='800 34px '+F; ctx.fillStyle='#fff'; ctx.fillText(String(it.pts),927,cy+12);
     });
-    return '<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">'
-      + '<rect width="1080" height="1920" fill="#fff"/>'
-      + '<rect width="1080" height="26" fill="'+RC+'"/>'
-      + '<text x="540" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="46" font-weight="800" letter-spacing="2"><tspan fill="'+RC+'">Ranking </tspan><tspan fill="#222">Spain</tspan></text>'
-      + '<text x="540" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="6" fill="#888">TOP '+TOP.length+'</text>'
-      + '<text x="540" y="392" text-anchor="middle" font-family="Arial, sans-serif" font-size="'+titleSize+'" font-weight="800" fill="'+RC+'">'+esc(CATL)+'</text>'
-      + '<text x="540" y="452" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="600" fill="#717171">'+esc(SCOPE)+'</text>'
-      + '<line x1="90" y1="510" x2="990" y2="510" stroke="#EBEBEB" stroke-width="3"/>'
-      + body
-      + '<text x="540" y="1865" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="600" letter-spacing="1" fill="#717171">rankingspain.com</text>'
-      + '</svg>';
+
+    ctx.textAlign='center'; ctx.font='600 32px '+F; ctx.fillStyle='#717171'; ctx.fillText('rankingspain.com',540,1865);
+    return cv;
   }
 
   function shareText(){ return '🏆 Top '+TOP.length+' '+CATL+' '+SCOPE+' según Ranking Spain 👇'; }
 
-  function rasterize(svgStr, w, h){
-    var url = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'}));
-    return new Promise(function(res){
-      var img = new Image();
-      img.onload = function(){
-        var c = document.createElement('canvas'); c.width=w; c.height=h;
-        var ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
-        ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
-        c.toBlob(function(b){ res(b); },'image/png');
-      };
-      img.onerror = function(){ URL.revokeObjectURL(url); res(null); };
-      img.src = url;
-    });
-  }
+  function canvasBlob(cv){ return new Promise(function(res){ cv.toBlob(function(b){ res(b); }, 'image/png'); }); }
 
   async function deliverStories(span, orig){
-    var blob = await rasterize(buildVertical(), 1080, 1920);
+    var blob = await canvasBlob(makeCanvas());
     var fname = 'ranking-spain-'+(CATL||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.png';
     if (blob && navigator.canShare && navigator.canShare({ files:[new File([blob],fname,{type:'image/png'})] })){
       try { await navigator.share({ files:[new File([blob],fname,{type:'image/png'})], text: shareText()+'\n'+PAGEURL }); span.textContent=orig; return; } catch(_){}
@@ -708,7 +712,11 @@ document.head.appendChild(thumbStyle);
   }
 
   var overlay = document.getElementById('rks-overlay');
-  function openRks(){ document.getElementById('rks-preview').innerHTML = buildVertical(); overlay.classList.add('open'); }
+  function openRks(){
+    var p=document.getElementById('rks-preview'); p.innerHTML='';
+    var cv=makeCanvas(); cv.style.width='100%'; cv.style.height='auto'; cv.style.display='block'; cv.style.borderRadius='12px';
+    p.appendChild(cv); overlay.classList.add('open');
+  }
   function closeRks(){ overlay.classList.remove('open'); }
 
   document.getElementById('rank-share-btn').addEventListener('click', openRks);

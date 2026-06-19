@@ -735,17 +735,18 @@ function closeSello(){ document.getElementById('sello-overlay').classList.remove
 
 function rasterize(svgStr, w, h){
   const url = URL.createObjectURL(new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'}));
-  return new Promise((res)=>{
-    const img = new Image();
-    img.onload = ()=>{
-      const c = document.createElement('canvas'); c.width=w; c.height=h;
-      const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
-      ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
-      c.toBlob(b=>res(b),'image/png');
-    };
-    img.onerror=()=>{ URL.revokeObjectURL(url); res(null); };
-    img.src = url;
-  });
+  const img = new Image(); img.width = w; img.height = h;
+  // decode() espera al render COMPLETO del SVG antes de pintarlo: evita que iOS
+  // descarte texto al rasterizar (lo que ocurría en la imagen de compartir).
+  const draw = ()=>{
+    const c = document.createElement('canvas'); c.width=w; c.height=h;
+    const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+    ctx.drawImage(img,0,0,w,h); URL.revokeObjectURL(url);
+    return new Promise(res=>c.toBlob(b=>res(b),'image/png'));
+  };
+  img.src = url;
+  if (img.decode) return img.decode().then(draw).catch(()=>{ URL.revokeObjectURL(url); return null; });
+  return new Promise((res)=>{ img.onload=()=>draw().then(res); img.onerror=()=>{ URL.revokeObjectURL(url); res(null); }; });
 }
 async function selloBlob(){
   const svg = document.querySelector('#sello-preview svg');
