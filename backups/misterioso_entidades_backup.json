@@ -1,0 +1,1230 @@
+[
+  {
+    "results": [
+      {
+        "codigo_ine": "12080",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Conocida como la \"puerta de los magos\". Famosa por sus procesiones de brujas en la Edad Media y por el linaje de los \"Blanes\". El convento de San Francisco tiene leyendas de apariciones de monjas y fenómenos paranormales. Atractivos: Castillo de Morella, Convento de San Francisco, murallas."
+      },
+      {
+        "codigo_ine": "46250",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El misterio de la calle Dalt. Leyendas de la Inquisición, callejones oscuros con apariciones de antiguos reos, y las historias de brujería en la huerta valenciana (como la \"bruixa\" de Patraix). Atractivos: Barrio del Carmen, Tribunal de las Aguas, Cauce del río Turia."
+      },
+      {
+        "codigo_ine": "08003",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Cementerio de Montjuïc es un epicentro de paranormal y espiritismo. En el Barrio Gótico se reportan apariciones en el antiguo barrio judío y en el Palau Reial Major. Leyendas de la \"Casa de l'Ardiaca\". Atractivos: Cementerio de Montjuïc, Barrio Gótico, Hospital de la Santa Creu."
+      },
+      {
+        "codigo_ine": "50265",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Único pueblo de España oficialmente excomulgado por la Iglesia (hasta 1998). Cuna de la brujería aragonesa. El castillo, en ruinas, es visitable y centro de rituales paganos y avistamientos de luces inexplicables. Escenario de la leyenda de la Campana de Velilla. Atractivos: Castillo de Trasmoz, Cerro de la Mora."
+      },
+      {
+        "codigo_ine": "50045",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Turismo oscuro y parapsicología. Escenario de una de las batallas más crueles de la Guerra Civil. Visitable mediante tours guiados. Fenómenos de psicofonía, voces, pasos y apariciones de soldados caídos. Atractivos: Pueblo Viejo de Belchite (en ruinas)."
+      },
+      {
+        "codigo_ine": "31264",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Capital española de la brujería. Origen del famoso auto de fe de Logroño (1610). Las cuevas son completamente visitables y se celebran akelarres modernos. Fuerte energía telúrica y turismo esotérico masivo. Atractivos: Cueva de las Brujas (Akelarre), Museo de las Brujas."
+      },
+      {
+        "codigo_ine": "21014",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Aparición de la Virgen a un pastor en un espino (leyenda fundacional). Conexión con antiguos cultos paganos vascos (Sorginak) y la mitología de basajaun y lamias en las cuevas de la zona. Atractivos: Santuario de Arantzazu, Cuevas."
+      },
+      {
+        "codigo_ine": "24115",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Mayor enclave templario de la Península. Leyendas sobre el tesoro templario más grande de la Cristiandad escondido en sus muros, símbolos esotéricos y un supuesto pasadizo que lo conecta con el castillo de Cornatel. Atractivos: Castillo de los Templarios (siglo XII), casco histórico, Museo del Bierzo."
+      },
+      {
+        "codigo_ine": "42164",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Soria es la cuna de las leyendas de Gustavo Adolfo Bécquer (\"Los ojos verdes\", \"El rayo de luna\"). La zona de la Sierra de Urbión está plagada de leyendas de las \"xanas\", súcubos y aparecidos en las lagunas glaciares. Atractivos: Casa Fuerte de San Leonardo."
+      },
+      {
+        "codigo_ine": "37011",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Cueva de Salamanca es el lugar donde según la leyenda el diablo enseñaba magia negra a 7 alumnos (quedando uno como pago). Punto de peregrinación esotérica y turismo de brujería y nigromancia. Atractivos: Cueva de Salamanca, Universidad, Casa de las Conchas."
+      },
+      {
+        "codigo_ine": "51025",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Centro místico de España. Misticismo extremo, levitaciones (Santa Teresa de Jesús), y apariciones en el casco antiguo amurallado. Conexión con la Orden del Temple. Atractivos: Murallas, Convento de Santa Teresa."
+      },
+      {
+        "codigo_ine": "45053",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Castillo templario con evidentes símbolos esotéricos. Leyendas de tesoros escondidos y apariciones de caballeros caídos en reconquistas. Atractivos: Castillo de Consuegra, Molinos."
+      },
+      {
+        "codigo_ine": "19053",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La \"Cueva de la Hiedra\" es famosa por rituales de brujería. El municipio es conocido por su historia de aquíes y el conocimiento de los ciclos astrales desde tiempos celtas y romanos. Atractivos: Castillo de Peña Bermeja, Cueva de la Iedra."
+      },
+      {
+        "codigo_ine": "28079",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Palacio de Linares es la casa encantada más famosa de España (apariciones de la hija asesinada). La Estación de Chamberí (\"Estación fantasma\") ofrece tours de fenómenos paranormales. El cementerio de la Almudena tiene alta actividad espiritista. Atractivos: Palacio de Linares, Estación de Chamberí, Cementerio de la Almudena, Parque del Retiro."
+      },
+      {
+        "codigo_ine": "28038",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La \"Casa de la Mora\" es un hotel y restaurante famoso por las apariciones de una mujer y soldados de la Guerra Civil. Muy popular entre los investigadores paranormales de Madrid. Atractivos: Casa de la Mora, Sierra de Guadarrama."
+      },
+      {
+        "codigo_ine": "10037",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La leyenda de la princesa musulmana que, traicionada por enamorarse de un noble cristiano, fue convertida en gallina por su padre brujo. Cada 23 de abril su sombra recorre las calles cacereñas próximas al palacio. El Parador acumula testimonios de presencias. Atractivos: Parador de Cáceres (antiguos palacios góticos), casco antiguo Patrimonio UNESCO."
+      },
+      {
+        "codigo_ine": "10087",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La leyenda del hallazgo de la virgen por un pastor y la aparición de la virgen. Conexión templaria en la zona y misticismo de los caballeros ocultos en el monasterio. Atractivos: Monasterio de Guadalupe."
+      },
+      {
+        "codigo_ine": "41091",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Casa de las Cabezas es parada obligatoria de terror histórico. El convento de Santa Clara tiene leyendas de monjas emparedadas. Actividad paranormal reportada en el Cementerio de San Fernando. Atractivos: Casa de las Cabezas, Convento de Santa Clara, Cementerio de San Fernando."
+      },
+      {
+        "codigo_ine": "18087",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El cementerio de San José (sobre un antiguo cementerio morisco) es uno de los lugares más estudiados por psicofonías. El Albaicín alberga leyendas de duendes y apariciones de la época nazarí. Atractivos: Alhambra, Barrio del Albaicín, Cementerio de San José."
+      },
+      {
+        "codigo_ine": "24010",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "En 1550 se manifestaron extrañas luces y una aparición divina en la Puerta del Lobo. En una cueva aparecieron formas blancas, luces y una figura infantil misteriosa. Atractivos: Casco renacentista (Patrimonio UNESCO), Universidad antigua, Puerta del Lobo."
+      },
+      {
+        "codigo_ine": "38023",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Laguna es conocida como la \"ciudad de los conventos y los aparecidos\". La Casa Lercaro es una de las casas encantadas más activas de España (aparición de Catalina Lercaro). Rutas de misterio nocturnas muy concurridas. Atractivos: Casa Lercaro, Hospital de Nuestra Señora de los Dolores, Convento de Santa Catalina."
+      },
+      {
+        "codigo_ine": "38005",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Historias de brujería canaria y apariciones de ánimas en pena. La erupción volcánica de 1706 dejó ruinas malditas y un fuerte legado de leyendas locales. Atractivos: Convento de San Francisco, Cueva de San Marcos."
+      },
+      {
+        "codigo_ine": "27030",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Famoso por la Santa Compaña y tradiciones meigas. Se pueden visitar lugares donde ocurrieron supuestos avistamientos de procesiones de difuntos. El turismo místico es parte de su identidad. Atractivos: Catedral, Museo Catedralicio, Aldea de Galdo."
+      },
+      {
+        "codigo_ine": "01014",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Conocida como la \"ciudad de la brujería\" en Galicia. Famosa por sus cementerios antiguos y la fuerte presencia de meigas (brujas) en su historia local documentada y leyendas urbanas. Atractivos: Iglesia de Santa María A Nova, Museo de la Campana."
+      },
+      {
+        "codigo_ine": "33044",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El misterio de la Cruz de los Ángeles y las apariciones de la \"Dama de Blanco\" en la Universidad. Fuerte tradición de \"xanas\" (ninfas de los ríos) en las afueras. Atractivos: Cámara Santa, Universidad."
+      },
+      {
+        "codigo_ine": "39076",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Aunque es un pueblo histórico, sus callejas ocultan leyendas de la Inquisición y casas solariegas con sonidos y presencias (como la Casa del Águila y la Parra). Fuerte turismo esotérico en la zona rural de Cantabria. Atractivos: Colegiata, Cuevas de Altamira, Casco histórico."
+      },
+      {
+        "codigo_ine": "24018",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Desde 1971, en la cocina de la casa de María Gómez Cámara empezaron a aparecer —y reaparecer tras ser picadas— manchas con forma de rostros humanos en el suelo de cemento. Es uno de los casos paranormales más famosos del mundo y la casa sigue siendo visitable en el pueblo. Atractivos: Casa de \"Las Caras\", Museo de Bélmez."
+      },
+      {
+        "codigo_ine": "18176",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Tras la expulsión morisca fue repoblado por familias gallegas que trajeron el culto a las meigas. Cada calle tiene su historia mágica. Símbolos esotéricos y figuras repartidas por el pueblo. Atractivos: \"Pueblo de las Brujas\" de la Alpujarra, Museo de la Brujería, Casa de Baba Yaga, Casa de Hansel y Gretel, Fuente de los Cántaros, Cueva del Ojo de Guayota, Fuente del Dragón."
+      },
+      {
+        "codigo_ine": "22006",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Tildado de \"pueblo maldito\", sus calles han sido escenario de numerosas leyendas, entre ellas la del jinete sombrío que aparece cabalgando las noches de luna llena por la zona alta del pueblo. Atractivos: Casco histórico, vistas del Guadiana."
+      },
+      {
+        "codigo_ine": "22004",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Existen leyendas locales de \"cortijos malditos\" y apariciones espectrales en las sierras circundantes, ligadas a un sustrato de brujería rural que sobrevivió hasta el siglo XX. Atractivos: Gruta de las Maravillas, Sierra de Aracena."
+      },
+      {
+        "codigo_ine": "21034",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Su leyenda fundacional es en sí un misterio: un pastor desaparece misteriosamente y en el lugar donde se le vio por última vez brota un manantial que da origen al pueblo. Atractivos: Plaza de los Toros, iglesia de San Jerónimo."
+      },
+      {
+        "codigo_ine": "14021",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El fantasma de doña Blanca en la plaza de Orive (leyenda del noble Carlos Ucel y su hija blanca y hermosa). El fantasma de la Mezquita (alojo nocturno). Medina Azahara con leyendas de amor y poder. La Facultad de Derecho, sobre un antiguo hospital psiquiátrico, es uno de los edificios con más actividad paranormal de Andalucía. Atractivos: Mezquita-Catedral, Medina Azahara, Facultad de Derecho, barrio de la Judería, Plaza de Orive."
+      },
+      {
+        "codigo_ine": "04004",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Teatro Cervantes guarda la historia de Conchita Robles, actriz asesinada en 1922 cuyas apariciones siguen reportándose. Además, en la provincia existieron dos casos de apariciones marianas y apariciones ligadas al accidente ferroviario de Fiñana en 1943. Atractivos: Teatro Cervantes, Alcazaba, casco histórico."
+      },
+      {
+        "codigo_ine": "22149",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Según la leyenda, en sus muros falleció el conde Don Julián y está enterrado el \"mayor traidor de España\". Numerosos visitantes reportan la aparición del fantasma del conde y de doña Violante de Luna, sobrina del Papa Luna, cuya tumba nunca se halló. Atractivos: Castillo de Loarre (el románico mejor conservado de Europa)."
+      },
+      {
+        "codigo_ine": "44127",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Una de las \"tierras de brujas\" más documentadas de la Sierra de Albarracín. La leyenda del pastor y las brujas de Jabaloyas cuenta que descendían volando sobre escobas para robar el vino de las bodegas de Frías de Albarracín. Atractivos: Monte Javalón, Ermita de la Virgen de Trinidad, iglesia de la Asunción."
+      },
+      {
+        "codigo_ine": "44109",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Escenario complementario de la leyenda de las brujas de Jabaloyas. La tradición oral mantiene viva la historia del \"Tío Candelas\" y su bodega vigilada. Atractivos: Bodegas tradicionales, casco urbano."
+      },
+      {
+        "codigo_ine": "43001",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos más mágicos de España, con leyendas de apariciones en sus callejuelas, una abundante tradición de brujería en la sierra y un caso documentado de experiencia paranormal en el casco urbano. Atractivos: Murallas, casco medieval, Plaza Mayor."
+      },
+      {
+        "codigo_ine": "09091",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Vigía del Camino de Santiago desde el siglo IX. Sus murallas acumulan leyendas de prisioneros, nobles y reyes, y son frecuentes las rutas nocturnas de misterio. Atractivos: Castillo de Castrojeriz, Convento de San Antón, excolegiata de Nuestra Señora del Manzano."
+      },
+      {
+        "codigo_ine": "42046",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "\"En Calatañazor perdió Almanzor el tambor\". Pueblo detenido en el tiempo donde, según la leyenda, cayó el invencible caudillo musulmán. El ambiente medieval invita a rutas de leyenda. Atractivos: Villa medieval amurallada, castillo, plazuelta del árbol torcido."
+      },
+      {
+        "codigo_ine": "42094",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "En lo alto del cerro de La Muela aún se siente, según los visitantes, \"la fuerza de un pueblo que resistió al Imperio Romano\". Numancia es un lugar cargado de energía histórica y leyendas de sacrificio colectivo. Atractivos: Numancia, yacimiento celtíbero."
+      },
+      {
+        "codigo_ine": "42029",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Considerado durante siglos un foco de brujería, aparece recogido en las crónicas de cazas de brujas de la provincia, junto con otros pueblos sorianos de tradición esotérica. Atractivos: Casco urbano serrano, paisaje de la Sierra de Urbión."
+      },
+      {
+        "codigo_ine": "19127",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La leyenda del fantasma de Masegoso cuenta que el pueblo entero desapareció tras un envenenamiento por envidia. Es uno de los enigmas rurales de Soria. Atractivos: Ruinas del pueblo despoblado."
+      },
+      {
+        "codigo_ine": "39037",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Cuna de la leyenda del Hombre Pez de Liérganes, el ser mitad hombre mitad pez que, según la tradición del siglo XVIII, fue visto en distintas costas europeas. El pueblo tiene un marcado carácter de leyenda. Atractivos: Puente Romano, Centro de Interpretación del Hombre Pez, casonas nobiliarias."
+      },
+      {
+        "codigo_ine": "39055",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Capital de Liébana, tierra de ojáncanos, anjanas y leyendas de tesoros ocultos. Existe la leyenda de la \"Mansión de los Espíritus\", una casona habitada por almas perdidas. Atractivos: Torre del Infantado, casco histórico, Picos de Europa."
+      },
+      {
+        "codigo_ine": "39032",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El castillo se levantó sobre una ermita del siglo IX y aún conserva una necrópolis en su patio. Existe un sainete teatral tradicional, \"El fantasma del Castillo de Argüeso\", basado en la traición de Don Fernando de Mier. Atractivos: Castillo de Argüeso, necrópolis del patio de armas."
+      },
+      {
+        "codigo_ine": "90637",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Casa de los Bayón fue escenario, a comienzos del siglo XX, de uno de los casos de poltergeist más famosos de España, documentado incluso con intervención de la Guardia Civil. Es considerada una de las casas rurales más embrujadas del país. Atractivos: Casa del Bayón (Rayán), valle minero."
+      },
+      {
+        "codigo_ine": "33053",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "En abril de 1854 todos los habitantes de Mengollo aparecieron muertos sin signos de violencia. Es la \"leyenda del pueblo fantasma de Asturias\", uno de los enigmas sin resolver de la región. Atractivos: Pueblo despoblado de Mengollo, valle del Quirós."
+      },
+      {
+        "codigo_ine": "33062",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El valle fue, según la leyenda, la prisión donde un hidalgo cumplió cadena perpetua por asesinar al cura del pueblo por orden de su señor. Es una ruta de misterio destacada. Atractivos: Valle del Desterrado, cascada de Seimeira."
+      },
+      {
+        "codigo_ine": "33063",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Según la tradición, la noche de San Juan aparece un hada encantada en la cascada de la Pena do Encanto para hechizar a quien la vea. Una de las rutas mágicas más señaladas de Asturias. Atractivos: Ruta de la Pena do Encanto, cascada."
+      },
+      {
+        "codigo_ine": "05008",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Crónica de brujería marinera: si los marineros se cruzaban con una mujer considerada bruja al salir a faenar, regresaban a casa por considerar perdido el día. Existen leyendas de viudas y apariciones en la noche de Difuntos. Atractivos: Anfiteatro marinero, puerto."
+      },
+      {
+        "codigo_ine": "15022",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "En sus montes y acantilados vivían, según la tradición, las meigas. Es uno de los enclaves gallegos donde más persiste la cultura de la brujería costera. Atractivos: Cabo Ortegal, acantilados más altos de Europa, calas."
+      },
+      {
+        "codigo_ine": "27020",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Cova da Serpe es escenario de una de las leyendas más famosas de Galicia: una serpiente gigante que devoraba ganado y exigía sacrificios hasta que un caballero la venció con una lanza bendita. Atractivos: A Cova da Serpe, torre de San Paio de Narla, mirador natural."
+      },
+      {
+        "codigo_ine": "36014",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Considerada una de las \"ciudades donde viven las brujas de Galicia\". Su pasado judío y su posición fronteriza han generado un sustrato de leyendas de apariciones y prácticas esotéricas. Atractivos: Catedral fortificada, barrio judío, Camino Portugués."
+      },
+      {
+        "codigo_ine": "16078",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Casa de la Sirena, una de las Casas Colgadas, protagoniza una de las leyendas más famosas de la ciudad. El Parador, antiguo convento de San Pablo, acumula relatos de apariciones de monjas. Atractivos: Casas Colgadas, Casa de la Sirena, Parador de Cuenca (antiguo convento)."
+      },
+      {
+        "codigo_ine": "16135",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos abandonados más impresionantes de España, frecuentado por amantes del misterio y la fotografía de ruinas. Atractivos: Pueblo abandonado, ruinas en lo alto de un cerro a 1.100 metros."
+      },
+      {
+        "codigo_ine": "16033",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Múltiples apariciones: el espectro de una joven noble vestida de blanco encerrada por su familia tras un amor prohibido; el fantasma de la emperatriz Eugenia de Montijo (última propietaria del castillo en el siglo XIX); y la figura histórica de Juana la Beltraneja. Actores que han rodado en el castillo también han reportado presencias. Atractivos: Castillo de Belmonte (siglo XV, forma de estrella de seis puntas), casco histórico."
+      },
+      {
+        "codigo_ine": "02010",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Sus cuevas subterráneas, el barrio árabe y su conjunto histórico amurallado son escenario de leyendas y rutas de misterio que recorren sus callejas medievales. Atractivos: Castillo del siglo XV, cuevas del Agujero, barrio árabe."
+      },
+      {
+        "codigo_ine": "45168",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Posiblemente la ciudad con más rutas de misterio nocturnas de España. Sus calles estrechas y oscuras guardan apariciones reportadas en la Casa de las Cabezas, el Castillo de San Servando y el barrio judío. Existen tours específicos \"Toledo Siniestro\". Atractivos: Casa de las Cabezas, criptas y momias, Castillo de San Servando, casco antiguo."
+      },
+      {
+        "codigo_ine": "17220",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Cuna de las célebres \"Brujas de Viladrau\", perseguidas en el juicio de brujería de 1618-1622. La ermita de Sant Segimon era el punto de reunión de los aquelarres la noche de Todos los Santos. Atractivos: Espai Montseny, ermita de Sant Segimon, macizo del Montseny."
+      },
+      {
+        "codigo_ine": "08212",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Sede de los juicios por brujería de la Catalunya central. Su museo narra la persecución, tortura y muerte de las mujeres condenadas por brujería, con un montaje multimedia basado en hechos reales. Atractivos: Centre d'Interpretació de la Bruixeria."
+      },
+      {
+        "codigo_ine": "43169",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Mussara, pedanía despoblada en los años 60, lleva más de 100 años con un misterio sin resolver. Se reportan fenómenos paranormales, apariciones y ruidos inexplicables entre sus ruinas; se ha comparado con el pueblo de \"Stranger Things\". Atractivos: Pueblo fantasma de La Mussara, Sierra de Prades."
+      },
+      {
+        "codigo_ine": "10060",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La tradición oral mantiene viva la existencia de brujas en los Ibores, con testimonios recogidos por la Inquisición en la comarca. Es uno de los puntos de brujería documentada de Extremadura. Atractivos: Cueva de Castañar (Monumento Natural), Sierra de Villuercas."
+      },
+      {
+        "codigo_ine": "10102",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Cueva de las Brujas de Ibahernando es un lugar donde \"la imaginación se despierta sola\", según los lugareños, asociado a leyendas de aquelarres y rituales. Atractivos: Cueva de las Brujas, casco rural."
+      },
+      {
+        "codigo_ine": "10067",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El ex-convento de San Francisco en ruinas es uno de los lugares más inquietantes de Extremadura, frecuentado por amantes del turismo oscuro. Atractivos: Ex-Convento abandonado de San Francisco, catedral."
+      },
+      {
+        "codigo_ine": "12141",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los centros de peregrinación más misteriosos de España. Hasta el siglo XX acudían \"endemoniados\" para ser exorcizados en el santuario, con testimonios documentados de posesiones y rituales de liberación. Atractivos: Santuario de la Virgen de la Balma (excavado en la roca)."
+      },
+      {
+        "codigo_ine": "30015",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La leyenda de la Vera Cruz (lignum crucis que apareció milagrosamente en 1231) y la tradición templaria del lugar generan una oferta de rutas de misterio (\"Caravaca Misteriosa\") donde se narra la doble vela a Dios y al Diablo de los caballeros caídos. Atractivos: Santuario de la Vera Cruz, castillo templario, casco histórico."
+      },
+      {
+        "codigo_ine": "30035",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Isla del Barón, en el Mar Menor, es escenario de la leyenda de una aparición femenina la noche de San Juan. Los pescadores relatan haber visto a una mujer de extraordinaria belleza envuelta en un resplandor. Atractivos: Mar Menor, Isla del Barón."
+      },
+      {
+        "codigo_ine": "31135",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los castillos más espectaculares de España: un rey de Navarra tuvo como mascota a un león y un fantasma se pasearía por él. Leyendas templarias, símbolos extraños y figuras llenas de misterio se dan cita en sus muros. Atractivos: Castillo de Javier (siglo XI), basílica, museo."
+      },
+      {
+        "codigo_ine": "33013",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Una de las alas del palacio, hoy Parador, encierra la leyenda de un fantasma noble medieval. Se escuchan ruidos, lamentos y melodías de otros tiempos, especialmente en la Galería Dorada. Varios testimonios avalan el paseo del espectro del rey Carlos III. Atractivos: Palacio Real de Olite (Parador Príncipe de Viana)."
+      },
+      {
+        "codigo_ine": "90717",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Durante la Guerra Civil fue uno de los mayores campos de prisioneros. Murieron unos 750 presos, 231 de ellos en la fuga de mayo de 1938. El lugar es uno de los escenarios de turismo oscuro y parapsicología más visitados del norte. Atractivos: Fuerte de San Cristóbal (monte Ezkaba)."
+      },
+      {
+        "codigo_ine": "35027",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Lugar de la aparición de la Virgen del Pino (8 de septiembre de 1481), patrona de Gran Canaria. La imagen apareció en lo alto de un pino del que brotaba un manantial de aguas medicinales. Es el principal centro de peregrinación mística de la isla. Atractivos: Basílica del Pino, casco histórico, Plaza del Pino."
+      },
+      {
+        "codigo_ine": "07040",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Leyendas como el \"drac de na Coca\" (dragón que acechaba en las acequias de la ciudad) y relatos de brujería en el casco antiguo, heredados del pasado musulmán y medieval. Atractivos: Catedral, casco antiguo, barrio de la Calatrava."
+      },
+      {
+        "codigo_ine": "15089",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los lugares con mayor concentración de energía telúrica del Mediterráneo. Considerado el \"tercer vértice del triángulo de las Bermudas\" en la tradición esotérica. Leyendas de apariciones, sirenas, templarios y avistamientos de naves no identificadas. Atractivos: Islote rocoso de casi 400 metros al sudoeste de Ibiza, reservas naturales, miradores."
+      },
+      {
+        "codigo_ine": "08009",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La habitación 712 del Parador es uno de los lugares con fenómenos paranormales más documentados de España. Se escuchan ruidos, lamentos y melodías de otros tiempos. La leyenda atribuye la presencia al espíritu de Adalés, hija del vizconde Ramón Folch, encerrada por su padre en la torre tras enamorarse de un príncipe árabe; murió al año de reclusión. El perro del vigilante nocturno se negaba a pasar por la zona durante las obras de adaptación. Atractivos: Castillo de Cardona (Parador, siglo IX), Colegiata de Sant Vicenç, Torre Minyona."
+      },
+      {
+        "codigo_ine": "43155",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Parador de Tortosa, ubicado en un castillo musulmán del siglo X, figura entre los Paradores con mayor misterio de España. Se reportan fenómenos inexplicables, sombras y presencias en sus estancias y en las galerías subterráneas. Atractivos: Castillo de la Zuda (Parador), catedral, casco histórico, murallas."
+      },
+      {
+        "codigo_ine": "19257",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El fantasma de doña Blanca de Borbón, esposa de Pedro I el Cruel, presuntamente envenenada entre estos muros en 1361. Huéspedes y empleados reportan sollozos, arrastrar de cadenas y una silueta difuminada recorriendo los pasillos abovedados. La Torre de Doña Blanca lleva su nombre. Atractivos: Castillo de Sigüenza (Parador, siglo XII), catedral, casco medieval, Casa del Doncel."
+      },
+      {
+        "codigo_ine": "13002",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Investigado por el programa Cuarto Milenio (Iker Jiménez y Carmen Porter). Empleadas y huéspedes reportan presencias, sillas que se giran solas y ruidos inexplicables. La habitación 39 es la más activa; varios huéspedes han abandonado el Parador tras vivencias paranormales. Atractivos: Parador de Santa Catalina (antiguo convento), Plaza Mayor, corrales de comedias."
+      },
+      {
+        "codigo_ine": "26010",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Catedral de León tiene documentados al menos cuatro fantasmas de personajes ilustres. El Parador de San Marcos, antiguo convento-hospital de peregrinos, cárcel (donde estuvo preso Quevedo) y prisión durante la Guerra Civil, es conocido por la aparición del \"fantasma de Quevedo\" y otras presencias en sus muros renacentistas. Atractivos: Catedral, Hostal de San Marcos (Parador), Casa Botines de Gaudí, Barrio Húmedo."
+      },
+      {
+        "codigo_ine": "37003",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Según la leyenda local, el espíritu de un noble traicionado y asesinado vaga por las murallas en noches de tormenta, vestido con armadura. Los visitantes reportan susurros y pasos en los pasillos vacíos del castillo. Atractivos: Castillo de Enrique II de Trastámara (Parador), catedral, murallas."
+      },
+      {
+        "codigo_ine": "40057",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La leyenda del \"noble sin cabeza\": Fernán Íñiguez de Coca, condenado por traición, vaga por sus pasillos de ladrillo. Se reportan fantasmas y secretos ocultos en sus gruesos muros. Atractivos: Castillo de Coca (siglo XV, gótico-mudéjar), propiedad de la Casa de Alba."
+      },
+      {
+        "codigo_ine": "40156",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Se dice que algunas noches se ven dos figuras espectrales vagando entre las murallas. La leyenda de Elvira y Roberto, amantes cuya historia terminó en tragedia, es la aparición más reportada; en noches de verano se ven sus sombras bajo una \"aureola de fuego\". Atractivos: Castillo de Pedraza (siglo XIII), casco medieval, museo de Zuloaga."
+      },
+      {
+        "codigo_ine": "34056",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Aunque el Parador moderno carece de la carga histórica de otros, la comarca montañesa palentina está llena de leyendas de ojáncanos y tradiciones celtas, y la zona es destino de retiros espirituales. Atractivos: Parador de Cervera de Pisuerga, Reserva Natural de Fuentes Carrionas."
+      },
+      {
+        "codigo_ine": "11032",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Castillo de Santiago ha sido investigado por equipos de parapsicología que han documentado fenómenos paranormales (psicofonías, imágenes y testimonios). Se realizan visitas especiales \"Fenomenología paranormal en el Castillo de Santiago\" donde se proyectan los audios e imágenes captados. Atractivos: Castillo de Santiago (siglo XV), palacios, entrada al Parque de Doñana."
+      },
+      {
+        "codigo_ine": "29084",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Free tour específico de \"Leyendas y Misterios de Ronda\" que recorre la Casa Encantada Rúa (espíritu de una niña asesinada que busca venganza), la calle de la Bola, la Casa del 98, la Capilla de los Ajusticiados y la Sauceda. Atractivos: Casa Rúa (Villa Apolo), calle de la Bola, Casa del 98, Capilla de los Ajusticiados, Puente Árabe, La Sauceda, Plaza de la Merced."
+      },
+      {
+        "codigo_ine": "32002",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Apariciones, ritos prohibidos, crímenes y romances en leyendas no contadas. El Torcal de Antequera tiene un halo de misterio ancestral. La Peña de los Enamorados guarda la leyenda de Tagzona y Tello (los amantes que se lanzaron al vacío). El Dolmen de Menga, 1.000 años más antiguo que Stonehenge, orienta su eje hacia la Peña, enigma arqueológico sin resolver. Atractivos: Dólmenes de Menga y Viera, El Torcal, Peña de los Enamorados, Colegiata de Santa María, casco histórico."
+      },
+      {
+        "codigo_ine": "41024",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Analizada en el podcast \"El Archivo del Misterio\" por sus extrañas psicofonías. La Necrópolis romana, con tumbas tan impresionantes como la Tumba del Elefante y la de Servilia, es un foco de actividad paranormal documentada. En 2019 apareció un mausoleo romano en el patio de una vivienda particular. Atractivos: Necrópolis romana, Anfiteatro, Alcázar de la Puerta de Sevilla."
+      },
+      {
+        "codigo_ine": "16009",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El primer \"ghost tour\" sobre Cádiz paranormal recoge apariciones en la calle Mesón y el terrible suceso de 1755. Existe el enigma de la \"niña\" y la investigación de la calle Valcárcel, donde se sucedieron hechos luctuosos que propiciaron fenómenos insólitos. Atractivos: Castillo de Santa Catalina, casco histórico, calle Mesón."
+      },
+      {
+        "codigo_ine": "06023",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Visitado por Iker Jiménez en busca de sucesos paranormales. Los vecinos mayores recuerdan la aparición de un fantasma en los tejados del castillo zafrense en varias ocasiones a lo largo de los años. Atractivos: Castillo-Palacio de los Duques de Feria (Parador, siglo XII), casco histórico."
+      },
+      {
+        "codigo_ine": "46109",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los lugares embrujados más famosos de la Comunidad Valenciana. Se han grabado múltiples psicofonías; los investigadores reportan lamentos de niños, rituales, pentagramas y un estruendo impresionante captado al poner un micrófono en el suelo. Investigado por Más Vale Sábado. Atractivos: Psiquiátrico abandonado \"La Humanitat\" (construido 1960-1980, cerrado en 2000)."
+      },
+      {
+        "codigo_ine": "39040",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Considerada \"la isla más paranormal de España\". Lugar de aislamiento que acumula psicofonías aterradoras, sombras que se mueven entre las ruinas y el espectro de una misteriosa anciana con bata blanca. Numerosos investigadores han documentado actividad. Atractivos: Antiguo sanatorio infantil de tuberculosis (isla en la bahía de Santander)."
+      },
+      {
+        "codigo_ine": "39038",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Tres presencias documentadas: Margarita de Eguilior (de 29 años, que toca el piano y pasea por las escaleras), su hija, y Antonio (antiguo sirviente). Predilección por la habitación 205. Se han obtenido fotografías con el rostro del Conde de Albox y de \"Rosita\" sosteniendo un bebé. Atractivos: Parador de Limpias (palacete modernista de principios del siglo XX), Castañar."
+      },
+      {
+        "codigo_ine": "21011",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Castillo de San Telmo es uno de los relatos de fantasmas más conocidos de Gipuzkoa. El Parador acumula testimonios de presencias en sus muros con heridas de bala de cañón. Atractivos: Parador de Hondarribia (Castillo de Carlos V, s. X), Plaza de Armas, Castillo de San Telmo."
+      },
+      {
+        "codigo_ine": "90689",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Leyenda de la princesa mora cautiva que esperó en vano a su caballero y murió prisionera. Su espíritu vaga por los pasillos. El castillo tiene vínculos esotéricos documentados. Atractivos: Castillo de Butrón (siglo XIII, estética de cuento de hadas)."
+      },
+      {
+        "codigo_ine": "48041",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Ligado a Eugenia de Montijo (emperatriz de Francia). Existe una \"leyenda negra\" que envuelve al castillo, frecuentado por amantes de lo esotérico. Atractivos: Castillo de Arteaga (siglo XIII, neogótico), Reserva de la Biosfera de Urdaibai."
+      },
+      {
+        "codigo_ine": "05006",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El monasterio alberga restos arqueológicos de la estructura original y siglos de historia benedictina. Es uno de los Paradores con más testimonios de presencias. Atractivos: Parador de Corias (Monasterio de San Juan Bautista, siglo XI, \"El Escorial de Asturias\"), biblioteca monumental."
+      },
+      {
+        "codigo_ine": "05005",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Leyenda de Don Pelayo, que murió enfrentándose a un oso en estos bosques. Los huéspedes reportan hojas que se mueven \"por un viento que no existe\" y la leyenda del oso. Atractivos: Parador de Cangas de Onís (monasterio de San Pedro de Villanueva, siglo VIII), puentes, Covadonga."
+      },
+      {
+        "codigo_ine": "36002",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Torre del Príncipe inspiró a Alejandro Dumas para El hombre de la máscara de hierro. Leyendas de amantes prohibidos encerrados, del príncipe portugués Alfonso Enríquez y del Conde de Gondomar. Atractivos: Parador de Baiona (Castillo de Monterreal, fortaleza de 3 km de perímetro amurallado), Torre del Príncipe."
+      },
+      {
+        "codigo_ine": "15078",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Parador, antiguo hospital de peregrinos, acumula leyendas de peregrinos fallecidos, apariciones marianas y meigas. Conxo, hospital psiquiátrico desde 1885 con más de 1.200 pacientes en condiciones deplorables, icono del turismo oscuro gallego. Atractivos: Hostal de los Reyes Católicos (Parador, s. XV), Catedral, casco viejo, Hospital Psiquiátrico de Conxo."
+      },
+      {
+        "codigo_ine": "22117",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El actual propietario asegura que el fantasma de la primera propietaria de la casa ronda las estancias, especialmente en determinadas fechas. La casa tiene capilla privada y mobiliario antiguo intacto. Atractivos: Casa Bardaxí (Plaza Mayor, siglo XVII), casco histórico ribagorzano."
+      },
+      {
+        "codigo_ine": "26138",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El milagro del gallo y la gallina: un joven peregrino alemán, Hugonell, fue injustamente ahorcado y, cuando sus padres fueron a buscarlo, este seguía vivo milagrosamente mientras un gallo asado cantaba. Es Bien de Interés Cultural inmaterial y uno de los misterios más famosos del Camino. Atractivos: Catedral,朝圣之路, mesón tradicional."
+      },
+      {
+        "codigo_ine": "18151",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La tradición oral alpujarreña conserva leyendas de brujería heredadas de la repoblación con gallegos (que trajeron el culto a las meigas), rituales de fertilidad y apariciones en los barrancos. Atractivos: Barranco del Poqueira, pueblos blancos de la Alpujarra."
+      },
+      {
+        "codigo_ine": "18157",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La \"Vieja del Blanqueo\" forma parte de la tradición oral del municipio, vinculada a la antigua fábrica de blanqueo de papel (dirigida por Berta Wilhelmi) y al patrimonio industrial abandonado de la zona. Las ruinas de la fábrica y los paseos de la central eléctrica (incluidos en rutas como \"Los Misterios de Pinos Genil\" de Secretos de Granada) generan relatos de presencias y ecos del pasado industrial. La documentación escrita sobre la aparición es escasa, por lo que se mantiene como leyenda oral local. Atractivos: Antigua Fábrica del Blanqueo de papel (s. XIX, hoy Centro CREA), Fábrica de la Luz, Presa de Pinillos, Pantano de Canales, Centro de Interpretación del Tranvía de la Sierra."
+      },
+      {
+        "codigo_ine": "90429",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Lugar del fusilamiento de Federico García Lorca (agosto 1936). La Fuente Grande, manantial árabe que abastecía la Alhambra, es uno de los últimos reductos musulmanes en capitular (1491). El entorno está cargado de la energía del Barranco de Víznar y de la \"no-muerte\" de Lorca (leyenda del panadero que lo encontró malherido). Atractivos: Fuente Grande o de las Lágrimas (Aynadamar), Parque Federico García Lorca, Sierra de la Alfaguara."
+      },
+      {
+        "codigo_ine": "18189",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Más de 6.500 personas enterradas en fosas comunes en el barranco. Las exhumaciones continúan. Es uno de los escenarios de turismo oscuro más simbólicos de España. Atractivos: Palacio del Cuzco (sede de la represión en 1936), Barranco de Víznar (Lugar de Memoria)."
+      },
+      {
+        "codigo_ine": "29094",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El hombre sin rostro de la Casa Cervantes. Testigos han visto una figura etérea masculina sin rostro que vaga y desaparece. La historia trágica: hace más de 200 años un hombre cayó al pozo del patio, murió ahogado y su rostro quedó tan deformado que lo taparon con una sábana. También se reportan avistamientos OVNI y procesos de la Inquisición. Atractivos: Casa de Cervantes (s. XVI), barrio de La Villa, Palacio de Beniel."
+      },
+      {
+        "codigo_ine": "23055",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Trompetas del Apocalipsis y caso de ouija con intervención de la Policía Nacional. Dos mujeres y una menor se comunicaron con el espíritu de un niño llamado Agustín (patrón de la ciudad); cuadros y radiadores se movían solos. La situación fue tan alarmante que requirió la intervención policial. Atractivos: Casco histórico minero, Castillo de Tobaruela, plaza de Toros."
+      },
+      {
+        "codigo_ine": "24006",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Maldición del callejón de las Brujas. María Santiago Rabadán, juzgada por hechicería en un Auto de Fe en 1655. Investigado por Manuel Jesús Segado Uceda. Atractivos: Casco histórico, callejón de las Brujas, restos romanos."
+      },
+      {
+        "codigo_ine": "23092",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Leyenda del Señor de las Cadenas, la Dama de la Capa y el origen de la expresión \"irse por los cerros de Úbeda\". La Puerta de Granada oculta un tesoro medieval junto a la muralla árabe. La Casa de los Salvajes acumula relatos inquietantes. Atractivos: Casco renacentista (Patrimonio UNESCO), Capilla del Salvador, Casa de los Salvajes, Plazuela, Sinagoga del Agua, Puerta de Granada."
+      },
+      {
+        "codigo_ine": "23029",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Pueblos del norte de Jaén unidos por una historia de magia y misterio, exvotos íberos y poemas de Jorge Manrique. Atractivos: Cueva de la Lobera, santuario ibérico de los Altos del Sotillo, puente romano sobre el Guadalimar."
+      },
+      {
+        "codigo_ine": "10049",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Dama Blanca que aparece sentada en noches de tormenta en la carretera Casar de Cáceres-Arroyo de la Luz. Es una de las apariciones en cunetas extremeñas más conocidas. Atractivos: Carreteras comarcales de Extremadura."
+      },
+      {
+        "codigo_ine": "10123",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El hombre alto vestido de negro que continúa suicidándose en la curva de Mirabel. Una de las apariciones de carretera más escalofriantes de Extremadura. Atractivos: Carretera de la curva de Mirabel."
+      },
+      {
+        "codigo_ine": "10121",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La dama de rojo de Miajadas, aparición en cuneta. Atractivos: Cruce de carreteras en la Serena."
+      },
+      {
+        "codigo_ine": "10140",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La niña vestida de comunión que se acerca a los coches en la carretera de Peraleda de la Mata. Atractivos: Carretera local junto al embalse de Orellana."
+      },
+      {
+        "codigo_ine": "10127",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La joven de la recta de la carretera Montehermoso-Pozuelo de Zarzón. Atractivos: Carretera de la Sierra de Gata."
+      },
+      {
+        "codigo_ine": "42174",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El misterio del reloj maldito y el pueblo poseído por el diablo. Un extraño suceso con el reloj del pueblo desencadenó una serie de muertes misteriosas. Inspiró el libro \"La rebelión de Lucifer\" de J.J. Benítez. Recogido por el programa Palacios y Castillos con Misterio de CyLTV. Atractivos: Iglesia, torre del reloj del pueblo, Sierra de Albarracín."
+      },
+      {
+        "codigo_ine": "02047",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El fantasma de Masegoso. El pueblo, rico y floreciente, desapareció tras el odio irreconciliable entre dos poderosas familias (Julián Alvarez y Andrés Orozco). Leyenda de desaparición misteriosa de un pueblo entero. Atractivos: Torre de Masegoso, paisaje serrano."
+      },
+      {
+        "codigo_ine": "37006",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La antigua Bletisa romana acumula leyendas medievales entre sus calles y murallas, en una de las zonas más mágicas de la provincia. Atractivos: Conjunto Histórico-Artístico, castillo, ribera del Tormes, Arribes."
+      },
+      {
+        "codigo_ine": "37001",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Pueblo de montaña con tradiciones y leyendas ancestrales, en una de las sierras más mágicas de Salamanca. Atractivos: Sierra de Candelario, arquitectura tradicional."
+      },
+      {
+        "codigo_ine": "37005",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Pueblo mágico por excelencia de Las Batuecas, con tradiciones seculares, leyendas de brujería serrana y ermitas rupestres en el valle. Atractivos: Primer pueblo declarado Conjunto Histórico-Artístico de España, plaza mayor, iglesia."
+      },
+      {
+        "codigo_ine": "49166",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Cabecera de la comarca de Sanabria, tierra de meigas, conjuros, mal de ojo y el \"llobu\". Cerca del Lago de Sanabria con su leyenda de Valverde de Lucerna (pueblo sumergido cuyas campanas suenan la noche de San Juan). Atractivos: Villa medieval amurallada, castillo de los Condes de Benavente, río Tera."
+      },
+      {
+        "codigo_ine": "49065",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Cuenta con ruta nocturna oficial \"Mitos y Leyendas\" organizada por el Ayuntamiento, que recorre los secretos que esconde la villa cuando cae la noche. Atractivos: Villa medieval, Arribes del Duero, bodegas subterráneas."
+      },
+      {
+        "codigo_ine": "49219",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El misterio de la Calle Balborraz: un capitán musulmán que quería destruir la ciudad, una ejecución y una historia de amor. Se cruza con la leyenda de la \"Cabeza de Piedra\" de la Catedral. Atractivos: Colegiata, cimborrio, casco histórico, ribera del Duero."
+      },
+      {
+        "codigo_ine": "49275",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Acoge las Jornadas de Misterio y acumula leyendas como la más oscura de la provincia. La Catedral y la iglesia de San Pedro y San Ildefonso concentran relatos de apariciones. Atractivos: Catedral, conjunto románico, puente sobre el Duero, iglesias."
+      },
+      {
+        "codigo_ine": "09011",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El misterio del fauno burgalés: en el Jardín Secreto se esconde la escultura de un fauno petrificado por una maldición, guardian de los seres mágicos del bosque. Entrada libre. Atractivos: Monasterio de San Salvador, Jardín Secreto, Casa del Parque Montes Obarenes."
+      },
+      {
+        "codigo_ine": "09007",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Una de las ciudades más pequeñas de España, con un castillo que acumula leyendas desde el siglo X. Atractivos: Ciudad colgante sobre La Muela, castillo del siglo X, iglesia fortificada de San Vicente."
+      },
+      {
+        "codigo_ine": "09014",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Una de las Raíces de Castilla, con un patrimonio cargado de historia y leyendas en el norte de Burgos. Atractivos: Salinas romanas, pueblo natal de Félix Rodríguez de la Fuente."
+      },
+      {
+        "codigo_ine": "09008",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Villa ducal con un pasado cargado de intrigas palaciegas y leyendas entre sus conventos. Atractivos: Ducado de Lerma, conventos, plaza mayor."
+      },
+      {
+        "codigo_ine": "09005",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Una de las Raíces de Castilla, con un casco histórico que guarda leyendas desde los orígenes del condado. Atractivos: Colegiata, casco medieval, origen de Castilla."
+      },
+      {
+        "codigo_ine": "47085",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Dama de la Mota y la maldición del castillo. La reina Isabel lo utilizó como residencia y prisión política; varios personajes fueron ejecutados por mandato real entre sus muros. Es uno de los castillos más temidos de Castilla. Atractivos: Castillo de la Mota (siglo XIII), casco histórico, Plaza Mayor."
+      },
+      {
+        "codigo_ine": "90805",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los municipios palentinos que más misterios alberga: se habla de energías milenarias, una sociedad intraterrestre y avistamiento de objetos luminosos no identificados en el cielo. Considerado \"lugar de poder\". Atractivos: Casco urbano, entorno natural."
+      },
+      {
+        "codigo_ine": "34199",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La leyenda dice que Plinio el Viejo mencionó estas fuentes. La zona está cargada de historia y tradiciones ancestrales. Atractivos: Fuentes romanas de La Reana (más de 2000 años), embalse de Camporredondo."
+      },
+      {
+        "codigo_ine": "34120",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Ruta \"Palencia Misteriosa\" de Rutas Misteriosas: episodios paranormales en la Catedral, la Diputación y el antiguo orfanato de Huérfanos Ferroviarios. Viejas leyendas de crímenes sin resolver, desapariciones y el Cristo que desvía los rayos en las tormentas. Atractivos: Catedral de San Antolín (\"La Bella Desconocida\"), Cristo del Buen Suceso, calle Mayor."
+      },
+      {
+        "codigo_ine": "14001",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Peñasco estratégico con un casco histórico cargado de leyendas medievales, en uno de los pueblos más singulares de la provincia de Cuenca. Atractivos: Villa medieval amurallada sobre un meandro del Júcar, castillo, iglesia fortificada."
+      },
+      {
+        "codigo_ine": "16112",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Antigua ciudad romana y medieval, con un patrimonio cargado de leyendas y tradiciones. Atractivos: Conjunto histórico, cuatro museos (Arte Sacro, Fragua, Etnográfico, Florencio de la Fuente)."
+      },
+      {
+        "codigo_ine": "16170",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos más bonitos de la provincia, en un paraje natural escénico que acumula tradiciones y leyendas. Atractivos: Estrecho de Priego (hoz del río Escabas), casco histórico de la Alcarria conquense."
+      },
+      {
+        "codigo_ine": "19212",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "En el corazón de la Alcarria, Pastrana ofrece \"historia, conventos y leyendas\" del Siglo de Oro, con la figura maldita de la princesa de Éboli. Atractivos: Palacio de la princesa de Éboli, conventos de Carmelitas, plaza Mayor."
+      },
+      {
+        "codigo_ine": "19044",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Villa medieval con un patrimonio cargado de leyendas de caballeros y tradiciones ancestrales. Atractivos: Castillo, casco medieval, Caballeros de Atienza."
+      },
+      {
+        "codigo_ine": "19190",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Enclave brujeril documentado. Las brujas de Molina se trasladaban hipotéticamente hasta Gallocanta (Zaragoza) para un aquelarre. Una tal Águeda, del siglo XVI, declaró que su abuela había sido bruja y se reunía en Gallocanta. Atractivos: Castillo, Señorío de Molina, casco histórico."
+      },
+      {
+        "codigo_ine": "19211",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Objeto del libro \"Alcarria bruja. Historia de la hechicería en Guadalajara y los procesos de la villa de Pareja\", de Javier Fernández Ortea. Procesos de brujería documentados. Atractivos: Casco urbano de la Alcarria, embalse de Entrepeñas."
+      },
+      {
+        "codigo_ine": "45165",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Acumula leyendas y tradiciones populares de la provincia de Toledo, con un sustrato de misterios recogidos por José Talavera. Atractivos: Casco histórico, cerámica, río Tajo, murallas."
+      },
+      {
+        "codigo_ine": "45125",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Villa medieval con un castillo que acumula leyendas de nobles y tradiciones, en una de las zonas más mágicas de la provincia de Toledo. Atractivos: Castillo-palacio de los Condes de Oropesa, parador, casco histórico."
+      },
+      {
+        "codigo_ine": "45200",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Zona conocida por las leyendas de los monjes sobrenaturales, recogidas en el libro de mitos y leyendas de Castilla-La Mancha. Atractivos: Puerto de los Yébenos, Montes de Toledo."
+      },
+      {
+        "codigo_ine": "90825",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Las minas de Almadén son escenario de la leyenda del Morgo, duende minero que extrae minerales bajo tierra. Tradiciones de brujería y apariciones en una de las comarcas más enigmáticas de CLM. Atractivos: Minas de mercurio (Patrimonio UNESCO), hospital de mineros, plaza de toros."
+      },
+      {
+        "codigo_ine": "13013",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Cuenta con leyendas de fantasmas locales, recogidas en rutas y tradiciones orales. Atractivos: Casco histórico, museos mineros."
+      },
+      {
+        "codigo_ine": "13018",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La mano negra, el morgo y los fantasmas de Valdepeñas son algunos de sus mitos y leyendas más conocidos. Atractivos: Bodegas, plaza Mayor, museo del vino."
+      },
+      {
+        "codigo_ine": "02030",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos con castillo más impresionantes de Albacete, con historia y leyendas de la Sierra del Segura. Atractivos: Castillo de Yeste, Sierra del Segura, casco histórico."
+      },
+      {
+        "codigo_ine": "02005",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Una de las fortalezas más impresionantes de Albacete, con historia y leyendas asociadas a la famosa batalla. Atractivos: Castillo de Almansa (siglo XIV), casco histórico."
+      },
+      {
+        "codigo_ine": "02004",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos más bonitos de Albacete, con historia medieval y leyendas. Atractivos: Plaza Mayor, torres del Salvador y de la Alcadima, casco histórico."
+      },
+      {
+        "codigo_ine": "50117",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Centro de aquelarres de toda Aragón. Las brujas de la zona se reunían en la laguna, con leyendas de hechicería que recorren la zona desde hace siglos. Las brujas de Molina de Aragón se desplazaban hasta aquí. Atractivos: Laguna de Gallocanta (mayor laguna salada de Europa), observatorio de grullas."
+      },
+      {
+        "codigo_ine": "44158",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Comparte nombre con Rubielos de Mora por una leyenda de amor que explica por qué ambos pueblos tienen el mismo nombre invertido. Atractivos: Castillo de Mora, casco histórico, Sierra de Gúdar."
+      },
+      {
+        "codigo_ine": "44201",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La otra mitad de la leyenda de amor que da nombre a ambos pueblos. calles empedradas y un pasado medieval cargado de historia. Atractivos: Casco histórico medieval, uno de los más bonitos de Teruel."
+      },
+      {
+        "codigo_ine": "22028",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Pueblo del Pirineo con chimeneas de brujas y tradiciones mágicas, en un entorno de naturaleza salvaje donde prosperan las leyendas. Atractivos: Parque Natural de los Valles Occidentales, arquitectura pirenaica, traje tradicional ansoano."
+      },
+      {
+        "codigo_ine": "31105",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Cueva de la Mora de Fitero, lugar mágico que cautivó al mismísimo Gustavo Adolfo Bécquer. Es una de las rutas con leyenda más señaladas de Navarra. Atractivos: Monasterio de Fitero, balnearios, ribera del Alhama."
+      },
+      {
+        "codigo_ine": "10082",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos más misteriosos de Extremadura: duendes, diablos, brujas, monaguillos muertos, pasadizos secretos, sirenas malditas, princesas encantadas, tesoros ocultos y caníbales. La Sirena de Garrovillas y las brujas (entre ellas La Macharra) que salen los sábados por las chimeneas montadas en escobas. La \"Ventana del Diablo\" de la iglesia de San Pedro. Atractivos: Plaza medieval porticada, iglesia de San Pedro (Ventana del Diablo), puente romano de Alconétar."
+      },
+      {
+        "codigo_ine": "10195",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Villa monumental con un casco histórico que acumula leyendas desde la Reconquista, en una de las zonas más mágicas de Extremadura. Atractivos: Plaza Mayor, castillo, casco histórico, cuna de Pizarro."
+      },
+      {
+        "codigo_ine": "10148",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Ciudad medieval con un casco histórico cargado de leyendas y tradiciones. Atractivos: Catedral (dos catedrales en una), murallas, palacios."
+      },
+      {
+        "codigo_ine": "90838",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Aquelarre anual teatralizado basado en los archivos inquisitoriales. Las brujas La Corbacha y La Candelera, famosas en los autos de fe de la Inquisición. Atractivos: Casco histórico, sierra, tradiciones inquisitoriales."
+      },
+      {
+        "codigo_ine": "06014",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Una de las ciudades templarias del sur de Badajoz, con tradiciones y leyendas medievales. Atractivos: Ciudad templaria, iglesias, casco histórico."
+      },
+      {
+        "codigo_ine": "06010",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Ciudad templaria con un castillo del siglo XVI y tradiciones de misterio, además de un enclave de astroturismo. Atractivos: Castillo, astroturismo (Entre Encinas y Estrellas), casco histórico."
+      },
+      {
+        "codigo_ine": "06015",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Pueblo señorial con un pasado ligado a la Inquisición, que acumula tradiciones y leyendas. Atractivos: Casco histórico, tribunal de la Inquisición, plaza Mayor."
+      },
+      {
+        "codigo_ine": "14049",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La dama fantasmal de Santa Clara. Los vecinos hablan de una figura blanca femenina que se pasea entre lamentos en el convento. El origen sería un macabro suceso de finales del siglo XV, recogido por el cronista fray Andrés de Guadalupe. Atractivos: Convento de Santa Clara (hoy hospedería), palacio de Portocarrero, casco histórico."
+      },
+      {
+        "codigo_ine": "14075",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos blancos más bonitos de Córdoba, con un castillo colgado sobre la sierra que acumula leyendas. Atractivos: Castillo, cueva de los Murciélagos, pueblo blanco de la Subbética."
+      },
+      {
+        "codigo_ine": "14055",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Hogar de relatos misteriosos y tradiciones que han capturado la imaginación de sus habitantes. Atractivos: Barrio de la Villa, Fuente del Rey, casco histórico barroco."
+      },
+      {
+        "codigo_ine": "41068",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los municipios sevillanos con más historia y tradiciones, recogidas por National Geographic. Atractivos: Universidad, colegiata, ducado, casco histórico."
+      },
+      {
+        "codigo_ine": "41039",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Municipio sevillano con tradiciones únicas y un \"estilo ecijano\" cargado de leyendas. Atractivos: Ciudad del barroco, torres, casco histórico."
+      },
+      {
+        "codigo_ine": "41095",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Municipio sevillano con imaginería antigua y tradiciones únicas que acumulan leyendas. Atractivos: Casco histórico, castillo, tradiciones."
+      },
+      {
+        "codigo_ine": "41036",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La estación encantada de El Coronil, epicentro de fenómenos paranormales en la campiña sevillana. Voces extrañas, sombras que cruzan de una habitación a otra y esferas luminosas en medio de la noche. Recogido por ABC Sevilla. Atractivos: Antigua estación de tren abandonada, casco urbano."
+      },
+      {
+        "codigo_ine": "23028",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Cortijo de las Ánimas, pueblo fantasma engullido por la presa del pantano del Tranco. La leyenda cuenta que José Requena Carmona tuvo un encuentro con el mismísimo Satanás. Atractivos: Parque Natural de Cazorla, Segura y Las Villas, castillo, casco histórico."
+      },
+      {
+        "codigo_ine": "18089",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Ciudad con un barrio troglodita y un pasado árabe que acumula leyendas de brujería y apariciones. Atractivos: Barrio de las cuevas, catedral, Alcazaba."
+      },
+      {
+        "codigo_ine": "19001",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Enclave con poderes curativos desde época romana y árabe, en un paraje de tajos impresionantes que acumulan tradiciones y leyendas. Atractivos: Tajos, baños árabes, parque natural de Tejeda, Almijara y Alhama."
+      },
+      {
+        "codigo_ine": "18135",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos más bonitos de Granada, con un pasado nazarí cargado de leyendas. Atractivos: Peña de los Gitanos, iglesia circular, Sierra de Parapanda."
+      },
+      {
+        "codigo_ine": "11023",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "\"Pura historia de Cádiz\", fundado por fenicios. Acumula leyendas de brujería y apariciones arraigadas en la cultura popular de la región. Atractivos: Casco histórico fenicio-romano-árabe, castillo, ducado."
+      },
+      {
+        "codigo_ine": "11039",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Municipio cargado de leyendas, con cuaderno de campo \"Historias y Leyendas\" editado por su turismo. Atractivos: Pueblo blanco amurallado, vistas al Atlántico, casco histórico."
+      },
+      {
+        "codigo_ine": "11035",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Historia heroica de Tarifa y leyendas medievales, con un pasado estratégico cargado de tradiciones. Atractivos: Casco histórico, castillo de Guzmán el Bueno, playas, puntal más al sur de Europa."
+      },
+      {
+        "codigo_ine": "04017",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Historia milenaria desde la prehistoria, con huella de fenicios, íberos, cartagineses, romanos y árabes que dejaron vestigios y leyendas. Atractivos: Casco histórico, Parque Natural de Cabo de Gata-Níjar, playas."
+      },
+      {
+        "codigo_ine": "90859",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La Dama Rosa, fantasma de una mujer que murió dando a luz a su hijo en el sanatorio. Sus llantos se escuchan entre las instalaciones abandonadas, que atendieron a casi 3.000 personas. Atractivos: Sanatorio San Francisco de Borja de Fontilles (1909), pueblo-sanatorio para enfermos de lepra."
+      },
+      {
+        "codigo_ine": "03002",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El \"crimen de les Mananes\" (1915), tema tabú en Alcoy. Tres curanderas/hechiceras/brujas (dos hermanas y una cuñada) con supuestos poderes sobrenaturales se relacionaron con la desaparición y hallazgo del cuerpo de un niño en una acequia. Atractivos: Casco histórico, parques naturales, industria textil."
+      },
+      {
+        "codigo_ine": "03040",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Acumula mitos, leyendas y tradiciones como las Voces del Pasado, en una de las zonas más mágicas de Alicante. Atractivos: Castillo de Atalaya, Tesoro de Villena, casco histórico."
+      },
+      {
+        "codigo_ine": "45017",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Túneles secretos bajo el Castillo de Xàtiva, donde el misterio y la historia se entrelazan. Leyendas de los papas Borgia y curiosidades enigmáticas del Hotel Montsant. Atractivos: Castillo, casco histórico, cuna de los papas Borgia, Hotel Montsant."
+      },
+      {
+        "codigo_ine": "46182",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Leyenda cidiana: el castillo se conquistó de noche con un rebaño de cabras con velas encendidas en los cuernos, que hicieron creer a los musulmanes que un gran ejército les atacaba. Atractivos: Castillo de Olocau, Sierra Calderona."
+      },
+      {
+        "codigo_ine": "12128",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos más bonitos de Castellón, con magia de piedra y un pasado medieval cargado de leyendas. Atractivos: Casco medieval, museo de arte contemporáneo, castillo."
+      },
+      {
+        "codigo_ine": "12051",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Considerado el \"último pueblo templario de España\", con un pasado cargado de misterio y tradiciones medievales. Atractivos: Casco medieval templario, restos del castillo."
+      },
+      {
+        "codigo_ine": "43118",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Pueblo con calles dedicadas a las brujas. Leyenda del Dip, criatura misteriosa, y de los perros diabólicos que atacaban a los vecinos. Ruta oficial del Dip. Atractivos: Casco antiguo medieval, sierra de Llaberia, calles con nombres de brujas."
+      },
+      {
+        "codigo_ine": "25059",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Leyenda de las siete ermitas (seis más la iglesia) que debían construirse para proteger al pueblo de la peste, tras el encuentro de un pastor con un monje ermitaño. Atractivos: Iglesia de la Asunción, casco urbano pirenaico, pirineos."
+      },
+      {
+        "codigo_ine": "18002",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los conjuntos medievales mejor conservados de Cataluña, con un barrio judío que acumula leyendas y un pasado cargado de historia. Atractivos: Puente medieval, judería (micvé), casco histórico."
+      },
+      {
+        "codigo_ine": "90889",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Villa medieval con un centro histórico que conserva el encanto del pasado, con leyendas y tradiciones. Atractivos: Basílica de Santa María, casco medieval, antigua capital del condado."
+      },
+      {
+        "codigo_ine": "28131",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "\"Octava Maravilla del Mundo\" y uno de los edificios más enigmáticos de España. Considerado \"una puerta al infierno que Felipe II se encargó de sellar\". Curaciones milagrosas, movimientos del Sol, estigmatizaciones y una leyenda local sobre una mina cuyas galerías llegaban al infierno. Atractivos: Monasterio de San Lorenzo de El Escorial (Patrimonio UNESCO), biblioteca, panteón de reyes, Casita del Príncipe."
+      },
+      {
+        "codigo_ine": "28027",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Pueblo medieval de cuento de la sierra de Madrid, con una muralla almenada y un centro urbano cargado de leyendas. Atractivos: Muralla árabe amurallada, castillo, río Lozoya, casco medieval."
+      },
+      {
+        "codigo_ine": "28052",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos medievales más bonitos de Madrid, con una plaza mayor única y tradiciones centenarias. Atractivos: Plaza Mayor medieval, convento de Clarisas, castillo."
+      },
+      {
+        "codigo_ine": "28082",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Castillo medieval de la sierra de Madrid que acumula leyendas de nobles y tradiciones. Atractivos: Castillo de los Mendoza (siglo XV), embalse de Santillana, Sierra de Guadarrama."
+      },
+      {
+        "codigo_ine": "39024",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Free tour oficial de \"Misterios y leyendas de Comillas\": milagros, sonidos escalofriantes y extrañas apariciones, historias transmitidas de generación en generación. Atractivos: Capricho de Gaudí, Palacio de Sobrellano, Universidad Pontificia, casco modernista."
+      },
+      {
+        "codigo_ine": "39067",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La leyenda de \"La Loba de Ruesga\". María Ruiz fue acusada de brujería y de la desaparición de niños, juzgada y condenada a la hoguera. Se dice que su espíritu sigue vagando por el pueblo y se le atribuyen fenómenos paranormales. Basada en un evento histórico real. Atractivos: Valle de Ruesga, cuevas, naturaleza."
+      },
+      {
+        "codigo_ine": "39080",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Pueblo con historias y leyendas recogidas en rutas oficiales. Atractivos: Casco histórico, castillo, iglesia, ría, puente."
+      },
+      {
+        "codigo_ine": "90013",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La xana de la cascada del Cioyo, una de las historias más tristes de las xanas asturianas. Atractivos: Ría del Eo, cascada del Cioyo, acantilados."
+      },
+      {
+        "codigo_ine": "33043",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Leyendas del diablo burlón, un personaje benigno que toma presencia humana o animal y disfruta riéndose de la gente. Recopiladas por Aurelio de Llano. Atractivos: Picos de Europa, Covadonga, Benia de Onís."
+      },
+      {
+        "codigo_ine": "36004",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Torre medieval defensiva contra vikingos, en una zona de tradiciones mágicas y meigas. Atractivos: Torre de San Sadurniño (siglo VIII, defensa contra vikingos), casco histórico, Rías Baixas."
+      },
+      {
+        "codigo_ine": "36005",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "El Bosque Encantado de Aldán, con restos de un minúsculo castillo inacabado con foso y almenas. Atractivos: Bosque Encantado de Aldán, castillo inacabado, rías."
+      },
+      {
+        "codigo_ine": "34002",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos más bonitos de Ourense, con un casco medieval cargado de leyendas. Atractivos: Casco histórico medieval, conjunto histórico-artístico, río Arnoya."
+      },
+      {
+        "codigo_ine": "34004",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "La capilla mozárabe de San Miguel, joya del año 937, guarda tradiciones y leyendas ancestrales en uno de los conjuntos más místicos de Galicia. Atractivos: Monasterio de San Salvador, iglesia de San Rosendo, capilla mozárabe de San Miguel (año 937)."
+      },
+      {
+        "codigo_ine": "32069",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Leyenda del puente construido por Santo Telmo (patrón de los marineros), que predicó ante una multitud y dividió las nubes en dos. Judería con tradiciones seculares. Atractivos: Casco medieval, judería, castillo, puente sobre el Miño."
+      },
+      {
+        "codigo_ine": "34003",
+        "tipo": "misterio",
+        "nombre": "Lugares de misterio y leyendas",
+        "descripcion": "Uno de los pueblos más bonitos de Ourense, con un castillo que acumula leyendas sobre el Sil y la Ribeira Sacra. Atractivos: Castillo, casco histórico, ribeira del Sil."
+      }
+    ],
+    "success": true,
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "WEUR",
+      "served_by_colo": "MAD",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 25.0169
+      },
+      "duration": 25.0169,
+      "changes": 0,
+      "last_row_id": 0,
+      "changed_db": false,
+      "size_after": 82157568,
+      "rows_read": 46199,
+      "rows_written": 0,
+      "total_attempts": 1
+    }
+  }
+]

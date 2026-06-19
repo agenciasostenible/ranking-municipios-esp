@@ -1,0 +1,1431 @@
+[
+  {
+    "results": [
+      {
+        "codigo_ine": "50265",
+        "categoria": "misterioso",
+        "puntuacion": 100,
+        "ranking_provincial": 1,
+        "ranking_nacional": 1
+      },
+      {
+        "codigo_ine": "31264",
+        "categoria": "misterioso",
+        "puntuacion": 100,
+        "ranking_provincial": 1,
+        "ranking_nacional": 2
+      },
+      {
+        "codigo_ine": "50045",
+        "categoria": "misterioso",
+        "puntuacion": 98,
+        "ranking_provincial": 2,
+        "ranking_nacional": 3
+      },
+      {
+        "codigo_ine": "24018",
+        "categoria": "misterioso",
+        "puntuacion": 98,
+        "ranking_provincial": 1,
+        "ranking_nacional": 4
+      },
+      {
+        "codigo_ine": "08009",
+        "categoria": "misterioso",
+        "puntuacion": 98,
+        "ranking_provincial": 1,
+        "ranking_nacional": 5
+      },
+      {
+        "codigo_ine": "39040",
+        "categoria": "misterioso",
+        "puntuacion": 95,
+        "ranking_provincial": 1,
+        "ranking_nacional": 6
+      },
+      {
+        "codigo_ine": "12080",
+        "categoria": "misterioso",
+        "puntuacion": 95,
+        "ranking_provincial": 1,
+        "ranking_nacional": 7
+      },
+      {
+        "codigo_ine": "38023",
+        "categoria": "misterioso",
+        "puntuacion": 95,
+        "ranking_provincial": 1,
+        "ranking_nacional": 8
+      },
+      {
+        "codigo_ine": "19257",
+        "categoria": "misterioso",
+        "puntuacion": 95,
+        "ranking_provincial": 1,
+        "ranking_nacional": 9
+      },
+      {
+        "codigo_ine": "45168",
+        "categoria": "misterioso",
+        "puntuacion": 95,
+        "ranking_provincial": 1,
+        "ranking_nacional": 10
+      },
+      {
+        "codigo_ine": "43169",
+        "categoria": "misterioso",
+        "puntuacion": 95,
+        "ranking_provincial": 1,
+        "ranking_nacional": 11
+      },
+      {
+        "codigo_ine": "46109",
+        "categoria": "misterioso",
+        "puntuacion": 92,
+        "ranking_provincial": 1,
+        "ranking_nacional": 12
+      },
+      {
+        "codigo_ine": "26010",
+        "categoria": "misterioso",
+        "puntuacion": 92,
+        "ranking_provincial": 1,
+        "ranking_nacional": 13
+      },
+      {
+        "codigo_ine": "28079",
+        "categoria": "misterioso",
+        "puntuacion": 92,
+        "ranking_provincial": 1,
+        "ranking_nacional": 14
+      },
+      {
+        "codigo_ine": "12141",
+        "categoria": "misterioso",
+        "puntuacion": 92,
+        "ranking_provincial": 2,
+        "ranking_nacional": 15
+      },
+      {
+        "codigo_ine": "90637",
+        "categoria": "misterioso",
+        "puntuacion": 90,
+        "ranking_provincial": 1,
+        "ranking_nacional": 16
+      },
+      {
+        "codigo_ine": "13002",
+        "categoria": "misterioso",
+        "puntuacion": 90,
+        "ranking_provincial": 1,
+        "ranking_nacional": 17
+      },
+      {
+        "codigo_ine": "27030",
+        "categoria": "misterioso",
+        "puntuacion": 90,
+        "ranking_provincial": 1,
+        "ranking_nacional": 18
+      },
+      {
+        "codigo_ine": "18176",
+        "categoria": "misterioso",
+        "puntuacion": 90,
+        "ranking_provincial": 1,
+        "ranking_nacional": 19
+      },
+      {
+        "codigo_ine": "16033",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 20
+      },
+      {
+        "codigo_ine": "10037",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 21
+      },
+      {
+        "codigo_ine": "22149",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 22
+      },
+      {
+        "codigo_ine": "37011",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 23
+      },
+      {
+        "codigo_ine": "28131",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 2,
+        "ranking_nacional": 24
+      },
+      {
+        "codigo_ine": "11032",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 25
+      },
+      {
+        "codigo_ine": "15078",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 26
+      },
+      {
+        "codigo_ine": "41091",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 27
+      },
+      {
+        "codigo_ine": "35027",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 28
+      },
+      {
+        "codigo_ine": "29094",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 29
+      },
+      {
+        "codigo_ine": "90859",
+        "categoria": "misterioso",
+        "puntuacion": 88,
+        "ranking_provincial": 1,
+        "ranking_nacional": 30
+      },
+      {
+        "codigo_ine": "43001",
+        "categoria": "misterioso",
+        "puntuacion": 86,
+        "ranking_provincial": 1,
+        "ranking_nacional": 31
+      },
+      {
+        "codigo_ine": "30015",
+        "categoria": "misterioso",
+        "puntuacion": 86,
+        "ranking_provincial": 1,
+        "ranking_nacional": 32
+      },
+      {
+        "codigo_ine": "03002",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 33
+      },
+      {
+        "codigo_ine": "90429",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 34
+      },
+      {
+        "codigo_ine": "32002",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 35
+      },
+      {
+        "codigo_ine": "36002",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 1,
+        "ranking_nacional": 36
+      },
+      {
+        "codigo_ine": "41024",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 37
+      },
+      {
+        "codigo_ine": "14021",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 1,
+        "ranking_nacional": 38
+      },
+      {
+        "codigo_ine": "50117",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 3,
+        "ranking_nacional": 39
+      },
+      {
+        "codigo_ine": "10082",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 40
+      },
+      {
+        "codigo_ine": "44127",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 41
+      },
+      {
+        "codigo_ine": "31135",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 42
+      },
+      {
+        "codigo_ine": "39038",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 43
+      },
+      {
+        "codigo_ine": "01014",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 44
+      },
+      {
+        "codigo_ine": "33013",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 3,
+        "ranking_nacional": 45
+      },
+      {
+        "codigo_ine": "24115",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 46
+      },
+      {
+        "codigo_ine": "42164",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 1,
+        "ranking_nacional": 47
+      },
+      {
+        "codigo_ine": "42174",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 48
+      },
+      {
+        "codigo_ine": "43155",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 2,
+        "ranking_nacional": 49
+      },
+      {
+        "codigo_ine": "15089",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 3,
+        "ranking_nacional": 50
+      },
+      {
+        "codigo_ine": "17220",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 1,
+        "ranking_nacional": 51
+      },
+      {
+        "codigo_ine": "06023",
+        "categoria": "misterioso",
+        "puntuacion": 85,
+        "ranking_provincial": 1,
+        "ranking_nacional": 52
+      },
+      {
+        "codigo_ine": "09091",
+        "categoria": "misterioso",
+        "puntuacion": 84,
+        "ranking_provincial": 1,
+        "ranking_nacional": 53
+      },
+      {
+        "codigo_ine": "08003",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 2,
+        "ranking_nacional": 54
+      },
+      {
+        "codigo_ine": "19053",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 2,
+        "ranking_nacional": 55
+      },
+      {
+        "codigo_ine": "42046",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 3,
+        "ranking_nacional": 56
+      },
+      {
+        "codigo_ine": "41036",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 3,
+        "ranking_nacional": 57
+      },
+      {
+        "codigo_ine": "21011",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 1,
+        "ranking_nacional": 58
+      },
+      {
+        "codigo_ine": "47085",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 1,
+        "ranking_nacional": 59
+      },
+      {
+        "codigo_ine": "19190",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 3,
+        "ranking_nacional": 60
+      },
+      {
+        "codigo_ine": "14049",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 2,
+        "ranking_nacional": 61
+      },
+      {
+        "codigo_ine": "40156",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 1,
+        "ranking_nacional": 62
+      },
+      {
+        "codigo_ine": "18157",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 3,
+        "ranking_nacional": 63
+      },
+      {
+        "codigo_ine": "49166",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 1,
+        "ranking_nacional": 64
+      },
+      {
+        "codigo_ine": "29084",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 3,
+        "ranking_nacional": 65
+      },
+      {
+        "codigo_ine": "08212",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 3,
+        "ranking_nacional": 66
+      },
+      {
+        "codigo_ine": "39076",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 3,
+        "ranking_nacional": 67
+      },
+      {
+        "codigo_ine": "18189",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 4,
+        "ranking_nacional": 68
+      },
+      {
+        "codigo_ine": "45017",
+        "categoria": "misterioso",
+        "puntuacion": 82,
+        "ranking_provincial": 2,
+        "ranking_nacional": 69
+      },
+      {
+        "codigo_ine": "04004",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 1,
+        "ranking_nacional": 70
+      },
+      {
+        "codigo_ine": "90717",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 4,
+        "ranking_nacional": 71
+      },
+      {
+        "codigo_ine": "05006",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 2,
+        "ranking_nacional": 72
+      },
+      {
+        "codigo_ine": "10060",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 3,
+        "ranking_nacional": 73
+      },
+      {
+        "codigo_ine": "23028",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 2,
+        "ranking_nacional": 74
+      },
+      {
+        "codigo_ine": "37003",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 2,
+        "ranking_nacional": 75
+      },
+      {
+        "codigo_ine": "16078",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 2,
+        "ranking_nacional": 76
+      },
+      {
+        "codigo_ine": "38005",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 2,
+        "ranking_nacional": 77
+      },
+      {
+        "codigo_ine": "42094",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 4,
+        "ranking_nacional": 78
+      },
+      {
+        "codigo_ine": "18087",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 5,
+        "ranking_nacional": 79
+      },
+      {
+        "codigo_ine": "22117",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 2,
+        "ranking_nacional": 80
+      },
+      {
+        "codigo_ine": "23055",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 3,
+        "ranking_nacional": 81
+      },
+      {
+        "codigo_ine": "39037",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 4,
+        "ranking_nacional": 82
+      },
+      {
+        "codigo_ine": "26138",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 1,
+        "ranking_nacional": 83
+      },
+      {
+        "codigo_ine": "46250",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 3,
+        "ranking_nacional": 84
+      },
+      {
+        "codigo_ine": "51025",
+        "categoria": "misterioso",
+        "puntuacion": 80,
+        "ranking_provincial": 1,
+        "ranking_nacional": 85
+      },
+      {
+        "codigo_ine": "14001",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 3,
+        "ranking_nacional": 86
+      },
+      {
+        "codigo_ine": "90825",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 2,
+        "ranking_nacional": 87
+      },
+      {
+        "codigo_ine": "24006",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 4,
+        "ranking_nacional": 88
+      },
+      {
+        "codigo_ine": "22006",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 1,
+        "ranking_nacional": 89
+      },
+      {
+        "codigo_ine": "90838",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 2,
+        "ranking_nacional": 90
+      },
+      {
+        "codigo_ine": "15022",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 4,
+        "ranking_nacional": 91
+      },
+      {
+        "codigo_ine": "28038",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 3,
+        "ranking_nacional": 92
+      },
+      {
+        "codigo_ine": "40057",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 2,
+        "ranking_nacional": 93
+      },
+      {
+        "codigo_ine": "39024",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 5,
+        "ranking_nacional": 94
+      },
+      {
+        "codigo_ine": "16009",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 2,
+        "ranking_nacional": 95
+      },
+      {
+        "codigo_ine": "49065",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 2,
+        "ranking_nacional": 96
+      },
+      {
+        "codigo_ine": "44109",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 3,
+        "ranking_nacional": 97
+      },
+      {
+        "codigo_ine": "90689",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 1,
+        "ranking_nacional": 98
+      },
+      {
+        "codigo_ine": "39032",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 6,
+        "ranking_nacional": 99
+      },
+      {
+        "codigo_ine": "37005",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 3,
+        "ranking_nacional": 100
+      },
+      {
+        "codigo_ine": "07040",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 1,
+        "ranking_nacional": 101
+      },
+      {
+        "codigo_ine": "43118",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 3,
+        "ranking_nacional": 102
+      },
+      {
+        "codigo_ine": "33053",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 3,
+        "ranking_nacional": 103
+      },
+      {
+        "codigo_ine": "39067",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 7,
+        "ranking_nacional": 104
+      },
+      {
+        "codigo_ine": "49275",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 3,
+        "ranking_nacional": 105
+      },
+      {
+        "codigo_ine": "23092",
+        "categoria": "misterioso",
+        "puntuacion": 78,
+        "ranking_provincial": 5,
+        "ranking_nacional": 106
+      },
+      {
+        "codigo_ine": "16135",
+        "categoria": "misterioso",
+        "puntuacion": 76,
+        "ranking_provincial": 4,
+        "ranking_nacional": 107
+      },
+      {
+        "codigo_ine": "24010",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 6,
+        "ranking_nacional": 108
+      },
+      {
+        "codigo_ine": "42029",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 5,
+        "ranking_nacional": 109
+      },
+      {
+        "codigo_ine": "18002",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 2,
+        "ranking_nacional": 110
+      },
+      {
+        "codigo_ine": "28027",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 4,
+        "ranking_nacional": 111
+      },
+      {
+        "codigo_ine": "05005",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 4,
+        "ranking_nacional": 112
+      },
+      {
+        "codigo_ine": "10049",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 4,
+        "ranking_nacional": 113
+      },
+      {
+        "codigo_ine": "45053",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 2,
+        "ranking_nacional": 114
+      },
+      {
+        "codigo_ine": "31105",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 5,
+        "ranking_nacional": 115
+      },
+      {
+        "codigo_ine": "27020",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 2,
+        "ranking_nacional": 116
+      },
+      {
+        "codigo_ine": "48041",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 2,
+        "ranking_nacional": 117
+      },
+      {
+        "codigo_ine": "10087",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 5,
+        "ranking_nacional": 118
+      },
+      {
+        "codigo_ine": "06014",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 3,
+        "ranking_nacional": 119
+      },
+      {
+        "codigo_ine": "02047",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 1,
+        "ranking_nacional": 120
+      },
+      {
+        "codigo_ine": "11023",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 3,
+        "ranking_nacional": 121
+      },
+      {
+        "codigo_ine": "44158",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 4,
+        "ranking_nacional": 122
+      },
+      {
+        "codigo_ine": "45125",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 3,
+        "ranking_nacional": 123
+      },
+      {
+        "codigo_ine": "33044",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 5,
+        "ranking_nacional": 124
+      },
+      {
+        "codigo_ine": "09011",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 2,
+        "ranking_nacional": 125
+      },
+      {
+        "codigo_ine": "21014",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 2,
+        "ranking_nacional": 126
+      },
+      {
+        "codigo_ine": "34120",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 1,
+        "ranking_nacional": 127
+      },
+      {
+        "codigo_ine": "19212",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 4,
+        "ranking_nacional": 128
+      },
+      {
+        "codigo_ine": "39055",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 8,
+        "ranking_nacional": 129
+      },
+      {
+        "codigo_ine": "32069",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 1,
+        "ranking_nacional": 130
+      },
+      {
+        "codigo_ine": "44201",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 5,
+        "ranking_nacional": 131
+      },
+      {
+        "codigo_ine": "49219",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 4,
+        "ranking_nacional": 132
+      },
+      {
+        "codigo_ine": "10195",
+        "categoria": "misterioso",
+        "puntuacion": 75,
+        "ranking_provincial": 6,
+        "ranking_nacional": 133
+      },
+      {
+        "codigo_ine": "02010",
+        "categoria": "misterioso",
+        "puntuacion": 74,
+        "ranking_provincial": 2,
+        "ranking_nacional": 134
+      },
+      {
+        "codigo_ine": "19001",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 6,
+        "ranking_nacional": 135
+      },
+      {
+        "codigo_ine": "02005",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 136
+      },
+      {
+        "codigo_ine": "22028",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 137
+      },
+      {
+        "codigo_ine": "90805",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 2,
+        "ranking_nacional": 138
+      },
+      {
+        "codigo_ine": "22004",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 2,
+        "ranking_nacional": 139
+      },
+      {
+        "codigo_ine": "19044",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 5,
+        "ranking_nacional": 140
+      },
+      {
+        "codigo_ine": "25059",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 1,
+        "ranking_nacional": 141
+      },
+      {
+        "codigo_ine": "36004",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 2,
+        "ranking_nacional": 142
+      },
+      {
+        "codigo_ine": "34003",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 2,
+        "ranking_nacional": 143
+      },
+      {
+        "codigo_ine": "90013",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 6,
+        "ranking_nacional": 144
+      },
+      {
+        "codigo_ine": "34004",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 145
+      },
+      {
+        "codigo_ine": "28052",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 5,
+        "ranking_nacional": 146
+      },
+      {
+        "codigo_ine": "09005",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 147
+      },
+      {
+        "codigo_ine": "05008",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 7,
+        "ranking_nacional": 148
+      },
+      {
+        "codigo_ine": "12051",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 149
+      },
+      {
+        "codigo_ine": "06010",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 4,
+        "ranking_nacional": 150
+      },
+      {
+        "codigo_ine": "09007",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 4,
+        "ranking_nacional": 151
+      },
+      {
+        "codigo_ine": "19127",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 6,
+        "ranking_nacional": 152
+      },
+      {
+        "codigo_ine": "18089",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 7,
+        "ranking_nacional": 153
+      },
+      {
+        "codigo_ine": "10102",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 7,
+        "ranking_nacional": 154
+      },
+      {
+        "codigo_ine": "28082",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 6,
+        "ranking_nacional": 155
+      },
+      {
+        "codigo_ine": "04017",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 2,
+        "ranking_nacional": 156
+      },
+      {
+        "codigo_ine": "41068",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 4,
+        "ranking_nacional": 157
+      },
+      {
+        "codigo_ine": "18151",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 8,
+        "ranking_nacional": 158
+      },
+      {
+        "codigo_ine": "10148",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 8,
+        "ranking_nacional": 159
+      },
+      {
+        "codigo_ine": "16170",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 5,
+        "ranking_nacional": 160
+      },
+      {
+        "codigo_ine": "14055",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 161
+      },
+      {
+        "codigo_ine": "13013",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 162
+      },
+      {
+        "codigo_ine": "39080",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 9,
+        "ranking_nacional": 163
+      },
+      {
+        "codigo_ine": "45165",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 4,
+        "ranking_nacional": 164
+      },
+      {
+        "codigo_ine": "11035",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 4,
+        "ranking_nacional": 165
+      },
+      {
+        "codigo_ine": "36014",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 166
+      },
+      {
+        "codigo_ine": "13018",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 4,
+        "ranking_nacional": 167
+      },
+      {
+        "codigo_ine": "11039",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 5,
+        "ranking_nacional": 168
+      },
+      {
+        "codigo_ine": "03040",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 3,
+        "ranking_nacional": 169
+      },
+      {
+        "codigo_ine": "02030",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 4,
+        "ranking_nacional": 170
+      },
+      {
+        "codigo_ine": "14075",
+        "categoria": "misterioso",
+        "puntuacion": 72,
+        "ranking_provincial": 4,
+        "ranking_nacional": 171
+      },
+      {
+        "codigo_ine": "02004",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 5,
+        "ranking_nacional": 172
+      },
+      {
+        "codigo_ine": "34002",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 4,
+        "ranking_nacional": 173
+      },
+      {
+        "codigo_ine": "36005",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 4,
+        "ranking_nacional": 174
+      },
+      {
+        "codigo_ine": "90889",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 3,
+        "ranking_nacional": 175
+      },
+      {
+        "codigo_ine": "16112",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 6,
+        "ranking_nacional": 176
+      },
+      {
+        "codigo_ine": "37006",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 4,
+        "ranking_nacional": 177
+      },
+      {
+        "codigo_ine": "09008",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 5,
+        "ranking_nacional": 178
+      },
+      {
+        "codigo_ine": "06015",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 5,
+        "ranking_nacional": 179
+      },
+      {
+        "codigo_ine": "45200",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 5,
+        "ranking_nacional": 180
+      },
+      {
+        "codigo_ine": "10123",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 9,
+        "ranking_nacional": 181
+      },
+      {
+        "codigo_ine": "18135",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 9,
+        "ranking_nacional": 182
+      },
+      {
+        "codigo_ine": "46182",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 4,
+        "ranking_nacional": 183
+      },
+      {
+        "codigo_ine": "33043",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 8,
+        "ranking_nacional": 184
+      },
+      {
+        "codigo_ine": "09014",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 6,
+        "ranking_nacional": 185
+      },
+      {
+        "codigo_ine": "33062",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 9,
+        "ranking_nacional": 186
+      },
+      {
+        "codigo_ine": "12128",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 4,
+        "ranking_nacional": 187
+      },
+      {
+        "codigo_ine": "41039",
+        "categoria": "misterioso",
+        "puntuacion": 70,
+        "ranking_provincial": 5,
+        "ranking_nacional": 188
+      },
+      {
+        "codigo_ine": "37001",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 5,
+        "ranking_nacional": 189
+      },
+      {
+        "codigo_ine": "34056",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 3,
+        "ranking_nacional": 190
+      },
+      {
+        "codigo_ine": "23029",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 7,
+        "ranking_nacional": 191
+      },
+      {
+        "codigo_ine": "10067",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 10,
+        "ranking_nacional": 192
+      },
+      {
+        "codigo_ine": "21034",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 3,
+        "ranking_nacional": 193
+      },
+      {
+        "codigo_ine": "10121",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 11,
+        "ranking_nacional": 194
+      },
+      {
+        "codigo_ine": "10127",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 12,
+        "ranking_nacional": 195
+      },
+      {
+        "codigo_ine": "19211",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 7,
+        "ranking_nacional": 196
+      },
+      {
+        "codigo_ine": "10140",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 13,
+        "ranking_nacional": 197
+      },
+      {
+        "codigo_ine": "30035",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 2,
+        "ranking_nacional": 198
+      },
+      {
+        "codigo_ine": "33063",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 10,
+        "ranking_nacional": 199
+      },
+      {
+        "codigo_ine": "41095",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 6,
+        "ranking_nacional": 200
+      },
+      {
+        "codigo_ine": "34199",
+        "categoria": "misterioso",
+        "puntuacion": 68,
+        "ranking_provincial": 4,
+        "ranking_nacional": 201
+      }
+    ],
+    "success": true,
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "WEUR",
+      "served_by_colo": "MAD",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 1.1748
+      },
+      "duration": 1.1748,
+      "changes": 0,
+      "last_row_id": 0,
+      "changed_db": false,
+      "size_after": 82157568,
+      "rows_read": 202,
+      "rows_written": 0,
+      "total_attempts": 1
+    }
+  }
+]

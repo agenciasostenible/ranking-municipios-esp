@@ -128,12 +128,13 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
           <div class="cerca-list">
             {items.map(r => {
               const g = grupo(r.tipo);
-              // Misterio tiene nombre genérico ("Lugares de misterio…"): el pueblo es el protagonista.
-              const generico = r.tipo === 'misterio';
-              const titulo = generico ? r.muni : r.nombre;
-              const sub = generico ? r.provincia : `${r.muni} · ${r.provincia}`;
+              const titulo = r.nombre;
+              const sub = `${r.muni} · ${r.provincia}`;
               const desc = (r.descripcion ?? '').trim();
-              const gq = generico ? gmapsUrl(r.muni, r.provincia, '') : gmapsUrl(r.nombre, r.muni, r.provincia);
+              // "Misterios de X" es genérico de pueblo: en Maps buscamos el pueblo, no el texto.
+              const gq = r.nombre.startsWith('Misterios de ')
+                ? gmapsUrl(r.muni, r.provincia, '')
+                : gmapsUrl(r.nombre, r.muni, r.provincia);
               return (
                 <div class="ce-row">
                   <span class="ce-ic" style={`color:${colorOf(r.tipo)};background:${colorOf(r.tipo)}15`}><Icon name={g.icon} size={18} /></span>
