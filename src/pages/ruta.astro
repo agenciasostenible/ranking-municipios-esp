@@ -622,6 +622,12 @@ const catTitle = selLabels.length <= 2
 const routeHeading = anchor ? `Lo mejor por la zona de ${anchor.nombre}` : `${catTitle} por ${prov}`;
 const diaHeading = pueblo ? `Un día en ${pueblo.nombre}` : '';
 
+// Etiquetas legibles para el resumen "Plan para…" que repetimos bajo el mapa
+const presLabel = pres === 'eco' ? 'Económico' : 'Cualquiera';
+const ritmoLabel = ritmo === 'completo' ? 'Ajetreado' : 'Relajado';
+const distLabel = compacta ? 'Corta' : 'Cualquiera';
+const planForCats = selLabels.join(' · ');   // se lee bien con varias categorías
+
 // Compartir por WhatsApp: la URL actual ya reproduce la ruta exacta (lleva a la web)
 const shareUrl = url.href;
 const waShare = (msg: string) => `https://wa.me/?text=${encodeURIComponent(msg + '\n' + shareUrl)}`;
@@ -732,6 +738,11 @@ const ogDescription = hasDia
 
       <div id="ruta-map" class="ruta-map"></div>
 
+      <div class="ruta-plan-for">
+        <div class="rpf-title"><Icon name={anchor ? 'map' : infoByCat[selCfgs[0].key].icon} size={17} /> Ruta para {planForCats}</div>
+        <div class="rpf-meta"><span>💶 Presupuesto: <strong>{presLabel}</strong></span><span class="rpf-dot">·</span><span>🧭 Distancia: <strong>{distLabel}</strong></span></div>
+      </div>
+
       {dayPlan.map((day, di) => (
         <div class="ruta-day">
           <div class="ruta-day-tag" style={`color:${headColor};background:${headColor}15`}>DÍA {di+1}</div>
@@ -825,7 +836,7 @@ const ogDescription = hasDia
         <span class="rt-grp">
           <span class="rt-label">🚶 Ritmo</span>
           <a class={`rt-pill${ritmo!=='completo'?' on':''}`} href={setParam('ritmo', null)} title="Pocas visitas, todo a pie y céntrico">Relajado</a>
-          <a class={`rt-pill${ritmo==='completo'?' on':''}`} href={setParam('ritmo', 'completo')} title="Más visitas (mejor con coche)">Completo</a>
+          <a class={`rt-pill${ritmo==='completo'?' on':''}`} href={setParam('ritmo', 'completo')} title="Más visitas (mejor con coche)">Ajetreado</a>
         </span>
         <span class="rt-grp">
           <span class="rt-label">💶 Presupuesto</span>
@@ -835,6 +846,11 @@ const ogDescription = hasDia
       </div>
 
       {diaVisitas.length > 0 && <div id="ruta-map" class="ruta-map"></div>}
+
+      <div class="ruta-plan-for">
+        <div class="rpf-title"><Icon name={diaPlan.icon} size={17} /> Plan para {diaPlan.catLabel}</div>
+        <div class="rpf-meta"><span>🚶 Ritmo: <strong>{ritmoLabel}</strong></span><span class="rpf-dot">·</span><span>💶 Presupuesto: <strong>{presLabel}</strong></span></div>
+      </div>
 
       {diaPlan.star && (
         <div class="dia-star" style={`border-color:${diaPlan.color}`}>
@@ -1220,6 +1236,11 @@ const ogDescription = hasDia
 .rt-pill { font-size: .77rem; font-weight: 600; color: var(--text-2); padding: 5px 11px; border: 1.5px solid var(--border); border-radius: 20px; text-decoration: none; }
 .rt-pill.on { border-color: var(--primary); background: #fff1f3; color: var(--primary); }
 .ruta-map { height: 300px; width: 100%; z-index: 0; background: #e8eef0; }
+.ruta-plan-for { padding: 13px 16px; background: #fafafa; border-bottom: 1px solid #f0f0f0; }
+.rpf-title { display: flex; align-items: center; gap: 7px; font-size: .98rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.rpf-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 5px; font-size: .84rem; color: var(--text-2); }
+.rpf-meta strong { color: var(--text); font-weight: 700; }
+.rpf-dot { color: var(--border); }
 :global(.ruta-marker span) { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font-weight: 700; font-size: .8rem; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
 .ruta-result-head { color: #fff; padding: 18px 20px; }
 .rrh-eyebrow { font-size: .72rem; letter-spacing: 1.5px; text-transform: uppercase; opacity: .85; font-weight: 600; }
