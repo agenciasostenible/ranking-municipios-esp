@@ -492,25 +492,36 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
     .filter-group { display: flex; align-items: center; gap: 6px; }
     .filter-group label {
       font-size: .7rem;
-      color: var(--text-2);
+      color: var(--text);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .4px;
       white-space: nowrap;
     }
     .filter-group select {
-      padding: 7px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
+      appearance: none;
+      -webkit-appearance: none;
+      padding: 9px 34px 9px 14px;
+      border: 1.5px solid #d6d6d6;
+      border-radius: 12px;
       font-family: inherit;
-      font-size: .82rem;
+      font-size: .85rem;
+      font-weight: 600;
       color: var(--text);
-      background: #fff;
+      background-color: #fff;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23FF385C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
       cursor: pointer;
       outline: none;
-      transition: border-color .15s;
+      transition: border-color .15s, box-shadow .15s;
     }
-    .filter-group select:focus { border-color: var(--text); }
+    .filter-group select:hover { border-color: var(--primary); }
+    .filter-group select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(255,56,92,.15);
+    }
     .btn-reset {
       margin-left: auto;
       padding: 7px 14px;
