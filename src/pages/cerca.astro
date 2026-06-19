@@ -15,7 +15,6 @@ const lonP = parseFloat(url.searchParams.get('lon') ?? '');
 const origenSel = url.searchParams.get('origen') ?? '';
 const catSel = url.searchParams.get('cat') ?? '';
 const RADIO_KM = 40;        // a tu lado de verdad
-const MAX_POR_MUNI = 3;     // variedad: no llenar la lista con un solo pueblo
 
 // Grupos de categoría (chip) -> tipos de entidad que incluye. key = categoría real.
 const GRUPOS = [
@@ -68,16 +67,11 @@ if (ref) {
   `).bind(ref.lat - dLat, ref.lat + dLat, ref.lon - dLon, ref.lon + dLon, ...tipos).all();
 
   const r0 = ref;
-  const perMuni: Record<string, number> = {};
   items = (results as any[])
     .map(r => ({ ...r, dist: km(r0.lat, r0.lon, r.latitud, r.longitud) }))
     .filter(r => r.dist <= RADIO_KM)
     .sort((a, b) => a.dist - b.dist)
-    .filter(r => {
-      perMuni[r.codigo_ine] = (perMuni[r.codigo_ine] ?? 0) + 1;
-      return perMuni[r.codigo_ine] <= MAX_POR_MUNI;
-    })
-    .slice(0, 60);
+    .slice(0, 150);
 }
 
 // Ciudades para el desplegable de respaldo
