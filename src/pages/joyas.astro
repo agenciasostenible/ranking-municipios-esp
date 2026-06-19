@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { getCatInfo, LABELS } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
+import { getAnunciosVarios, ANUNCIO_TIPOS } from '../lib/anuncios';
 
 // ── Prototipo "Joyas sin masificar" ──────────────────────────────────────────
 // Cruza SUSTANCIA (ranking_global, lo que objetivamente hay para ver) con
@@ -116,6 +117,10 @@ const cerca = target
 const catLabel = (k: string) => LABELS[k] ?? k;
 const catIcon  = (k: string) => getCatInfo(k).icon;
 const catColor = (k: string) => CAT_COLORS[k] ?? '#43a047';
+
+// Recomendados (negocios/influencers) de los municipios que salen como joyas
+const adsMap = await getAnunciosVarios(joyas.map(r => r.codigo_ine), 'joyas');
+const anuncios = joyas.flatMap(r => (adsMap.get(r.codigo_ine) ?? []).map(a => ({ ...a, muni: r.nombre }))).slice(0, 6);
 const pct = (x: number) => Math.round(x * 100);
 ---
 
@@ -202,6 +207,31 @@ const pct = (x: number) => Math.round(x * 100);
         </form>
       )}
     </div>
+
+    {anuncios.length > 0 && (
+      <div class="joyas-ads">
+        {anuncios.map(a => (
+          <div class="ad-card">
+            {a.foto && <img class="ad-foto" src={a.foto} alt={a.nombre} loading="lazy" />}
+            <div class="ad-body">
+              <div class="ad-top">
+                <span class="ad-badge">⭐ Recomendado</span>
+                <span class="ad-tipo">{ANUNCIO_TIPOS[a.tipo]?.label ?? 'Establecimiento'}</span>
+                <span class="ad-muni">{a.muni}</span>
+              </div>
+              <div class="ad-name">{a.nombre}</div>
+              {a.descripcion && <div class="ad-desc">{a.descripcion}</div>}
+              <div class="ad-meta">
+                {a.direccion && <span>📍 {a.direccion}</span>}
+                {a.telefono && <a href={`tel:${a.telefono}`} class="ad-act">📞 Llamar</a>}
+                {a.wa && <a href={a.wa} target="_blank" rel="nofollow noopener" class="ad-act ad-wa">💬 WhatsApp</a>}
+                {a.web && <a href={a.web} target="_blank" rel="nofollow noopener" class="ad-act">🔗 Web</a>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
 
     {joyas.length === 0 ? (
       <p class="joyas-empty">{ref
@@ -355,6 +385,20 @@ const pct = (x: number) => Math.round(x * 100);
   .jc-track i { display: block; height: 100%; border-radius: 999px; }
   .jc-track i.sub { background: #43a047; }
   .jc-track i.fame { background: var(--primary); }
+
+  .joyas-ads { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .ad-card { display: flex; gap: 12px; padding: 14px; background: #fffdf5; border: 1.5px solid #ffe08a; border-radius: 14px; }
+  .ad-foto { width: 78px; height: 78px; object-fit: cover; border-radius: 11px; flex-shrink: 0; }
+  .ad-body { flex: 1; min-width: 0; }
+  .ad-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ad-badge { font-size: .68rem; font-weight: 800; color: #b8860a; background: #fff4d1; padding: 3px 8px; border-radius: 999px; }
+  .ad-tipo { font-size: .72rem; font-weight: 600; color: var(--text-2); }
+  .ad-muni { margin-left: auto; font-size: .78rem; font-weight: 700; color: var(--text); }
+  .ad-name { font-size: 1.02rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; margin: 3px 0; }
+  .ad-desc { font-size: .85rem; color: var(--text-2); line-height: 1.45; }
+  .ad-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; font-size: .8rem; color: var(--text-2); }
+  .ad-act { font-weight: 700; color: var(--primary); text-decoration: none; }
+  .ad-wa { color: #1faf54; }
 
   .joyas-empty { text-align: center; color: var(--text-2); padding: 30px; }
   .joyas-foot { text-align: center; color: var(--text-2); font-size: .76rem; margin-top: 30px; }

@@ -32,6 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
   const sets: string[] = [
     'tipo = ?', 'nombre = ?', 'descripcion = ?', 'direccion = ?', 'contacto = ?',
     'email = ?', 'telefono = ?', 'whatsapp = ?', 'web = ?', 'en_ficha = ?', 'en_ruta_mun = ?', 'en_ruta_zona = ?', 'en_ranking_prov = ?',
+    'en_cerca = ?', 'en_joyas = ?',
   ];
   const vals: any[] = [
     tipo, nombre,
@@ -43,6 +44,7 @@ export const POST: APIRoute = async ({ request }) => {
     bit(b.whatsapp),
     String(b.web || '').slice(0, 200) || null,
     bit(b.en_ficha), bit(b.en_ruta_mun), bit(b.en_ruta_zona), bit(b.en_ranking_prov),
+    bit(b.en_cerca), bit(b.en_joyas),
   ];
 
   if (b.quitar_foto) {

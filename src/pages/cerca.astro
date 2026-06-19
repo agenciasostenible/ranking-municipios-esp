@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { CAT_COLORS } from '../lib/utils';
 import { gmapsUrl } from '../lib/entidades';
+import { getAnunciosCerca, ANUNCIO_TIPOS } from '../lib/anuncios';
 
 // ── "Qué ver cerca de ti" ─────────────────────────────────────────────────────
 // Un botón → tu ubicación → cosas concretas para visitar A TU LADO (entidades de
@@ -74,6 +75,9 @@ if (ref) {
     .slice(0, 150);
 }
 
+// Recomendados (negocios/influencers) cerca de ti
+const anuncios = ref ? await getAnunciosCerca(ref.lat, ref.lon, RADIO_KM, 'cerca') : [];
+
 // Ciudades para el desplegable de respaldo
 const { results: origRows } = await DB.prepare(`
   SELECT codigo_ine, nombre, provincia FROM municipios
@@ -121,6 +125,31 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
             {GRUPOS.map(g => <option value={g.key} selected={catSel === g.key}>{g.label}</option>)}
           </select>
         </form>
+
+        {anuncios.length > 0 && (
+          <div class="ce-ads">
+            {anuncios.map(a => (
+              <div class="ad-card">
+                {a.foto && <img class="ad-foto" src={a.foto} alt={a.nombre} loading="lazy" />}
+                <div class="ad-body">
+                  <div class="ad-top">
+                    <span class="ad-badge">⭐ Recomendado</span>
+                    <span class="ad-tipo">{ANUNCIO_TIPOS[a.tipo]?.label ?? 'Establecimiento'}</span>
+                    <span class="ad-km">a {Math.round(a.dist)} km</span>
+                  </div>
+                  <div class="ad-name">{a.nombre}</div>
+                  {a.descripcion && <div class="ad-desc">{a.descripcion}</div>}
+                  <div class="ad-meta">
+                    {a.direccion && <span>📍 {a.direccion}{a.municipio ? ` · ${a.municipio}` : ''}</span>}
+                    {a.telefono && <a href={`tel:${a.telefono}`} class="ad-act">📞 Llamar</a>}
+                    {a.wa && <a href={a.wa} target="_blank" rel="nofollow noopener" class="ad-act ad-wa">💬 WhatsApp</a>}
+                    {a.web && <a href={a.web} target="_blank" rel="nofollow noopener" class="ad-act">🔗 Web</a>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {items.length === 0 ? (
           <p class="cerca-empty">No encontramos sitios de esta categoría a menos de {RADIO_KM} km. Prueba otra categoría.</p>
@@ -224,6 +253,20 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
   .ce-maps { display: inline-flex; align-items: center; gap: .3rem; align-self: flex-start; margin-top: 10px; padding: .32rem .7rem;
     font-size: .78rem; font-weight: 700; color: #1a73e8; background: #e8f0fe; border-radius: 999px; text-decoration: none; }
   .ce-maps:hover { background: #d2e3fc; }
+
+  .ce-ads { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .ad-card { display: flex; gap: 12px; padding: 14px; background: #fffdf5; border: 1.5px solid #ffe08a; border-radius: 14px; }
+  .ad-foto { width: 78px; height: 78px; object-fit: cover; border-radius: 11px; flex-shrink: 0; }
+  .ad-body { flex: 1; min-width: 0; }
+  .ad-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ad-badge { font-size: .68rem; font-weight: 800; color: #b8860a; background: #fff4d1; padding: 3px 8px; border-radius: 999px; }
+  .ad-tipo { font-size: .72rem; font-weight: 600; color: var(--text-2); }
+  .ad-km { margin-left: auto; font-size: .78rem; font-weight: 700; color: var(--text); }
+  .ad-name { font-size: 1.02rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; margin: 3px 0; }
+  .ad-desc { font-size: .85rem; color: var(--text-2); line-height: 1.45; }
+  .ad-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; font-size: .8rem; color: var(--text-2); }
+  .ad-act { font-weight: 700; color: var(--primary); text-decoration: none; }
+  .ad-wa { color: #1faf54; }
 
   @media (max-width: 560px) { .cerca-hero h1 { font-size: 1.65rem; } }
 </style>

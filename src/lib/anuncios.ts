@@ -53,8 +53,8 @@ function toAnuncio(r: any): Anuncio {
 }
 
 // Superficie donde se muestra → columna de colocación que debe estar a 1.
-export type Surface = 'ficha' | 'ruta_mun' | 'ruta_zona' | 'ranking_prov';
-const COL: Record<Surface, string> = { ficha: 'en_ficha', ruta_mun: 'en_ruta_mun', ruta_zona: 'en_ruta_zona', ranking_prov: 'en_ranking_prov' };
+export type Surface = 'ficha' | 'ruta_mun' | 'ruta_zona' | 'ranking_prov' | 'cerca' | 'joyas';
+const COL: Record<Surface, string> = { ficha: 'en_ficha', ruta_mun: 'en_ruta_mun', ruta_zona: 'en_ruta_zona', ranking_prov: 'en_ranking_prov', cerca: 'en_cerca', joyas: 'en_joyas' };
 
 /** Anuncios aprobados de un municipio, visibles en la superficie indicada. */
 export async function getAnunciosMunicipio(codigo_ine: string, surface: Surface = 'ficha'): Promise<Anuncio[]> {
@@ -88,6 +88,29 @@ export async function getAnunciosProvincia(provincia: string, surface: Surface =
   } catch {
     return [];
   }
+}
+
+/** Anuncios aprobados CERCA de un punto (lat/lon), con su distancia en km, ordenados por cercanía. */
+export async function getAnunciosCerca(lat: number, lon: number, radioKm: number, surface: Surface = 'cerca'): Promise<(Anuncio & { dist: number })[]> {
+  if (isNaN(lat) || isNaN(lon)) return [];
+  const dLat = radioKm / 111, dLon = radioKm / (111 * Math.cos(lat * Math.PI / 180));
+  try {
+    const { results } = await DB.prepare(
+      `SELECT a.id, a.codigo_ine, a.municipio, a.tipo, a.nombre, a.descripcion, a.direccion, a.web, a.telefono, a.whatsapp,
+              (a.foto_data IS NOT NULL) AS foto_data, m.latitud AS _lat, m.longitud AS _lon
+         FROM anuncios a JOIN municipios m ON m.codigo_ine = a.codigo_ine
+        WHERE a.estado = 'aprobado' AND a.${COL[surface]} = 1
+          AND m.latitud BETWEEN ? AND ? AND m.longitud BETWEEN ? AND ?`
+    ).bind(lat - dLat, lat + dLat, lon - dLon, lon + dLon).all();
+    const R = 6371, toR = Math.PI / 180;
+    return (results as any[]).map(r => {
+      const a = toAnuncio(r) as Anuncio & { dist: number };
+      const dLa = (r._lat - lat) * toR, dLo = (r._lon - lon) * toR;
+      const s = Math.sin(dLa / 2) ** 2 + Math.cos(lat * toR) * Math.cos(r._lat * toR) * Math.sin(dLo / 2) ** 2;
+      a.dist = 2 * R * Math.asin(Math.sqrt(s));
+      return a;
+    }).filter(a => a.dist <= radioKm).sort((x, y) => x.dist - y.dist);
+  } catch { return []; }
 }
 
 /** Anuncios aprobados de varios municipios (para rutas), agrupados por codigo_ine. */
