@@ -2,7 +2,7 @@
 import { DB } from '../../lib/d1client';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
-import { TABS, SIDEBAR_GROUPS, ALL_CATS, getCatInfo, LABELS, formatPob } from '../../lib/db';
+import { TABS, SIDEBAR_GROUPS, ALL_CATS, getCatInfo, LABELS, formatPob, getSubtitle } from '../../lib/db';
 import { CAT_COLORS } from '../../lib/utils';
 import { getCreadores } from '../../lib/creadores';
 // @ts-ignore
@@ -228,6 +228,7 @@ function buildUrl(overrides: Record<string, string | number>) {
   <div class="result-header">
     <div>
       <h2>{catLabel}</h2>
+      {getSubtitle(categoria!) && <div class="cat-tagline">{getSubtitle(categoria!)}</div>}
       <div class="sub">
         {totalRows.toLocaleString('es-ES')} municipios ·
         Mostrando {(page-1)*perPage+1}–{Math.min(page*perPage, totalRows)}
@@ -788,6 +789,12 @@ document.head.appendChild(thumbStyle);
   padding: 16px 20px 0;
   max-width: 1100px;
   margin: 0 auto;
+}
+.cat-tagline {
+  font-size: .92rem;
+  color: var(--text-2);
+  margin: 2px 0 4px;
+  line-height: 1.4;
 }
 /* Creadores recomendados */
 .cre-block { margin: 28px 0 6px; padding-top: 20px; border-top: 1px solid #eee; }

@@ -146,7 +146,6 @@ export const SIDEBAR_GROUPS = [
     items: [
       { key: 'ranking_global',  label: 'Ranking global',     icon: 'emoji_events' },
       { key: 'pueblo_bonito',   label: 'Pueblos bonitos',    icon: 'auto_awesome' },
-      { key: 'TurismoRural',    label: 'Turismo rural',      icon: 'cottage' },
       { key: 'notoriedad_instagram', label: 'Popularidad en redes', icon: 'trending_up' },
     ],
   },
@@ -176,28 +175,21 @@ export const SIDEBAR_GROUPS = [
     ],
   },
   {
-    title: 'Naturaleza',
+    title: 'Naturaleza y aire libre',
     icon: 'park',
     items: [
-      { key: 'playas',       label: 'Playas',         icon: 'beach_access' },
-      { key: 'miradores',    label: 'Miradores',      icon: 'binoculars' },
-    ],
-  },
-  {
-    title: 'Lujo y lifestyle',
-    icon: 'diamond',
-    items: [
-      { key: 'lujo',         label: 'Turismo de lujo', icon: 'diamond' },
-      { key: 'solteros',     label: 'Solteros',        icon: 'nightlife' },
-    ],
-  },
-  {
-    title: 'Activo',
-    icon: 'hiking',
-    items: [
       { key: 'senderismo',     label: 'Senderismo',     icon: 'hiking' },
-      { key: 'Campings',       label: 'Camping',        icon: 'camping' },
       { key: 'turismo_activo', label: 'Turismo activo', icon: 'mountain' },
+      { key: 'miradores',      label: 'Miradores',      icon: 'binoculars' },
+      { key: 'playas',         label: 'Playas',         icon: 'beach_access' },
+    ],
+  },
+  {
+    title: 'Dónde dormir',
+    icon: 'cottage',
+    items: [
+      { key: 'TurismoRural',   label: 'Turismo rural',  icon: 'cottage' },
+      { key: 'Campings',       label: 'Camping',        icon: 'camping' },
     ],
   },
   {
@@ -210,7 +202,46 @@ export const SIDEBAR_GROUPS = [
       { key: 'misterioso',        label: 'Turismo misterioso',  icon: 'dark_mode' },
     ],
   },
+  {
+    title: 'Lujo y lifestyle',
+    icon: 'diamond',
+    items: [
+      { key: 'lujo',         label: 'Turismo de lujo', icon: 'diamond' },
+      { key: 'solteros',     label: 'Solteros',        icon: 'nightlife' },
+    ],
+  },
 ];
+
+// Microdescripción de cada categoría (qué hay dentro). Evita confundir al usuario.
+export const SUBTITLES: Record<string, string> = {
+  ranking_global:    'la mejor valoración global de cada pueblo',
+  monumentos:        'catedrales, palacios y patrimonio',
+  castillos:         'castillos, fortalezas y murallas',
+  fiestas:           'fiestas populares y tradiciones',
+  festivales:        'festivales de música, cine y arte',
+  gastronomia:       'buena mesa, productos y estrellas',
+  vinos:             'bodegas y enoturismo',
+  oleoturismo:       'aceite de oliva y almazaras',
+  senderismo:        'rutas y caminos para andar',
+  turismo_activo:    'aventura y deporte: ferratas, barrancos, escalada',
+  miradores:         'vistas y puntos panorámicos',
+  playas:            'costa, calas y baño',
+  Playas:            'costa, calas y baño',
+  naturaleza:        'cascadas, gargantas, embalses y parajes',
+  TurismoRural:      'casas rurales y pueblos para desconectar',
+  Campings:          'acampada y bungalós en plena naturaleza',
+  pueblo_bonito:     'los pueblos con más encanto de España',
+  turismo_religioso: 'catedrales, santuarios y peregrinaciones',
+  turismo_mascotas:  'destinos para viajar con tu mascota',
+  turismo_lgtbi:     'destinos LGTBI-friendly',
+  lujo:              'destinos premium y de alta gama',
+  solteros:          'ambiente y vida social para singles',
+  misterioso:        'leyendas, brujería y lugares con misterio',
+  notoriedad_instagram: 'los pueblos más populares en redes',
+};
+export function getSubtitle(cat: string): string {
+  return SUBTITLES[cat] ?? '';
+}
 
 // Lista completa de categorías del sidebar (para el select de categoría)
 export const ALL_CATS = SIDEBAR_GROUPS.flatMap(g => g.items);
