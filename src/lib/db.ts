@@ -45,6 +45,7 @@ export const ICONS: Record<string, string> = {
 
   miradores:         'binoculars',
   solteros:          'nightlife',
+  misterioso:        'dark_mode',
   birdwatching:      'flutter_dash',
   cuevas:            'mountain',
   ciclismo:          'pedal_bike',
@@ -91,6 +92,7 @@ export const LABELS: Record<string, string> = {
 
   miradores:         'Miradores',
   solteros:          'Solteros',
+  misterioso:        'Turismo misterioso',
   cuevas:            'Cuevas',
   escalada:          'Escalada',
   pesca:             'Pesca',
@@ -127,6 +129,7 @@ export const TABS = [
   { key: 'miradores',        label: 'Miradores',   icon: 'binoculars' },
   { key: 'lujo',             label: 'Lujo',        icon: 'diamond' },
   { key: 'solteros',         label: 'Solteros',    icon: 'nightlife' },
+  { key: 'misterioso',       label: 'Misterio',    icon: 'dark_mode' },
   { key: 'pueblo_bonito',    label: 'Pueblos bonitos', icon: 'auto_awesome' },
   { key: 'turismo_religioso',label: 'Religioso',   icon: 'church' },
   { key: 'turismo_activo',   label: 'Activo',      icon: 'mountain' },
@@ -204,6 +207,7 @@ export const SIDEBAR_GROUPS = [
       { key: 'turismo_religioso', label: 'Turismo religioso',   icon: 'church' },
       { key: 'turismo_mascotas',  label: 'Turismo con mascotas', icon: 'pets' },
       { key: 'turismo_lgtbi',     label: 'Turismo LGTBI',       icon: 'rainbow' },
+      { key: 'misterioso',        label: 'Turismo misterioso',  icon: 'dark_mode' },
     ],
   },
 ];
@@ -217,7 +221,7 @@ export const FICHA_CATS = [
   'gastronomia','Campings','TurismoRural',
   'castillos',
   'Playas',
-  'vinos','miradores','lujo','solteros',
+  'vinos','miradores','lujo','solteros','misterioso',
   'pueblo_bonito',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
   'notoriedad_instagram',
@@ -227,7 +231,7 @@ export const FICHA_CATS = [
 // Solo las categorías confirmadas / en uso.
 export const DETAIL_CATS = [
   'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
-  'senderismo','TurismoRural','Campings','vinos','miradores','lujo','solteros',
+  'senderismo','TurismoRural','Campings','vinos','miradores','lujo','solteros','misterioso',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
   'pueblo_bonito','notoriedad_instagram',
 ];
