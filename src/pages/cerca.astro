@@ -139,7 +139,6 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
               const titulo = generico ? r.muni : r.nombre;
               const sub = generico ? r.provincia : `${r.muni} · ${r.provincia}`;
               const desc = (r.descripcion ?? '').trim();
-              const descCorta = desc.length > 165 ? desc.slice(0, 165).trimEnd() + '…' : desc;
               const gq = generico ? gmapsUrl(r.muni, r.provincia, '') : gmapsUrl(r.nombre, r.muni, r.provincia);
               return (
                 <div class="ce-row">
@@ -151,7 +150,7 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
                     </div>
                     <a class="ce-name" href={`/municipio/${r.codigo_ine}${g.key ? `?desde=${g.key}` : ''}`}>{titulo}</a>
                     <div class="ce-loc">📍 {sub}</div>
-                    {descCorta && <div class="ce-desc">{descCorta}</div>}
+                    {desc && <div class="ce-desc">{desc}</div>}
                     <a class="ce-maps" href={gq} target="_blank" rel="nofollow noopener">🗺️ Ver en Google Maps</a>
                   </div>
                 </div>
