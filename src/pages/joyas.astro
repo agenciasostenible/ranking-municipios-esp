@@ -13,11 +13,16 @@ import { CAT_COLORS } from '../lib/utils';
 const url = Astro.url;
 const provSel = url.searchParams.get('prov') ?? '';
 const mSel    = url.searchParams.get('m') ?? '';
+const latP = parseFloat(url.searchParams.get('lat') ?? '');
+const lonP = parseFloat(url.searchParams.get('lon') ?? '');
+const origenSel = url.searchParams.get('origen') ?? '';
 const POP_MIN = 2000;  // suelo de población: sitios "reales", no aldeas de 50 hab.
+const RADIO_KM = 200;  // "cerca de mí": joyas dentro de este radio
 
 // 1) Sustancia + fama + meta de cada municipio canónico
 const { results: rowsRaw } = await DB.prepare(`
   SELECT m.codigo_ine, m.nombre, m.provincia, m.comarca, m.poblacion, m.foto_url,
+         m.latitud, m.longitud,
          sub.puntuacion AS sub, hy.puntuacion AS fame
   FROM municipios m
   JOIN puntuaciones sub ON sub.codigo_ine = m.codigo_ine AND sub.categoria = 'ranking_global'
@@ -51,15 +56,42 @@ const subRank  = pctRanker(base.map(r => r.sub));
 const fameRank = pctRanker(base.map(r => r.fame));
 for (const r of rows) { r.sp = subRank(r.sub); r.fp = fameRank(r.fame); r.gap = r.fp - r.sp; }
 
-// 4) Joyas infravaloradas: sustancia alta (p55+) y fama baja (p45-)
-let joyas = base.filter(r => r.sp >= 0.55 && r.fp <= 0.45 && best.has(r.codigo_ine));
-if (provSel) joyas = joyas.filter(r => r.provincia === provSel);
-joyas.sort((a, b) => a.gap - b.gap || b.sub - a.sub);
-joyas = joyas.slice(0, 30);
+// Distancia en línea recta (haversine)
+function km(aLat: number, aLon: number, bLat: number, bLon: number) {
+  const R = 6371, toR = Math.PI / 180;
+  const dLat = (bLat - aLat) * toR, dLon = (bLon - aLon) * toR;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * toR) * Math.cos(bLat * toR) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+// Punto de referencia: ubicación del móvil (lat/lon) o ciudad de origen elegida
+let ref: { lat: number; lon: number } | null = null;
+let refName = '';
+if (!isNaN(latP) && !isNaN(lonP)) { ref = { lat: latP, lon: lonP }; refName = 'ti'; }
+else if (origenSel) {
+  const o = rows.find(r => r.codigo_ine === origenSel);
+  if (o && o.latitud) { ref = { lat: o.latitud, lon: o.longitud }; refName = o.nombre; }
+}
 
-// Provincias y "famosos" para los selectores
+// 4) Joyas infravaloradas: sustancia alta (p55+) y fama baja (p45-)
+let joyas = base.filter(r => r.sp >= 0.55 && r.fp <= 0.45 && best.has(r.codigo_ine)) as any[];
+if (ref) {
+  // modo "cerca de": ordenar por distancia y quedarnos con las del radio
+  const r0 = ref;
+  joyas = joyas.filter(r => r.latitud && r.longitud)
+    .map(r => ({ ...r, dist: km(r0.lat, r0.lon, r.latitud, r.longitud) }));
+  const enRadio = joyas.filter(r => r.dist <= RADIO_KM).sort((a, b) => a.dist - b.dist);
+  joyas = (enRadio.length ? enRadio : joyas.sort((a, b) => a.dist - b.dist).slice(0, 12)).slice(0, 30);
+} else {
+  if (provSel) joyas = joyas.filter(r => r.provincia === provSel);
+  joyas.sort((a, b) => a.gap - b.gap || b.sub - a.sub);
+  joyas = joyas.slice(0, 30);
+}
+
+// Provincias, "famosos" (comprobador) y "orígenes" (ciudades para el desplegable de cercanía)
 const provincias = [...new Set(base.map(r => r.provincia))].sort((a, b) => a.localeCompare(b, 'es'));
 const famosos = [...base].sort((a, b) => b.fame - a.fame).slice(0, 150)
+  .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+const origenes = [...base].sort((a, b) => (b.poblacion ?? 0) - (a.poblacion ?? 0)).slice(0, 120)
   .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
 // 5) Veredicto de un sitio concreto (?m=)
@@ -145,19 +177,36 @@ const pct = (x: number) => Math.round(x * 100);
       )}
     </div>
 
-    <!-- Lista de joyas -->
-    <div class="joyas-list-head">
-      <h2>💎 {provSel ? `Joyas infravaloradas de ${provSel}` : 'Las joyas infravaloradas de España'}</h2>
-      <form method="get">
-        <select name="prov" onchange="this.form.submit()">
-          <option value="">Toda España</option>
-          {provincias.map(p => <option value={p} selected={p === provSel}>{p}</option>)}
+    <!-- Cerca de mí -->
+    <div class="joyas-near">
+      <button type="button" id="geo-btn" class="near-btn">📍 Joyas cerca de mí</button>
+      <span class="near-or">o desde tu ciudad</span>
+      <form method="get" class="near-origen">
+        <select name="origen" onchange="this.form.submit()">
+          <option value="">elige tu ciudad…</option>
+          {origenes.map(o => <option value={o.codigo_ine} selected={o.codigo_ine === origenSel}>{o.nombre} ({o.provincia})</option>)}
         </select>
       </form>
+      {ref && <a href="/joyas" class="near-clear">✕ quitar cercanía</a>}
+    </div>
+
+    <!-- Lista de joyas -->
+    <div class="joyas-list-head">
+      <h2>💎 {ref ? `Joyas cerca de ${refName}` : (provSel ? `Joyas infravaloradas de ${provSel}` : 'Las joyas infravaloradas de España')}</h2>
+      {!ref && (
+        <form method="get">
+          <select name="prov" onchange="this.form.submit()">
+            <option value="">Toda España</option>
+            {provincias.map(p => <option value={p} selected={p === provSel}>{p}</option>)}
+          </select>
+        </form>
+      )}
     </div>
 
     {joyas.length === 0 ? (
-      <p class="joyas-empty">No encontramos joyas claras con estos datos en {provSel}. Prueba otra provincia.</p>
+      <p class="joyas-empty">{ref
+        ? `No hay joyas claras a menos de ${RADIO_KM} km de ${refName}. Quita la cercanía para ver las de toda España.`
+        : `No encontramos joyas claras con estos datos en ${provSel}. Prueba otra provincia.`}</p>
     ) : (
       <div class="joyas-grid">
         {joyas.map(r => {
@@ -166,6 +215,7 @@ const pct = (x: number) => Math.round(x * 100);
             <a href={`/municipio/${r.codigo_ine}`} class="joya-card">
               <div class="jc-photo" style={r.foto_url ? `background-image:url('${r.foto_url}')` : 'background:#e9eef0'}>
                 <span class="jc-gem">💎</span>
+                {r.dist != null && <span class="jc-dist">a {Math.round(r.dist)} km</span>}
               </div>
               <div class="jc-body">
                 <div class="jc-name">{r.nombre}</div>
@@ -185,8 +235,35 @@ const pct = (x: number) => Math.round(x * 100);
     )}
 
     <p class="joyas-foot">Prototipo. Sustancia = ranking global de datos verificados · Fama = popularidad en redes.
-       Solo municipios de más de {POP_MIN.toLocaleString('es-ES')} habitantes.</p>
+       Solo municipios de más de {POP_MIN.toLocaleString('es-ES')} habitantes. Distancia en línea recta.</p>
   </div>
+
+  <script is:inline>
+    (function () {
+      var btn = document.getElementById('geo-btn');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        if (!navigator.geolocation) {
+          alert('Tu navegador no permite la ubicación. Elige tu ciudad en el desplegable.');
+          return;
+        }
+        var original = btn.textContent;
+        btn.textContent = '📍 Buscando tu ubicación…';
+        btn.disabled = true;
+        navigator.geolocation.getCurrentPosition(
+          function (p) {
+            window.location.href = '/joyas?lat=' + p.coords.latitude.toFixed(4) + '&lon=' + p.coords.longitude.toFixed(4);
+          },
+          function () {
+            btn.textContent = original;
+            btn.disabled = false;
+            alert('No pudimos obtener tu ubicación. Elige tu ciudad en el desplegable de al lado.');
+          },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+        );
+      });
+    })();
+  </script>
 </Base>
 
 <style>
@@ -237,6 +314,24 @@ const pct = (x: number) => Math.round(x * 100);
   .vd-cerca-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .vd-chip { font-size: .82rem; font-weight: 600; color: #2e7d32; background: #fff; border: 1.5px solid #cce8cf;
     border-radius: 999px; padding: 6px 12px; text-decoration: none; }
+
+  .joyas-near { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 4px 0 18px; }
+  .near-btn { display: inline-flex; align-items: center; gap: 6px; padding: 11px 18px; background: #2e7d32; color: #fff;
+    font-family: inherit; font-size: .92rem; font-weight: 700; border: none; border-radius: 999px; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(46,125,50,.28); transition: background .12s; }
+  .near-btn:hover { background: #256628; }
+  .near-btn:disabled { opacity: .7; cursor: default; }
+  .near-or { font-size: .82rem; color: var(--text-2); }
+  .near-origen { min-width: 200px; flex: 1; max-width: 280px; }
+  .near-origen select { appearance: none; -webkit-appearance: none; width: 100%; padding: 11px 36px 11px 14px;
+    border: 1.5px solid #cce8cf; border-radius: 12px; font-family: inherit; font-size: .88rem; font-weight: 600;
+    color: var(--text); background-color: #fff; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232e7d32' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; }
+  .near-clear { font-size: .82rem; font-weight: 600; color: var(--text-2); text-decoration: none; }
+  .near-clear:hover { color: var(--primary); }
+  .jc-dist { position: absolute; top: 8px; left: 8px; font-size: .76rem; font-weight: 700; color: #2e7d32;
+    background: rgba(255,255,255,.94); padding: 4px 9px; border-radius: 999px; }
 
   .joyas-list-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
   .joyas-list-head h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0; flex: 1; }
