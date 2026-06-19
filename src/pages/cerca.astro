@@ -2,51 +2,36 @@
 import { DB } from '../lib/d1client';
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
-import { getCatInfo, LABELS } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
 
-// ── "Lo mejor cerca de ti" ────────────────────────────────────────────────────
-// Un botón → tu ubicación → los mejores sitios alrededor, ordenados por distancia.
-// Solo datos estructurales: puntuaciones + coordenadas (ya en D1). Sin registro.
+// ── "Qué ver cerca de ti" ─────────────────────────────────────────────────────
+// Un botón → tu ubicación → cosas concretas para visitar A TU LADO (entidades de
+// todas las categorías), ordenadas por distancia. Radio pequeño: al lado, no a 2h.
 
 const url = Astro.url;
 const latP = parseFloat(url.searchParams.get('lat') ?? '');
 const lonP = parseFloat(url.searchParams.get('lon') ?? '');
 const origenSel = url.searchParams.get('origen') ?? '';
-const POP_MIN  = 1000;   // incluye también gemas pequeñas, pero no aldeas de 50 hab.
-const QUAL_PCT = 0.5;    // solo sitios "buenos" (mitad superior por calidad)
-const RADIO_KM = 120;    // a tu alrededor
+const catSel = url.searchParams.get('cat') ?? '';
+const RADIO_KM = 40;        // a tu lado de verdad
+const MAX_POR_MUNI = 3;     // variedad: no llenar la lista con un solo pueblo
 
-// Calidad (ranking_global) + meta + coordenadas
-const { results: rowsRaw } = await DB.prepare(`
-  SELECT m.codigo_ine, m.nombre, m.provincia, m.comarca, m.poblacion, m.foto_url,
-         m.latitud, m.longitud, g.puntuacion AS cal
-  FROM municipios m
-  JOIN puntuaciones g ON g.codigo_ine = m.codigo_ine AND g.categoria = 'ranking_global'
-  WHERE COALESCE(m.es_duplicado,0) = 0 AND g.puntuacion > 0
-        AND m.latitud IS NOT NULL AND m.latitud <> 0
-`).all();
-
-// Mejor categoría de cada municipio (el "destaca en…")
-const { results: bestRaw } = await DB.prepare(`
-  SELECT codigo_ine, categoria, MAX(puntuacion) AS sc
-  FROM puntuaciones
-  WHERE categoria NOT IN ('ranking_global','notoriedad_instagram') AND puntuacion > 0
-  GROUP BY codigo_ine
-`).all();
-const best = new Map<string, { cat: string; sc: number }>();
-for (const b of bestRaw as any[]) best.set(b.codigo_ine, { cat: b.categoria, sc: b.sc });
-
-// Percentil de calidad sobre los municipios con población suficiente
-const rows = (rowsRaw as any[]);
-const base = rows.filter(r => (r.poblacion ?? 0) >= POP_MIN);
-const sortedCal = [...base.map(r => r.cal)].sort((a, b) => a - b);
-const nCal = sortedCal.length;
-function calPct(v: number) {
-  let lo = 0, hi = nCal;
-  while (lo < hi) { const mid = (lo + hi) >> 1; if (sortedCal[mid] < v) lo = mid + 1; else hi = mid; }
-  return nCal > 1 ? lo / (nCal - 1) : 0;
-}
+// Grupos de categoría (chip) -> tipos de entidad que incluye. key = categoría real.
+const GRUPOS = [
+  { key: '',              label: 'Todo',       icon: 'apps',         tipos: null as string[] | null },
+  { key: 'monumentos',    label: 'Monumentos', icon: 'fort',         tipos: ['monumento','palacio','iglesia','ermita','catedral','conjunto_historico','conjunto','yacimiento','museo','torre'] },
+  { key: 'naturaleza',    label: 'Naturaleza', icon: 'landscape',    tipos: ['espacio','fauna'] },
+  { key: 'miradores',     label: 'Miradores',  icon: 'binoculars',   tipos: ['mirador'] },
+  { key: 'castillos',     label: 'Castillos',  icon: 'castle',       tipos: ['castillo','alcazaba','fortaleza','muralla'] },
+  { key: 'senderismo',    label: 'Senderismo', icon: 'hiking',       tipos: ['sendero'] },
+  { key: 'Playas',        label: 'Playas',     icon: 'beach_access', tipos: ['playa'] },
+  { key: 'misterioso',    label: 'Misterio',   icon: 'dark_mode',    tipos: ['misterio'] },
+  { key: 'turismo_activo',label: 'Aventura',   icon: 'mountain',     tipos: ['activo'] },
+  { key: 'vinos',         label: 'Vinos',      icon: 'wine_bar',     tipos: ['vino'] },
+];
+const TIPO_GRUPO: Record<string, typeof GRUPOS[number]> = {};
+const ALL_TIPOS: string[] = [];
+for (const g of GRUPOS) if (g.tipos) for (const t of g.tipos) { TIPO_GRUPO[t] = g; ALL_TIPOS.push(t); }
 
 function km(aLat: number, aLon: number, bLat: number, bLon: number) {
   const R = 6371, toR = Math.PI / 180;
@@ -55,47 +40,72 @@ function km(aLat: number, aLon: number, bLat: number, bLon: number) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-// Punto de referencia
+// Punto de referencia: ubicación (lat/lon) o ciudad elegida
 let ref: { lat: number; lon: number } | null = null;
-let refName = '';
-if (!isNaN(latP) && !isNaN(lonP)) { ref = { lat: latP, lon: lonP }; refName = 'ti'; }
+let refMuni = '';
+if (!isNaN(latP) && !isNaN(lonP)) { ref = { lat: latP, lon: lonP }; }
 else if (origenSel) {
-  const o = rows.find(r => r.codigo_ine === origenSel);
-  if (o && o.latitud) { ref = { lat: o.latitud, lon: o.longitud }; refName = o.nombre; }
+  const o = await DB.prepare(`SELECT nombre, latitud, longitud FROM municipios WHERE codigo_ine=?`).bind(origenSel).first() as any;
+  if (o && o.latitud) { ref = { lat: o.latitud, lon: o.longitud }; refMuni = o.nombre; }
 }
 
-// Lo mejor cerca: sitios buenos dentro del radio, ordenados por CALIDAD (mostrando
-// la distancia). Por pura distancia salía el extrarradio y enterraba las joyas.
-let lista: any[] = [];
+// Lista de cosas que ver cerca
+let items: any[] = [];
 if (ref) {
+  const tipos = (catSel && GRUPOS.find(g => g.key === catSel)?.tipos) || ALL_TIPOS;
+  // caja geográfica para traer solo lo cercano (eficiente: no cargar todo)
+  const dLat = RADIO_KM / 111;
+  const dLon = RADIO_KM / (111 * Math.cos(ref.lat * Math.PI / 180));
+  const ph = tipos.map(() => '?').join(',');
+  const { results } = await DB.prepare(`
+    SELECT e.tipo, e.nombre, m.codigo_ine, m.nombre AS muni, m.provincia, m.latitud, m.longitud
+    FROM entidades e
+    JOIN municipios m ON m.codigo_ine = e.codigo_ine
+    WHERE COALESCE(m.es_duplicado,0) = 0
+      AND m.latitud BETWEEN ? AND ? AND m.longitud BETWEEN ? AND ?
+      AND e.tipo IN (${ph})
+  `).bind(ref.lat - dLat, ref.lat + dLat, ref.lon - dLon, ref.lon + dLon, ...tipos).all();
+
   const r0 = ref;
-  const cand = base
-    .filter(r => best.has(r.codigo_ine) && r.codigo_ine !== origenSel && calPct(r.cal) >= QUAL_PCT)
-    .map(r => ({ ...r, dist: km(r0.lat, r0.lon, r.latitud, r.longitud) }));
-  const enRadio = cand.filter(r => r.dist <= RADIO_KM).sort((a, b) => b.cal - a.cal);
-  lista = (enRadio.length ? enRadio : cand.sort((a, b) => a.dist - b.dist).slice(0, 12)).slice(0, 36);
+  const perMuni: Record<string, number> = {};
+  items = (results as any[])
+    .map(r => ({ ...r, dist: km(r0.lat, r0.lon, r.latitud, r.longitud) }))
+    .filter(r => r.dist <= RADIO_KM)
+    .sort((a, b) => a.dist - b.dist)
+    .filter(r => {
+      perMuni[r.codigo_ine] = (perMuni[r.codigo_ine] ?? 0) + 1;
+      return perMuni[r.codigo_ine] <= MAX_POR_MUNI;
+    })
+    .slice(0, 60);
 }
 
 // Ciudades para el desplegable de respaldo
-const origenes = [...base].sort((a, b) => (b.poblacion ?? 0) - (a.poblacion ?? 0)).slice(0, 120)
-  .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+const { results: origRows } = await DB.prepare(`
+  SELECT codigo_ine, nombre, provincia FROM municipios
+  WHERE COALESCE(es_duplicado,0)=0 AND poblacion >= 20000 AND latitud IS NOT NULL
+  ORDER BY nombre
+`).all();
+const origenes = origRows as any[];
 
-const catLabel = (k: string) => LABELS[k] ?? k;
-const catIcon  = (k: string) => getCatInfo(k).icon;
-const catColor = (k: string) => CAT_COLORS[k] ?? '#FF385C';
+const grupo = (t: string) => TIPO_GRUPO[t] ?? GRUPOS[1];
+const colorOf = (t: string) => CAT_COLORS[grupo(t).key] ?? '#FF385C';
+const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `origen=${origenSel}` : '');
 ---
 
-<Base title="Lo mejor cerca de ti — Ranking España"
-      description="Pulsa un botón y descubre los mejores sitios cerca de ti, ordenados por distancia. Sin registro.">
+<Base title="Qué ver cerca de ti — Ranking España"
+      description="Pulsa un botón y descubre todo lo que tienes al lado para visitar: monumentos, naturaleza, miradores, castillos y más.">
   <div class="cerca-wrap">
 
     <div class="cerca-hero">
-      <h1>Lo mejor cerca de ti</h1>
-      <p>Pulsa el botón y te enseñamos <strong>los mejores sitios a tu alrededor</strong>, del más cercano al más lejano.</p>
-      <div class="cerca-actions">
-        <button type="button" id="geo-btn" class="cerca-btn">📍 Ver lo mejor cerca de mí</button>
-        <span class="cerca-or">o elige tu ciudad</span>
-        <form method="get" class="cerca-origen">
+      <h1>Qué ver cerca de ti</h1>
+      <p>Descubre <strong>todo lo que tienes al lado para visitar</strong>. Pulsa el botón y compártenos tu ubicación.</p>
+      <button type="button" id="geo-btn" class="cerca-geo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="22" height="22"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+        Usar mi ubicación
+      </button>
+      <div class="cerca-alt">
+        <span>o elige tu ciudad</span>
+        <form method="get">
           <select name="origen" onchange="this.form.submit()">
             <option value="">tu ciudad…</option>
             {origenes.map(o => <option value={o.codigo_ine} selected={o.codigo_ine === origenSel}>{o.nombre} ({o.provincia})</option>)}
@@ -104,41 +114,39 @@ const catColor = (k: string) => CAT_COLORS[k] ?? '#FF385C';
       </div>
     </div>
 
-    {ref ? (
-      lista.length === 0 ? (
-        <p class="cerca-empty">No encontramos sitios destacados cerca. Prueba con otra ubicación.</p>
-      ) : (
-        <>
-          <div class="cerca-head">
-            <h2>Lo mejor cerca de {refName}</h2>
-            <a href="/cerca" class="cerca-reset">↺ otra ubicación</a>
-          </div>
-          <div class="cerca-grid">
-            {lista.map(r => {
-              const b = best.get(r.codigo_ine)!;
+    {ref && (
+      <>
+        <!-- Chips de categoría -->
+        <div class="cerca-chips">
+          {GRUPOS.map(g => (
+            <a href={`/cerca?${qLoc}${g.key ? `&cat=${g.key}` : ''}`}
+               class={`cerca-chip${catSel === g.key ? ' on' : ''}`}>
+              <Icon name={g.icon} size={15} /> {g.label}
+            </a>
+          ))}
+        </div>
+
+        {items.length === 0 ? (
+          <p class="cerca-empty">No encontramos sitios de esta categoría a menos de {RADIO_KM} km. Prueba otra categoría.</p>
+        ) : (
+          <div class="cerca-list">
+            {items.map(r => {
+              const g = grupo(r.tipo);
               return (
-                <a href={`/municipio/${r.codigo_ine}`} class="cc-card">
-                  <div class="cc-photo" style={r.foto_url ? `background-image:url('${r.foto_url}')` : 'background:#e9eef0'}>
-                    <span class="cc-dist">a {Math.round(r.dist)} km</span>
-                  </div>
-                  <div class="cc-body">
-                    <div class="cc-name">{r.nombre}</div>
-                    <div class="cc-sub">{r.comarca ?? r.provincia}{r.comarca ? ` · ${r.provincia}` : ''}</div>
-                    <div class="cc-why" style={`color:${catColor(b.cat)}`}>
-                      <Icon name={catIcon(b.cat)} size={14} /> Destaca en {catLabel(b.cat)}
-                    </div>
-                  </div>
+                <a href={`/municipio/${r.codigo_ine}${g.key ? `?desde=${g.key}` : ''}`} class="ce-row">
+                  <span class="ce-ic" style={`color:${colorOf(r.tipo)};background:${colorOf(r.tipo)}15`}><Icon name={g.icon} size={18} /></span>
+                  <span class="ce-body">
+                    <span class="ce-cat" style={`color:${colorOf(r.tipo)}`}>{g.label}</span>
+                    <span class="ce-name">{r.nombre}</span>
+                    <span class="ce-loc">📍 {r.muni} · {r.provincia}</span>
+                  </span>
+                  <span class="ce-km">a {Math.round(r.dist)} km</span>
                 </a>
               );
             })}
           </div>
-        </>
-      )
-    ) : (
-      <div class="cerca-prompt">
-        <div class="cp-pin">📍</div>
-        <p>Dale al botón de arriba para ver al instante lo mejor que tienes alrededor.</p>
-      </div>
+        )}
+      </>
     )}
   </div>
 
@@ -151,17 +159,14 @@ const catColor = (k: string) => CAT_COLORS[k] ?? '#FF385C';
           alert('Tu navegador no permite la ubicación. Elige tu ciudad en el desplegable.');
           return;
         }
-        var original = btn.textContent;
-        btn.textContent = '📍 Buscando tu ubicación…';
+        btn.textContent = 'Buscando tu ubicación…';
         btn.disabled = true;
         navigator.geolocation.getCurrentPosition(
           function (p) {
             window.location.href = '/cerca?lat=' + p.coords.latitude.toFixed(4) + '&lon=' + p.coords.longitude.toFixed(4);
           },
           function () {
-            btn.textContent = original;
-            btn.disabled = false;
-            alert('No pudimos obtener tu ubicación. Elige tu ciudad en el desplegable.');
+            window.location.reload();
           },
           { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
         );
@@ -171,48 +176,39 @@ const catColor = (k: string) => CAT_COLORS[k] ?? '#FF385C';
 </Base>
 
 <style>
-  .cerca-wrap { max-width: 1080px; margin: 0 auto; padding: 18px 16px 60px; }
-  .cerca-hero { text-align: center; padding: 16px 8px 26px; }
+  .cerca-wrap { max-width: 760px; margin: 0 auto; padding: 18px 16px 60px; }
+  .cerca-hero { text-align: center; padding: 18px 8px 22px; }
   .cerca-hero h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0 0 10px; }
-  .cerca-hero p { color: var(--text-2); font-size: .98rem; line-height: 1.5; max-width: 540px; margin: 0 auto 20px; }
+  .cerca-hero p { color: var(--text-2); font-size: .98rem; line-height: 1.5; max-width: 480px; margin: 0 auto 20px; }
   .cerca-hero strong { color: var(--text); font-weight: 700; }
-  .cerca-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-  .cerca-btn { display: inline-flex; align-items: center; gap: 7px; padding: 14px 24px; background: var(--primary); color: #fff;
-    font-family: inherit; font-size: 1rem; font-weight: 700; border: none; border-radius: 999px; cursor: pointer;
-    box-shadow: 0 4px 14px rgba(255,56,92,.32); transition: transform .12s, box-shadow .12s; }
-  .cerca-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,56,92,.4); }
-  .cerca-btn:disabled { opacity: .75; cursor: default; transform: none; }
-  .cerca-or { font-size: .85rem; color: var(--text-2); }
-  .cerca-origen { min-width: 200px; max-width: 260px; }
-  .cerca-origen select { appearance: none; -webkit-appearance: none; width: 100%; padding: 11px 36px 11px 14px;
-    border: 1.5px solid #d6d6d6; border-radius: 12px; font-family: inherit; font-size: .9rem; font-weight: 600;
-    color: var(--text); background-color: #fff; cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23FF385C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 12px center; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .cerca-geo { display: inline-flex; align-items: center; gap: 10px; padding: 16px 30px; background: var(--primary); color: #fff;
+    font-family: inherit; font-size: 1.08rem; font-weight: 800; border: none; border-radius: 999px; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,56,92,.4); transition: transform .12s, box-shadow .12s; }
+  .cerca-geo:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(255,56,92,.5); }
+  .cerca-geo:disabled { opacity: .8; cursor: default; transform: none; }
+  .cerca-alt { margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .cerca-alt span { font-size: .84rem; color: var(--text-2); }
+  .cerca-alt select { appearance: none; -webkit-appearance: none; padding: 9px 32px 9px 13px; border: 1.5px solid #d6d6d6;
+    border-radius: 10px; font-family: inherit; font-size: .85rem; font-weight: 600; color: var(--text); background-color: #fff; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FF385C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 11px center; }
 
-  .cerca-prompt { text-align: center; color: var(--text-2); padding: 36px 16px; }
-  .cp-pin { font-size: 2.4rem; margin-bottom: 8px; }
+  .cerca-chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 14px; margin-bottom: 6px; -webkit-overflow-scrolling: touch; }
+  .cerca-chip { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px; border: 1.5px solid var(--border);
+    border-radius: 999px; font-size: .85rem; font-weight: 600; color: var(--text-2); text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+  .cerca-chip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
   .cerca-empty { text-align: center; color: var(--text-2); padding: 30px; }
+  .cerca-list { display: flex; flex-direction: column; gap: 8px; }
+  .ce-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--border);
+    border-radius: 14px; text-decoration: none; transition: box-shadow .12s, transform .12s; }
+  .ce-row:hover { box-shadow: 0 6px 16px rgba(0,0,0,.07); transform: translateY(-1px); }
+  .ce-ic { flex-shrink: 0; width: 40px; height: 40px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; }
+  .ce-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .ce-cat { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+  .ce-name { font-size: .98rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; line-height: 1.25; margin: 1px 0; }
+  .ce-loc { font-size: .78rem; color: var(--text-2); }
+  .ce-km { flex-shrink: 0; font-size: .82rem; font-weight: 700; color: var(--text); white-space: nowrap; }
 
-  .cerca-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-  .cerca-head h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0; flex: 1; }
-  .cerca-reset { font-size: .85rem; font-weight: 600; color: var(--text-2); text-decoration: none; white-space: nowrap; }
-  .cerca-reset:hover { color: var(--primary); }
-
-  .cerca-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 16px; }
-  .cc-card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border);
-    border-radius: 16px; overflow: hidden; text-decoration: none; transition: transform .12s, box-shadow .12s; }
-  .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,.08); }
-  .cc-photo { height: 122px; background-size: cover; background-position: center; position: relative; }
-  .cc-dist { position: absolute; top: 8px; left: 8px; font-size: .78rem; font-weight: 700; color: var(--primary);
-    background: rgba(255,255,255,.94); padding: 4px 10px; border-radius: 999px; }
-  .cc-body { padding: 12px 14px 14px; }
-  .cc-name { font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-  .cc-sub { font-size: .76rem; color: var(--text-2); margin-top: 1px; }
-  .cc-why { display: inline-flex; align-items: center; gap: 5px; font-size: .8rem; font-weight: 600; margin-top: 8px; }
-
-  @media (max-width: 560px) {
-    .cerca-hero h1 { font-size: 1.65rem; }
-    .cerca-origen { flex: 1; max-width: none; }
-  }
+  @media (max-width: 560px) { .cerca-hero h1 { font-size: 1.65rem; } }
 </style>
