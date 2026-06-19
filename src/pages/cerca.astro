@@ -3,6 +3,7 @@ import { DB } from '../lib/d1client';
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { CAT_COLORS } from '../lib/utils';
+import { gmapsUrl } from '../lib/entidades';
 
 // ── "Qué ver cerca de ti" ─────────────────────────────────────────────────────
 // Un botón → tu ubicación → cosas concretas para visitar A TU LADO (entidades de
@@ -58,7 +59,7 @@ if (ref) {
   const dLon = RADIO_KM / (111 * Math.cos(ref.lat * Math.PI / 180));
   const ph = tipos.map(() => '?').join(',');
   const { results } = await DB.prepare(`
-    SELECT e.tipo, e.nombre, m.codigo_ine, m.nombre AS muni, m.provincia, m.latitud, m.longitud
+    SELECT e.tipo, e.nombre, e.descripcion, m.codigo_ine, m.nombre AS muni, m.provincia, m.latitud, m.longitud
     FROM entidades e
     JOIN municipios m ON m.codigo_ine = e.codigo_ine
     WHERE COALESCE(m.es_duplicado,0) = 0
@@ -116,15 +117,16 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
 
     {ref && (
       <>
-        <!-- Chips de categoría -->
-        <div class="cerca-chips">
-          {GRUPOS.map(g => (
-            <a href={`/cerca?${qLoc}${g.key ? `&cat=${g.key}` : ''}`}
-               class={`cerca-chip${catSel === g.key ? ' on' : ''}`}>
-              <Icon name={g.icon} size={15} /> {g.label}
-            </a>
-          ))}
-        </div>
+        <!-- Categoría: desplegable -->
+        <form method="get" class="cerca-catform">
+          {!isNaN(latP) && <input type="hidden" name="lat" value={latP} />}
+          {!isNaN(lonP) && <input type="hidden" name="lon" value={lonP} />}
+          {origenSel && <input type="hidden" name="origen" value={origenSel} />}
+          <label class="cerca-catlbl">Categoría</label>
+          <select name="cat" class="cerca-catsel" onchange="this.form.submit()">
+            {GRUPOS.map(g => <option value={g.key} selected={catSel === g.key}>{g.label}</option>)}
+          </select>
+        </form>
 
         {items.length === 0 ? (
           <p class="cerca-empty">No encontramos sitios de esta categoría a menos de {RADIO_KM} km. Prueba otra categoría.</p>
@@ -136,16 +138,23 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
               const generico = r.tipo === 'misterio';
               const titulo = generico ? r.muni : r.nombre;
               const sub = generico ? r.provincia : `${r.muni} · ${r.provincia}`;
+              const desc = (r.descripcion ?? '').trim();
+              const descCorta = desc.length > 165 ? desc.slice(0, 165).trimEnd() + '…' : desc;
+              const gq = generico ? gmapsUrl(r.muni, r.provincia, '') : gmapsUrl(r.nombre, r.muni, r.provincia);
               return (
-                <a href={`/municipio/${r.codigo_ine}${g.key ? `?desde=${g.key}` : ''}`} class="ce-row">
+                <div class="ce-row">
                   <span class="ce-ic" style={`color:${colorOf(r.tipo)};background:${colorOf(r.tipo)}15`}><Icon name={g.icon} size={18} /></span>
-                  <span class="ce-body">
-                    <span class="ce-cat" style={`color:${colorOf(r.tipo)}`}>{g.label}</span>
-                    <span class="ce-name">{titulo}</span>
-                    <span class="ce-loc">📍 {sub}</span>
-                  </span>
-                  <span class="ce-km">a {Math.round(r.dist)} km</span>
-                </a>
+                  <div class="ce-body">
+                    <div class="ce-top">
+                      <span class="ce-cat" style={`color:${colorOf(r.tipo)}`}>{g.label}</span>
+                      <span class="ce-km">a {Math.round(r.dist)} km</span>
+                    </div>
+                    <a class="ce-name" href={`/municipio/${r.codigo_ine}${g.key ? `?desde=${g.key}` : ''}`}>{titulo}</a>
+                    <div class="ce-loc">📍 {sub}</div>
+                    {descCorta && <div class="ce-desc">{descCorta}</div>}
+                    <a class="ce-maps" href={gq} target="_blank" rel="nofollow noopener">🗺️ Ver en Google Maps</a>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -197,22 +206,30 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FF385C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 11px center; }
 
-  .cerca-chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 14px; margin-bottom: 6px; -webkit-overflow-scrolling: touch; }
-  .cerca-chip { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px; border: 1.5px solid var(--border);
-    border-radius: 999px; font-size: .85rem; font-weight: 600; color: var(--text-2); text-decoration: none; white-space: nowrap; flex-shrink: 0; }
-  .cerca-chip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .cerca-catform { display: flex; align-items: center; gap: 10px; margin: 6px 0 16px; }
+  .cerca-catlbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-2); flex-shrink: 0; }
+  .cerca-catsel { appearance: none; -webkit-appearance: none; flex: 1; max-width: 300px; padding: 11px 36px 11px 14px;
+    border: 1.5px solid #d6d6d6; border-radius: 12px; font-family: inherit; font-size: .92rem; font-weight: 600; color: var(--text);
+    background-color: #fff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23FF385C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; }
 
   .cerca-empty { text-align: center; color: var(--text-2); padding: 30px; }
-  .cerca-list { display: flex; flex-direction: column; gap: 8px; }
-  .ce-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--border);
-    border-radius: 14px; text-decoration: none; transition: box-shadow .12s, transform .12s; }
-  .ce-row:hover { box-shadow: 0 6px 16px rgba(0,0,0,.07); transform: translateY(-1px); }
+  .cerca-list { display: flex; flex-direction: column; gap: 10px; }
+  .ce-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: #fff; border: 1px solid var(--border);
+    border-radius: 14px; }
   .ce-ic { flex-shrink: 0; width: 40px; height: 40px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; }
   .ce-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .ce-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   .ce-cat { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
-  .ce-name { font-size: .98rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; line-height: 1.25; margin: 1px 0; }
-  .ce-loc { font-size: .78rem; color: var(--text-2); }
   .ce-km { flex-shrink: 0; font-size: .82rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .ce-name { font-size: 1rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; line-height: 1.25; margin: 2px 0; text-decoration: none; }
+  .ce-name:hover { color: var(--primary); }
+  .ce-loc { font-size: .78rem; color: var(--text-2); }
+  .ce-desc { font-size: .85rem; color: var(--text-2); line-height: 1.45; margin-top: 6px; }
+  .ce-maps { display: inline-flex; align-items: center; gap: .3rem; align-self: flex-start; margin-top: 10px; padding: .32rem .7rem;
+    font-size: .78rem; font-weight: 700; color: #1a73e8; background: #e8f0fe; border-radius: 999px; text-decoration: none; }
+  .ce-maps:hover { background: #d2e3fc; }
 
   @media (max-width: 560px) { .cerca-hero h1 { font-size: 1.65rem; } }
 </style>
