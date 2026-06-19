@@ -146,6 +146,42 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   </div>
 </section>
 
+<!-- ── QUÉ VER CERCA DE TI (destacado, geolocalización) ── -->
+<section class="nearby">
+  <div class="nearby-card">
+    <span class="nearby-eyebrow">📍 A tu lado · Nuevo</span>
+    <h2 class="nearby-title">¿Qué ver cerca de ti?</h2>
+    <p class="nearby-sub">Comparte tu ubicación y descubre al instante <strong>todo lo que tienes al lado para visitar</strong>.</p>
+    <a href="/cerca" id="home-cerca-btn" class="nearby-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="20" height="20"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+      Ver qué hay cerca de mí
+    </a>
+    <div class="nearby-tags">
+      <span><Icon name="account_balance" size={14} /> Monumentos</span>
+      <span><Icon name="landscape" size={14} /> Naturaleza</span>
+      <span><Icon name="binoculars" size={14} /> Miradores</span>
+      <span><Icon name="castle" size={14} /> Castillos</span>
+      <span><Icon name="dark_mode" size={14} /> Misterio</span>
+    </div>
+  </div>
+</section>
+<script is:inline>
+  (function () {
+    var b = document.getElementById('home-cerca-btn');
+    if (!b) return;
+    b.addEventListener('click', function (e) {
+      if (!navigator.geolocation) return; // deja navegar a /cerca
+      e.preventDefault();
+      b.style.opacity = '.75';
+      navigator.geolocation.getCurrentPosition(
+        function (p) { window.location.href = '/cerca?lat=' + p.coords.latitude.toFixed(4) + '&lon=' + p.coords.longitude.toFixed(4); },
+        function () { window.location.href = '/cerca'; },
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+      );
+    });
+  })();
+</script>
+
 <!-- ── PLANIFICADOR DE RUTAS (destacado) ── -->
 <section class="route-promo">
   <form class="rp-card" method="get" action="/ruta" id="rp-card" data-mode="zona">
@@ -307,17 +343,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   document.getElementById('chips-prev')?.addEventListener('click', () => bar?.scrollBy({ left: -300, behavior: 'smooth' }));
   document.getElementById('chips-next')?.addEventListener('click', () => bar?.scrollBy({ left: 300, behavior: 'smooth' }));
 </script>
-
-<!-- ── QUÉ VER CERCA DE TI (destacado) ── -->
-<a href="/cerca" class="cerca-promo">
-  <span class="cp-pin">📍</span>
-  <span class="cp-txt">
-    <span class="cp-eyebrow">Nuevo · A tu lado</span>
-    <span class="cp-title">Qué ver cerca de ti</span>
-    <span class="cp-sub">Pulsa, comparte tu ubicación y descubre <strong>todo lo que tienes al lado para visitar</strong>: monumentos, naturaleza, miradores, castillos…</span>
-    <span class="cp-cta">Ver qué hay cerca →</span>
-  </span>
-</a>
 
 <!-- ── JOYAS SIN MASIFICAR (destacado) ── -->
 <a href="/joyas" class="joyas-promo">
@@ -773,21 +798,26 @@ function doSearch() {
 .rp-ac small { color: var(--text-2); font-weight: 500; }
 @media (max-width: 560px) { .rp-row { flex-direction: column; } .rp-go { justify-content: center; } }
 
-/* Banner Qué ver cerca de ti */
-.cerca-promo { max-width: 1100px; margin: 22px auto 0; padding: 18px 20px; display: flex; align-items: center; gap: 16px;
-  background: linear-gradient(135deg, #eef5ff 0%, #eafaff 100%); border: 1.5px solid #cfe3f7; border-radius: 18px;
-  text-decoration: none; transition: transform .12s, box-shadow .12s; }
-.cerca-promo:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(30,136,229,.14); }
-.cerca-promo .cp-pin { font-size: 2rem; flex-shrink: 0; }
-.cerca-promo .cp-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.cerca-promo .cp-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #1565c0; }
-.cerca-promo .cp-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 2px 0 4px; }
-.cerca-promo .cp-sub { font-size: .9rem; color: var(--text-2); line-height: 1.45; }
-.cerca-promo .cp-sub strong { color: var(--text); font-weight: 700; }
-.cerca-promo .cp-cta { display: inline-flex; align-self: flex-start; margin-top: 12px; padding: 10px 18px; background: #1565c0;
-  color: #fff; font-size: .9rem; font-weight: 700; border-radius: 999px; box-shadow: 0 2px 8px rgba(21,101,192,.28); }
-.cerca-promo:hover .cp-cta { background: #114a8f; }
-@media (max-width: 560px) { .cerca-promo { padding: 16px; gap: 12px; } .cerca-promo .cp-cta { align-self: stretch; justify-content: center; text-align: center; } }
+/* Sección "Qué ver cerca de ti" (geolocalización) */
+.nearby { max-width: 700px; margin: 16px auto 0; padding: 0 16px; position: relative; z-index: 2; }
+.nearby-card { position: relative; overflow: hidden; text-align: center; padding: 28px 22px 24px; border-radius: 22px;
+  background: radial-gradient(120% 120% at 50% 0%, #1e88e5 0%, #1565c0 55%, #0d47a1 100%);
+  box-shadow: 0 14px 38px rgba(21,101,192,.32); }
+.nearby-card::before { content: ''; position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+  width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.22) 0%, transparent 65%); pointer-events: none; }
+.nearby-eyebrow { position: relative; display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: #fff; background: rgba(255,255,255,.18); padding: 5px 12px; border-radius: 999px; }
+.nearby-title { position: relative; font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; color: #fff; margin: 14px 0 8px; }
+.nearby-sub { position: relative; font-size: .98rem; line-height: 1.5; color: rgba(255,255,255,.92); max-width: 440px; margin: 0 auto 20px; }
+.nearby-sub strong { color: #fff; font-weight: 700; }
+.nearby-btn { position: relative; display: inline-flex; align-items: center; gap: 9px; padding: 15px 30px; background: #fff;
+  color: #1565c0; font-size: 1.05rem; font-weight: 800; border-radius: 999px; text-decoration: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,.22); transition: transform .14s, box-shadow .14s; }
+.nearby-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 28px rgba(0,0,0,.3); }
+.nearby-tags { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
+.nearby-tags span { display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; font-weight: 600; color: #fff;
+  background: rgba(255,255,255,.16); padding: 6px 12px; border-radius: 999px; }
+@media (max-width: 560px) { .nearby-title { font-size: 1.45rem; } .nearby-btn { width: 100%; justify-content: center; } }
 
 /* Banner Joyas sin masificar */
 .joyas-promo { max-width: 1100px; margin: 22px auto 0; padding: 18px 20px; display: flex; align-items: center; gap: 16px;
