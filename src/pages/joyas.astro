@@ -1,0 +1,273 @@
+---
+import { DB } from '../lib/d1client';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { getCatInfo, LABELS } from '../lib/db';
+import { CAT_COLORS } from '../lib/utils';
+
+// ── Prototipo "Joyas sin masificar" ──────────────────────────────────────────
+// Cruza SUSTANCIA (ranking_global, lo que objetivamente hay para ver) con
+// FAMA (popularidad en redes). Una "joya infravalorada" = mucha sustancia y
+// poca fama: un sitio que merece la pena y que aún no está masificado.
+
+const url = Astro.url;
+const provSel = url.searchParams.get('prov') ?? '';
+const mSel    = url.searchParams.get('m') ?? '';
+const POP_MIN = 2000;  // suelo de población: sitios "reales", no aldeas de 50 hab.
+
+// 1) Sustancia + fama + meta de cada municipio canónico
+const { results: rowsRaw } = await DB.prepare(`
+  SELECT m.codigo_ine, m.nombre, m.provincia, m.comarca, m.poblacion, m.foto_url,
+         sub.puntuacion AS sub, hy.puntuacion AS fame
+  FROM municipios m
+  JOIN puntuaciones sub ON sub.codigo_ine = m.codigo_ine AND sub.categoria = 'ranking_global'
+  JOIN puntuaciones hy  ON hy.codigo_ine  = m.codigo_ine AND hy.categoria  = 'notoriedad_instagram'
+  WHERE COALESCE(m.es_duplicado,0) = 0 AND sub.puntuacion > 0 AND hy.puntuacion > 0
+`).all();
+
+// 2) Mejor categoría de cada municipio (el "por qué destaca")
+const { results: bestRaw } = await DB.prepare(`
+  SELECT codigo_ine, categoria, MAX(puntuacion) AS sc
+  FROM puntuaciones
+  WHERE categoria NOT IN ('ranking_global','notoriedad_instagram') AND puntuacion > 0
+  GROUP BY codigo_ine
+`).all();
+const best = new Map<string, { cat: string; sc: number }>();
+for (const b of bestRaw as any[]) best.set(b.codigo_ine, { cat: b.categoria, sc: b.sc });
+
+// 3) Percentiles (sobre los municipios con población suficiente)
+function pctRanker(values: number[]) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const n = sorted.length;
+  return (v: number) => {
+    let lo = 0, hi = n;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (sorted[mid] < v) lo = mid + 1; else hi = mid; }
+    return n > 1 ? lo / (n - 1) : 0;
+  };
+}
+const rows = (rowsRaw as any[]).map(r => ({ ...r, sp: 0, fp: 0, gap: 0 }));
+const base = rows.filter(r => (r.poblacion ?? 0) >= POP_MIN);
+const subRank  = pctRanker(base.map(r => r.sub));
+const fameRank = pctRanker(base.map(r => r.fame));
+for (const r of rows) { r.sp = subRank(r.sub); r.fp = fameRank(r.fame); r.gap = r.fp - r.sp; }
+
+// 4) Joyas infravaloradas: sustancia alta (p55+) y fama baja (p45-)
+let joyas = base.filter(r => r.sp >= 0.55 && r.fp <= 0.45 && best.has(r.codigo_ine));
+if (provSel) joyas = joyas.filter(r => r.provincia === provSel);
+joyas.sort((a, b) => a.gap - b.gap || b.sub - a.sub);
+joyas = joyas.slice(0, 30);
+
+// Provincias y "famosos" para los selectores
+const provincias = [...new Set(base.map(r => r.provincia))].sort((a, b) => a.localeCompare(b, 'es'));
+const famosos = [...base].sort((a, b) => b.fame - a.fame).slice(0, 150)
+  .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+// 5) Veredicto de un sitio concreto (?m=)
+const target = mSel ? rows.find(r => r.codigo_ine === mSel) : null;
+function verdictOf(r: any) {
+  if (r.sp >= 0.55 && r.fp <= 0.45) return { key: 'joya', emoji: '💎', label: 'Joya infravalorada',
+    msg: 'Tiene mucho más de lo que su fama refleja. De los sitios que aún puedes disfrutar sin agobios.' };
+  if (r.sp >= 0.6 && r.fp >= 0.6) return { key: 'merecida', emoji: '✅', label: 'Fama merecida',
+    msg: 'Es famoso y lo merece: la sustancia acompaña al nombre. Eso sí, espera compañía.' };
+  if (r.fp >= 0.6 && r.sp < 0.4) return { key: 'sobre', emoji: '📸', label: 'Más nombre que contenido',
+    msg: 'Suena más de lo que nuestro ranking encuentra para ver. Quizá te cunda más una joya de al lado.' };
+  return { key: 'discreto', emoji: '🙂', label: 'Discreto y tranquilo',
+    msg: 'Ni mucha fama ni mucho que destacar en nuestros datos: un sitio de paso.' };
+}
+const verdict = target ? verdictOf(target) : null;
+const cerca = target
+  ? base.filter(r => r.provincia === target.provincia && r.codigo_ine !== target.codigo_ine
+      && r.sp >= 0.5 && r.fp <= 0.5 && best.has(r.codigo_ine))
+      .sort((a, b) => a.gap - b.gap).slice(0, 4)
+  : [];
+
+const catLabel = (k: string) => LABELS[k] ?? k;
+const catIcon  = (k: string) => getCatInfo(k).icon;
+const catColor = (k: string) => CAT_COLORS[k] ?? '#43a047';
+const pct = (x: number) => Math.round(x * 100);
+---
+
+<Base title="Joyas sin masificar — Ranking España"
+      description="Sitios con sustancia real y poca fama: lo que de verdad merece la pena en España y todavía no está masificado."
+      noindex={true}>
+  <div class="joyas-wrap">
+
+    <div class="joyas-hero">
+      <div class="jh-badge">NUEVO · EN PRUEBAS</div>
+      <h1>Joyas sin masificar</h1>
+      <p>Cruzamos <strong>lo que objetivamente hay para ver</strong> (nuestro ranking de datos verificados)
+         con <strong>la fama en redes</strong>. Cuando hay mucho de lo primero y poco de lo segundo, tienes
+         una <strong>joya infravalorada</strong>: un sitio que merece la pena y que <em>aún</em> puedes
+         disfrutar sin colas.</p>
+    </div>
+
+    <!-- Comprobador de un sitio famoso -->
+    <div class="joyas-check">
+      <div class="jck-title">🔎 ¿Ese sitio famoso merece la pena… o hay algo mejor al lado?</div>
+      <form method="get" class="jck-form">
+        <select name="m" onchange="this.form.submit()">
+          <option value="">Elige un destino conocido…</option>
+          {famosos.map(f => <option value={f.codigo_ine} selected={f.codigo_ine === mSel}>{f.nombre} ({f.provincia})</option>)}
+        </select>
+      </form>
+
+      {target && verdict && (
+        <div class={`verdict v-${verdict.key}`}>
+          <div class="vd-head">
+            <span class="vd-emoji">{verdict.emoji}</span>
+            <div>
+              <a class="vd-name" href={`/municipio/${target.codigo_ine}`}>{target.nombre}</a>
+              <div class="vd-prov">{target.provincia}</div>
+            </div>
+            <span class="vd-label">{verdict.label}</span>
+          </div>
+          <div class="vd-bars">
+            <div class="vd-bar-row">
+              <span class="vd-bar-lbl">Sustancia (lo que hay para ver)</span>
+              <div class="vd-track"><div class="vd-fill sub" style={`width:${pct(target.sp)}%`}></div></div>
+              <span class="vd-bar-pct">{pct(target.sp)}</span>
+            </div>
+            <div class="vd-bar-row">
+              <span class="vd-bar-lbl">Fama en redes</span>
+              <div class="vd-track"><div class="vd-fill fame" style={`width:${pct(target.fp)}%`}></div></div>
+              <span class="vd-bar-pct">{pct(target.fp)}</span>
+            </div>
+          </div>
+          <p class="vd-msg">{verdict.msg}</p>
+          {cerca.length > 0 && (
+            <div class="vd-cerca">
+              <div class="vd-cerca-t">💎 Joyas de verdad en {target.provincia}:</div>
+              <div class="vd-cerca-list">
+                {cerca.map(c => <a href={`/municipio/${c.codigo_ine}`} class="vd-chip">{c.nombre}</a>)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+
+    <!-- Lista de joyas -->
+    <div class="joyas-list-head">
+      <h2>💎 {provSel ? `Joyas infravaloradas de ${provSel}` : 'Las joyas infravaloradas de España'}</h2>
+      <form method="get">
+        <select name="prov" onchange="this.form.submit()">
+          <option value="">Toda España</option>
+          {provincias.map(p => <option value={p} selected={p === provSel}>{p}</option>)}
+        </select>
+      </form>
+    </div>
+
+    {joyas.length === 0 ? (
+      <p class="joyas-empty">No encontramos joyas claras con estos datos en {provSel}. Prueba otra provincia.</p>
+    ) : (
+      <div class="joyas-grid">
+        {joyas.map(r => {
+          const b = best.get(r.codigo_ine)!;
+          return (
+            <a href={`/municipio/${r.codigo_ine}`} class="joya-card">
+              <div class="jc-photo" style={r.foto_url ? `background-image:url('${r.foto_url}')` : 'background:#e9eef0'}>
+                <span class="jc-gem">💎</span>
+              </div>
+              <div class="jc-body">
+                <div class="jc-name">{r.nombre}</div>
+                <div class="jc-sub">{r.comarca ?? r.provincia}{r.comarca ? ` · ${r.provincia}` : ''}</div>
+                <div class="jc-why" style={`color:${catColor(b.cat)}`}>
+                  <Icon name={catIcon(b.cat)} size={14} /> Destaca en {catLabel(b.cat)}
+                </div>
+                <div class="jc-bars">
+                  <div class="jc-bar"><span>Sustancia</span><div class="jc-track"><i class="sub" style={`width:${pct(r.sp)}%`}></i></div></div>
+                  <div class="jc-bar"><span>Fama</span><div class="jc-track"><i class="fame" style={`width:${pct(r.fp)}%`}></i></div></div>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+
+    <p class="joyas-foot">Prototipo. Sustancia = ranking global de datos verificados · Fama = popularidad en redes.
+       Solo municipios de más de {POP_MIN.toLocaleString('es-ES')} habitantes.</p>
+  </div>
+</Base>
+
+<style>
+  .joyas-wrap { max-width: 1080px; margin: 0 auto; padding: 18px 16px 60px; }
+  .joyas-hero { text-align: center; padding: 14px 8px 24px; }
+  .jh-badge { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: 1px; color: var(--primary);
+    background: #fff1f3; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; }
+  .joyas-hero h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0 0 10px; }
+  .joyas-hero p { color: var(--text-2); font-size: .98rem; line-height: 1.55; max-width: 620px; margin: 0 auto; }
+  .joyas-hero strong { color: var(--text); font-weight: 700; }
+
+  .joyas-check { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin: 8px 0 30px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.04); }
+  .jck-title { font-weight: 700; font-size: 1.02rem; color: var(--text); margin-bottom: 12px; letter-spacing: -0.01em; }
+  .jck-form select, .joyas-list-head select {
+    appearance: none; -webkit-appearance: none; width: 100%; padding: 12px 38px 12px 14px;
+    border: 1.5px solid #d6d6d6; border-radius: 12px; font-family: inherit; font-size: .92rem; font-weight: 600;
+    color: var(--text); background-color: #fff; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23FF385C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+  .verdict { margin-top: 16px; border: 1.5px solid var(--border); border-radius: 14px; padding: 16px; }
+  .verdict.v-joya { border-color: #43a047; background: #f3faf4; }
+  .verdict.v-merecida { border-color: #1e88e5; background: #f2f8fe; }
+  .verdict.v-sobre { border-color: #f0a020; background: #fff9ef; }
+  .verdict.v-discreto { background: #fafafa; }
+  .vd-head { display: flex; align-items: center; gap: 12px; }
+  .vd-emoji { font-size: 1.8rem; }
+  .vd-name { font-size: 1.15rem; font-weight: 700; color: var(--text); text-decoration: none; }
+  .vd-prov { font-size: .8rem; color: var(--text-2); }
+  .vd-label { margin-left: auto; font-weight: 700; font-size: .82rem; padding: 6px 12px; border-radius: 999px;
+    background: #fff; border: 1.5px solid currentColor; }
+  .v-joya .vd-label { color: #2e7d32; }
+  .v-merecida .vd-label { color: #1565c0; }
+  .v-sobre .vd-label { color: #b9750d; }
+  .v-discreto .vd-label { color: var(--text-2); }
+  .vd-bars { margin: 14px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+  .vd-bar-row { display: flex; align-items: center; gap: 10px; }
+  .vd-bar-lbl { font-size: .78rem; color: var(--text-2); width: 175px; flex-shrink: 0; }
+  .vd-track { flex: 1; height: 9px; background: #ececec; border-radius: 999px; overflow: hidden; }
+  .vd-fill { height: 100%; border-radius: 999px; }
+  .vd-fill.sub { background: #43a047; }
+  .vd-fill.fame { background: var(--primary); }
+  .vd-bar-pct { font-size: .8rem; font-weight: 700; color: var(--text); width: 26px; text-align: right; }
+  .vd-msg { font-size: .92rem; color: var(--text); margin: 10px 0 0; line-height: 1.5; }
+  .vd-cerca { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .vd-cerca-t { font-size: .85rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .vd-cerca-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .vd-chip { font-size: .82rem; font-weight: 600; color: #2e7d32; background: #fff; border: 1.5px solid #cce8cf;
+    border-radius: 999px; padding: 6px 12px; text-decoration: none; }
+
+  .joyas-list-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+  .joyas-list-head h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0; flex: 1; }
+  .joyas-list-head form { min-width: 220px; }
+
+  .joyas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 16px; }
+  .joya-card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; text-decoration: none; transition: transform .12s, box-shadow .12s; }
+  .joya-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,.08); }
+  .jc-photo { height: 120px; background-size: cover; background-position: center; position: relative; }
+  .jc-gem { position: absolute; top: 8px; right: 8px; font-size: 1rem; background: rgba(255,255,255,.92);
+    width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .jc-body { padding: 12px 14px 14px; }
+  .jc-name { font-size: 1.02rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+  .jc-sub { font-size: .76rem; color: var(--text-2); margin-top: 1px; }
+  .jc-why { display: inline-flex; align-items: center; gap: 5px; font-size: .8rem; font-weight: 600; margin-top: 8px; }
+  .jc-bars { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+  .jc-bar { display: flex; align-items: center; gap: 8px; }
+  .jc-bar span { font-size: .68rem; color: var(--text-2); width: 56px; flex-shrink: 0; }
+  .jc-track { flex: 1; height: 6px; background: #ececec; border-radius: 999px; overflow: hidden; }
+  .jc-track i { display: block; height: 100%; border-radius: 999px; }
+  .jc-track i.sub { background: #43a047; }
+  .jc-track i.fame { background: var(--primary); }
+
+  .joyas-empty { text-align: center; color: var(--text-2); padding: 30px; }
+  .joyas-foot { text-align: center; color: var(--text-2); font-size: .76rem; margin-top: 30px; }
+
+  @media (max-width: 560px) {
+    .joyas-hero h1 { font-size: 1.6rem; }
+    .vd-bar-lbl { width: 130px; }
+    .vd-label { margin-left: 0; }
+  }
+</style>
