@@ -20,6 +20,7 @@ export const ICONS: Record<string, string> = {
   ranking_global:    'emoji_events',
   fiestas:           'celebration',
   senderismo:        'hiking',
+  naturaleza:        'landscape',
   monumentos:        'fort',
   gastronomia:       'restaurant',
   Campings:          'camping',
@@ -69,6 +70,7 @@ export const LABELS: Record<string, string> = {
   ranking_global:    'Global',
   fiestas:           'Fiestas',
   senderismo:        'Senderismo',
+  naturaleza:        'Naturaleza',
   monumentos:        'Monumentos',
   gastronomia:       'Gastronomía',
   camping:           'Camping',
@@ -119,6 +121,7 @@ export const TABS = [
   { key: 'fiestas',          label: 'Fiestas',     icon: 'celebration' },
   { key: 'festivales',       label: 'Festivales',  icon: 'festival' },
   { key: 'senderismo',       label: 'Senderismo',  icon: 'hiking' },
+  { key: 'naturaleza',       label: 'Naturaleza',  icon: 'landscape' },
   { key: 'monumentos',      label: 'Monumentos',  icon: 'fort' },
   { key: 'gastronomia',      label: 'Gastronomía', icon: 'restaurant' },
   { key: 'Campings',         label: 'Camping',     icon: 'camping' },
@@ -178,6 +181,7 @@ export const SIDEBAR_GROUPS = [
     title: 'Naturaleza y aire libre',
     icon: 'park',
     items: [
+      { key: 'naturaleza',     label: 'Naturaleza',     icon: 'landscape' },
       { key: 'senderismo',     label: 'Senderismo',     icon: 'hiking' },
       { key: 'turismo_activo', label: 'Turismo activo', icon: 'mountain' },
       { key: 'miradores',      label: 'Miradores',      icon: 'binoculars' },
@@ -248,7 +252,7 @@ export const ALL_CATS = SIDEBAR_GROUPS.flatMap(g => g.items);
 
 // Categorías a mostrar en la ficha de municipio (tarjetas de ranking)
 export const FICHA_CATS = [
-  'ranking_global','monumentos','fiestas','festivales','senderismo',
+  'ranking_global','monumentos','fiestas','festivales','senderismo','naturaleza',
   'gastronomia','Campings','TurismoRural',
   'castillos',
   'Playas',
@@ -262,7 +266,7 @@ export const FICHA_CATS = [
 // Solo las categorías confirmadas / en uso.
 export const DETAIL_CATS = [
   'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
-  'senderismo','TurismoRural','Campings','vinos','miradores','lujo','solteros','misterioso',
+  'senderismo','naturaleza','TurismoRural','Campings','vinos','miradores','lujo','solteros','misterioso',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
   'pueblo_bonito','notoriedad_instagram',
 ];

@@ -10,7 +10,7 @@ INE = json.load(open('/tmp/ine_munis.json'))
 
 def norm(s):
     s=unicodedata.normalize('NFD',s); return ''.join(c for c in s if unicodedata.category(c)!='Mn').lower().strip()
-ARTS={'el','la','los','las','o','a','os','as','l','es','sa',"l'"}
+ARTS={'el','la','los','las','o','a','os','as','l','es','sa',"l'",'els','ses','na'}
 def key(s):
     s=norm(s).replace("’","'").replace("'"," ")
     s=re.sub(r'[^a-z0-9ñ/ ]',' ',s); toks=[t for t in s.split() if t]
@@ -101,6 +101,10 @@ for r in R:
     if nk in ALIAS: name,prov=ALIAS[nk]
     if not name or len(name)<2: drop+=1; continue
     icode=match(name,prov,INE_pidx,INE_gidx)
+    if not icode and '/' in name:                 # bilingüe: "Calpe/Calp" -> probar cada lado
+        for part in name.split('/'):
+            icode=match(part.strip(),prov,INE_pidx,INE_gidx)
+            if icode: break
     if not icode:
         drop+=1
         if len(samp)<15: samp.append((r['line'],r['provincia'],name))

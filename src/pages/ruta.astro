@@ -19,6 +19,7 @@ const RUTA_CATS: { key: string; tipo: string; label: string }[] = [
   { key: 'turismo_lgtbi',     tipo: 'lgtbi',       label: 'Turismo LGTBI' },
   { key: 'TurismoRural',      tipo: 'rural',       label: 'Turismo rural' },
   { key: 'senderismo',        tipo: 'sendero',     label: 'Senderismo' },
+  { key: 'naturaleza',        tipo: 'espacio',     label: 'Naturaleza' },
   { key: 'lujo',              tipo: 'lujo',        label: 'Turismo de lujo' },
   { key: 'vinos',             tipo: 'vino',        label: 'Vinos y bodegas' },
   { key: 'miradores',         tipo: 'mirador',     label: 'Miradores' },
@@ -58,6 +59,8 @@ const CAT_PROFILE: Record<string, CatProfile> = {
   vinos:            { visitar: { keyword: 'bodega enoturismo visita' } },
   // Miradores: lo que se visita son los miradores y puntos panorámicos.
   miradores:        { visitar: { keyword: 'mirador panorámica vistas' } },
+  // Naturaleza: el protagonista es el paraje natural (cascadas, gargantas, bosques…).
+  naturaleza:       { visitar: { keyword: 'paraje natural naturaleza' } },
 };
 
 const url = Astro.url;
