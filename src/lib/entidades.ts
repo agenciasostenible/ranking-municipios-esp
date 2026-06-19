@@ -61,3 +61,19 @@ export function getSelloStyle(sello: string | null): string {
 export function getTipoIcon(tipo: string): string {
   return TIPO_ICONS[tipo] ?? '📍';
 }
+
+// Tipos que NO son un punto concreto con ficha en Google Maps
+// (una fiesta/festival es un evento; gastronomía/producto es un plato o producto local).
+const NO_MAPS_TIPOS = new Set(['fiesta', 'festival', 'gastronomia', 'producto']);
+
+// ¿Esta entidad es un sitio físico con ficha en Google? (monumento, castillo, mirador,
+// museo, iglesia, espacio natural, yacimiento, sendero…). Por defecto sí.
+export function tieneFichaMaps(tipo: string | null | undefined): boolean {
+  return !!tipo && !NO_MAPS_TIPOS.has(tipo);
+}
+
+// Enlace de búsqueda en Google Maps por nombre + municipio + provincia.
+export function gmapsUrl(nombre: string, municipio: string, provincia: string): string {
+  const q = [nombre, municipio, provincia].filter(Boolean).join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
