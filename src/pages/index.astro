@@ -47,6 +47,13 @@ const { results: ccaas } = await DB.prepare(
 const totalRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios`).first();
 const total = totalRow?.n ?? 0;
 
+// Top 3 del voto del público (para el CTA de la home)
+const { results: topVotosRows } = await DB.prepare(
+  `SELECT codigo_ine, nombre, provincia, votos FROM votos WHERE votos > 0 ORDER BY votos DESC, nombre ASC LIMIT 3`
+).all();
+const topVotos = (topVotosRows as any[]) ?? [];
+const medallas = ['🥇', '🥈', '🥉'];
+
 // Experiencias del planificador de rutas (mismas claves que /ruta)
 const ROUTE_EXP = [
   { key: 'monumentos',        icon: 'account_balance', label: 'Monumentos' },
@@ -162,6 +169,30 @@ const municipios = (rankingGlobal as any[]).map(r => ({
       <!-- Autocomplete desktop -->
       <div id="ac" class="hero-ac"></div>
     </div>
+  </div>
+</section>
+
+<!-- ── CTA: voto del público (destacado, arriba) ── -->
+<section class="vote-hero">
+  <div class="vote-hero-inner">
+    <span class="vote-hero-kicker">🏆 El voto del público</span>
+    <h2 class="vote-hero-title">Vota el mejor municipio turístico de España</h2>
+    <p class="vote-hero-sub">Elige provincia y municipio, vota y mira el ranking en directo.</p>
+    <a href="/votar" class="vote-hero-btn">Votar ahora →</a>
+    {topVotos.length > 0 && (
+      <div class="vote-hero-top">
+        <span class="vote-hero-top-label">Top 3 ahora mismo</span>
+        <div class="vote-hero-top-list">
+          {topVotos.map((m, i) => (
+            <a href="/votar" class="vt-top-row">
+              <span class="vt-top-medal">{medallas[i]}</span>
+              <span class="vt-top-name">{m.nombre}<small>{m.provincia}</small></span>
+              <span class="vt-top-votes">{Number(m.votos).toLocaleString('es-ES')}<small>votos</small></span>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
   </div>
 </section>
 
@@ -452,16 +483,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     <div class="istat"><div class="n">{provincias.length}</div><div class="l">Provincias</div></div>
     <div class="istat"><div class="n">{ccaas.length}</div><div class="l">CC.AA.</div></div>
   </div>
-
-  <!-- ── CTA: voto del público ── -->
-  <a href="/votar" class="vote-cta">
-    <div class="vote-cta-txt">
-      <span class="vote-cta-kicker">🏆 El voto del público</span>
-      <strong>Vota el mejor municipio turístico de España</strong>
-      <small>Elige provincia y municipio, vota y mira el ranking en directo.</small>
-    </div>
-    <span class="vote-cta-btn">Votar ahora →</span>
-  </a>
 
   <div class="result-header">
     <div>
@@ -1371,23 +1392,33 @@ function doSearch() {
   .mun-grid { grid-template-columns: 1fr; }
 }
 
-/* ── CTA voto del público ── */
-.vote-cta {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  margin: 22px 0 8px; padding: 20px 24px; border-radius: 18px; text-decoration: none;
-  background: linear-gradient(100deg, #FF385C 0%, #E31C5F 100%);
-  box-shadow: 0 10px 30px rgba(227,28,95,.25);
+/* ── CTA voto del público (destacado, arriba) ── */
+.vote-hero { padding: 14px 16px 6px; }
+.vote-hero-inner {
+  max-width: 760px; margin: 0 auto; text-align: center;
+  background: linear-gradient(135deg, #FF385C 0%, #E31C5F 100%);
+  border-radius: 24px; padding: 32px 28px 26px;
+  box-shadow: 0 14px 40px rgba(227,28,95,.28);
 }
-.vote-cta-txt { display: flex; flex-direction: column; gap: 3px; }
-.vote-cta-kicker { color: #ffd9e1; font-size: .76rem; font-weight: 800; letter-spacing: .04em; }
-.vote-cta-txt strong { color: #fff; font-size: 1.18rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
-.vote-cta-txt small { color: #ffe4ea; font-size: .85rem; }
-.vote-cta-btn { flex-shrink: 0; background: #fff; color: #E31C5F; font-weight: 800; font-size: .95rem; padding: 12px 20px; border-radius: 999px; white-space: nowrap; }
-.vote-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(227,28,95,.32); }
-.vote-cta { transition: transform .15s ease, box-shadow .15s ease; }
+.vote-hero-kicker { display: inline-block; background: rgba(255,255,255,.2); color: #fff; font-weight: 800; font-size: .95rem; letter-spacing: .02em; padding: 8px 18px; border-radius: 999px; }
+.vote-hero-title { color: #fff; font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.12; margin: 16px 0 8px; }
+.vote-hero-sub { color: #ffe1e8; font-size: 1.02rem; margin: 0 0 22px; }
+.vote-hero-btn { display: inline-block; background: #fff; color: #E31C5F; font-weight: 800; font-size: 1.08rem; padding: 15px 34px; border-radius: 999px; text-decoration: none; box-shadow: 0 6px 18px rgba(0,0,0,.12); transition: transform .15s ease; }
+.vote-hero-btn:hover { transform: translateY(-2px); }
+.vote-hero-top { margin-top: 24px; background: rgba(255,255,255,.15); border-radius: 18px; padding: 14px; }
+.vote-hero-top-label { display: block; color: #fff; font-weight: 800; font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+.vote-hero-top-list { display: flex; flex-direction: column; gap: 7px; }
+.vt-top-row { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 13px; padding: 11px 15px; text-decoration: none; transition: transform .12s ease; }
+.vt-top-row:hover { transform: scale(1.015); }
+.vt-top-medal { font-size: 1.4rem; flex-shrink: 0; }
+.vt-top-name { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; color: #222; font-weight: 700; font-size: 1.02rem; line-height: 1.2; }
+.vt-top-name small { color: #999; font-weight: 500; font-size: .76rem; }
+.vt-top-votes { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; color: #FF385C; font-weight: 800; font-size: 1.1rem; line-height: 1; }
+.vt-top-votes small { color: #bbb; font-weight: 600; font-size: .62rem; text-transform: uppercase; letter-spacing: .03em; margin-top: 3px; }
 @media (max-width: 560px) {
-  .vote-cta { flex-direction: column; align-items: flex-start; text-align: left; padding: 18px 20px; }
-  .vote-cta-btn { align-self: stretch; text-align: center; }
+  .vote-hero-title { font-size: 1.6rem; }
+  .vote-hero-inner { padding: 26px 18px 20px; border-radius: 20px; }
+  .vote-hero-btn { display: block; }
 }
 </style>
 
