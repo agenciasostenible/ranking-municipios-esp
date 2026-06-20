@@ -17,6 +17,21 @@ const { results: rankingGlobal } = await DB.prepare(`
   LIMIT 20
 `).all();
 
+// Datos para el mapa embebido (top 500 por ranking global, con coordenadas)
+const { results: mapRows } = await DB.prepare(`
+  SELECT m.codigo_ine, m.nombre, m.provincia, m.latitud, m.longitud, ROUND(p.puntuacion,1) AS s
+  FROM puntuaciones p
+  JOIN municipios m ON m.codigo_ine = p.codigo_ine
+  WHERE p.categoria = 'ranking_global' AND COALESCE(m.es_duplicado,0) = 0
+    AND m.latitud IS NOT NULL AND m.latitud <> 0 AND p.puntuacion > 0
+  ORDER BY p.puntuacion DESC
+  LIMIT 500
+`).all();
+const homeMapData = JSON.stringify((mapRows as any[]).map(r => ({
+  c: r.codigo_ine, n: r.nombre, p: r.provincia,
+  lat: Math.round(r.latitud * 10000) / 10000, lon: Math.round(r.longitud * 10000) / 10000, s: r.s,
+})));
+
 const { results: provincias } = await DB.prepare(
   `SELECT DISTINCT provincia FROM municipios ORDER BY provincia`
 ).all();
@@ -378,6 +393,40 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     </div>
   ))}
 </section>
+
+<!-- ── MAPA EMBEBIDO ── -->
+<section class="home-map-sec">
+  <div class="hms-head">
+    <h2 class="hms-title">🗺️ El mapa de la España que merece la pena</h2>
+    <a href="/mapa" class="hms-more">Filtrar por categoría →</a>
+  </div>
+  <div id="home-map"></div>
+</section>
+<script id="home-map-data" type="application/json" set:html={homeMapData}></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" is:inline></script>
+<script is:inline>
+  (function () {
+    var raw = document.getElementById('home-map-data');
+    var el = document.getElementById('home-map');
+    if (!raw || !el || !window.L) return;
+    var items = JSON.parse(raw.textContent);
+    if (!items.length) return;
+    var scores = items.map(function (d) { return d.s; });
+    var lo = Math.min.apply(null, scores), hi = Math.max.apply(null, scores);
+    var norm = function (s) { return hi > lo ? (s - lo) / (hi - lo) : 1; };
+    var map = L.map('home-map', { scrollWheelZoom: false, zoomControl: true }).setView([40.2, -3.6], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(map);
+    function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    items.forEach(function (d) {
+      var t = norm(d.s);
+      var color = t >= 0.66 ? '#FF385C' : t >= 0.33 ? '#FF8A5C' : '#9aa0a6';
+      L.circleMarker([d.lat, d.lon], { radius: 4 + t * 8, fillColor: color, color: '#fff', weight: 1.2, fillOpacity: 0.85 })
+        .bindPopup('<div style="text-align:center;min-width:140px"><div style="font-weight:700;font-size:1rem;color:#222">' + esc(d.n) + '</div><div style="font-size:.78rem;color:#717171;margin:2px 0 6px">' + esc(d.p) + ' · ' + d.s + ' pts</div><a href="/municipio/' + d.c + '" style="display:inline-block;background:#FF385C;color:#fff;font-weight:700;font-size:.82rem;padding:7px 14px;border-radius:999px;text-decoration:none">Ver ficha →</a></div>')
+        .addTo(map);
+    });
+  })();
+</script>
 
 <!-- ── TOP MUNICIPIOS GRID ── -->
 <div class="page-content">
@@ -845,6 +894,15 @@ function doSearch() {
 .cx-map-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: #fff1f3; color: var(--primary);
   font-size: .86rem; font-weight: 700; border-radius: 999px; text-decoration: none; border: 1.5px solid #ffd5dd; white-space: nowrap; transition: background .12s; }
 .cx-map-btn:hover { background: #ffe0e6; }
+
+/* Mapa embebido en la home */
+.home-map-sec { max-width: 1100px; margin: 32px auto 0; padding: 0 16px; }
+.hms-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.hms-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0; }
+.hms-more { font-size: .86rem; font-weight: 700; color: var(--primary); text-decoration: none; white-space: nowrap; }
+.hms-more:hover { text-decoration: underline; }
+#home-map { width: 100%; height: 460px; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); background: #e8eef0; z-index: 0; }
+@media (max-width: 560px) { #home-map { height: 360px; } }
 .cx-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0; }
 .cx-group { margin-bottom: 22px; }
 .cx-group-title { display: flex; align-items: center; gap: 7px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-2); margin: 0 0 9px; }
