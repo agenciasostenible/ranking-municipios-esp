@@ -1,0 +1,127 @@
+---
+import { DB } from '../../lib/d1client';
+
+// Panel de banners publicitarios. Protegido: /admin/banners?key=XXXX (env ADMIN_KEY)
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const key = Astro.url.searchParams.get('key') ?? '';
+const ADMIN_KEY = env('ADMIN_KEY');
+const ok = ADMIN_KEY && key === ADMIN_KEY;
+
+const SLOTS = [
+  { v: 'home_top',  label: 'Home · arriba del todo (encima de "Qué ver cerca de ti")' },
+  { v: 'home_cats', label: 'Home · antes de las categorías' },
+];
+
+let banners: any[] = [];
+if (ok) {
+  const r = await DB.prepare(
+    `SELECT id, slot, enlace, alt, activo, (foto_data IS NOT NULL) AS hasfoto FROM banners ORDER BY slot, creado_at DESC`
+  ).all();
+  banners = r.results as any[];
+}
+const slotLabel = (s: string) => SLOTS.find(x => x.v === s)?.label ?? s;
+---
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Banners publicitarios</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 24px 16px; color: #222; background: #fafafa; }
+  h1 { font-size: 1.4rem; } h2 { font-size: 1.05rem; margin-top: 28px; }
+  .muted { color: #777; }
+  .box { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  label { display: block; font-size: .8rem; font-weight: 700; color: #444; margin: 12px 0 4px; }
+  input[type=text], input[type=url], select { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 9px; font-size: .95rem; font-family: inherit; }
+  .chk { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-top: 12px; }
+  .chk input { width: auto; }
+  button { margin-top: 16px; padding: 11px 22px; background: #FF385C; color: #fff; border: none; border-radius: 999px; font-weight: 800; font-size: .95rem; cursor: pointer; }
+  .bcard { display: flex; gap: 14px; align-items: center; }
+  .bcard img { width: 200px; max-width: 45%; height: auto; border-radius: 8px; background: #eee; }
+  .bmeta { flex: 1; font-size: .88rem; }
+  .tag { display: inline-block; background: #f0f0f0; border-radius: 8px; padding: 1px 8px; font-size: .72rem; font-weight: 700; }
+  .on { color: #16a34a; font-weight: 700; } .off { color: #b91c1c; font-weight: 700; }
+  .acts button { font-size: .8rem; padding: 7px 14px; margin: 8px 8px 0 0; }
+  .acts .del { background: #fff; color: #dc2626; border: 1.5px solid #dc2626; }
+  .hint { font-size: .8rem; color: #888; margin-top: 4px; }
+</style>
+</head>
+<body>
+  {!ok ? (
+    <p>🔒 Acceso restringido. Usa <code>?key=TU_CLAVE</code> en la URL.</p>
+  ) : (
+    <>
+      <h1>🖼️ Banners publicitarios</h1>
+      <p class="muted">Sube una imagen horizontal (ideal ~1200×250 px). Aparecerá en el slot elegido de la home.</p>
+
+      <h2>➕ Nuevo banner</h2>
+      <div class="box">
+        <label>Posición</label>
+        <select id="slot">{SLOTS.map(s => <option value={s.v}>{s.label}</option>)}</select>
+        <label>Imagen (JPG/PNG/WebP)</label>
+        <input type="file" id="foto" accept="image/*" />
+        <div class="hint">Máx ~1 MB. Horizontal queda mejor.</div>
+        <label>Enlace al pulsar (opcional)</label>
+        <input type="url" id="enlace" placeholder="https://..." />
+        <label>Texto alternativo (accesibilidad)</label>
+        <input type="text" id="alt" placeholder="Publicidad de ..." />
+        <label class="chk"><input type="checkbox" id="activo" checked /> Activo (visible en la web)</label>
+        <button id="crear">Guardar banner</button>
+      </div>
+
+      <h2>📋 Banners existentes</h2>
+      {banners.length === 0 && <p class="muted">Todavía no hay banners.</p>}
+      {banners.map(b => (
+        <div class="box bcard" data-id={b.id}>
+          {b.hasfoto && <img src={`/api/banner-foto?id=${b.id}`} alt={b.alt ?? ''} />}
+          <div class="bmeta">
+            <span class="tag">{slotLabel(b.slot)}</span>
+            <div style="margin:6px 0">{b.activo ? <span class="on">● Activo</span> : <span class="off">● Oculto</span>}</div>
+            {b.enlace && <div class="muted" style="word-break:break-all">🔗 {b.enlace}</div>}
+            <div class="acts">
+              <button class="toggle" data-id={b.id} data-slot={b.slot} data-enlace={b.enlace ?? ''} data-alt={b.alt ?? ''} data-activo={b.activo}>{b.activo ? 'Ocultar' : 'Activar'}</button>
+              <button class="del" data-id={b.id}>Borrar</button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  )}
+
+  <script is:inline define:vars={{ key }}>
+    function fileToDataURL(f) {
+      return new Promise(function (res, rej) {
+        var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = rej; r.readAsDataURL(f);
+      });
+    }
+    async function post(body) {
+      var r = await fetch('/api/banner-guardar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ key: key }, body)) });
+      return r.json();
+    }
+    var crear = document.getElementById('crear');
+    if (crear) crear.addEventListener('click', async function () {
+      var f = document.getElementById('foto').files[0];
+      if (!f) { alert('Elige una imagen.'); return; }
+      crear.disabled = true; crear.textContent = 'Subiendo…';
+      var foto = await fileToDataURL(f);
+      var res = await post({
+        slot: document.getElementById('slot').value, foto: foto,
+        enlace: document.getElementById('enlace').value, alt: document.getElementById('alt').value,
+        activo: document.getElementById('activo').checked,
+      });
+      if (res.ok) location.reload(); else { alert('Error: ' + (res.error || '?')); crear.disabled = false; crear.textContent = 'Guardar banner'; }
+    });
+    document.querySelectorAll('.del').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        if (!confirm('¿Borrar este banner?')) return;
+        var res = await post({ eliminar: true, id: Number(btn.dataset.id) });
+        if (res.ok) location.reload(); else alert('Error');
+      });
+    });
+    document.querySelectorAll('.toggle').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var res = await post({ id: Number(btn.dataset.id), slot: btn.dataset.slot, enlace: btn.dataset.enlace, alt: btn.dataset.alt, activo: btn.dataset.activo == '1' ? false : true });
+        if (res.ok) location.reload(); else alert('Error');
+      });
+    });
+  </script>
+</body>
+</html>

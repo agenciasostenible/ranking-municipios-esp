@@ -4,6 +4,10 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { TABS, SIDEBAR_GROUPS, formatPob, getSubtitle } from '../lib/db';
 import { getProvGradient } from '../lib/utils';
+import { getBanner } from '../lib/banners';
+
+const bannerTop = await getBanner('home_top');
+const bannerCats = await getBanner('home_cats');
 // @ts-ignore
 
 
@@ -160,6 +164,12 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     </div>
   </div>
 </section>
+
+<!-- ── BANNER PUBLICITARIO (home arriba) ── -->
+{bannerTop && (bannerTop.enlace
+  ? <a href={bannerTop.enlace} target="_blank" rel="noopener sponsored" class="home-banner"><img src={bannerTop.foto} alt={bannerTop.alt ?? 'Publicidad'} loading="lazy" /></a>
+  : <div class="home-banner"><img src={bannerTop.foto} alt={bannerTop.alt ?? 'Publicidad'} loading="lazy" /></div>
+)}
 
 <!-- ── QUÉ VER CERCA DE TI (destacado, geolocalización) ── -->
 <section class="nearby">
@@ -337,6 +347,12 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     <div id="mcs-ac" class="mcs-ac"></div>
   </div>
 </div>
+
+<!-- ── BANNER PUBLICITARIO (antes de categorías) ── -->
+{bannerCats && (bannerCats.enlace
+  ? <a href={bannerCats.enlace} target="_blank" rel="noopener sponsored" class="home-banner"><img src={bannerCats.foto} alt={bannerCats.alt ?? 'Publicidad'} loading="lazy" /></a>
+  : <div class="home-banner"><img src={bannerCats.foto} alt={bannerCats.alt ?? 'Publicidad'} loading="lazy" /></div>
+)}
 
 <!-- ── CATEGORY CHIPS (Airbnb style) ── -->
 <div class="chips-wrap">
@@ -849,6 +865,10 @@ function doSearch() {
 .rp-ac a:hover { background: #fff1f3; color: var(--primary); }
 .rp-ac small { color: var(--text-2); font-weight: 500; }
 @media (max-width: 560px) { .rp-row { flex-direction: column; } .rp-go { justify-content: center; } }
+
+/* Banner publicitario de la home */
+.home-banner { display: block; max-width: 1100px; margin: 16px auto 0; padding: 0 16px; }
+.home-banner img { width: 100%; height: auto; border-radius: 16px; display: block; box-shadow: 0 4px 16px rgba(0,0,0,.06); }
 
 /* Sección "Qué ver cerca de ti" (geolocalización) */
 .nearby { max-width: 700px; margin: 16px auto 0; padding: 0 16px; position: relative; z-index: 2; }
