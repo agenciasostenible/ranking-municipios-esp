@@ -357,7 +357,10 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 
 <!-- ── EXPLORAR POR CATEGORÍA (agrupado) ── -->
 <section class="cat-explore">
-  <h2 class="cx-title">Explora por categoría</h2>
+  <div class="cx-head">
+    <h2 class="cx-title">Explora por categoría</h2>
+    <a href="/mapa" class="cx-map-btn">🌍 Ver en el mapa →</a>
+  </div>
   {SIDEBAR_GROUPS.map((g) => (
     <div class="cx-group">
       <div class="cx-group-title"><Icon name={g.icon} size={15} /> {g.title}</div>
@@ -838,7 +841,11 @@ function doSearch() {
 
 /* Explorar por categoría (agrupado, con microdescripción) */
 .cat-explore { max-width: 1100px; margin: 18px auto 0; padding: 0 16px; }
-.cx-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0 0 16px; }
+.cx-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.cx-map-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: #fff1f3; color: var(--primary);
+  font-size: .86rem; font-weight: 700; border-radius: 999px; text-decoration: none; border: 1.5px solid #ffd5dd; white-space: nowrap; transition: background .12s; }
+.cx-map-btn:hover { background: #ffe0e6; }
+.cx-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0; }
 .cx-group { margin-bottom: 22px; }
 .cx-group-title { display: flex; align-items: center; gap: 7px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-2); margin: 0 0 9px; }
 .cx-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }

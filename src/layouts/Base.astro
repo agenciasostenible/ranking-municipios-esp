@@ -313,9 +313,8 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
       .mob-search-band { display: block; }
       .header-search { display: none; }
       /* En móvil dejamos solo "Comparar municipios" (no sale en otro sitio);
-         "Rankings" y "Planifica tu ruta" van en el menú hamburguesa. */
-      .header-nav .nav-link:first-child,
-      .header-nav .nav-link:nth-child(2) { display: none; }
+         el resto va en el menú hamburguesa. */
+      .header-nav .nav-link:not(:last-child) { display: none; }
       .header-inner { gap: 10px; }
     }
 
@@ -802,6 +801,7 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
 
       <nav class="header-nav">
         <a href="/ranking/ranking_global" class="nav-link">🏆 Rankings</a>
+        <a href="/mapa" class="nav-link">🌍 Mapa</a>
         <a href="/ruta" class="nav-link">🗺️ Planifica tu ruta</a>
         <a href="/comparar" class="nav-link">⚖️ Comparar municipios</a>
       </nav>
@@ -847,6 +847,10 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
     <a href="/ranking/ranking_global" class="nav-drawer-link">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M6 20V10M12 20V4M18 20v-6"/></svg>
       Rankings
+    </a>
+    <a href="/mapa" class="nav-drawer-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+      Mapa de España
     </a>
     <a href="/ruta" class="nav-drawer-link">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 20l-5.5 2.5V6L9 3.5m0 16.5l6-2.5m-6 2.5V3.5m6 14l5.5 2.5V4l-5.5-2.5m0 16V1.5m0 2L9 6"/></svg>
