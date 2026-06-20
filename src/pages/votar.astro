@@ -45,7 +45,7 @@ const provincias = (provRows as any[]).map((r) => r.provincia);
     </div>
   </div>
 
-  <div class="vt-rankwrap">
+  <div class="vt-rankwrap" id="vt-rankwrap">
     <button class="vt-rank-btn" id="vt-rank-btn">📊 Ver ranking</button>
     <div class="vt-rank" id="vt-rank" hidden>
       <div class="vt-rank-head">
@@ -179,6 +179,12 @@ const provincias = (provRows as any[]).map((r) => r.provincia);
         </li>`;
       }).join('');
     } catch {}
+  }
+
+  // Llegada desde la home con "Ver ranking": abrir el ranking y bajar a él.
+  if (/[?&]ver=ranking/.test(location.search) || location.hash === '#ranking') {
+    loadRanking(true);
+    setTimeout(() => $('vt-rankwrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
   }
 </script>
 

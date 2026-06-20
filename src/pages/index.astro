@@ -191,6 +191,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
             </a>
           ))}
         </div>
+        <a href="/votar?ver=ranking" class="vote-hero-rank">Ver ranking completo →</a>
       </div>
     )}
   </div>
@@ -1415,6 +1416,8 @@ function doSearch() {
 .vt-top-name small { color: #999; font-weight: 500; font-size: .76rem; }
 .vt-top-votes { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; color: #FF385C; font-weight: 800; font-size: 1.1rem; line-height: 1; }
 .vt-top-votes small { color: #bbb; font-weight: 600; font-size: .62rem; text-transform: uppercase; letter-spacing: .03em; margin-top: 3px; }
+.vote-hero-rank { display: block; margin-top: 12px; color: #fff; font-weight: 800; font-size: .95rem; text-decoration: none; padding: 11px; border: 1.5px solid rgba(255,255,255,.55); border-radius: 999px; transition: background .15s ease; }
+.vote-hero-rank:hover { background: rgba(255,255,255,.16); }
 @media (max-width: 560px) {
   .vote-hero-title { font-size: 1.6rem; }
   .vote-hero-inner { padding: 26px 18px 20px; border-radius: 20px; }
