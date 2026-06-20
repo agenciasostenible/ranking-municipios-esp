@@ -1239,7 +1239,12 @@ function doSearch() {
   height: 160px;
   position: relative;
   flex-shrink: 0;
+  transition: transform .55s cubic-bezier(.2, .6, .2, 1);
+  will-change: transform;
 }
+/* Toque Airbnb: la foto hace zoom suave al pasar el ratón (la tarjeta recorta) */
+:global(.mun-card:hover .mun-card-bg) { transform: scale(1.06); }
+:global(.mun-card:hover .mun-card-pos) { transform: scale(.943); }
 :global(.mun-card-overlay) {
   position: absolute;
   inset: 0;
@@ -1249,6 +1254,8 @@ function doSearch() {
   position: absolute;
   top: 10px;
   left: 12px;
+  transform-origin: top left;
+  transition: transform .55s cubic-bezier(.2, .6, .2, 1);
   background: rgba(0,0,0,.4);
   color: #fff;
   font-size: .75rem;
