@@ -6,7 +6,7 @@ import Base from '../layouts/Base.astro';
   <div class="enc-hero">
     <span class="enc-kicker">📸 Encuesta</span>
     <h1>¿Cuál es tu municipio favorito de España para pasar 2 días?</h1>
-    <p>Recomienda tu escapada de fin de semana. Pon tu Instagram y, si nos gusta, <strong>publicaremos tu recomendación</strong> con tu nombre en nuestra cuenta. 👀</p>
+    <p>Recomienda tu escapada de fin de semana. Pon tu Instagram y <strong>lo subiremos a nuestro Instagram</strong> con tu nombre. 👀</p>
   </div>
 
   <form class="enc-form" id="enc-form">
@@ -27,23 +27,17 @@ import Base from '../layouts/Base.astro';
       <input id="e-frase" type="text" maxlength="140" placeholder="Ej. Por sus calas y el casco antiguo al atardecer" />
     </div>
 
-    <div class="enc-field">
-      <label>Tu foto de perfil <span class="enc-opt">(opcional, queda más bonito)</span></label>
-      <input id="e-foto" type="file" accept="image/*" />
-      <img id="e-foto-prev" alt="" class="enc-foto-prev" />
-    </div>
-
     <!-- honeypot anti-spam -->
     <input id="e-website" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
 
     <button type="submit" class="enc-go" id="e-go">Enviar mi recomendación</button>
-    <p class="enc-note">No publicamos datos privados. Tu Instagram y tu recomendación pueden aparecer en nuestra cuenta.</p>
+    <p class="enc-note">Tu Instagram y tu recomendación se publicarán en nuestra cuenta de Instagram.</p>
   </form>
 
   <div class="enc-ok" id="enc-ok" hidden>
     <div class="enc-ok-ic">🎉</div>
     <h2>¡Gracias por tu recomendación!</h2>
-    <p>La revisamos y, si encaja, la publicaremos en nuestro Instagram. ¡Atento/a!</p>
+    <p>La subiremos a nuestro Instagram con tu nombre. ¡Atento/a!</p>
     <a href="/" class="enc-ok-home">Volver al inicio</a>
   </div>
 </div>
@@ -84,22 +78,6 @@ import Base from '../layouts/Base.astro';
   });
   document.addEventListener('click', (e: any) => { if (!sAc.contains(e.target) && e.target !== sInput) sAc.innerHTML = ''; });
 
-  // Foto: redimensiona en el navegador a ≤400px y guarda como JPEG.
-  let fotoData = '';
-  $('e-foto').addEventListener('change', (e: any) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    const img = new Image();
-    img.onload = () => {
-      const max = 400; let { width: w, height: h } = img;
-      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
-      const c = document.createElement('canvas'); c.width = w; c.height = h;
-      c.getContext('2d')!.drawImage(img, 0, 0, w, h);
-      fotoData = c.toDataURL('image/jpeg', 0.82);
-      const prev = $('e-foto-prev'); prev.src = fotoData; prev.style.display = 'block';
-    };
-    img.src = URL.createObjectURL(file);
-  });
-
   $('enc-form').addEventListener('submit', async (e: any) => {
     e.preventDefault();
     const handle = $('e-handle').value.trim().replace(/^@/, '');
@@ -111,7 +89,6 @@ import Base from '../layouts/Base.astro';
       codigo: matchCode,
       provincia: matchProv,
       frase: $('e-frase').value.trim(),
-      avatar: fotoData,
       website: $('e-website').value, // honeypot
     };
     $('e-go').disabled = true; $('e-go').textContent = 'Enviando…';
@@ -145,7 +122,6 @@ import Base from '../layouts/Base.astro';
   .enc-ac a:hover { background: #fdf0f6; }
   .enc-ac small { color: #888; }
   .enc-matched { font-size: .82rem; color: #16a34a; font-weight: 700; }
-  .enc-foto-prev { display: none; width: 76px; height: 76px; border-radius: 50%; object-fit: cover; margin-top: 8px; border: 2px solid #fdf0f6; }
   .enc-go { padding: 15px; background: #d63384; color: #fff; border: none; border-radius: 12px; font-size: 1.02rem; font-weight: 800; cursor: pointer; margin-top: 4px; }
   .enc-go:disabled { opacity: .6; }
   .enc-note { font-size: .78rem; color: #999; text-align: center; margin: 0; line-height: 1.5; }
