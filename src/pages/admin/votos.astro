@@ -8,42 +8,54 @@ const key = Astro.url.searchParams.get('key') ?? '';
 const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 
 let ranking: any[] = [];
-let totalVotos = 0;
+let totalVotos = 0, totalReales = 0, totalSeed = 0, numSeed = 0;
 if (ok) {
   ranking = (await DB.prepare(
-    `SELECT codigo_ine, nombre, provincia, votos, updated_at
+    `SELECT codigo_ine, nombre, provincia, votos, COALESCE(seed_votos,0) AS seed_votos, updated_at
        FROM votos WHERE votos > 0
        ORDER BY votos DESC, nombre ASC`
   ).all()).results as any[];
-  totalVotos = ranking.reduce((s, r) => s + Number(r.votos || 0), 0);
+  for (const r of ranking) {
+    const v = Number(r.votos || 0), s = Number(r.seed_votos || 0);
+    totalVotos += v; totalSeed += s; totalReales += Math.max(v - s, 0);
+    if (s > 0) numSeed++;
+  }
 }
 const fecha = (s: string) => (s ? String(s).slice(0, 16).replace('T', ' ') : '');
+const nf = (n: number) => Number(n).toLocaleString('es-ES');
 ---
 <html lang="es">
 <head>
 <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Voto del público — ranking completo</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; color: #222; background: #fafafa; }
+  body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 24px 16px 60px; color: #222; background: #fafafa; }
   h1 { font-size: 1.45rem; margin-bottom: 4px; }
   .sub { color: #777; font-size: .9rem; margin-bottom: 18px; }
-  .stats { display: flex; gap: 12px; margin-bottom: 20px; }
-  .stat { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px 18px; flex: 1; text-align: center; }
-  .stat .n { font-size: 1.6rem; font-weight: 800; color: #FF385C; }
-  .stat .l { font-size: .78rem; color: #777; }
-  .tip { background: #fff1f3; border: 1px solid #f3b6c4; border-radius: 12px; padding: 11px 14px; font-size: .88rem; color: #c01c47; margin-bottom: 18px; }
+  .stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px 18px; flex: 1; min-width: 120px; text-align: center; }
+  .stat .n { font-size: 1.5rem; font-weight: 800; color: #FF385C; }
+  .stat.seed .n { color: #e8a200; }
+  .stat .l { font-size: .76rem; color: #777; }
+  .tip { background: #fff1f3; border: 1px solid #f3b6c4; border-radius: 12px; padding: 11px 14px; font-size: .88rem; color: #c01c47; margin-bottom: 14px; }
   .tip code { background: #fff; padding: 1px 6px; border-radius: 5px; }
+  .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .refresh { color: #FF385C; font-weight: 700; text-decoration: none; font-size: .9rem; }
+  .clear { background: #fff; color: #e8a200; border: 1.5px solid #e8a200; border-radius: 9px; padding: 8px 14px; font-weight: 700; font-size: .85rem; text-decoration: none; }
   table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
   th, td { padding: 10px 12px; text-align: left; font-size: .9rem; border-top: 1px solid #f0f0f0; }
   th { background: #f7f7f7; font-size: .76rem; text-transform: uppercase; letter-spacing: .03em; color: #666; }
-  td.pos { width: 44px; font-weight: 800; color: #999; }
-  td.votos { text-align: right; font-weight: 800; color: #FF385C; font-size: 1rem; }
+  td.pos { width: 40px; font-weight: 800; color: #999; }
+  td.votos { text-align: right; font-weight: 800; color: #FF385C; font-size: 1rem; white-space: nowrap; }
+  td.votos .real { display: block; font-size: .68rem; font-weight: 700; color: #16a34a; }
+  tr.is-seed { background: #fffdf5; }
   td a { color: #222; font-weight: 700; text-decoration: none; }
   td a:hover { color: #FF385C; }
   .prov { color: #888; font-weight: 500; font-size: .82rem; }
+  .badge { display: inline-block; background: #fff3d6; color: #b9860b; border: 1px solid #f0d79a; border-radius: 6px; padding: 0 6px; font-size: .68rem; font-weight: 800; margin-left: 6px; vertical-align: middle; }
+  .badge.real { background: #e7f6ec; color: #16a34a; border-color: #b6e3c5; }
   .when { color: #bbb; font-size: .74rem; }
   .empty { color: #999; padding: 20px 0; }
-  .refresh { display: inline-block; margin-bottom: 16px; color: #FF385C; font-weight: 700; text-decoration: none; font-size: .9rem; }
 </style>
 </head>
 <body>
@@ -52,30 +64,46 @@ const fecha = (s: string) => (s ? String(s).slice(0, 16).replace('T', ' ') : '')
 ) : (
   <>
     <h1>🏆 Voto del público</h1>
-    <div class="sub">Ranking completo — todos los municipios que han recibido al menos un voto.</div>
-    <p class="tip">Enlace para compartir: <code>{Astro.url.origin}/votar</code>. Recarga para ver el recuento actualizado (los datos son en directo).</p>
+    <div class="sub">Ranking completo — todos los municipios con al menos un voto. Datos en directo.</div>
+    <p class="tip">Enlace para compartir: <code>{Astro.url.origin}/votar</code>. Las filas en <b>amarillo</b> con la etiqueta <span class="badge">SEMBRADO</span> tienen votos inventados (para arrancar). Cuando tengas votos reales de sobra, pulsa <b>Quitar votos inventados</b>: se restará solo la parte inventada y se conservarán los reales (en <span class="badge real">verde</span>).</p>
     <div class="stats">
-      <div class="stat"><div class="n">{totalVotos.toLocaleString('es-ES')}</div><div class="l">Votos totales</div></div>
-      <div class="stat"><div class="n">{ranking.length.toLocaleString('es-ES')}</div><div class="l">Municipios votados</div></div>
+      <div class="stat"><div class="n">{nf(totalVotos)}</div><div class="l">Votos totales</div></div>
+      <div class="stat"><div class="n">{nf(totalReales)}</div><div class="l">Votos reales</div></div>
+      <div class="stat seed"><div class="n">{nf(totalSeed)}</div><div class="l">Inventados ({numSeed} munis)</div></div>
+      <div class="stat"><div class="n">{nf(ranking.length)}</div><div class="l">Municipios</div></div>
     </div>
-    <a class="refresh" href={`/admin/votos?key=${encodeURIComponent(key)}`}>🔄 Refrescar</a>
+    <div class="bar">
+      <a class="refresh" href={`/admin/votos?key=${encodeURIComponent(key)}`}>🔄 Refrescar</a>
+      {totalSeed > 0 && (
+        <a class="clear" href={`/api/votos-moderar?key=${encodeURIComponent(key)}&accion=quitar-seed`}
+           onclick="return confirm('¿Quitar TODOS los votos inventados? Se restará solo la parte sembrada; los votos reales se conservan.')">
+          🧹 Quitar votos inventados
+        </a>
+      )}
+    </div>
     {ranking.length === 0 ? (
       <p class="empty">Todavía no hay votos.</p>
     ) : (
       <table>
         <thead><tr><th>#</th><th>Municipio</th><th style="text-align:right">Votos</th></tr></thead>
         <tbody>
-          {ranking.map((r, i) => (
-            <tr>
-              <td class="pos">{i + 1}</td>
-              <td>
-                <a href={`/municipio/${r.codigo_ine}`} target="_blank" rel="noopener">{r.nombre}</a>
-                <span class="prov"> · {r.provincia}</span>
-                <div class="when">últ. {fecha(r.updated_at)}</div>
-              </td>
-              <td class="votos">{r.votos}</td>
-            </tr>
-          ))}
+          {ranking.map((r, i) => {
+            const reales = Math.max(Number(r.votos) - Number(r.seed_votos || 0), 0);
+            const isSeed = Number(r.seed_votos || 0) > 0;
+            return (
+              <tr class={isSeed ? 'is-seed' : ''}>
+                <td class="pos">{i + 1}</td>
+                <td>
+                  <a href={`/municipio/${r.codigo_ine}`} target="_blank" rel="noopener">{r.nombre}</a>
+                  <span class="prov"> · {r.provincia}</span>
+                  {isSeed && <span class="badge">SEMBRADO {r.seed_votos}</span>}
+                  {reales > 0 && <span class="badge real">{reales} REAL{reales === 1 ? '' : 'ES'}</span>}
+                  <div class="when">últ. {fecha(r.updated_at)}</div>
+                </td>
+                <td class="votos">{nf(r.votos)}{reales > 0 && isSeed && <span class="real">{reales} real{reales === 1 ? '' : 'es'}</span>}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     )}

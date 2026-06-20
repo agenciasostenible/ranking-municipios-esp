@@ -160,7 +160,10 @@ const provincias = (provRows as any[]).map((r) => r.provincia);
       const d = await r.json();
       const list = $('vt-rank-list'), empty = $('vt-rank-empty');
       const items = (d.ranking as any[]) || [];
-      $('vt-rank-meta').textContent = d.totalVotos ? `${d.totalVotos} votos · ${d.municipios} municipios` : '';
+      const fmt = (n: number) => Number(n).toLocaleString('es-ES');
+      $('vt-rank-meta').textContent = d.totalVotos
+        ? `${fmt(d.totalVotos)} ${d.totalVotos === 1 ? 'voto' : 'votos'} · ${fmt(d.municipios)} ${d.municipios === 1 ? 'municipio' : 'municipios'}`
+        : '';
       if (!items.length) { list.innerHTML = ''; empty.hidden = false; return; }
       empty.hidden = true;
       list.innerHTML = items.map((m, i) => {
@@ -168,8 +171,11 @@ const provincias = (provRows as any[]).map((r) => r.provincia);
         const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span class="vt-pos">${i + 1}</span>`;
         return `<li class="vt-rank-item${me}">
           <span class="vt-rank-medal">${medal}</span>
-          <a class="vt-rank-name" href="/municipio/${m.codigo_ine}">${m.nombre}<small>${m.provincia || ''}</small></a>
-          <span class="vt-rank-votes">${m.votos}</span>
+          <a class="vt-rank-name" href="/municipio/${m.codigo_ine}">
+            <span class="vt-rank-muni">${m.nombre}</span>
+            <span class="vt-rank-prov">${m.provincia || ''}</span>
+          </a>
+          <span class="vt-rank-votes"><b>${fmt(m.votos)}</b><small>${m.votos === 1 ? 'voto' : 'votos'}</small></span>
         </li>`;
       }).join('');
     } catch {}
@@ -208,15 +214,19 @@ const provincias = (provRows as any[]).map((r) => r.provincia);
   .vt-rank-head h2 { font-size: 1.1rem; color: #222; margin: 0; }
   .vt-rank-meta { font-size: .8rem; color: #999; font-weight: 600; }
   .vt-rank-list { list-style: none; margin: 0; padding: 0; }
-  .vt-rank-item { display: flex; align-items: center; gap: 12px; padding: 10px 8px; border-top: 1px solid #f2f2f2; }
-  .vt-rank-item:first-child { border-top: none; }
-  .vt-rank-item.vt-me { background: #fff1f3; border-radius: 10px; }
-  .vt-rank-medal { width: 30px; text-align: center; font-size: 1.2rem; flex-shrink: 0; }
-  .vt-pos { display: inline-block; color: #999; font-weight: 800; font-size: .92rem; }
-  .vt-rank-name { flex: 1; min-width: 0; color: #222; font-weight: 700; text-decoration: none; display: flex; flex-direction: column; }
-  .vt-rank-name small { color: #999; font-weight: 500; font-size: .78rem; }
-  .vt-rank-name:hover { color: #FF385C; }
-  .vt-rank-votes { font-weight: 800; color: #FF385C; font-size: 1rem; flex-shrink: 0; }
+  /* Filas inyectadas por JS → estilos globales (el scope de Astro no las alcanza) */
+  :global(.vt-rank-item) { display: flex; align-items: center; gap: 12px; padding: 11px 8px; border-top: 1px solid #f2f2f2; }
+  :global(.vt-rank-item:first-child) { border-top: none; }
+  :global(.vt-rank-item.vt-me) { background: #fff1f3; border-radius: 10px; padding-left: 10px; padding-right: 10px; }
+  :global(.vt-rank-medal) { width: 32px; text-align: center; font-size: 1.25rem; flex-shrink: 0; }
+  :global(.vt-pos) { display: inline-block; color: #999; font-weight: 800; font-size: .95rem; }
+  :global(.vt-rank-name) { flex: 1; min-width: 0; text-decoration: none; display: flex; flex-direction: column; gap: 1px; line-height: 1.25; }
+  :global(.vt-rank-muni) { color: #222; font-weight: 700; font-size: .98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :global(.vt-rank-prov) { color: #999; font-weight: 500; font-size: .78rem; }
+  :global(.vt-rank-name:hover .vt-rank-muni) { color: #FF385C; }
+  :global(.vt-rank-votes) { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+  :global(.vt-rank-votes b) { color: #FF385C; font-weight: 800; font-size: 1.1rem; }
+  :global(.vt-rank-votes small) { color: #bbb; font-weight: 600; font-size: .68rem; text-transform: uppercase; letter-spacing: .03em; }
   .vt-rank-empty { color: #999; text-align: center; padding: 14px 0; }
 </style>
 </Base>
