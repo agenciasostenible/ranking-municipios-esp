@@ -1,0 +1,125 @@
+---
+import { DB } from '../lib/d1client';
+import Base from '../layouts/Base.astro';
+
+// Mapa interactivo de España: los mejores municipios por categoría, geolocalizados.
+const url = Astro.url;
+const MAP_CATS = [
+  { key: 'ranking_global', label: 'Lo mejor en general' },
+  { key: 'pueblo_bonito',  label: 'Pueblos bonitos' },
+  { key: 'monumentos',     label: 'Monumentos' },
+  { key: 'naturaleza',     label: 'Naturaleza' },
+  { key: 'castillos',      label: 'Castillos' },
+  { key: 'miradores',      label: 'Miradores' },
+  { key: 'gastronomia',    label: 'Gastronomía' },
+  { key: 'senderismo',     label: 'Senderismo' },
+  { key: 'Playas',         label: 'Playas' },
+  { key: 'vinos',          label: 'Vinos' },
+  { key: 'fiestas',        label: 'Fiestas' },
+  { key: 'oleoturismo',    label: 'Oleoturismo' },
+];
+const catSel = MAP_CATS.some(c => c.key === url.searchParams.get('cat')) ? url.searchParams.get('cat')! : 'ranking_global';
+const catLabel = MAP_CATS.find(c => c.key === catSel)!.label;
+
+const { results } = await DB.prepare(`
+  SELECT m.codigo_ine, m.nombre, m.provincia, m.latitud, m.longitud, ROUND(p.puntuacion,1) AS s
+  FROM puntuaciones p
+  JOIN municipios m ON m.codigo_ine = p.codigo_ine
+  WHERE p.categoria = ? AND COALESCE(m.es_duplicado,0) = 0
+    AND m.latitud IS NOT NULL AND m.latitud <> 0 AND p.puntuacion > 0
+  ORDER BY p.puntuacion DESC
+  LIMIT 800
+`).bind(catSel).all();
+
+const items = (results as any[]).map(r => ({
+  c: r.codigo_ine, n: r.nombre, p: r.provincia,
+  lat: Math.round(r.latitud * 10000) / 10000, lon: Math.round(r.longitud * 10000) / 10000, s: r.s,
+}));
+const payload = JSON.stringify({ cat: catSel, items });
+---
+
+<Base title={`Mapa de España — ${catLabel} | Ranking España`}
+      description="Mapa interactivo con los mejores municipios de España. Filtra por categoría y descubre lo que merece la pena, dónde está cada cosa.">
+  <div class="mapa-bar">
+    <div class="mb-left">
+      <h1>🗺️ El mapa de la España que merece la pena</h1>
+      <p>Los <strong>{items.length}</strong> mejores en <strong>{catLabel.toLowerCase()}</strong>. Pulsa un punto para ver su ficha.</p>
+    </div>
+    <form method="get" class="mb-form">
+      <label>Categoría</label>
+      <select name="cat" onchange="this.form.submit()">
+        {MAP_CATS.map(c => <option value={c.key} selected={c.key === catSel}>{c.label}</option>)}
+      </select>
+    </form>
+  </div>
+
+  <div id="map"></div>
+  <div class="mapa-legend">
+    <span class="lg-dot lg-1"></span> Top
+    <span class="lg-dot lg-2"></span> Muy bueno
+    <span class="lg-dot lg-3"></span> Bueno
+    <span class="lg-note">· Cuanto más grande y rosa, mejor valorado</span>
+  </div>
+
+  <script id="map-data" type="application/json" set:html={payload}></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" is:inline></script>
+  <script is:inline>
+    (function () {
+      var raw = document.getElementById('map-data');
+      if (!raw || !window.L) return;
+      var data = JSON.parse(raw.textContent);
+      var items = data.items, cat = data.cat;
+      if (!items.length) return;
+      var scores = items.map(function (d) { return d.s; });
+      var lo = Math.min.apply(null, scores), hi = Math.max.apply(null, scores);
+      var norm = function (s) { return hi > lo ? (s - lo) / (hi - lo) : 1; };
+
+      var map = L.map('map', { scrollWheelZoom: true, zoomControl: true }).setView([40.0, -3.6], 6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18, attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+
+      function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+      items.forEach(function (d) {
+        var t = norm(d.s);
+        var color = t >= 0.66 ? '#FF385C' : t >= 0.33 ? '#FF8A5C' : '#9aa0a6';
+        var r = 4 + t * 9;
+        var mk = L.circleMarker([d.lat, d.lon], {
+          radius: r, fillColor: color, color: '#fff', weight: 1.2, fillOpacity: 0.85
+        });
+        mk.bindPopup(
+          '<div style="text-align:center;min-width:140px">' +
+          '<div style="font-weight:700;font-size:1rem;color:#222">' + esc(d.n) + '</div>' +
+          '<div style="font-size:.78rem;color:#717171;margin:2px 0 6px">' + esc(d.p) + ' · ' + d.s + ' pts</div>' +
+          '<a href="/municipio/' + d.c + '?desde=' + cat + '" style="display:inline-block;background:#FF385C;color:#fff;font-weight:700;font-size:.82rem;padding:7px 14px;border-radius:999px;text-decoration:none">Ver ficha →</a>' +
+          '</div>'
+        );
+        mk.addTo(map);
+      });
+    })();
+  </script>
+</Base>
+
+<style>
+  .mapa-bar { max-width: 1100px; margin: 0 auto; padding: 16px; display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .mb-left { flex: 1; min-width: 240px; }
+  .mb-left h1 { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0 0 4px; }
+  .mb-left p { font-size: .9rem; color: var(--text-2); margin: 0; }
+  .mb-left strong { color: var(--text); font-weight: 700; }
+  .mb-form { display: flex; align-items: center; gap: 10px; }
+  .mb-form label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-2); }
+  .mb-form select { appearance: none; -webkit-appearance: none; min-width: 200px; padding: 11px 36px 11px 14px;
+    border: 1.5px solid #d6d6d6; border-radius: 12px; font-family: inherit; font-size: .92rem; font-weight: 600; color: var(--text);
+    background-color: #fff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23FF385C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; }
+  #map { width: 100%; max-width: 1100px; margin: 0 auto; height: 68vh; min-height: 420px; background: #e8eef0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 0; }
+  .mapa-legend { max-width: 1100px; margin: 10px auto 40px; padding: 0 16px; display: flex; align-items: center; gap: 8px;
+    font-size: .8rem; color: var(--text-2); flex-wrap: wrap; }
+  .lg-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #ddd; }
+  .lg-dot.lg-1 { background: #FF385C; } .lg-dot.lg-2 { background: #FF8A5C; } .lg-dot.lg-3 { background: #9aa0a6; }
+  .lg-note { color: #999; }
+  :global(.leaflet-popup-content) { margin: 12px 14px; }
+</style>
