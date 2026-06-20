@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+const EMAIL = 'hola@rankingspain.com';
+---
+<Base title="Contacto — Ranking Spain"
+      description="¿Tienes una duda, una sugerencia o quieres anunciarte en Ranking Spain? Escríbenos.">
+  <div class="legal-wrap">
+    <h1>Contacto</h1>
+    <p class="legal-lead">¿Tienes una duda, una corrección sobre algún municipio, una sugerencia o una propuesta? Nos encanta que nos escribas.</p>
+
+    <h2>Escríbenos</h2>
+    <p>📧 <a href={`mailto:${EMAIL}`}>{EMAIL}</a></p>
+    <p>Intentamos responder en un plazo de 2-3 días laborables.</p>
+
+    <h2>Para negocios y creadores</h2>
+    <ul>
+      <li>¿Tienes un restaurante, alojamiento o experiencia y quieres aparecer recomendado? → <a href="/anunciate">Anúnciate con nosotros</a></li>
+      <li>¿Eres creador de Instagram y quieres colaborar? → <a href="/colabora">Colabora como creador</a></li>
+    </ul>
+
+    <h2>¿Has visto un dato incorrecto?</h2>
+    <p>Trabajamos con miles de municipios y, aunque cuidamos mucho los datos, alguna vez se cuela un error. Si ves algo mal, escríbenos indicando el municipio y la categoría y lo revisamos lo antes posible. ¡Gracias por ayudarnos a mejorar!</p>
+  </div>
+</Base>

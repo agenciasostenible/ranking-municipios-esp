@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+const EMAIL = 'hola@rankingspain.com';
+---
+<Base title="Aviso legal — Ranking Spain" noindex={true}
+      description="Aviso legal y condiciones de uso de Ranking Spain.">
+  <div class="legal-wrap">
+    <h1>Aviso legal</h1>
+    <p class="legal-lead">Condiciones generales de uso del sitio web <strong>rankingspain.com</strong> (en adelante, el "Sitio Web").</p>
+
+    <h2>1. Titular del sitio</h2>
+    <p>En cumplimiento de la Ley 34/2002 de Servicios de la Sociedad de la Información y Comercio Electrónico (LSSI-CE), se informa de los datos del titular:</p>
+    <ul>
+      <li><strong>Titular:</strong> [NOMBRE O RAZÓN SOCIAL]</li>
+      <li><strong>NIF/CIF:</strong> [NIF]</li>
+      <li><strong>Domicilio:</strong> [DIRECCIÓN]</li>
+      <li><strong>Correo de contacto:</strong> <a href={`mailto:${EMAIL}`}>{EMAIL}</a></li>
+    </ul>
+
+    <h2>2. Objeto</h2>
+    <p>Ranking Spain es un sitio web informativo que ofrece rankings y herramientas de descubrimiento turístico de los municipios de España, elaborados a partir de datos verificables. El acceso es gratuito, sin perjuicio de servicios concretos que puedan estar sujetos a condiciones específicas (por ejemplo, la publicación de anuncios de establecimientos).</p>
+
+    <h2>3. Condiciones de uso</h2>
+    <p>El usuario se compromete a hacer un uso adecuado de los contenidos y a no emplearlos para actividades ilícitas, lesivas de derechos de terceros o que puedan dañar, sobrecargar o impedir el normal funcionamiento del Sitio Web.</p>
+
+    <h2>4. Propiedad intelectual</h2>
+    <p>La marca, el diseño, el código y la estructura de los rankings son titularidad de Ranking Spain o cuentan con licencia para su uso. Queda prohibida su reproducción, distribución o transformación sin autorización. Las fotografías y la cartografía pueden proceder de terceros (p. ej. OpenStreetMap, Google) y pertenecen a sus respectivos titulares.</p>
+
+    <h2>5. Exención de responsabilidad</h2>
+    <p>Los rankings y puntuaciones tienen carácter <strong>orientativo</strong> y se basan en criterios propios y en datos de distintas fuentes. Ranking Spain no garantiza la exactitud, vigencia o exhaustividad de toda la información, ni se responsabiliza de las decisiones que el usuario tome en función de ella. Tampoco se responsabiliza de los contenidos de sitios externos enlazados.</p>
+
+    <h2>6. Legislación aplicable</h2>
+    <p>Las presentes condiciones se rigen por la legislación española. Para cualquier controversia, las partes se someten a los juzgados y tribunales que correspondan conforme a derecho.</p>
+
+    <p class="legal-note">⚠️ Plantilla orientativa. Antes de publicarla, completa los datos del titular ([NOMBRE], [NIF], [DIRECCIÓN]) y revísala con un profesional para adaptarla a tu situación real.</p>
+    <p class="legal-date">Última actualización: junio de 2026.</p>
+  </div>
+</Base>

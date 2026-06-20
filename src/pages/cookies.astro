@@ -1,0 +1,36 @@
+---
+import Base from '../layouts/Base.astro';
+const EMAIL = 'hola@rankingspain.com';
+---
+<Base title="Política de cookies — Ranking Spain" noindex={true}
+      description="Qué cookies utiliza Ranking Spain y cómo gestionarlas.">
+  <div class="legal-wrap">
+    <h1>Política de cookies</h1>
+    <p class="legal-lead">Una cookie es un pequeño archivo que un sitio web guarda en tu dispositivo para que funcione correctamente o para recordar información.</p>
+
+    <h2>1. Qué cookies usamos</h2>
+    <ul>
+      <li><strong>Técnicas (necesarias):</strong> imprescindibles para que la web funcione (por ejemplo, recordar preferencias básicas de navegación). No requieren consentimiento.</li>
+      <li><strong>Analíticas (si aplican):</strong> nos ayudarían a entender de forma agregada y anónima cómo se usa la web para mejorarla. Solo se activarían con tu consentimiento.</li>
+    </ul>
+    <p>No utilizamos cookies con fines publicitarios de seguimiento de terceros. Algunos servicios externos que incrustamos (como el mapa de OpenStreetMap o, en ciertas páginas, contenidos de Google) pueden establecer sus propias cookies, regidas por sus respectivas políticas.</p>
+
+    <h2>2. Almacenamiento en tu navegador</h2>
+    <p>Para que algunas funciones recuerden tus elecciones (por ejemplo, la última categoría que viste), podemos usar el almacenamiento local de tu navegador. Esta información permanece en tu dispositivo y no se envía a nuestros servidores.</p>
+
+    <h2>3. Cómo gestionarlas o eliminarlas</h2>
+    <p>Puedes configurar o eliminar las cookies desde los ajustes de tu navegador. Aquí tienes las guías de los más comunes:</p>
+    <ul>
+      <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Google Chrome</a></li>
+      <li><a href="https://support.apple.com/es-es/guide/safari/sfri11471/mac" target="_blank" rel="noopener">Safari</a></li>
+      <li><a href="https://support.mozilla.org/es/kb/Borrar%20cookies" target="_blank" rel="noopener">Firefox</a></li>
+    </ul>
+    <p>Ten en cuenta que desactivar ciertas cookies puede afectar al funcionamiento de algunas partes de la web.</p>
+
+    <h2>4. Dudas</h2>
+    <p>Si tienes cualquier pregunta sobre esta política, escríbenos a <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.</p>
+
+    <p class="legal-note">⚠️ Plantilla orientativa. Ajústala a las cookies/analíticas que realmente utilices y revísala con un profesional.</p>
+    <p class="legal-date">Última actualización: junio de 2026.</p>
+  </div>
+</Base>
