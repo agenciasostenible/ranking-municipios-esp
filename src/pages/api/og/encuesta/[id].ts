@@ -55,14 +55,11 @@ export const GET: APIRoute = async ({ params, request, redirect }) => {
     await ensureWasm(origin);
     const fonts = await loadFonts(origin);
 
-    // Avatar: foto subida (incrustada como data URL) o, si no hay, círculo con la inicial.
+    // Avatar: solo si hay foto subida (incrustada como data URL). Si no hay, no se pinta nada.
     const avatarSrc = typeof row.avatar_data === 'string' && row.avatar_data.startsWith('data:') ? row.avatar_data : '';
     const avatar = avatarSrc
-      ? { type: 'img', props: { src: avatarSrc, width: 180, height: 180, style: { width: 180, height: 180, borderRadius: 90, objectFit: 'cover', border: '6px solid #FF385C' } } }
-      : T((handle[0] || '?').toUpperCase(), {
-          width: 180, height: 180, borderRadius: 90, background: '#FFF1F3', border: '6px solid #FF385C',
-          alignItems: 'center', justifyContent: 'center', color: '#E31C5F', fontSize: 76, fontWeight: 800,
-        });
+      ? { type: 'img', props: { src: avatarSrc, width: 180, height: 180, style: { width: 180, height: 180, borderRadius: 90, objectFit: 'cover', border: '6px solid #FF385C', marginBottom: 28 } } }
+      : null;
 
     const node = T([
       T([], { position: 'absolute', top: 0, left: 0, width: 1080, height: 26, background: '#FF385C' }),
@@ -77,9 +74,9 @@ export const GET: APIRoute = async ({ params, request, redirect }) => {
         background: '#FF385C', color: '#fff', borderRadius: 34, padding: '14px 38px',
         fontSize: 28, fontWeight: 800, letterSpacing: 3, marginBottom: 46,
       }),
-      avatar,
+      ...(avatar ? [avatar] : []),
       // @usuario
-      T(`@${handle}`, { color: '#222222', fontSize: 56, fontWeight: 800, marginTop: 28, marginBottom: 54 }),
+      T(`@${handle}`, { color: '#222222', fontSize: 56, fontWeight: 800, marginBottom: 54 }),
       T('recomienda pasar 2 días en', { color: '#717171', fontSize: 30, fontWeight: 600, marginBottom: 18 }),
       // Municipio (protagonista)
       T(sitio, { color: '#FF385C', fontSize: sitioSize, fontWeight: 800, marginBottom: provincia ? 12 : 0, textAlign: 'center', maxWidth: 940 }),
