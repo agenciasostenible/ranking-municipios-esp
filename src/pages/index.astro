@@ -801,8 +801,8 @@ function doSearch() {
 /* Sección "Qué ver cerca de ti" (geolocalización) */
 .nearby { max-width: 700px; margin: 16px auto 0; padding: 0 16px; position: relative; z-index: 2; }
 .nearby-card { position: relative; overflow: hidden; text-align: center; padding: 28px 22px 24px; border-radius: 22px;
-  background: radial-gradient(120% 120% at 50% 0%, #1e88e5 0%, #1565c0 55%, #0d47a1 100%);
-  box-shadow: 0 14px 38px rgba(21,101,192,.32); }
+  background: radial-gradient(120% 120% at 50% 0%, #FF6B85 0%, #FF385C 55%, #D81B53 100%);
+  box-shadow: 0 14px 38px rgba(255,56,92,.34); }
 .nearby-card::before { content: ''; position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
   width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.22) 0%, transparent 65%); pointer-events: none; }
 .nearby-eyebrow { position: relative; display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: 1px;
@@ -811,7 +811,7 @@ function doSearch() {
 .nearby-sub { position: relative; font-size: .98rem; line-height: 1.5; color: rgba(255,255,255,.92); max-width: 440px; margin: 0 auto 20px; }
 .nearby-sub strong { color: #fff; font-weight: 700; }
 .nearby-btn { position: relative; display: inline-flex; align-items: center; gap: 9px; padding: 15px 30px; background: #fff;
-  color: #1565c0; font-size: 1.05rem; font-weight: 800; border-radius: 999px; text-decoration: none;
+  color: var(--primary); font-size: 1.05rem; font-weight: 800; border-radius: 999px; text-decoration: none;
   box-shadow: 0 6px 20px rgba(0,0,0,.22); transition: transform .14s, box-shadow .14s; }
 .nearby-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 28px rgba(0,0,0,.3); }
 .nearby-tags { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
