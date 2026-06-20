@@ -1,0 +1,222 @@
+---
+import Base from '../layouts/Base.astro';
+import { DB } from '../lib/d1client';
+
+const { results: provRows } = await DB.prepare(
+  `SELECT DISTINCT provincia FROM municipios WHERE COALESCE(es_duplicado,0)=0 AND provincia IS NOT NULL ORDER BY provincia`
+).all();
+const provincias = (provRows as any[]).map((r) => r.provincia);
+---
+<Base title="Vota el mejor municipio turístico de España — Ranking Spain" description="El voto del público: elige tu provincia y municipio y vota cuál es el mejor pueblo o ciudad de España para visitar. Mira el ranking en directo y comparte.">
+<div class="vt-page">
+  <div class="vt-hero">
+    <span class="vt-kicker">🏆 El voto del público</span>
+    <h1>¿Cuál es el mejor municipio turístico de España?</h1>
+    <p>Tú decides. Elige tu favorito y vótalo. Mira cómo va el ranking en directo y <strong>comparte para que voten más</strong>.</p>
+  </div>
+
+  <div class="vt-card" id="vt-form">
+    <div class="vt-already" id="vt-already" hidden></div>
+    <div class="vt-row">
+      <div class="vt-field">
+        <label>Provincia</label>
+        <select id="vt-prov">
+          <option value="">Elige provincia…</option>
+          {provincias.map((p) => <option value={p}>{p}</option>)}
+        </select>
+      </div>
+      <div class="vt-field">
+        <label>Municipio</label>
+        <select id="vt-muni" disabled>
+          <option value="">Elige provincia primero…</option>
+        </select>
+      </div>
+    </div>
+    <button class="vt-go" id="vt-go" disabled>Vota este municipio</button>
+  </div>
+
+  <div class="vt-thanks" id="vt-thanks" hidden>
+    <div class="vt-thanks-ic">🎉</div>
+    <h2 id="vt-thanks-title">¡Voto registrado!</h2>
+    <p id="vt-thanks-sub"></p>
+    <div class="vt-thanks-acts">
+      <button class="vt-share" id="vt-share">📲 Compartir para que voten</button>
+      <button class="vt-change" id="vt-change">Cambiar mi voto</button>
+    </div>
+  </div>
+
+  <div class="vt-rankwrap">
+    <button class="vt-rank-btn" id="vt-rank-btn">📊 Ver ranking</button>
+    <div class="vt-rank" id="vt-rank" hidden>
+      <div class="vt-rank-head">
+        <h2>Ranking del público</h2>
+        <span class="vt-rank-meta" id="vt-rank-meta"></span>
+      </div>
+      <ol class="vt-rank-list" id="vt-rank-list"></ol>
+      <p class="vt-rank-empty" id="vt-rank-empty" hidden>Aún no hay votos. ¡Sé el primero!</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as any;
+  const LS = 'voto_municipio_v1';
+  const shareUrl = location.origin + '/votar';
+
+  let prevVote: { codigo: string; nombre: string } | null = null;
+  try { prevVote = JSON.parse(localStorage.getItem(LS) || 'null'); } catch {}
+
+  function showAlready() {
+    if (prevVote && prevVote.nombre) {
+      const a = $('vt-already');
+      a.innerHTML = `Ya votaste por <b>${prevVote.nombre}</b>. Si votas otra vez, moverás tu voto.`;
+      a.hidden = false;
+    }
+  }
+  showAlready();
+
+  // ── Selector en cascada provincia → municipio ──
+  const provSel = $('vt-prov'), muniSel = $('vt-muni'), go = $('vt-go');
+  provSel.addEventListener('change', async () => {
+    go.disabled = true;
+    const prov = provSel.value;
+    if (!prov) { muniSel.innerHTML = '<option value="">Elige provincia primero…</option>'; muniSel.disabled = true; return; }
+    muniSel.disabled = true; muniSel.innerHTML = '<option value="">Cargando…</option>';
+    try {
+      const r = await fetch('/api/municipios?prov=' + encodeURIComponent(prov));
+      const muns = await r.json();
+      muniSel.innerHTML = '<option value="">Elige municipio…</option>' +
+        (muns as any[]).map((m) => {
+          const nom = String(m.nombre || '').replace(/[&<>"]/g, '');
+          return `<option value="${m.codigo_ine}" data-n="${nom}">${nom}</option>`;
+        }).join('');
+      muniSel.disabled = false;
+    } catch { muniSel.innerHTML = '<option value="">Error al cargar</option>'; }
+  });
+  muniSel.addEventListener('change', () => { go.disabled = !muniSel.value; });
+
+  // ── Votar ──
+  go.addEventListener('click', async () => {
+    const codigo = muniSel.value;
+    if (!codigo) return;
+    const nombre = muniSel.options[muniSel.selectedIndex]?.getAttribute('data-n') || muniSel.options[muniSel.selectedIndex]?.textContent || '';
+    go.disabled = true; go.textContent = 'Votando…';
+    try {
+      const r = await fetch('/api/votar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo, previo: prevVote?.codigo || '' }),
+      });
+      const d = await r.json();
+      if (!r.ok || !d.ok) throw new Error();
+      prevVote = { codigo, nombre };
+      localStorage.setItem(LS, JSON.stringify(prevVote));
+      $('vt-form').hidden = true;
+      $('vt-thanks-title').textContent = '¡Voto registrado para ' + nombre + '!';
+      $('vt-thanks-sub').textContent = nombre + ' lleva ' + d.votos + (d.votos === 1 ? ' voto' : ' votos') + '. Comparte para que suba.';
+      $('vt-thanks').hidden = false;
+      loadRanking(true);
+    } catch {
+      go.disabled = false; go.textContent = 'Vota este municipio';
+      alert('No se pudo registrar el voto. Inténtalo de nuevo.');
+    }
+  });
+
+  // ── Cambiar voto ──
+  $('vt-change').addEventListener('click', () => {
+    $('vt-thanks').hidden = true;
+    $('vt-form').hidden = false;
+    go.disabled = !muniSel.value; go.textContent = 'Vota este municipio';
+    showAlready();
+  });
+
+  // ── Compartir ──
+  $('vt-share').addEventListener('click', async () => {
+    const text = prevVote?.nombre
+      ? `He votado a ${prevVote.nombre} como el mejor municipio turístico de España 🏆 ¿Y tú? Vota el tuyo:`
+      : '🏆 Vota cuál es el mejor municipio turístico de España:';
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Vota el mejor municipio de España', text, url: shareUrl }); return; }
+    } catch {}
+    try {
+      await navigator.clipboard.writeText(text + ' ' + shareUrl);
+      const b = $('vt-share'); const old = b.textContent; b.textContent = '✓ Enlace copiado';
+      setTimeout(() => { b.textContent = old; }, 2000);
+    } catch { prompt('Copia y comparte este enlace:', shareUrl); }
+  });
+
+  // ── Ranking público ──
+  const rankBtn = $('vt-rank-btn');
+  let rankOpen = false;
+  rankBtn.addEventListener('click', () => {
+    rankOpen = !rankOpen;
+    $('vt-rank').hidden = !rankOpen;
+    rankBtn.textContent = rankOpen ? '▲ Ocultar ranking' : '📊 Ver ranking';
+    if (rankOpen) loadRanking();
+  });
+  async function loadRanking(force = false) {
+    if (force) { rankOpen = true; $('vt-rank').hidden = false; rankBtn.textContent = '▲ Ocultar ranking'; }
+    try {
+      const r = await fetch('/api/votos-ranking?limit=50');
+      const d = await r.json();
+      const list = $('vt-rank-list'), empty = $('vt-rank-empty');
+      const items = (d.ranking as any[]) || [];
+      $('vt-rank-meta').textContent = d.totalVotos ? `${d.totalVotos} votos · ${d.municipios} municipios` : '';
+      if (!items.length) { list.innerHTML = ''; empty.hidden = false; return; }
+      empty.hidden = true;
+      list.innerHTML = items.map((m, i) => {
+        const me = prevVote && prevVote.codigo === m.codigo_ine ? ' vt-me' : '';
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span class="vt-pos">${i + 1}</span>`;
+        return `<li class="vt-rank-item${me}">
+          <span class="vt-rank-medal">${medal}</span>
+          <a class="vt-rank-name" href="/municipio/${m.codigo_ine}">${m.nombre}<small>${m.provincia || ''}</small></a>
+          <span class="vt-rank-votes">${m.votos}</span>
+        </li>`;
+      }).join('');
+    } catch {}
+  }
+</script>
+
+<style>
+  .vt-page { max-width: 620px; margin: 0 auto; padding: 28px 16px 60px; }
+  .vt-kicker { display: inline-block; background: #fff1f3; color: #FF385C; font-weight: 800; font-size: .78rem; letter-spacing: .04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 12px; }
+  .vt-hero h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; color: #222; margin: 0 0 10px; line-height: 1.18; }
+  .vt-hero p { color: #555; font-size: .98rem; line-height: 1.55; margin: 0 0 24px; }
+  .vt-card { background: #fff; border: 1px solid #ebebeb; border-radius: 18px; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,.05); }
+  .vt-already { background: #fff1f3; color: #c01c47; border-radius: 12px; padding: 10px 14px; font-size: .88rem; margin-bottom: 16px; }
+  .vt-row { display: flex; gap: 12px; }
+  .vt-field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .vt-field label { font-size: .82rem; font-weight: 700; color: #333; }
+  .vt-field select { padding: 13px 14px; border: 1.5px solid #ddd; border-radius: 12px; font-size: .95rem; font-family: inherit; background: #fff; color: #222; cursor: pointer; }
+  .vt-field select:focus { outline: none; border-color: #FF385C; }
+  .vt-field select:disabled { background: #f7f7f7; color: #999; cursor: default; }
+  .vt-go { width: 100%; margin-top: 18px; padding: 15px; background: #FF385C; color: #fff; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 800; cursor: pointer; }
+  .vt-go:disabled { opacity: .45; cursor: default; }
+  @media (max-width: 460px) { .vt-row { flex-direction: column; } }
+
+  .vt-thanks { text-align: center; background: #fff; border: 1px solid #ebebeb; border-radius: 18px; padding: 30px 20px; box-shadow: 0 8px 30px rgba(0,0,0,.05); }
+  .vt-thanks-ic { font-size: 3rem; }
+  .vt-thanks h2 { font-size: 1.3rem; color: #222; margin: 6px 0 8px; }
+  .vt-thanks p { color: #666; line-height: 1.5; margin: 0 0 18px; }
+  .vt-thanks-acts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .vt-share { padding: 13px 20px; background: #FF385C; color: #fff; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: .95rem; }
+  .vt-change { padding: 13px 20px; background: #fff; color: #FF385C; border: 1.5px solid #FF385C; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: .95rem; }
+
+  .vt-rankwrap { margin-top: 26px; text-align: center; }
+  .vt-rank-btn { padding: 13px 22px; background: #fff; color: #222; border: 1.5px solid #ddd; border-radius: 999px; font-weight: 800; cursor: pointer; font-size: .95rem; }
+  .vt-rank { margin-top: 18px; text-align: left; background: #fff; border: 1px solid #ebebeb; border-radius: 18px; padding: 18px; }
+  .vt-rank-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .vt-rank-head h2 { font-size: 1.1rem; color: #222; margin: 0; }
+  .vt-rank-meta { font-size: .8rem; color: #999; font-weight: 600; }
+  .vt-rank-list { list-style: none; margin: 0; padding: 0; }
+  .vt-rank-item { display: flex; align-items: center; gap: 12px; padding: 10px 8px; border-top: 1px solid #f2f2f2; }
+  .vt-rank-item:first-child { border-top: none; }
+  .vt-rank-item.vt-me { background: #fff1f3; border-radius: 10px; }
+  .vt-rank-medal { width: 30px; text-align: center; font-size: 1.2rem; flex-shrink: 0; }
+  .vt-pos { display: inline-block; color: #999; font-weight: 800; font-size: .92rem; }
+  .vt-rank-name { flex: 1; min-width: 0; color: #222; font-weight: 700; text-decoration: none; display: flex; flex-direction: column; }
+  .vt-rank-name small { color: #999; font-weight: 500; font-size: .78rem; }
+  .vt-rank-name:hover { color: #FF385C; }
+  .vt-rank-votes { font-weight: 800; color: #FF385C; font-size: 1rem; flex-shrink: 0; }
+  .vt-rank-empty { color: #999; text-align: center; padding: 14px 0; }
+</style>
+</Base>

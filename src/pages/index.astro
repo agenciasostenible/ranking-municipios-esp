@@ -453,6 +453,16 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     <div class="istat"><div class="n">{ccaas.length}</div><div class="l">CC.AA.</div></div>
   </div>
 
+  <!-- ── CTA: voto del público ── -->
+  <a href="/votar" class="vote-cta">
+    <div class="vote-cta-txt">
+      <span class="vote-cta-kicker">🏆 El voto del público</span>
+      <strong>Vota el mejor municipio turístico de España</strong>
+      <small>Elige provincia y municipio, vota y mira el ranking en directo.</small>
+    </div>
+    <span class="vote-cta-btn">Votar ahora →</span>
+  </a>
+
   <div class="result-header">
     <div>
       <h2>🏆 Top municipios de España</h2>
@@ -1359,6 +1369,25 @@ function doSearch() {
 }
 @media (max-width: 480px) {
   .mun-grid { grid-template-columns: 1fr; }
+}
+
+/* ── CTA voto del público ── */
+.vote-cta {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin: 22px 0 8px; padding: 20px 24px; border-radius: 18px; text-decoration: none;
+  background: linear-gradient(100deg, #FF385C 0%, #E31C5F 100%);
+  box-shadow: 0 10px 30px rgba(227,28,95,.25);
+}
+.vote-cta-txt { display: flex; flex-direction: column; gap: 3px; }
+.vote-cta-kicker { color: #ffd9e1; font-size: .76rem; font-weight: 800; letter-spacing: .04em; }
+.vote-cta-txt strong { color: #fff; font-size: 1.18rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
+.vote-cta-txt small { color: #ffe4ea; font-size: .85rem; }
+.vote-cta-btn { flex-shrink: 0; background: #fff; color: #E31C5F; font-weight: 800; font-size: .95rem; padding: 12px 20px; border-radius: 999px; white-space: nowrap; }
+.vote-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(227,28,95,.32); }
+.vote-cta { transition: transform .15s ease, box-shadow .15s ease; }
+@media (max-width: 560px) {
+  .vote-cta { flex-direction: column; align-items: flex-start; text-align: left; padding: 18px 20px; }
+  .vote-cta-btn { align-self: stretch; text-align: center; }
 }
 </style>
 
