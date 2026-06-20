@@ -1,0 +1,158 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="¿Tu municipio favorito de España para pasar 2 días? — Ranking Spain" description="Dinos qué municipio o ciudad de España recomendarías para una escapada de 2 días. Pon tu Instagram y publicaremos tu recomendación.">
+<div class="enc-page">
+  <div class="enc-hero">
+    <span class="enc-kicker">📸 Encuesta</span>
+    <h1>¿Cuál es tu municipio favorito de España para pasar 2 días?</h1>
+    <p>Recomienda tu escapada de fin de semana. Pon tu Instagram y, si nos gusta, <strong>publicaremos tu recomendación</strong> con tu nombre en nuestra cuenta. 👀</p>
+  </div>
+
+  <form class="enc-form" id="enc-form">
+    <div class="enc-field">
+      <label>Tu usuario de Instagram *</label>
+      <input id="e-handle" type="text" maxlength="60" placeholder="@tucuenta" required autocomplete="off" />
+    </div>
+
+    <div class="enc-field">
+      <label>Tu municipio o ciudad favorito para una escapada de 2 días *</label>
+      <input id="e-sitio" type="text" maxlength="80" placeholder="Empieza a escribir… (ej. Cadaqués)" required autocomplete="off" />
+      <div id="e-ac" class="enc-ac"></div>
+      <span id="e-matched" class="enc-matched" hidden></span>
+    </div>
+
+    <div class="enc-field">
+      <label>¿Por qué ahí? <span class="enc-opt">(opcional, sale como cita en la imagen)</span></label>
+      <input id="e-frase" type="text" maxlength="140" placeholder="Ej. Por sus calas y el casco antiguo al atardecer" />
+    </div>
+
+    <div class="enc-field">
+      <label>Tu foto de perfil <span class="enc-opt">(opcional, queda más bonito)</span></label>
+      <input id="e-foto" type="file" accept="image/*" />
+      <img id="e-foto-prev" alt="" class="enc-foto-prev" />
+    </div>
+
+    <!-- honeypot anti-spam -->
+    <input id="e-website" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
+
+    <button type="submit" class="enc-go" id="e-go">Enviar mi recomendación</button>
+    <p class="enc-note">No publicamos datos privados. Tu Instagram y tu recomendación pueden aparecer en nuestra cuenta.</p>
+  </form>
+
+  <div class="enc-ok" id="enc-ok" hidden>
+    <div class="enc-ok-ic">🎉</div>
+    <h2>¡Gracias por tu recomendación!</h2>
+    <p>La revisamos y, si encaja, la publicaremos en nuestro Instagram. ¡Atento/a!</p>
+    <a href="/" class="enc-ok-home">Volver al inicio</a>
+  </div>
+</div>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as any;
+
+  // Sitio: autocompletar contra la BD de municipios, pero admite texto libre.
+  let matchCode = '', matchProv = '';
+  const sInput = $('e-sitio'), sAc = $('e-ac'), sMatched = $('e-matched');
+  function clearMatch() { matchCode = ''; matchProv = ''; sMatched.hidden = true; }
+  let stmr: any;
+  sInput.addEventListener('input', () => {
+    clearMatch();                       // al editar a mano deja de estar normalizado
+    clearTimeout(stmr);
+    const q = sInput.value.trim();
+    if (q.length < 2) { sAc.innerHTML = ''; return; }
+    stmr = setTimeout(async () => {
+      try {
+        const r = await fetch('/api/search?q=' + encodeURIComponent(q));
+        const d = await r.json();
+        const muns = ((d as any[]) || []).filter((x) => x.tipo === 'municipio').slice(0, 6);
+        sAc.innerHTML = muns.map((m) =>
+          `<a href="#" data-c="${m.codigo_ine}" data-n="${String(m.nombre || '').replace(/"/g, '')}" data-p="${String(m.provincia || '').replace(/"/g, '')}">${m.nombre} <small>${m.provincia || ''}</small></a>`
+        ).join('');
+      } catch {}
+    }, 200);
+  });
+  sAc.addEventListener('click', (e: any) => {
+    e.preventDefault();
+    const a = e.target.closest('a'); if (!a) return;
+    sInput.value = a.getAttribute('data-n');
+    matchCode = a.getAttribute('data-c') || '';
+    matchProv = a.getAttribute('data-p') || '';
+    sMatched.textContent = '✓ ' + sInput.value + (matchProv ? ' · ' + matchProv : '');
+    sMatched.hidden = false;
+    sAc.innerHTML = '';
+  });
+  document.addEventListener('click', (e: any) => { if (!sAc.contains(e.target) && e.target !== sInput) sAc.innerHTML = ''; });
+
+  // Foto: redimensiona en el navegador a ≤400px y guarda como JPEG.
+  let fotoData = '';
+  $('e-foto').addEventListener('change', (e: any) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+      const max = 400; let { width: w, height: h } = img;
+      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+      fotoData = c.toDataURL('image/jpeg', 0.82);
+      const prev = $('e-foto-prev'); prev.src = fotoData; prev.style.display = 'block';
+    };
+    img.src = URL.createObjectURL(file);
+  });
+
+  $('enc-form').addEventListener('submit', async (e: any) => {
+    e.preventDefault();
+    const handle = $('e-handle').value.trim().replace(/^@/, '');
+    const sitio = $('e-sitio').value.trim();
+    if (!handle || !sitio) { alert('Pon tu Instagram y tu municipio favorito.'); return; }
+    const payload = {
+      handle,
+      sitio,
+      codigo: matchCode,
+      provincia: matchProv,
+      frase: $('e-frase').value.trim(),
+      avatar: fotoData,
+      website: $('e-website').value, // honeypot
+    };
+    $('e-go').disabled = true; $('e-go').textContent = 'Enviando…';
+    try {
+      const r = await fetch('/api/encuesta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error();
+      $('e-go').textContent = '✓ Enviado';
+      $('enc-form').style.display = 'none';
+      $('enc-ok').hidden = false; $('enc-ok').style.display = 'block';
+    } catch {
+      $('e-go').disabled = false; $('e-go').textContent = 'Enviar mi recomendación';
+      alert('No se pudo enviar. Inténtalo de nuevo.');
+    }
+  });
+</script>
+
+<style>
+  .enc-page { max-width: 600px; margin: 0 auto; padding: 28px 16px 60px; }
+  .enc-kicker { display: inline-block; background: #fdf0f6; color: #d63384; font-weight: 800; font-size: .78rem; letter-spacing: .04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 12px; }
+  .enc-hero h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; color: #222; margin: 0 0 10px; line-height: 1.2; }
+  .enc-hero p { color: #555; font-size: .95rem; line-height: 1.55; margin: 0 0 24px; }
+  .enc-form { display: flex; flex-direction: column; gap: 18px; }
+  .enc-field { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .enc-field label { font-size: .85rem; font-weight: 700; color: #333; }
+  .enc-opt { font-weight: 500; color: #999; }
+  .enc-field input[type="text"], .enc-field input[type="email"] { padding: 12px 13px; border: 1.5px solid #ddd; border-radius: 12px; font-size: .98rem; font-family: inherit; }
+  .enc-field input:focus { outline: none; border-color: #d63384; }
+  .enc-ac { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #fff; border-radius: 0 0 12px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); overflow: hidden; }
+  .enc-ac a { display: block; padding: 10px 13px; border-top: 1px solid #f0f0f0; text-decoration: none; color: #222; font-size: .92rem; }
+  .enc-ac a:first-child { border-top: none; }
+  .enc-ac a:hover { background: #fdf0f6; }
+  .enc-ac small { color: #888; }
+  .enc-matched { font-size: .82rem; color: #16a34a; font-weight: 700; }
+  .enc-foto-prev { display: none; width: 76px; height: 76px; border-radius: 50%; object-fit: cover; margin-top: 8px; border: 2px solid #fdf0f6; }
+  .enc-go { padding: 15px; background: #d63384; color: #fff; border: none; border-radius: 12px; font-size: 1.02rem; font-weight: 800; cursor: pointer; margin-top: 4px; }
+  .enc-go:disabled { opacity: .6; }
+  .enc-note { font-size: .78rem; color: #999; text-align: center; margin: 0; line-height: 1.5; }
+  .enc-ok { text-align: center; padding: 48px 0; }
+  .enc-ok-ic { font-size: 3.2rem; }
+  .enc-ok h2 { font-size: 1.35rem; color: #222; margin: 8px 0; }
+  .enc-ok p { color: #666; line-height: 1.5; }
+  .enc-ok-home { display: inline-block; margin-top: 14px; color: #d63384; font-weight: 800; text-decoration: none; }
+</style>
+</Base>
