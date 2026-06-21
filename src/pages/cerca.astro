@@ -254,15 +254,17 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
   #cerca-muni:focus { outline: none; border-color: var(--primary); }
   .cerca-ac { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30; background: #fff;
     border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.2); overflow: hidden; text-align: left; }
-  .cerca-ac-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; text-decoration: none; border-top: 1px solid #f5f5f5; }
-  .cerca-ac-item:first-child { border-top: none; }
-  .cerca-ac-item:hover { background: #fafafa; }
-  .cerca-ac-pin { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: #fff0f2;
+  /* Resultados inyectados por JS → estilos globales (el scope de Astro no los alcanza) */
+  :global(.cerca-ac-item) { display: flex; align-items: center; gap: 14px; padding: 12px 16px; text-decoration: none; border-top: 1px solid #f5f5f5; }
+  :global(.cerca-ac-item:first-child) { border-top: none; }
+  :global(.cerca-ac-item:hover) { background: #fafafa; }
+  :global(.cerca-ac-pin) { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: #fff0f2;
     display: flex; align-items: center; justify-content: center; }
-  .cerca-ac-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
-  .cerca-ac-name { font-weight: 700; color: #222; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cerca-ac-prov { color: #888; font-size: .82rem; }
-  .cerca-ac-empty { display: block; padding: 13px 16px; color: #999; font-size: .9rem; }
+  :global(.cerca-ac-pin svg) { display: block; }
+  :global(.cerca-ac-text) { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+  :global(.cerca-ac-name) { font-weight: 700; color: #222; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :global(.cerca-ac-prov) { color: #888; font-size: .82rem; }
+  :global(.cerca-ac-empty) { display: block; padding: 13px 16px; color: #999; font-size: .9rem; }
 
   .cerca-catform { display: flex; align-items: center; gap: 10px; margin: 6px 0 16px; }
   .cerca-catlbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-2); flex-shrink: 0; }
