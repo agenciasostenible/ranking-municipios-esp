@@ -1404,18 +1404,18 @@ function doSearch() {
 .vote-hero-kicker { display: inline-block; background: rgba(255,255,255,.22); color: #fff; font-weight: 800; font-size: .95rem; letter-spacing: .02em; padding: 8px 18px; border-radius: 999px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .vote-hero-title { color: #fff; font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.12; margin: 16px 0 8px; text-shadow: 0 2px 14px rgba(0,0,0,.55); }
 .vote-hero-sub { color: #fff; font-size: 1.02rem; margin: 0 0 22px; text-shadow: 0 1px 10px rgba(0,0,0,.55); }
-.vote-hero-btn { display: inline-block; background: rgba(255,255,255,.16); color: #fff; font-weight: 800; font-size: 1rem; padding: 12px 28px; border-radius: 999px; text-decoration: none; border: 1.5px solid rgba(255,255,255,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: background .15s ease, transform .15s ease; }
-.vote-hero-btn:hover { background: rgba(255,255,255,.28); transform: translateY(-2px); }
-.vote-hero-top { margin-top: 24px; background: rgba(255,255,255,.15); border-radius: 18px; padding: 14px; }
+.vote-hero-btn { display: inline-block; background: #fff; color: #E31C5F; font-weight: 800; font-size: 1.08rem; padding: 15px 34px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 22px rgba(0,0,0,.28); transition: transform .15s ease, box-shadow .15s ease; }
+.vote-hero-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.34); }
+.vote-hero-top { margin-top: 24px; }
 .vote-hero-top-label { display: block; color: #fff; font-weight: 800; font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
 .vote-hero-top-list { display: flex; flex-direction: column; gap: 7px; }
-.vt-top-row { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 13px; padding: 11px 15px; text-decoration: none; transition: transform .12s ease; }
-.vt-top-row:hover { transform: scale(1.015); }
+.vt-top-row { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.4); border-radius: 13px; padding: 11px 15px; text-decoration: none; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: transform .12s ease, background .15s ease; }
+.vt-top-row:hover { transform: scale(1.015); background: rgba(255,255,255,.2); }
 .vt-top-medal { font-size: 1.4rem; flex-shrink: 0; }
-.vt-top-name { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; color: #222; font-weight: 700; font-size: 1.02rem; line-height: 1.2; }
-.vt-top-name small { color: #999; font-weight: 500; font-size: .76rem; }
-.vt-top-votes { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; color: #FF385C; font-weight: 800; font-size: 1.1rem; line-height: 1; }
-.vt-top-votes small { color: #bbb; font-weight: 600; font-size: .62rem; text-transform: uppercase; letter-spacing: .03em; margin-top: 3px; }
+.vt-top-name { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; color: #fff; font-weight: 700; font-size: 1.02rem; line-height: 1.2; text-shadow: 0 1px 6px rgba(0,0,0,.4); }
+.vt-top-name small { color: rgba(255,255,255,.82); font-weight: 500; font-size: .76rem; }
+.vt-top-votes { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; color: #fff; font-weight: 800; font-size: 1.1rem; line-height: 1; text-shadow: 0 1px 6px rgba(0,0,0,.4); }
+.vt-top-votes small { color: rgba(255,255,255,.72); font-weight: 600; font-size: .62rem; text-transform: uppercase; letter-spacing: .03em; margin-top: 3px; }
 .vote-hero-rank { display: block; margin-top: 12px; color: #fff; font-weight: 800; font-size: .95rem; text-decoration: none; padding: 11px; background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.5); border-radius: 999px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: background .15s ease; }
 .vote-hero-rank:hover { background: rgba(255,255,255,.22); }
 @media (max-width: 560px) {
