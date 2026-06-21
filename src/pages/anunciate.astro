@@ -98,8 +98,9 @@ const TIPOS = [
     </label>
 
     <div class="an-field">
-      <label>1 foto (opcional pero recomendable)</label>
-      <input id="an-foto" type="file" accept="image/*" />
+      <label>1 foto del establecimiento *</label>
+      <input id="an-foto" type="file" accept="image/*" required />
+      <small class="an-hint">Obligatoria. Una buena foto (fachada, plato, habitación…) hace que tu anuncio funcione.</small>
       <img id="an-foto-prev" class="an-prev" alt="" />
     </div>
 
@@ -172,6 +173,7 @@ const TIPOS = [
     if (!$('an-tipo').value || !$('an-nombre').value.trim() || !$('an-email').value.trim() || !$('an-prov').value || !$('an-codigo').value) {
       alert('Por favor, rellena el tipo, el nombre, la provincia, el municipio y el email.'); return;
     }
+    if (!fotoData) { alert('Sube una foto del establecimiento: es obligatoria.'); $('an-foto')?.focus(); return; }
     const btn = $('an-go'); btn.disabled = true; btn.textContent = 'Enviando…';
     try {
       const r = await fetch('/api/anuncios', {
@@ -222,6 +224,7 @@ const TIPOS = [
 .an-wa > span { flex: 1; }
 .an-wa-hint { color: var(--text-2); }
 .an-prev { display: none; max-width: 160px; border-radius: 10px; margin-top: 8px; }
+.an-hint { font-size: .76rem; color: var(--text-2); margin-top: -2px; }
 .an-go { background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 4px; }
 .an-go:hover { background: var(--primary-dark); }
 .an-go:disabled { opacity: .6; cursor: default; }

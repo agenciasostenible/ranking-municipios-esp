@@ -36,11 +36,12 @@ export const POST: APIRoute = async ({ request }) => {
   }
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return okJson({ ok: false, error: 'email' }, 400);
 
-  // Foto opcional (data URL base64 generada en el cliente)
+  // Foto OBLIGATORIA (data URL base64 generada en el cliente)
   let fotoData: string | null = null, fotoMime: string | null = null;
   const foto = typeof body.foto === 'string' ? body.foto : '';
   const m = /^data:(image\/(?:jpeg|png|webp));base64,/.exec(foto);
   if (m && foto.length <= MAX_FOTO) { fotoData = foto; fotoMime = m[1]; }
+  if (!fotoData) return okJson({ ok: false, error: 'falta_foto' }, 400);
 
   const token = (globalThis.crypto?.randomUUID?.() ?? String(Math.random()).slice(2)) + String(Date.now());
 

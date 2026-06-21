@@ -20,10 +20,15 @@ export const GET: APIRoute = async ({ url }) => {
   const mime = row?.foto_mime || 'image/jpeg';
   const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
-  return new Response(bytes, {
-    headers: {
-      'Content-Type': mime,
-      'Cache-Control': 'public, max-age=86400',
-    },
-  });
+  const headers: Record<string, string> = {
+    'Content-Type': mime,
+    'Cache-Control': 'public, max-age=86400',
+  };
+  // ?dl=1 → fuerza la descarga del archivo (para retocar la foto en el panel)
+  if (url.searchParams.get('dl')) {
+    const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+    headers['Content-Disposition'] = `attachment; filename="anuncio-${id}.${ext}"`;
+  }
+
+  return new Response(bytes, { headers });
 };

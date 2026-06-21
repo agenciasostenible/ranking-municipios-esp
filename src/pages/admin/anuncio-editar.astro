@@ -34,6 +34,8 @@ const TIPOS = [
   .row { display: flex; gap: 12px; } .row .f { flex: 1; }
   .save { background: #FF385C; color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; }
   .prev { max-width: 140px; border-radius: 8px; margin-top: 6px; }
+  .dl-foto { display: inline-block; align-self: flex-start; margin: 8px 0 2px; padding: 7px 13px; background: #16a34a; color: #fff; border-radius: 8px; font-size: .82rem; font-weight: 700; text-decoration: none; }
+  .subir { font-size: .82rem; font-weight: 700; color: #555; margin-top: 4px; }
   .muted { color: #888; font-size: .8rem; }
 </style></head>
 <body>
@@ -73,6 +75,8 @@ const TIPOS = [
       <div class="f">
         <label>Foto</label>
         {a.foto_data && <img class="prev" id="prev" src={`/api/anuncio-foto?id=${a.id}`} alt="" />}
+        {a.foto_data && <a class="dl-foto" href={`/api/anuncio-foto?id=${a.id}&dl=1`} download={`anuncio-${a.id}.jpg`}>⬇️ Descargar foto</a>}
+        <label class="subir">Cambiar / subir otra foto</label>
         <input type="file" id="foto" accept="image/*" />
         {a.foto_data && <label class="chk"><input type="checkbox" id="quitar_foto" /> Quitar la foto actual</label>}
       </div>
