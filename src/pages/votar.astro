@@ -52,6 +52,12 @@ const provincias = (provRows as any[]).map((r) => r.provincia);
         <h2>Ranking del público</h2>
         <span class="vt-rank-meta" id="vt-rank-meta"></span>
       </div>
+      <div class="vt-segs" id="vt-segs">
+        <button class="vt-seg active" data-seg="general">General</button>
+        <button class="vt-seg" data-seg="pueblos">🏘️ Pueblos<small>&lt; 10.000</small></button>
+        <button class="vt-seg" data-seg="medianos">🏙️ Medianos<small>10.000–100.000</small></button>
+        <button class="vt-seg" data-seg="ciudades">🌆 Ciudades<small>&gt; 100.000</small></button>
+      </div>
       <ol class="vt-rank-list" id="vt-rank-list"></ol>
       <p class="vt-rank-empty" id="vt-rank-empty" hidden>Aún no hay votos. ¡Sé el primero!</p>
     </div>
@@ -153,10 +159,19 @@ const provincias = (provRows as any[]).map((r) => r.provincia);
     rankBtn.textContent = rankOpen ? '▲ Ocultar ranking' : '📊 Ver ranking';
     if (rankOpen) loadRanking();
   });
+  // Segmentos por población
+  let seg = 'general';
+  $('vt-segs')?.addEventListener('click', (e: any) => {
+    const b = e.target.closest('.vt-seg'); if (!b) return;
+    seg = b.dataset.seg || 'general';
+    Array.from($('vt-segs').children).forEach((c: any) => c.classList.toggle('active', c === b));
+    loadRanking();
+  });
+
   async function loadRanking(force = false) {
     if (force) { rankOpen = true; $('vt-rank').hidden = false; rankBtn.textContent = '▲ Ocultar ranking'; }
     try {
-      const r = await fetch('/api/votos-ranking?limit=50');
+      const r = await fetch('/api/votos-ranking?limit=50&seg=' + seg);
       const d = await r.json();
       const list = $('vt-rank-list'), empty = $('vt-rank-empty');
       const items = (d.ranking as any[]) || [];
@@ -219,6 +234,12 @@ const provincias = (provRows as any[]).map((r) => r.provincia);
   .vt-rank-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
   .vt-rank-head h2 { font-size: 1.1rem; color: #222; margin: 0; }
   .vt-rank-meta { font-size: .8rem; color: #999; font-weight: 600; }
+  .vt-segs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; }
+  .vt-seg { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 13px; border: 1.5px solid #e6e6e6; border-radius: 16px; background: #fff; color: #555; font-weight: 700; font-size: .82rem; cursor: pointer; font-family: inherit; line-height: 1.15; }
+  .vt-seg small { font-weight: 600; font-size: .62rem; color: #aaa; }
+  .vt-seg.active { background: #FF385C; border-color: #FF385C; color: #fff; }
+  .vt-seg.active small { color: rgba(255,255,255,.85); }
+  .vt-seg:hover:not(.active) { border-color: #FF385C; color: #FF385C; }
   .vt-rank-list { list-style: none; margin: 0; padding: 0; }
   /* Filas inyectadas por JS → estilos globales (el scope de Astro no las alcanza) */
   :global(.vt-rank-item) { display: flex; align-items: center; gap: 12px; padding: 11px 8px; border-top: 1px solid #f2f2f2; }

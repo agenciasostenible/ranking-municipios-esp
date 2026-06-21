@@ -6,14 +6,31 @@ const env = (k: string) =>
 
 const key = Astro.url.searchParams.get('key') ?? '';
 const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+const seg = Astro.url.searchParams.get('seg') ?? 'general';
+
+const SEGS = [
+  { v: 'general',  t: 'General',     r: 'todos' },
+  { v: 'pueblos',  t: '🏘️ Pueblos',  r: '< 10.000' },
+  { v: 'medianos', t: '🏙️ Medianos', r: '10.000–100.000' },
+  { v: 'ciudades', t: '🌆 Ciudades', r: '> 100.000' },
+];
+function segCond(s: string): string {
+  if (s === 'pueblos')  return 'AND m.poblacion < 10000';
+  if (s === 'medianos') return 'AND m.poblacion >= 10000 AND m.poblacion < 100000';
+  if (s === 'ciudades') return 'AND m.poblacion >= 100000';
+  return '';
+}
 
 let ranking: any[] = [];
 let totalVotos = 0, totalReales = 0, totalSeed = 0, numSeed = 0;
 if (ok) {
+  const join = seg === 'general' ? 'LEFT JOIN' : 'JOIN';
   ranking = (await DB.prepare(
-    `SELECT codigo_ine, nombre, provincia, votos, COALESCE(seed_votos,0) AS seed_votos, updated_at
-       FROM votos WHERE votos > 0
-       ORDER BY votos DESC, nombre ASC`
+    `SELECT v.codigo_ine, v.nombre, v.provincia, v.votos, COALESCE(v.seed_votos,0) AS seed_votos,
+            m.poblacion, v.updated_at
+       FROM votos v ${join} municipios m ON m.codigo_ine = v.codigo_ine
+      WHERE v.votos > 0 ${segCond(seg)}
+      ORDER BY v.votos DESC, v.nombre ASC`
   ).all()).results as any[];
   for (const r of ranking) {
     const v = Number(r.votos || 0), s = Number(r.seed_votos || 0);
@@ -23,38 +40,55 @@ if (ok) {
 }
 const fecha = (s: string) => (s ? String(s).slice(0, 16).replace('T', ' ') : '');
 const nf = (n: number) => Number(n).toLocaleString('es-ES');
+const segUrl = (s: string) => `/admin/votos?key=${encodeURIComponent(key)}&seg=${s}`;
+const link = (codigo: any, accion: string) => `/api/votos-moderar?key=${encodeURIComponent(key)}&seg=${seg}&id=${codigo}&accion=${accion}&codigo=${codigo}`;
 ---
 <html lang="es">
 <head>
 <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Voto del público — ranking completo</title>
+<title>Voto del público — ranking</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 24px 16px 60px; color: #222; background: #fafafa; }
+  body { font-family: system-ui, sans-serif; max-width: 840px; margin: 0 auto; padding: 24px 16px 60px; color: #222; background: #fafafa; }
   h1 { font-size: 1.45rem; margin-bottom: 4px; }
-  .sub { color: #777; font-size: .9rem; margin-bottom: 18px; }
+  .sub { color: #777; font-size: .9rem; margin-bottom: 16px; }
   .stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-  .stat { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px 18px; flex: 1; min-width: 120px; text-align: center; }
-  .stat .n { font-size: 1.5rem; font-weight: 800; color: #FF385C; }
+  .stat { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px 18px; flex: 1; min-width: 110px; text-align: center; }
+  .stat .n { font-size: 1.4rem; font-weight: 800; color: #FF385C; }
   .stat.seed .n { color: #e8a200; }
-  .stat .l { font-size: .76rem; color: #777; }
-  .tip { background: #fff1f3; border: 1px solid #f3b6c4; border-radius: 12px; padding: 11px 14px; font-size: .88rem; color: #c01c47; margin-bottom: 14px; }
+  .stat .l { font-size: .74rem; color: #777; }
+  .segs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .seg { display: inline-flex; flex-direction: column; align-items: center; padding: 8px 14px; border: 1.5px solid #e3e3e3; border-radius: 14px; text-decoration: none; color: #555; font-weight: 700; font-size: .85rem; line-height: 1.2; }
+  .seg small { font-weight: 600; font-size: .64rem; color: #aaa; }
+  .seg.active { background: #FF385C; border-color: #FF385C; color: #fff; }
+  .seg.active small { color: rgba(255,255,255,.85); }
+  .tip { background: #fff1f3; border: 1px solid #f3b6c4; border-radius: 12px; padding: 11px 14px; font-size: .86rem; color: #c01c47; margin-bottom: 14px; }
   .tip code { background: #fff; padding: 1px 6px; border-radius: 5px; }
-  .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .bar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
   .refresh { color: #FF385C; font-weight: 700; text-decoration: none; font-size: .9rem; }
   .clear { background: #fff; color: #e8a200; border: 1.5px solid #e8a200; border-radius: 9px; padding: 8px 14px; font-weight: 700; font-size: .85rem; text-decoration: none; }
+  .addbox { background: #fff; border: 1px dashed #FF385C; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; position: relative; }
+  .addbox b { font-size: .9rem; } .addbox .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; position: relative; }
+  .addbox input[type=text] { flex: 2; min-width: 160px; }
+  .addbox input[type=number] { width: 90px; }
+  .addbox input { padding: 9px 11px; border: 1.5px solid #ddd; border-radius: 8px; font-size: .9rem; }
+  .addbox button { padding: 9px 14px; background: #FF385C; color: #fff; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; }
+  .add-ac { position: absolute; top: 44px; left: 0; right: 0; background: #fff; border-radius: 10px; box-shadow: 0 10px 26px rgba(0,0,0,.16); z-index: 20; overflow: hidden; }
+  .add-ac a { display: block; padding: 9px 12px; border-top: 1px solid #f0f0f0; text-decoration: none; color: #222; font-size: .88rem; }
+  .add-ac a:first-child { border-top: none; } .add-ac a:hover { background: #fff1f3; } .add-ac small { color: #999; }
   table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
-  th, td { padding: 10px 12px; text-align: left; font-size: .9rem; border-top: 1px solid #f0f0f0; }
-  th { background: #f7f7f7; font-size: .76rem; text-transform: uppercase; letter-spacing: .03em; color: #666; }
-  td.pos { width: 40px; font-weight: 800; color: #999; }
-  td.votos { text-align: right; font-weight: 800; color: #FF385C; font-size: 1rem; white-space: nowrap; }
-  td.votos .real { display: block; font-size: .68rem; font-weight: 700; color: #16a34a; }
+  th, td { padding: 9px 10px; text-align: left; font-size: .88rem; border-top: 1px solid #f0f0f0; vertical-align: middle; }
+  th { background: #f7f7f7; font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: #666; }
+  td.pos { width: 34px; font-weight: 800; color: #999; }
   tr.is-seed { background: #fffdf5; }
-  td a { color: #222; font-weight: 700; text-decoration: none; }
-  td a:hover { color: #FF385C; }
-  .prov { color: #888; font-weight: 500; font-size: .82rem; }
-  .badge { display: inline-block; background: #fff3d6; color: #b9860b; border: 1px solid #f0d79a; border-radius: 6px; padding: 0 6px; font-size: .68rem; font-weight: 800; margin-left: 6px; vertical-align: middle; }
+  td a.muni { color: #222; font-weight: 700; text-decoration: none; } td a.muni:hover { color: #FF385C; }
+  .prov { color: #888; font-weight: 500; font-size: .8rem; }
+  .pob { color: #aaa; font-size: .72rem; }
+  .badge { display: inline-block; background: #fff3d6; color: #b9860b; border: 1px solid #f0d79a; border-radius: 6px; padding: 0 6px; font-size: .66rem; font-weight: 800; margin-left: 5px; }
   .badge.real { background: #e7f6ec; color: #16a34a; border-color: #b6e3c5; }
-  .when { color: #bbb; font-size: .74rem; }
+  .setf { display: flex; gap: 5px; align-items: center; justify-content: flex-end; }
+  .setf input { width: 72px; padding: 6px 8px; border: 1.5px solid #ddd; border-radius: 7px; font-size: .9rem; text-align: right; font-weight: 700; }
+  .setf button { padding: 6px 9px; background: #16a34a; color: #fff; border: none; border-radius: 7px; font-weight: 800; cursor: pointer; font-size: .85rem; }
+  .del { color: #dc2626; text-decoration: none; font-weight: 700; font-size: .8rem; margin-left: 8px; }
   .empty { color: #999; padding: 20px 0; }
 </style>
 </head>
@@ -64,25 +98,45 @@ const nf = (n: number) => Number(n).toLocaleString('es-ES');
 ) : (
   <>
     <h1>🏆 Voto del público</h1>
-    <div class="sub">Ranking completo — todos los municipios con al menos un voto. Datos en directo.</div>
-    <p class="tip">Enlace para compartir: <code>{Astro.url.origin}/votar</code>. Las filas en <b>amarillo</b> con la etiqueta <span class="badge">SEMBRADO</span> tienen votos inventados (para arrancar). Cuando tengas votos reales de sobra, pulsa <b>Quitar votos inventados</b>: se restará solo la parte inventada y se conservarán los reales (en <span class="badge real">verde</span>).</p>
+    <div class="sub">Ranking en directo. Puedes <b>modificar los votos</b> de cualquier municipio; lo que pongas por encima de los votos reales cuenta como <b>inventado</b>.</div>
+
+    <div class="segs">
+      {SEGS.map((s) => (
+        <a class={`seg${seg === s.v ? ' active' : ''}`} href={segUrl(s.v)}>{s.t}<small>{s.r}</small></a>
+      ))}
+    </div>
+
     <div class="stats">
-      <div class="stat"><div class="n">{nf(totalVotos)}</div><div class="l">Votos totales</div></div>
-      <div class="stat"><div class="n">{nf(totalReales)}</div><div class="l">Votos reales</div></div>
-      <div class="stat seed"><div class="n">{nf(totalSeed)}</div><div class="l">Inventados ({numSeed} munis)</div></div>
+      <div class="stat"><div class="n">{nf(totalVotos)}</div><div class="l">Votos (esta vista)</div></div>
+      <div class="stat"><div class="n">{nf(totalReales)}</div><div class="l">Reales</div></div>
+      <div class="stat seed"><div class="n">{nf(totalSeed)}</div><div class="l">Inventados ({numSeed})</div></div>
       <div class="stat"><div class="n">{nf(ranking.length)}</div><div class="l">Municipios</div></div>
     </div>
+
+    <div class="addbox">
+      <b>➕ Añadir o fijar votos de un municipio</b>
+      <form class="row" method="post" action="/api/votos-moderar" id="addf">
+        <input type="hidden" name="key" value={key} />
+        <input type="hidden" name="seg" value={seg} />
+        <input type="hidden" name="accion" value="set" />
+        <input type="hidden" name="codigo" id="add-codigo" />
+        <input type="text" id="add-muni" placeholder="Escribe un municipio…" autocomplete="off" />
+        <input type="number" name="votos" id="add-votos" placeholder="votos" min="0" />
+        <button type="submit">Fijar</button>
+        <div class="add-ac" id="add-ac"></div>
+      </form>
+    </div>
+
     <div class="bar">
-      <a class="refresh" href={`/admin/votos?key=${encodeURIComponent(key)}`}>🔄 Refrescar</a>
+      <a class="refresh" href={segUrl(seg)}>🔄 Refrescar</a>
       {totalSeed > 0 && (
-        <a class="clear" href={`/api/votos-moderar?key=${encodeURIComponent(key)}&accion=quitar-seed`}
-           onclick="return confirm('¿Quitar TODOS los votos inventados? Se restará solo la parte sembrada; los votos reales se conservan.')">
-          🧹 Quitar votos inventados
-        </a>
+        <a class="clear" href={`/api/votos-moderar?key=${encodeURIComponent(key)}&seg=${seg}&accion=quitar-seed`}
+           onclick="return confirm('¿Quitar TODOS los votos inventados? Se conservan los reales.')">🧹 Quitar inventados</a>
       )}
     </div>
+
     {ranking.length === 0 ? (
-      <p class="empty">Todavía no hay votos.</p>
+      <p class="empty">No hay municipios votados en esta vista.</p>
     ) : (
       <table>
         <thead><tr><th>#</th><th>Municipio</th><th style="text-align:right">Votos</th></tr></thead>
@@ -94,19 +148,69 @@ const nf = (n: number) => Number(n).toLocaleString('es-ES');
               <tr class={isSeed ? 'is-seed' : ''}>
                 <td class="pos">{i + 1}</td>
                 <td>
-                  <a href={`/municipio/${r.codigo_ine}`} target="_blank" rel="noopener">{r.nombre}</a>
+                  <a class="muni" href={`/municipio/${r.codigo_ine}`} target="_blank" rel="noopener">{r.nombre}</a>
                   <span class="prov"> · {r.provincia}</span>
-                  {isSeed && <span class="badge">SEMBRADO {r.seed_votos}</span>}
-                  {reales > 0 && <span class="badge real">{reales} REAL{reales === 1 ? '' : 'ES'}</span>}
-                  <div class="when">últ. {fecha(r.updated_at)}</div>
+                  {r.poblacion != null && <span class="pob"> · {nf(r.poblacion)} hab.</span>}
+                  {isSeed && <span class="badge">{r.seed_votos} inventados</span>}
+                  {reales > 0 && <span class="badge real">{reales} reales</span>}
+                  <a class="del" href={link(r.codigo_ine, 'borrar')} onclick="return confirm('¿Borrar este municipio del ranking?')">borrar</a>
                 </td>
-                <td class="votos">{nf(r.votos)}{reales > 0 && isSeed && <span class="real">{reales} real{reales === 1 ? '' : 'es'}</span>}</td>
+                <td>
+                  <form class="setf" method="post" action="/api/votos-moderar">
+                    <input type="hidden" name="key" value={key} />
+                    <input type="hidden" name="seg" value={seg} />
+                    <input type="hidden" name="accion" value="set" />
+                    <input type="hidden" name="codigo" value={r.codigo_ine} />
+                    <input type="number" name="votos" value={r.votos} min="0" />
+                    <button type="submit" title="Guardar votos">✓</button>
+                  </form>
+                </td>
               </tr>
             );
           })}
         </tbody>
       </table>
     )}
+
+    <script is:inline>
+      (function () {
+        var inp = document.getElementById('add-muni');
+        var ac = document.getElementById('add-ac');
+        var hid = document.getElementById('add-codigo');
+        var votos = document.getElementById('add-votos');
+        var form = document.getElementById('addf');
+        if (!inp) return;
+        var t;
+        inp.addEventListener('input', function () {
+          hid.value = '';
+          clearTimeout(t);
+          var q = inp.value.trim();
+          if (q.length < 2) { ac.innerHTML = ''; return; }
+          t = setTimeout(function () {
+            fetch('/api/municipios-buscar?q=' + encodeURIComponent(q))
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                ac.innerHTML = (d || []).map(function (m) {
+                  var n = String(m.nombre).replace(/"/g, '');
+                  return '<a href="#" data-c="' + m.codigo_ine + '" data-n="' + n + '">' + n + ' <small>' + (m.provincia || '') + '</small></a>';
+                }).join('');
+              }).catch(function () {});
+          }, 180);
+        });
+        ac.addEventListener('click', function (e) {
+          e.preventDefault();
+          var a = e.target.closest('a'); if (!a) return;
+          inp.value = a.getAttribute('data-n');
+          hid.value = a.getAttribute('data-c');
+          ac.innerHTML = '';
+          votos.focus();
+        });
+        form.addEventListener('submit', function (e) {
+          if (!hid.value) { e.preventDefault(); alert('Elige un municipio de la lista.'); }
+        });
+        document.addEventListener('click', function (e) { if (!ac.contains(e.target) && e.target !== inp) ac.innerHTML = ''; });
+      })();
+    </script>
   </>
 )}
 </body>
