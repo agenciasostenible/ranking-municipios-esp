@@ -1,0 +1,128 @@
+---
+import { DB } from '../../lib/d1client';
+
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+const origin = Astro.url.origin;
+
+// Contadores rápidos (qué necesita atención)
+let cEncuesta = 0, cVotosMunis = 0, cAnunPend = 0, cCreadPend = 0, cBanners = 0;
+const num = async (sql: string) => { try { const r = await DB.prepare(sql).first() as any; return Number(r?.n || 0); } catch { return 0; } };
+if (ok) {
+  cEncuesta   = await num(`SELECT COUNT(*) n FROM encuesta WHERE publicado=0`);
+  cVotosMunis = await num(`SELECT COUNT(*) n FROM votos WHERE votos>0`);
+  cAnunPend   = await num(`SELECT COUNT(*) n FROM anuncios WHERE estado='pendiente'`);
+  cCreadPend  = await num(`SELECT COUNT(*) n FROM creadores WHERE aprobado=0`);
+  cBanners    = await num(`SELECT COUNT(*) n FROM banners`);
+}
+const k = encodeURIComponent(key);
+
+const PANELES = [
+  { t: '📸 Encuestas', d: 'Instagramers · municipio favorito', href: `/admin/encuesta?key=${k}`, badge: cEncuesta, badgeLbl: 'sin publicar' },
+  { t: '🏆 Voto del público', d: 'Ranking + editar votos', href: `/admin/votos?key=${k}`, badge: cVotosMunis, badgeLbl: 'municipios' },
+  { t: '📢 Publicidad / Anunciantes', d: 'Negocios y establecimientos', href: `/admin/anuncios?key=${k}`, badge: cAnunPend, badgeLbl: 'pendientes' },
+  { t: '👤 Instagramers', d: 'Creadores recomendados', href: `/admin/creadores?key=${k}`, badge: cCreadPend, badgeLbl: 'pendientes' },
+  { t: '🖼️ Banners', d: 'Anuncios de imagen en la home', href: `/admin/banners?key=${k}`, badge: cBanners, badgeLbl: 'activos' },
+];
+
+const COMPARTIR = [
+  { t: '📸 Encuesta a instagramers', url: `${origin}/encuesta`, msg: '¿Cuál es tu municipio favorito de España para pasar 2 días? Cuéntamelo aquí 👇' },
+  { t: '🏆 Voto del público', url: `${origin}/votar`, msg: '🏆 Vota cuál es el mejor municipio turístico de España:' },
+  { t: '📢 Anúnciate (negocios)', url: `${origin}/anunciate`, msg: '¿Tienes un negocio turístico? Anúncialo en Ranking Spain:' },
+  { t: '🤝 Colabora (creadores)', url: `${origin}/colabora`, msg: '¿Creas contenido de viajes en Instagram? Sal recomendado en Ranking Spain:' },
+];
+---
+<html lang="es">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Panel de control — Ranking Spain</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 22px 16px 60px; color: #222; background: #fafafa; }
+  h1 { font-size: 1.5rem; margin: 0 0 2px; }
+  .sub { color: #777; font-size: .9rem; margin-bottom: 20px; }
+  h2 { font-size: 1.05rem; margin: 26px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .card { display: flex; flex-direction: column; gap: 3px; background: #fff; border: 1px solid #e5e5e5; border-radius: 14px; padding: 16px; text-decoration: none; color: #222; position: relative; transition: transform .12s, box-shadow .12s; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,.08); }
+  .card .t { font-weight: 800; font-size: 1.02rem; }
+  .card .d { color: #777; font-size: .84rem; }
+  .card .badge { position: absolute; top: 14px; right: 14px; background: #fff1f3; color: #FF385C; font-weight: 800; font-size: .72rem; padding: 3px 9px; border-radius: 999px; }
+  .card .badge.zero { background: #f1f1f1; color: #aaa; }
+  .share { background: #fff; border: 1px solid #e5e5e5; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+  .share .st { font-weight: 800; font-size: .96rem; margin-bottom: 2px; }
+  .share .su { color: #2563eb; font-size: .82rem; word-break: break-all; margin-bottom: 10px; display: block; }
+  .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .acts button, .acts a { display: inline-flex; align-items: center; gap: 5px; padding: 9px 13px; border-radius: 9px; font-weight: 700; font-size: .84rem; cursor: pointer; text-decoration: none; border: 1.5px solid transparent; }
+  .b-share { background: #FF385C; color: #fff; border: none; }
+  .b-wa { background: #25D366; color: #fff; }
+  .b-mail { background: #fff; color: #444; border-color: #ddd; }
+  .b-copy { background: #fff; color: #444; border-color: #ddd; }
+  .key-note { color: #999; font-size: .78rem; margin-top: 24px; }
+</style>
+</head>
+<body>
+{!ok ? (
+  <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>
+) : (
+  <>
+    <h1>🎛️ Panel de control</h1>
+    <div class="sub">Todo en un sitio: gestión y enlaces para compartir.</div>
+
+    <h2>Gestión</h2>
+    <div class="grid">
+      {PANELES.map((p) => (
+        <a class="card" href={p.href}>
+          <span class={`badge${p.badge ? '' : ' zero'}`}>{p.badge} {p.badgeLbl}</span>
+          <span class="t">{p.t}</span>
+          <span class="d">{p.d}</span>
+        </a>
+      ))}
+    </div>
+
+    <h2>Enlaces para compartir</h2>
+    {COMPARTIR.map((s) => (
+      <div class="share" data-url={s.url} data-msg={s.msg}>
+        <div class="st">{s.t}</div>
+        <a class="su" href={s.url} target="_blank" rel="noopener">{s.url}</a>
+        <div class="acts">
+          <button class="b-share" data-act="share">📲 Compartir</button>
+          <a class="b-wa" data-act="wa" target="_blank" rel="noopener">🟢 WhatsApp</a>
+          <a class="b-mail" data-act="mail">✉️ Email</a>
+          <button class="b-copy" data-act="copy">📋 Copiar</button>
+        </div>
+      </div>
+    ))}
+
+    <p class="key-note">Guarda esta página en favoritos con tu clave. No la compartas (da acceso a la gestión).</p>
+
+    <script is:inline>
+      (function () {
+        document.querySelectorAll('.share').forEach(function (box) {
+          var url = box.getAttribute('data-url');
+          var msg = box.getAttribute('data-msg');
+          var full = msg + ' ' + url;
+          var wa = box.querySelector('[data-act=wa]');
+          if (wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(full);
+          var mail = box.querySelector('[data-act=mail]');
+          if (mail) mail.href = 'mailto:?subject=' + encodeURIComponent('Ranking Spain') + '&body=' + encodeURIComponent(msg + '\n\n' + url);
+          var sh = box.querySelector('[data-act=share]');
+          if (sh) sh.addEventListener('click', function () {
+            if (navigator.share) { navigator.share({ title: 'Ranking Spain', text: msg, url: url }).catch(function(){}); }
+            else { navigator.clipboard && navigator.clipboard.writeText(full); alert('Enlace copiado (tu navegador no tiene compartir nativo).'); }
+          });
+          var cp = box.querySelector('[data-act=copy]');
+          if (cp) cp.addEventListener('click', function () {
+            navigator.clipboard.writeText(full).then(function () {
+              var o = cp.textContent; cp.textContent = '✓ Copiado'; setTimeout(function () { cp.textContent = o; }, 1500);
+            }).catch(function () { prompt('Copia el enlace:', full); });
+          });
+        });
+      })();
+    </script>
+  </>
+)}
+</body>
+</html>
