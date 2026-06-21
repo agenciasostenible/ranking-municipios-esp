@@ -78,14 +78,6 @@ if (ref) {
 // Recomendados (negocios/influencers) cerca de ti
 const anuncios = ref ? await getAnunciosCerca(ref.lat, ref.lon, RADIO_KM, 'cerca') : [];
 
-// Ciudades para el desplegable de respaldo
-const { results: origRows } = await DB.prepare(`
-  SELECT codigo_ine, nombre, provincia FROM municipios
-  WHERE COALESCE(es_duplicado,0)=0 AND poblacion >= 20000 AND latitud IS NOT NULL
-  ORDER BY nombre
-`).all();
-const origenes = origRows as any[];
-
 const grupo = (t: string) => TIPO_GRUPO[t] ?? GRUPOS[1];
 const colorOf = (t: string) => CAT_COLORS[grupo(t).key] ?? '#FF385C';
 const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `origen=${origenSel}` : '');
@@ -103,13 +95,11 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
         Usar mi ubicación
       </button>
       <div class="cerca-alt">
-        <span>o elige tu ciudad</span>
-        <form method="get">
-          <select name="origen" onchange="this.form.submit()">
-            <option value="">tu ciudad…</option>
-            {origenes.map(o => <option value={o.codigo_ine} selected={o.codigo_ine === origenSel}>{o.nombre} ({o.provincia})</option>)}
-          </select>
-        </form>
+        <span>o escribe tu municipio</span>
+        <div class="cerca-ac-wrap">
+          <input id="cerca-muni" type="text" placeholder="Escribe tu municipio…" autocomplete="off" />
+          <div id="cerca-ac" class="cerca-ac"></div>
+        </div>
       </div>
     </div>
 
@@ -192,7 +182,7 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
       if (!btn) return;
       btn.addEventListener('click', function () {
         if (!navigator.geolocation) {
-          alert('Tu navegador no permite la ubicación. Elige tu ciudad en el desplegable.');
+          alert('Tu navegador no permite la ubicación. Escribe tu municipio abajo.');
           return;
         }
         btn.textContent = 'Buscando tu ubicación…';
@@ -206,6 +196,34 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
           },
           { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
         );
+      });
+    })();
+
+    // Autocompletado de municipio (todos los municipios, como el buscador de arriba)
+    (function () {
+      var input = document.getElementById('cerca-muni');
+      var ac = document.getElementById('cerca-ac');
+      if (!input || !ac) return;
+      var t;
+      function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      input.addEventListener('input', function () {
+        clearTimeout(t);
+        var q = input.value.trim();
+        if (q.length < 2) { ac.innerHTML = ''; return; }
+        t = setTimeout(function () {
+          fetch('/api/search?q=' + encodeURIComponent(q))
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              var muns = (d || []).filter(function (x) { return x.tipo === 'municipio'; }).slice(0, 8);
+              ac.innerHTML = muns.map(function (m) {
+                return '<a href="/cerca?origen=' + m.codigo_ine + '">' + esc(m.nombre) + ' <small>' + esc(m.provincia) + '</small></a>';
+              }).join('');
+            })
+            .catch(function () {});
+        }, 200);
+      });
+      document.addEventListener('click', function (e) {
+        if (!ac.contains(e.target) && e.target !== input) ac.innerHTML = '';
       });
     })();
   </script>
@@ -224,10 +242,16 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
   .cerca-geo:disabled { opacity: .8; cursor: default; transform: none; }
   .cerca-alt { margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
   .cerca-alt span { font-size: .84rem; color: var(--text-2); }
-  .cerca-alt select { appearance: none; -webkit-appearance: none; padding: 9px 32px 9px 13px; border: 1.5px solid #d6d6d6;
-    border-radius: 10px; font-family: inherit; font-size: .85rem; font-weight: 600; color: var(--text); background-color: #fff; cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FF385C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 11px center; }
+  .cerca-ac-wrap { position: relative; width: 100%; max-width: 320px; }
+  #cerca-muni { width: 100%; padding: 11px 14px; border: 1.5px solid #d6d6d6; border-radius: 12px; font-family: inherit;
+    font-size: .92rem; color: var(--text); background: #fff; }
+  #cerca-muni:focus { outline: none; border-color: var(--primary); }
+  .cerca-ac { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: #fff;
+    border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.14); overflow: hidden; text-align: left; }
+  .cerca-ac a { display: block; padding: 11px 14px; border-top: 1px solid #f0f0f0; text-decoration: none; color: var(--text); font-size: .92rem; }
+  .cerca-ac a:first-child { border-top: none; }
+  .cerca-ac a:hover { background: #fff1f3; }
+  .cerca-ac small { color: #999; }
 
   .cerca-catform { display: flex; align-items: center; gap: 10px; margin: 6px 0 16px; }
   .cerca-catlbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-2); flex-shrink: 0; }
