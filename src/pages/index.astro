@@ -904,20 +904,20 @@ function doSearch() {
 
 /* Sección "Qué ver cerca de ti" (geolocalización) */
 .nearby { max-width: 700px; margin: 16px auto 0; padding: 0 16px; position: relative; z-index: 2; }
-.nearby-card { position: relative; overflow: hidden; text-align: center; padding: 28px 22px 24px; border-radius: 22px;
-  background: radial-gradient(120% 120% at 50% 0%, #FF6B85 0%, #FF385C 55%, #D81B53 100%);
-  box-shadow: 0 14px 38px rgba(255,56,92,.34); }
-.nearby-card::before { content: ''; position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
-  width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.22) 0%, transparent 65%); pointer-events: none; }
+.nearby-card { position: relative; overflow: hidden; text-align: center; padding: 30px 22px 26px; border-radius: 22px;
+  background: #0e1622 url('/img/cerca-torre.jpg') center 28% / cover no-repeat;
+  box-shadow: 0 14px 38px rgba(14,22,34,.4); }
+.nearby-card::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10,15,25,.5) 0%, rgba(10,15,25,.62) 45%, rgba(10,15,25,.82) 100%); }
 .nearby-eyebrow { position: relative; display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: 1px;
   text-transform: uppercase; color: #fff; background: rgba(255,255,255,.18); padding: 5px 12px; border-radius: 999px; }
 .nearby-title { position: relative; font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; color: #fff; margin: 14px 0 8px; }
 .nearby-sub { position: relative; font-size: .98rem; line-height: 1.5; color: rgba(255,255,255,.92); max-width: 440px; margin: 0 auto 20px; }
 .nearby-sub strong { color: #fff; font-weight: 700; }
-.nearby-btn { position: relative; display: inline-flex; align-items: center; gap: 9px; padding: 15px 30px; background: #fff;
-  color: var(--primary); font-size: 1.05rem; font-weight: 800; border-radius: 999px; text-decoration: none;
-  box-shadow: 0 6px 20px rgba(0,0,0,.22); transition: transform .14s, box-shadow .14s; }
-.nearby-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 28px rgba(0,0,0,.3); }
+.nearby-btn { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 9px; padding: 15px 30px; background: var(--primary);
+  color: #fff; font-size: 1.05rem; font-weight: 800; border-radius: 999px; text-decoration: none;
+  box-shadow: 0 8px 24px rgba(255,56,92,.5); transition: transform .14s, box-shadow .14s; }
+.nearby-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 30px rgba(255,56,92,.6); }
 .nearby-tags { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; }
 .nearby-tags span { display: inline-flex; align-items: center; gap: 5px; font-size: .78rem; font-weight: 600; color: #fff;
   background: rgba(255,255,255,.16); padding: 6px 12px; border-radius: 999px; }
