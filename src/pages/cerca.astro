@@ -205,6 +205,7 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
       var ac = document.getElementById('cerca-ac');
       if (!input || !ac) return;
       var t;
+      var PIN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>';
       function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
       input.addEventListener('input', function () {
         clearTimeout(t);
@@ -217,7 +218,10 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
               var muns = (d || []);
               ac.innerHTML = muns.length
                 ? muns.map(function (m) {
-                    return '<a href="/cerca?origen=' + m.codigo_ine + '">' + esc(m.nombre) + ' <small>' + esc(m.provincia) + '</small></a>';
+                    return '<a class="cerca-ac-item" href="/cerca?origen=' + m.codigo_ine + '">' +
+                      '<span class="cerca-ac-pin">' + PIN + '</span>' +
+                      '<span class="cerca-ac-text"><span class="cerca-ac-name">' + esc(m.nombre) + '</span>' +
+                      '<span class="cerca-ac-prov">' + esc(m.provincia) + '</span></span></a>';
                   }).join('')
                 : '<span class="cerca-ac-empty">Sin resultados</span>';
             })
@@ -244,17 +248,21 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
   .cerca-geo:disabled { opacity: .8; cursor: default; transform: none; }
   .cerca-alt { margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
   .cerca-alt span { font-size: .84rem; color: var(--text-2); }
-  .cerca-ac-wrap { position: relative; width: 100%; max-width: 320px; }
-  #cerca-muni { width: 100%; padding: 11px 14px; border: 1.5px solid #d6d6d6; border-radius: 12px; font-family: inherit;
-    font-size: .92rem; color: var(--text); background: #fff; }
+  .cerca-ac-wrap { position: relative; width: 100%; max-width: 440px; }
+  #cerca-muni { width: 100%; padding: 13px 16px; border: 1.5px solid #d6d6d6; border-radius: 14px; font-family: inherit;
+    font-size: .95rem; color: var(--text); background: #fff; }
   #cerca-muni:focus { outline: none; border-color: var(--primary); }
-  .cerca-ac { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: #fff;
-    border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.14); overflow: hidden; text-align: left; }
-  .cerca-ac a { display: block; padding: 11px 14px; border-top: 1px solid #f0f0f0; text-decoration: none; color: var(--text); font-size: .92rem; }
-  .cerca-ac a:first-child { border-top: none; }
-  .cerca-ac a:hover { background: #fff1f3; }
-  .cerca-ac small { color: #999; }
-  .cerca-ac-empty { display: block; padding: 11px 14px; color: #999; font-size: .9rem; }
+  .cerca-ac { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30; background: #fff;
+    border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.2); overflow: hidden; text-align: left; }
+  .cerca-ac-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; text-decoration: none; border-top: 1px solid #f5f5f5; }
+  .cerca-ac-item:first-child { border-top: none; }
+  .cerca-ac-item:hover { background: #fafafa; }
+  .cerca-ac-pin { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: #fff0f2;
+    display: flex; align-items: center; justify-content: center; }
+  .cerca-ac-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+  .cerca-ac-name { font-weight: 700; color: #222; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cerca-ac-prov { color: #888; font-size: .82rem; }
+  .cerca-ac-empty { display: block; padding: 13px 16px; color: #999; font-size: .9rem; }
 
   .cerca-catform { display: flex; align-items: center; gap: 10px; margin: 6px 0 16px; }
   .cerca-catlbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-2); flex-shrink: 0; }
