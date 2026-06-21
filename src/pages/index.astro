@@ -103,11 +103,19 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 <section class="hero-section">
   <div class="hero-inner">
     <h1 class="hero-title">El ranking de los municipios de España</h1>
-    <p class="hero-sub">Ordenados con datos verificados, no opiniones.<br /><strong class="hero-sub-cta">Elige una experiencia para ver el ranking</strong></p>
+    <p class="hero-sub">Ordenados con datos verificados, no opiniones.</p>
 
-    <!-- Paso 1: Categorías -->
+    <!-- Acción principal -->
+    <a href="/ranking/ranking_global" class="hero-cta-main">
+      <span class="hcm-trophy">🏆</span>
+      <span>Ver el ranking de España</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+
+    <!-- Categorías: desplegable "Elige una experiencia" -->
     <div class="hero-cats-wrap">
-      <div class="hero-cats" id="hero-cats">
+      <button type="button" class="hero-cats-toggle" id="hero-cats-toggle" aria-expanded="false">Elige una experiencia <span class="hct-arrow">▾</span></button>
+      <div class="hero-cats" id="hero-cats" hidden>
         {[
           {key:'senderismo',        icon:'hiking',          label:'Senderismo'},
           {key:'naturaleza',        icon:'landscape',       label:'Naturaleza'},
@@ -132,30 +140,13 @@ const municipios = (rankingGlobal as any[]).map(r => ({
           {key:'turismo_mascotas',  icon:'pets',            label:'Turismo con mascotas'},
           {key:'turismo_lgtbi',     icon:'rainbow',         label:'Turismo LGTBI'},
           {key:'notoriedad_instagram', icon:'trending_up',  label:'Popularidad en redes'},
-        ].map((c, i) => (
-          <button class={`hero-cat-pill${i >= 5 ? ' hero-cat-extra' : ''}`} data-key={c.key}>
+        ].map((c) => (
+          <a class="hero-cat-pill" href={`/ranking/${c.key}`}>
             <span class="hero-cat-ic"><Icon name={c.icon} size={17} /></span>
             <span class="hero-cat-label">{c.label}</span>
-          </button>
+          </a>
         ))}
-        <button type="button" class="hero-cat-more" id="hero-cat-more">Ver más ▾</button>
       </div>
-    </div>
-
-    <!-- Buscar por categoría + acceso al ranking completo -->
-    <div class="hero-all-wrap">
-      <div class="hero-find-label">¿Dónde quieres buscar? <span class="hero-find-cat" id="hero-find-cat"></span></div>
-      <div class="hero-find-box">
-        <div class="hero-find-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input id="hf-input" type="text" placeholder="Comunidad, provincia o municipio…" autocomplete="off" />
-        </div>
-        <div id="hf-ac" class="hero-find-ac"></div>
-      </div>
-      <a href="/ranking/ranking_global" id="hero-all-btn" class="hero-all-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-        Ver toda España
-      </a>
     </div>
 
     <!-- Paso 2: Zona opcional + CTA (solo desktop) -->
@@ -674,51 +665,17 @@ document.addEventListener('click', (e) => {
   if (!(e.target as Element)?.closest?.('.hero-search-wrap')) ac.classList.remove('open');
 });
 
-// ── Category pills → eligen categoría y enfocan el buscador "por categoría" ──
+// selectedCat lo siguen usando el buscador de zona (desktop) y la hoja móvil
 let selectedCat = '';
-const heroAllBtn = document.getElementById('hero-all-btn') as HTMLAnchorElement | null;
-const heroFindCat = document.getElementById('hero-find-cat');
-const heroAllWrap = document.querySelector('.hero-all-wrap');
-function setHeroCat(cat: string, label: string) {
-  selectedCat = cat;
-  if (heroAllBtn) heroAllBtn.href = `/ranking/${cat || 'ranking_global'}`;
-  if (heroFindCat) heroFindCat.textContent = label ? `en ${label}` : '';
-}
-document.querySelectorAll('.hero-cat-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    const cat = (pill as HTMLElement).dataset.key || '';
-    const label = (pill.querySelector('.hero-cat-label') as HTMLElement)?.textContent?.trim() || '';
-    document.querySelectorAll('.hero-cat-pill').forEach(p => p.classList.remove('selected'));
-    pill.classList.add('selected');
-    setHeroCat(cat, label);
-    heroAllWrap?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => (document.getElementById('hf-input') as HTMLInputElement)?.focus(), 300);
-  });
-});
 
-// Buscador "por categoría" (inline): autocompletado que respeta la categoría elegida
-const hfInput = document.getElementById('hf-input') as HTMLInputElement | null;
-const hfAc = document.getElementById('hf-ac');
-let hfTimer: ReturnType<typeof setTimeout>;
-hfInput?.addEventListener('input', () => {
-  const q = hfInput.value.trim();
-  clearTimeout(hfTimer);
-  if (q.length < 2) { if (hfAc) hfAc.innerHTML = ''; return; }
-  hfTimer = setTimeout(async () => {
-    const data = await fetchResults(q);
-    if (hfAc) renderItems(hfAc, data, q);
-  }, 200);
-});
-document.addEventListener('click', (e) => {
-  if (hfAc && !(e.target as Element)?.closest?.('.hero-all-wrap')) hfAc.innerHTML = '';
-});
-
-// "Ver más / Ver menos" de las categorías del hero
-const heroMore = document.getElementById('hero-cat-more');
+// ── Desplegable "Elige una experiencia" (categorías → enlaces a su ranking) ──
+const heroCatsToggle = document.getElementById('hero-cats-toggle');
 const heroCats = document.getElementById('hero-cats');
-heroMore?.addEventListener('click', () => {
-  const exp = heroCats!.classList.toggle('expanded');
-  heroMore.textContent = exp ? 'Ver menos ▴' : 'Ver más ▾';
+heroCatsToggle?.addEventListener('click', () => {
+  const willOpen = heroCats?.hasAttribute('hidden') ?? false;
+  if (willOpen) heroCats?.removeAttribute('hidden'); else heroCats?.setAttribute('hidden', '');
+  heroCatsToggle.setAttribute('aria-expanded', String(willOpen));
+  heroCatsToggle.classList.toggle('open', willOpen);
 });
 
 // ── Paso 2 móvil: hoja de selección de zona ──
@@ -776,17 +733,39 @@ function doSearch() {
 
 <style>
 /* ── Hero cat pills ── */
+.hero-cta-main {
+  display: inline-flex; align-items: center; gap: 10px; margin: 6px auto 16px;
+  padding: 15px 30px; background: #fff; color: #E31C5F; border-radius: 999px;
+  font-size: 1.1rem; font-weight: 800; text-decoration: none;
+  box-shadow: 0 8px 26px rgba(0,0,0,.28); transition: transform .15s ease, box-shadow .15s ease;
+}
+.hero-cta-main:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,.34); }
+.hcm-trophy { font-size: 1.15rem; }
 .hero-cats-wrap {
   margin: 0 auto 20px;
   max-width: 760px;
+  text-align: center;
 }
+.hero-cats-toggle {
+  display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px;
+  background: rgba(255,255,255,0.16); backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255,255,255,0.55); border-radius: 999px;
+  color: #fff; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: background .18s;
+}
+.hero-cats-toggle:hover { background: rgba(255,255,255,0.28); }
+.hero-cats-toggle .hct-arrow { transition: transform .2s; display: inline-block; }
+.hero-cats-toggle.open .hct-arrow { transform: rotate(180deg); }
+.hero-cats[hidden] { display: none; }
 .hero-cats {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
+  margin-top: 14px;
 }
 .hero-cat-pill {
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 8px;
