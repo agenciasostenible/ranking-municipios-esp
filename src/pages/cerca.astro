@@ -211,16 +211,18 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
         var q = input.value.trim();
         if (q.length < 2) { ac.innerHTML = ''; return; }
         t = setTimeout(function () {
-          fetch('/api/search?q=' + encodeURIComponent(q))
+          fetch('/api/municipios-buscar?q=' + encodeURIComponent(q))
             .then(function (r) { return r.json(); })
             .then(function (d) {
-              var muns = (d || []).filter(function (x) { return x.tipo === 'municipio'; }).slice(0, 8);
-              ac.innerHTML = muns.map(function (m) {
-                return '<a href="/cerca?origen=' + m.codigo_ine + '">' + esc(m.nombre) + ' <small>' + esc(m.provincia) + '</small></a>';
-              }).join('');
+              var muns = (d || []);
+              ac.innerHTML = muns.length
+                ? muns.map(function (m) {
+                    return '<a href="/cerca?origen=' + m.codigo_ine + '">' + esc(m.nombre) + ' <small>' + esc(m.provincia) + '</small></a>';
+                  }).join('')
+                : '<span class="cerca-ac-empty">Sin resultados</span>';
             })
             .catch(function () {});
-        }, 200);
+        }, 180);
       });
       document.addEventListener('click', function (e) {
         if (!ac.contains(e.target) && e.target !== input) ac.innerHTML = '';
@@ -252,6 +254,7 @@ const qLoc = ref && !isNaN(latP) ? `lat=${latP}&lon=${lonP}` : (origenSel ? `ori
   .cerca-ac a:first-child { border-top: none; }
   .cerca-ac a:hover { background: #fff1f3; }
   .cerca-ac small { color: #999; }
+  .cerca-ac-empty { display: block; padding: 11px 14px; color: #999; font-size: .9rem; }
 
   .cerca-catform { display: flex; align-items: center; gap: 10px; margin: 6px 0 16px; }
   .cerca-catlbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--text-2); flex-shrink: 0; }
