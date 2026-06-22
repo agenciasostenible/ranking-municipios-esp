@@ -13,12 +13,14 @@ const {
   description = 'Descubre el ranking turístico de los municipios de España. Filtra por provincia, comarca y categoría.',
   ogTitle = title,
   ogDescription = description,
-  ogImage = '/og-default.png',
+  ogImage = '/og-portada.jpg',
   canonical,
   noindex = false,
 } = Astro.props;
 const rawUrl = canonical ?? Astro.url.href;
 const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://rankingspain.com');
+// La imagen de enlace debe ir en URL absoluta para WhatsApp/Instagram/etc.
+const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.com' + ogImage;
 ---
 <!DOCTYPE html>
 <html lang="es">
@@ -40,12 +42,12 @@ const url = rawUrl.replace('https://ranking-municipios-esp.pages.dev', 'https://
   <meta property="og:url" content={url} />
   <meta property="og:title" content={ogTitle} />
   <meta property="og:description" content={ogDescription} />
-  <meta property="og:image" content={ogImage} />
+  <meta property="og:image" content={ogImageAbs} />
   <meta property="og:locale" content="es_ES" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={ogTitle} />
   <meta name="twitter:description" content={ogDescription} />
-  <meta name="twitter:image" content={ogImage} />
+  <meta name="twitter:image" content={ogImageAbs} />
 
   <!-- Plus Jakarta Sans (equivalente libre a Airbnb Cereal) — carga asíncrona -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
