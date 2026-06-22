@@ -71,6 +71,7 @@ export const CAT_COLORS: Record<string, string> = {
   playas:            '#0097a7',
   Playas:            '#0097a7',
   gastronomia:       '#f4511e',
+  soletes:           '#e8a200',
   restaurantes_top:  '#fb8c00',
   estrellas:         '#5c35c0',
   birdwatching:      '#2e7d32',
