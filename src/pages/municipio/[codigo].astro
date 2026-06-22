@@ -71,6 +71,11 @@ const { results: soletesRows } = await DB.prepare(
    ORDER BY tipo, nombre`
 ).bind(codigo).all();
 const soletes = soletesRows as any[];
+// Iconos de línea (Lucide) para "Dónde comer" — con más estilo que los emojis
+const SOLETE_ICON: Record<string, string> = {
+  restaurante: 'restaurant', bar: 'sports_bar', cafeteria: 'local_cafe',
+  chiringuito: 'local_bar', vinoteca: 'wine_bar', heladeria: 'icecream', fast_good: 'fastfood',
+};
 
 const totalProvRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios WHERE provincia = ?`).bind(municipio.provincia).first();
 const totalProv = totalProvRow?.n ?? 0;
@@ -578,7 +583,7 @@ const creadores = await getCreadores(
       <div class="entidades-grid">
         {soletes.map(e => (
           <div class="entidad-card card">
-            <div class="entidad-icon">{getTipoIcon(e.tipo)}</div>
+            <div class="entidad-icon entidad-icon-line"><Icon name={SOLETE_ICON[e.tipo] ?? 'restaurant'} size={24} /></div>
             <div class="entidad-body">
               <div class="entidad-name">{e.nombre}</div>
               {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
@@ -1173,6 +1178,9 @@ window.openSello = openSello;
   background: var(--bg);
   border-radius: 12px;
 }
+/* Iconos de línea (Lucide) para "Dónde comer": fino y en tono cálido elegante */
+.entidad-icon-line { background: #fff7e6; color: #c8920e; }
+.entidad-icon-line :global(svg) { width: 24px; height: 24px; stroke-width: 1.6; }
 .entidad-body { flex: 1; min-width: 0; }
 .entidad-name { font-weight: 700; font-size: .875rem; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
 .entidad-desc { font-size: .78rem; color: var(--text-2); margin-bottom: 7px; line-height: 1.4; }
