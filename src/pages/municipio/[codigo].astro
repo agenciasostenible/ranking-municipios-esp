@@ -49,6 +49,7 @@ const totalNacional = totalNacionalRow?.n ?? 0;
 let { results: entidades } = await DB.prepare(
   `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
    WHERE e.codigo_ine = ?
+     AND COALESCE(e.fuente,'') <> 'guia_repsol_solete'
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
        SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
        WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
@@ -62,6 +63,14 @@ let { results: entidades } = await DB.prepare(
    LIMIT 40`
 ).bind(codigo).all();
 entidades = dedupByName(entidades as any[]);
+
+// Soletes de Guía Repsol (dónde comer): sección propia con enlace a Google Maps
+const { results: soletesRows } = await DB.prepare(
+  `SELECT tipo, nombre, descripcion, enlace FROM entidades
+   WHERE codigo_ine = ? AND fuente = 'guia_repsol_solete'
+   ORDER BY tipo, nombre`
+).bind(codigo).all();
+const soletes = soletesRows as any[];
 
 const totalProvRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios WHERE provincia = ?`).bind(municipio.provincia).first();
 const totalProv = totalProvRow?.n ?? 0;
@@ -111,6 +120,7 @@ const CAT_TIPOS: Record<string, string[]> = {
   castillos:     ['castillo', 'torre', 'fortaleza', 'alcazaba', 'muralla', 'conjunto_historico'],
   yacimientos:   ['yacimiento'],
   gastronomia:   ['gastronomia', 'producto'],
+  soletes:       ['restaurante', 'bar', 'cafeteria', 'chiringuito', 'vinoteca', 'heladeria', 'fast_good'],
   fiestas:       ['fiesta'],
   festivales:    ['festival'],
   turismo_religioso: ['religioso'],
@@ -552,6 +562,34 @@ const creadores = await getCreadores(
                   🗺️ Ver en Google Maps
                 </a>
               )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {soletes.length > 0 && (
+    <section class="mun-section">
+      <h2 class="mun-section-title">🍽️ Dónde comer · Soletes de Guía Repsol</h2>
+      <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
+        {soletes.length} {soletes.length === 1 ? 'sitio' : 'sitios'} de {municipio.nombre} distinguidos con un <strong>Solete de Guía Repsol</strong>: restaurantes, bares, cafeterías, chiringuitos y más, apetecibles y asequibles.
+      </p>
+      <div class="entidades-grid">
+        {soletes.map(e => (
+          <div class="entidad-card card">
+            <div class="entidad-icon">{getTipoIcon(e.tipo)}</div>
+            <div class="entidad-body">
+              <div class="entidad-name">{e.nombre}</div>
+              {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
+              <div class="entidad-badges">
+                <span class="sello-badge" style="background:#fff7e6;color:#b9860b">☀️ Solete · Guía Repsol</span>
+                <span class="tipo-badge">{TIPO_LABEL[e.tipo] ?? e.tipo}</span>
+              </div>
+              <a class="entidad-maps" target="_blank" rel="noopener"
+                 href={e.enlace || gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
+                🗺️ Ver en Google Maps
+              </a>
             </div>
           </div>
         ))}

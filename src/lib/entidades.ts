@@ -18,6 +18,13 @@ export const TIPO_ICONS: Record<string, string> = {
   activo:     '🧗',
   oleoturismo:'🫒',
   rural:      '🏡',
+  restaurante:'🍽️',
+  bar:        '🍻',
+  cafeteria:  '☕',
+  chiringuito:'🍹',
+  vinoteca:   '🍷',
+  heladeria:  '🍦',
+  fast_good:  '🍔',
 };
 
 export const TIPO_LABEL: Record<string, string> = {
@@ -40,6 +47,13 @@ export const TIPO_LABEL: Record<string, string> = {
   activo:     'Turismo activo',
   oleoturismo:'Oleoturismo',
   rural:      'Turismo rural',
+  restaurante:'Restaurante',
+  bar:        'Bar',
+  cafeteria:  'Cafetería',
+  chiringuito:'Chiringuito',
+  vinoteca:   'Vinoteca',
+  heladeria:  'Heladería',
+  fast_good:  'Comida rápida',
 };
 
 export const SELLO_COLORS: Record<string, { bg: string; color: string }> = {

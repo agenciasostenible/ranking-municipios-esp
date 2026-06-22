@@ -73,6 +73,7 @@ export const LABELS: Record<string, string> = {
   naturaleza:        'Naturaleza',
   monumentos:        'Monumentos',
   gastronomia:       'Gastronomía',
+  soletes:           'Dónde comer (Soletes)',
   camping:           'Camping',
   Campings:          'Camping',
   TurismoRural:      'Turismo Rural',
