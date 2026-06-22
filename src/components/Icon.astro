@@ -4,7 +4,8 @@ import { Trophy, Landmark, PartyPopper, TreePine, Footprints, Utensils, Tent,
   Music2, Star, Droplet, Wine, Umbrella, Binoculars, Bird, Bike, Fish,
   Heart, Backpack, Diamond, Accessibility, Flower2, Bath, Church, Store,
   ShoppingBasket, Leaf, Flame, Eye, SunMoon, Sparkles, Rainbow, PawPrint, TrendingUp,
-  Map, Route, Coffee, Beer, IceCreamCone, Sandwich, Martini } from 'lucide-astro';
+  Map, Route, Coffee, Beer, IceCreamCone, Sandwich, Martini,
+  BarChart3, Instagram, LayoutGrid, Scale, MapPin, Share2, ListOrdered } from 'lucide-astro';
 
 interface Props { name: string; size?: number; class?: string; }
 const { name, size = 22, class: cls = '' } = Astro.props;
@@ -63,6 +64,13 @@ const MAP: Record<string, any> = {
   icecream:        IceCreamCone,
   fastfood:        Sandwich,
   local_bar:       Martini,
+  bar_chart:       BarChart3,
+  instagram:       Instagram,
+  grid:            LayoutGrid,
+  scale:           Scale,
+  map_pin:         MapPin,
+  share:           Share2,
+  list_ordered:    ListOrdered,
 };
 
 const Component = MAP[name] ?? Landmark;
