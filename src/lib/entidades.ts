@@ -76,6 +76,22 @@ export function getTipoIcon(tipo: string): string {
   return TIPO_ICONS[tipo] ?? '📍';
 }
 
+// Nombre de icono de LÍNEA (Lucide, vía componente Icon) para cada tipo de entidad.
+// Sustituye a los emojis para un look más elegante y uniforme.
+export const TIPO_ICON_NAME: Record<string, string> = {
+  castillo: 'castle', alcazaba: 'castle', fortaleza: 'castle', torre: 'castle', muralla: 'castle',
+  monumento: 'fort', conjunto: 'location_city', conjunto_historico: 'location_city', yacimiento: 'archaeology',
+  fiesta: 'celebration', festival: 'festival', espacio: 'park', parque_natural: 'park',
+  gastronomia: 'restaurant', producto: 'shopping_basket', sendero: 'hiking', mirador: 'binoculars',
+  iglesia: 'church', religioso: 'church', museo: 'museum', lgtbi: 'rainbow', mascotas: 'pets',
+  activo: 'mountain', oleoturismo: 'opacity', rural: 'cottage', misterio: 'dark_mode', misterioso: 'dark_mode',
+  restaurante: 'restaurant', bar: 'sports_bar', cafeteria: 'local_cafe', chiringuito: 'local_bar',
+  vinoteca: 'wine_bar', heladeria: 'icecream', fast_good: 'fastfood',
+};
+export function getTipoIconName(tipo: string | null | undefined): string {
+  return (tipo && TIPO_ICON_NAME[tipo]) || 'place';
+}
+
 // Tipos que NO son un punto concreto con ficha en Google Maps
 // (una fiesta/festival es un evento; gastronomía/producto es un plato o producto local).
 const NO_MAPS_TIPOS = new Set(['fiesta', 'festival', 'gastronomia', 'producto']);
