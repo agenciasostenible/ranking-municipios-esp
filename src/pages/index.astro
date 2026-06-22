@@ -521,6 +521,20 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   </div>
 </div>
 
+<!-- ── SÍGUENOS EN INSTAGRAM ── -->
+<section class="ig-follow">
+  <a href="https://instagram.com/ranking_spain" target="_blank" rel="noopener" class="ig-follow-card">
+    <span class="ig-follow-ic">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4"/><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"/></svg>
+    </span>
+    <span class="ig-follow-txt">
+      <strong>Síguenos en Instagram para descubrir más sitios</strong>
+      <small>@ranking_spain</small>
+    </span>
+    <span class="ig-follow-btn">Seguir</span>
+  </a>
+</section>
+
 <script>
 // ── Ver más municipios ────────────────────────────────────────────────────────
 let currentPage = 1;
@@ -1401,6 +1415,24 @@ function doSearch() {
   .vote-hero-title { font-size: 1.6rem; }
   .vote-hero-inner { padding: 26px 18px 20px; border-radius: 20px; }
   .vote-hero-btn { display: block; }
+}
+
+/* ── Síguenos en Instagram ── */
+.ig-follow { max-width: 760px; margin: 26px auto 0; padding: 0 16px; }
+.ig-follow-card {
+  display: flex; align-items: center; gap: 16px; padding: 18px 22px; border-radius: 20px; text-decoration: none;
+  background: linear-gradient(95deg, #515BD4 0%, #8134AF 28%, #DD2A7B 60%, #F58529 100%);
+  box-shadow: 0 12px 30px rgba(221,42,123,.28); transition: transform .15s ease, box-shadow .15s ease;
+}
+.ig-follow-card:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(221,42,123,.34); }
+.ig-follow-ic { flex-shrink: 0; color: #fff; display: flex; }
+.ig-follow-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ig-follow-txt strong { color: #fff; font-size: 1.08rem; font-weight: 800; line-height: 1.25; letter-spacing: -.01em; }
+.ig-follow-txt small { color: rgba(255,255,255,.92); font-size: .85rem; font-weight: 600; }
+.ig-follow-btn { flex-shrink: 0; background: #fff; color: #C13584; font-weight: 800; font-size: .92rem; padding: 11px 20px; border-radius: 999px; white-space: nowrap; }
+@media (max-width: 520px) {
+  .ig-follow-card { flex-direction: column; text-align: center; }
+  .ig-follow-btn { align-self: stretch; }
 }
 </style>
 
