@@ -287,7 +287,6 @@ function buildUrl(overrides: Record<string, string | number>) {
                          onclick="event.stopPropagation()">{r.nombre}</a>
                       <a href={`/municipio/${r.codigo_ine}?desde=${categoria}`}
                          class="ver-todo-btn" onclick="event.stopPropagation()">Ver ficha completa →</a>
-                      <span class="vista-rapida-btn" title="Ver un resumen aquí mismo">Vista rápida <span class="expand-arrow">▾</span></span>
                     </div>
                     <div style="font-size:.72rem;color:var(--text-2);margin-top:1px">{r.comarca ?? ''}</div>
                   </div>
@@ -304,32 +303,6 @@ function buildUrl(overrides: Record<string, string | number>) {
               <td><span class="prov-tag">{r.provincia}</span></td>
               <td><span class="ctag">{r.comunidad}</span></td>
               <td><span style="color:var(--text-2);font-size:.78rem">{formatPob(r.poblacion)}</span></td>
-            </tr>
-            <tr class="expand-row" id={`expand-${r.codigo_ine}`} style="display:none">
-              <td colspan="6" style="padding:0">
-                <div class="expand-panel">
-                  <div class="desde-block-inline" data-nombre={r.nombre} data-puntuacion={r.puntuacion} data-pos={offset + i + 1} data-rank-prov={r.ranking_provincial ?? ''}>
-                    <div class="desde-block-title">¿Por qué {r.nombre} destaca en {catInfo.label}?</div>
-                    <div class="desde-block-meta">
-                      <span class="desde-pts" style={`color:${catColor}`}>{Number(r.puntuacion).toFixed(1)} pts</span>
-                      {r.ranking_provincial && <span class="desde-rank-prov">· #{r.ranking_provincial} en {r.provincia}</span>}
-                      <span class="desde-rank-es">· #{offset + i + 1} en España</span>
-                    </div>
-                    <div class="desde-entidades-loading" data-codigo={r.codigo_ine} style="font-size:.8rem;color:#aaa;margin-top:8px">Cargando recursos...</div>
-                  </div>
-                  <div class="expand-section-title">📊 Desglose por categoría</div>
-                  <div class="bars-loading" data-codigo={r.codigo_ine} style="font-size:.8rem;color:#aaa">Cargando...</div>
-                  <div class="expand-note">
-                    La puntuación combina: inventario de recursos + sellos oficiales (BIC, UNESCO, IT) + notoriedad Wikipedia + datos de alojamiento y gastronomía.
-                  </div>
-                  <div style="margin-top:10px">
-                    <a href={`/municipio/${r.codigo_ine}?desde=${categoria}`}
-                       style="font-size:.82rem;color:var(--primary);font-weight:600">
-                      Ver ficha completa →
-                    </a>
-                  </div>
-                </div>
-              </td>
             </tr>
           </>
         );
@@ -619,9 +592,10 @@ async function toggleExpand(codigo) {
 }
 
 document.querySelectorAll('.rank-row').forEach(row => {
+  row.style.cursor = 'pointer';
   row.addEventListener('click', () => {
     const codigo = row.getAttribute('data-codigo');
-    if (codigo) toggleExpand(codigo);
+    if (codigo) window.location.href = `/municipio/${codigo}?desde=${categoria}`;
   });
 });
 
