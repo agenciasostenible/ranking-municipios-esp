@@ -167,7 +167,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 <!-- ── CTA: voto del público (destacado, arriba) ── -->
 <section class="vote-hero">
   <div class="vote-hero-inner">
-    <span class="vote-hero-kicker">🏆 El voto del público</span>
+    <span class="vote-hero-kicker"><Icon name="emoji_events" size={16} /> El voto del público</span>
     <h2 class="vote-hero-title">Vota el mejor municipio turístico de España</h2>
     <p class="vote-hero-sub">Elige provincia y municipio, vota y mira el ranking en directo.</p>
     <a href="/votar" class="vote-hero-btn">Votar ahora →</a>
@@ -198,7 +198,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 <!-- ── QUÉ VER CERCA DE TI (destacado, geolocalización) ── -->
 <section class="nearby">
   <div class="nearby-card">
-    <span class="nearby-eyebrow">📍 A tu lado · Nuevo</span>
+    <span class="nearby-eyebrow"><Icon name="map_pin" size={14} /> A tu lado · Nuevo</span>
     <h2 class="nearby-title">¿Qué ver cerca de ti?</h2>
     <p class="nearby-sub">Comparte tu ubicación y descubre al instante <strong>todo lo que tienes al lado para visitar</strong>.</p>
     <a href="/cerca" id="home-cerca-btn" class="nearby-btn">
@@ -244,8 +244,8 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     <p class="rp-sub">Te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google. Elige una <strong>zona</strong>… o el <strong>plan de un día</strong> dentro de un solo pueblo.</p>
 
     <div class="rp-modes" role="tablist">
-      <button type="button" class="rp-mode on" data-mode="zona">🧭 Por la zona</button>
-      <button type="button" class="rp-mode" data-mode="pueblo">📍 Un día en un pueblo</button>
+      <button type="button" class="rp-mode on" data-mode="zona"><Icon name="compass" size={15} /> Por la zona</button>
+      <button type="button" class="rp-mode" data-mode="pueblo"><Icon name="map_pin" size={15} /> Un día en un pueblo</button>
     </div>
 
     <button type="button" class="rp-label rp-chips-toggle" id="rp-chips-toggle">
@@ -401,7 +401,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 
 <!-- ── JOYAS SIN MASIFICAR (destacado) ── -->
 <a href="/joyas" class="joyas-promo">
-  <span class="jp-gem">💎</span>
+  <span class="jp-gem"><Icon name="diamond" size={26} /></span>
   <span class="jp-txt">
     <span class="jp-eyebrow">Nuevo · Antimasificación</span>
     <span class="jp-title">Joyas sin masificar</span>
@@ -414,7 +414,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 <section class="cat-explore">
   <div class="cx-head">
     <h2 class="cx-title">Explora por categoría</h2>
-    <a href="/mapa" class="cx-map-btn">🌍 Ver en el mapa →</a>
+    <a href="/mapa" class="cx-map-btn"><Icon name="globe" size={16} /> Ver en el mapa →</a>
   </div>
   {SIDEBAR_GROUPS.map((g) => (
     <div class="cx-group">
@@ -437,8 +437,8 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 <!-- ── MAPA EMBEBIDO ── -->
 <section class="home-map-sec">
   <div class="hms-head">
-    <h2 class="hms-title">🗺️ El mapa de la España que merece la pena</h2>
-    <a href="/mapa" class="hms-more">🎚️ Filtrar el mapa por categoría →</a>
+    <h2 class="hms-title"><Icon name="map" size={20} /> El mapa de la España que merece la pena</h2>
+    <a href="/mapa" class="hms-more"><Icon name="sliders" size={16} /> Filtrar el mapa por categoría →</a>
   </div>
   <div id="home-map"></div>
 </section>
@@ -479,7 +479,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 
   <div class="result-header">
     <div>
-      <h2>🏆 Top municipios de España</h2>
+      <h2><Icon name="emoji_events" size={20} /> Top municipios de España</h2>
       <div class="sub">Los mejores destinos según nuestro ranking global</div>
     </div>
     <a href="/ranking/ranking_global" class="pgb">Ver ranking completo →</a>
@@ -1435,6 +1435,14 @@ function doSearch() {
   .ig-follow-card { flex-direction: column; text-align: center; }
   .ig-follow-btn { align-self: stretch; }
 }
+
+/* Alineación de iconos de línea (Lucide) en cabeceras y badges */
+.vote-hero-kicker :global(svg), .nearby-eyebrow :global(svg) { vertical-align: -2px; margin-right: 4px; }
+.rp-mode :global(svg) { vertical-align: -3px; margin-right: 5px; }
+.jp-gem { display: inline-flex; align-items: center; }
+.jp-gem :global(svg) { color: #2e7d32; }
+.hms-title :global(svg) { vertical-align: -3px; margin-right: 7px; color: var(--primary); }
+.result-header h2 :global(svg) { vertical-align: -3px; margin-right: 7px; color: var(--primary); }
 </style>
 
 </Base>

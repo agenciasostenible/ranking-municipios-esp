@@ -425,15 +425,15 @@ const creadores = await getCreadores(
             <div class="reco-body">
               <div class="reco-top">
                 <span class="reco-tipo">{ANUNCIO_TIPOS[a.tipo]?.label ?? 'Establecimiento'}</span>
-                <span class="reco-badge">⭐ Recomendado</span>
+                <span class="reco-badge"><Icon name="star" size={12} /> Recomendado</span>
               </div>
               <div class="reco-name">{a.nombre}</div>
               {a.descripcion && <div class="reco-desc">{a.descripcion}</div>}
               <div class="reco-meta">
-                {a.direccion && <span>📍 {a.direccion}</span>}
-                {a.telefono && <a href={`tel:${a.telefono}`} class="reco-act">📞 Llamar</a>}
-                {a.wa && <a href={a.wa} target="_blank" rel="nofollow noopener" class="reco-act reco-wa">💬 WhatsApp</a>}
-                {a.web && <a href={a.web} target="_blank" rel="nofollow noopener">🔗 Web</a>}
+                {a.direccion && <span><Icon name="map_pin" size={13} /> {a.direccion}</span>}
+                {a.telefono && <a href={`tel:${a.telefono}`} class="reco-act"><Icon name="phone" size={13} /> Llamar</a>}
+                {a.wa && <a href={a.wa} target="_blank" rel="nofollow noopener" class="reco-act reco-wa"><Icon name="message" size={13} /> WhatsApp</a>}
+                {a.web && <a href={a.web} target="_blank" rel="nofollow noopener"><Icon name="link" size={13} /> Web</a>}
               </div>
             </div>
           </div>
@@ -583,7 +583,7 @@ const creadores = await getCreadores(
               <div class="entidad-name">{e.nombre}</div>
               {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
               <div class="entidad-badges">
-                <span class="sello-badge" style="background:#fff7e6;color:#b9860b">☀️ Solete · Guía Repsol</span>
+                <span class="sello-badge" style="background:#fff7e6;color:#b9860b"><Icon name="sun" size={12} /> Solete · Guía Repsol</span>
                 <span class="tipo-badge">{TIPO_LABEL[e.tipo] ?? e.tipo}</span>
               </div>
               <a class="entidad-maps" target="_blank" rel="noopener"
@@ -647,14 +647,14 @@ const creadores = await getCreadores(
 
   <!-- CTA anunciarse -->
   <a href={`/anunciate?muni=${encodeURIComponent(municipio.nombre)}&codigo=${codigo}&prov=${encodeURIComponent(municipio.provincia)}`} class="anunciate-cta">
-    📢 ¿Tienes un negocio o servicio? <strong>Date de alta para que valoremos tu solicitud</strong> →
+    <Icon name="megaphone" size={16} /> ¿Tienes un negocio o servicio? <strong>Date de alta para que valoremos tu solicitud</strong> →
   </a>
 
   <!-- Navigation -->
   <div class="mun-nav">
     <a href={`/provincia/${encodeURIComponent(municipio.provincia)}`} class="pgb">← {municipio.provincia}</a>
-    <a href="/ranking/ranking_global" class="pgb">🏆 Ranking global</a>
-    <a href="/" class="pgb">🔍 Buscador</a>
+    <a href="/ranking/ranking_global" class="pgb"><Icon name="emoji_events" size={15} /> Ranking global</a>
+    <a href="/" class="pgb"><Icon name="search" size={15} /> Buscador</a>
   </div>
 </div>
 
@@ -1148,6 +1148,8 @@ window.openSello = openSello;
 }
 .mun-section-title :global(svg) { width: 15px; height: 15px; vertical-align: -2px; margin-right: 6px; color: var(--primary); }
 .entidad-maps :global(svg), .desde-maps :global(svg) { width: 14px; height: 14px; vertical-align: -2px; margin-right: 3px; }
+.reco-badge :global(svg), .sello-badge :global(svg) { vertical-align: -2px; margin-right: 3px; }
+.reco-act :global(svg), .pgb :global(svg) { vertical-align: -2px; margin-right: 4px; }
 
 /* ── Entidades ── */
 .entidades-grid {
