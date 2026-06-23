@@ -1,4 +1,5 @@
 ---
+import Icon from '../components/Icon.astro';
 interface Props {
   title?: string;
   description?: string;
@@ -216,6 +217,7 @@ const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.
       transition: all .15s;
     }
     .nav-link:hover { border-color: var(--text); }
+    .nav-link :global(svg) { vertical-align: -2px; margin-right: 5px; width: 15px; height: 15px; color: var(--primary); }
 
     /* ── Hamburger ── */
     .hamburger {
@@ -804,9 +806,9 @@ const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.
       </div>
 
       <nav class="header-nav">
-        <a href="/ranking/ranking_global" class="nav-link">🏆 Rankings</a>
-        <a href="/mapa" class="nav-link">🌍 Mapa</a>
-        <a href="/ruta" class="nav-link">🗺️ Planifica tu ruta</a>
+        <a href="/ranking/ranking_global" class="nav-link"><Icon name="emoji_events" size={15} /> Rankings</a>
+        <a href="/mapa" class="nav-link"><Icon name="globe" size={15} /> Mapa</a>
+        <a href="/ruta" class="nav-link"><Icon name="map" size={15} /> Planifica tu ruta</a>
         <a href="/comparar" class="nav-link">⚖️ Comparar municipios</a>
       </nav>
 
