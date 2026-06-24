@@ -49,7 +49,7 @@ const totalNacional = totalNacionalRow?.n ?? 0;
 let { results: entidades } = await DB.prepare(
   `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
    WHERE e.codigo_ine = ?
-     AND COALESCE(e.fuente,'') <> 'guia_repsol_solete'
+     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion')
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
        SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
        WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
@@ -71,6 +71,14 @@ const { results: soletesRows } = await DB.prepare(
    ORDER BY tipo, nombre`
 ).bind(codigo).all();
 const soletes = soletesRows as any[];
+
+// Restaurantes recomendados (base de datos gastronómica): nombre + especialidad
+const { results: recoRows } = await DB.prepare(
+  `SELECT nombre, descripcion FROM entidades
+   WHERE codigo_ine = ? AND fuente = 'gastronomia_ampliacion'
+   ORDER BY nombre`
+).bind(codigo).all();
+const restosReco = recoRows as any[];
 
 const totalProvRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios WHERE provincia = ?`).bind(municipio.provincia).first();
 const totalProv = totalProvRow?.n ?? 0;
@@ -588,6 +596,30 @@ const creadores = await getCreadores(
               </div>
               <a class="entidad-maps" target="_blank" rel="noopener"
                  href={e.enlace || gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
+                <Icon name="map_pin" size={14} /> Ver en Google Maps
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {restosReco.length > 0 && (
+    <section class="mun-section">
+      <h2 class="mun-section-title"><Icon name="restaurant" size={20} /> Restaurantes recomendados</h2>
+      <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
+        {restosReco.length} {restosReco.length === 1 ? 'restaurante de referencia' : 'restaurantes de referencia'} en {municipio.nombre}, seleccionados por su cocina y valoraciones (distinciones Michelin y Repsol, guías y reseñas verificadas).
+      </p>
+      <div class="entidades-grid">
+        {restosReco.map(e => (
+          <div class="entidad-card card">
+            <div class="entidad-icon entidad-icon-line entidad-icon-solete"><Icon name="restaurant" size={24} /></div>
+            <div class="entidad-body">
+              <div class="entidad-name">{e.nombre}</div>
+              {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
+              <a class="entidad-maps" target="_blank" rel="noopener"
+                 href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
                 <Icon name="map_pin" size={14} /> Ver en Google Maps
               </a>
             </div>
