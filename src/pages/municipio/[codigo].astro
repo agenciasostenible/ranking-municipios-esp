@@ -219,7 +219,17 @@ if (desde && desde !== 'ranking_global') {
            SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
            WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
          ) <= 8)
-       ORDER BY CASE nivel_sello WHEN 'UNESCO' THEN 1 WHEN 'Parque Nacional' THEN 2 WHEN 'BIC Nacional' THEN 3 ELSE 4 END, nombre LIMIT 12`
+       ORDER BY
+         CASE nivel_sello
+           WHEN 'UNESCO' THEN 1 WHEN 'Parque Nacional' THEN 2 WHEN 'BIC Nacional' THEN 3
+           WHEN '3 Estrellas Michelin' THEN 4 WHEN '2 Estrellas Michelin' THEN 5 WHEN '1 Estrella Michelin' THEN 6
+           WHEN '3 Llaves Michelin' THEN 4 WHEN '2 Llaves Michelin' THEN 5 WHEN '1 Llave Michelin' THEN 6
+           WHEN 'Reserva Starlight' THEN 5 WHEN 'IT Internacional' THEN 6 WHEN 'IT Nacional' THEN 7
+           ELSE 8 END,
+         CASE WHEN COALESCE(e.fuente,'')='guia_michelin' THEN 0
+              WHEN COALESCE(e.fuente,'')='guia_repsol_solete' THEN 1
+              WHEN COALESCE(e.fuente,'')='gastronomia_ampliacion' THEN 2 ELSE 3 END,
+         nombre LIMIT 12`
     ).bind(codigo, ...tiposDesde).all();
     desdeEntidades = dedupByName(de as any[]);
   }
