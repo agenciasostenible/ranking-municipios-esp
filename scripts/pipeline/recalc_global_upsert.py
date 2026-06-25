@@ -17,7 +17,7 @@ for r in scores_rows:
 PESOS = {
     'monumentos': 1.3, 'pueblo_bonito': 1.2, 'gastronomia': 1.1, 'castillos': 1.0,
     'conjuntos': 1.0, 'museos': 0.9, 'Playas': 0.8, 'senderismo': 0.8, 'fiestas': 0.8,
-    'TurismoRural': 0.7, 'vinos': 0.6, 'festivales': 0.5,
+    'vinos': 0.6, 'festivales': 0.5,
 }
 K_VIRTUAL = 2.0
 BASE_M = 28.0

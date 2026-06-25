@@ -34,7 +34,7 @@ PESOS = {
     "Playas":           0.8,
     "senderismo":       0.8,
     "fiestas":          0.8,
-    "TurismoRural":     0.7,
+    # 'TurismoRural' excluido del global desde 2026-06-25 (score casi universal, distorsionaba)
     "vinos":            0.6,
     "festivales":       0.5,
 }
