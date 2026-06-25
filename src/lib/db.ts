@@ -267,7 +267,7 @@ export const FICHA_CATS = [
   'vinos','miradores','lujo','solteros','misterioso',
   'pueblo_bonito',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
-  'hoteles_encanto','ciclismo','estrellas',
+  'hoteles_encanto','ciclismo','estrellas','balnearios',
   'notoriedad_instagram',
 ];
 
@@ -277,6 +277,6 @@ export const DETAIL_CATS = [
   'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
   'senderismo','naturaleza','TurismoRural','Campings','vinos','miradores','lujo','solteros','misterioso',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
-  'hoteles_encanto','ciclismo','estrellas',
+  'hoteles_encanto','ciclismo','estrellas','balnearios',
   'pueblo_bonito','notoriedad_instagram',
 ];
