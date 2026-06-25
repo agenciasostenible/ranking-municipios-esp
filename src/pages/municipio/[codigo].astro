@@ -112,7 +112,8 @@ const { results: hotelesRows } = await DB.prepare(
    WHERE codigo_ine = ? AND fuente = 'hoteles_encanto'
    ORDER BY CASE nivel_sello
      WHEN '3 Llaves Michelin' THEN 1 WHEN '2 Llaves Michelin' THEN 2
-     WHEN '1 Llave Michelin' THEN 3 WHEN 'Parador histórico' THEN 4 ELSE 5 END, nombre`
+     WHEN 'Relais & Châteaux' THEN 3
+     WHEN '1 Llave Michelin' THEN 4 WHEN 'Parador histórico' THEN 5 ELSE 6 END, nombre`
 ).bind(codigo).all();
 const hotelesEncanto = hotelesRows as any[];
 
@@ -679,19 +680,22 @@ const creadores = await getCreadores(
     <section class="mun-section">
       <h2 class="mun-section-title"><Icon name="cottage" size={20} /> Alojamientos con encanto</h2>
       <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
-        {hotelesEncanto.length === 1 ? 'Sitio especial para dormir' : `${hotelesEncanto.length} sitios especiales para dormir`} en {municipio.nombre}: Paradores en edificios históricos y hoteles con encanto distinguidos con Llave MICHELIN.
+        {hotelesEncanto.length === 1 ? 'Sitio especial para dormir' : `${hotelesEncanto.length} sitios especiales para dormir`} en {municipio.nombre}: Paradores en edificios históricos y hoteles con encanto distinguidos con Llave MICHELIN o Relais & Châteaux.
       </p>
       <div class="entidades-grid">
         {hotelesEncanto.map(e => {
           const esMichelin = (e.nivel_sello || '').includes('Llave');
+          const esRelais = (e.nivel_sello || '').includes('Relais');
+          const iconCls = esMichelin ? 'entidad-icon-hotel-mk' : esRelais ? 'entidad-icon-hotel-rc' : 'entidad-icon-hotel';
+          const badgeStyle = esMichelin ? 'background:#fdeaef;color:#c8102e' : esRelais ? 'background:#e6f0ea;color:#1f6b4a' : 'background:#efe9df;color:#7a5a2e';
           return (
             <div class="entidad-card card">
-              <div class:list={['entidad-icon', 'entidad-icon-line', esMichelin ? 'entidad-icon-hotel-mk' : 'entidad-icon-hotel']}><Icon name="cottage" size={24} /></div>
+              <div class:list={['entidad-icon', 'entidad-icon-line', iconCls]}><Icon name="cottage" size={24} /></div>
               <div class="entidad-body">
                 <div class="entidad-name">{e.nombre}</div>
                 {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
                 <div class="entidad-badges">
-                  <span class="sello-badge" style={esMichelin ? 'background:#fdeaef;color:#c8102e' : 'background:#efe9df;color:#7a5a2e'}>{e.nivel_sello}</span>
+                  <span class="sello-badge" style={badgeStyle}>{e.nivel_sello}</span>
                 </div>
                 <a class="entidad-maps" target="_blank" rel="noopener"
                    href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
@@ -1294,6 +1298,7 @@ window.openSello = openSello;
 .entidad-icon-vv { background: #e6f5ea; color: #1f7a3d; }  /* verde vía verde */
 .entidad-icon-hotel { background: #efe9df; color: #7a5a2e; }  /* tono cálido parador */
 .entidad-icon-hotel-mk { background: #fdeaef; color: #c8102e; }  /* llave michelin */
+.entidad-icon-hotel-rc { background: #e6f0ea; color: #1f6b4a; }  /* relais & châteaux */
 .desde-item-icon-line :global(svg) { width: 18px; height: 18px; stroke-width: 1.7; color: #8a7a55; vertical-align: middle; }
 .entidad-body { flex: 1; min-width: 0; }
 .entidad-name { font-weight: 700; font-size: .875rem; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
