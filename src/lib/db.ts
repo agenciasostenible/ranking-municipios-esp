@@ -99,6 +99,7 @@ export const LABELS: Record<string, string> = {
   miradores:         'Miradores',
   solteros:          'Solteros',
   misterioso:        'Turismo misterioso',
+  estrellas:         'Astroturismo (Starlight)',
   cuevas:            'Cuevas',
   escalada:          'Escalada',
   pesca:             'Pesca',
@@ -266,7 +267,7 @@ export const FICHA_CATS = [
   'vinos','miradores','lujo','solteros','misterioso',
   'pueblo_bonito',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
-  'hoteles_encanto','ciclismo',
+  'hoteles_encanto','ciclismo','estrellas',
   'notoriedad_instagram',
 ];
 
@@ -276,6 +277,6 @@ export const DETAIL_CATS = [
   'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
   'senderismo','naturaleza','TurismoRural','Campings','vinos','miradores','lujo','solteros','misterioso',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
-  'hoteles_encanto','ciclismo',
+  'hoteles_encanto','ciclismo','estrellas',
   'pueblo_bonito','notoriedad_instagram',
 ];

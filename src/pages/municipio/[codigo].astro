@@ -49,7 +49,7 @@ const totalNacional = totalNacionalRow?.n ?? 0;
 let { results: entidades } = await DB.prepare(
   `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
    WHERE e.codigo_ine = ?
-     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','hoteles_encanto')
+     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','hoteles_encanto','starlight')
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
        SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
        WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
@@ -116,6 +116,13 @@ const { results: hotelesRows } = await DB.prepare(
      WHEN '1 Llave Michelin' THEN 4 WHEN 'Parador histórico' THEN 5 ELSE 6 END, nombre`
 ).bind(codigo).all();
 const hotelesEncanto = hotelesRows as any[];
+
+// Astroturismo: certificaciones Starlight (Reservas y Destinos) del municipio
+const { results: starlightRows } = await DB.prepare(
+  `SELECT nombre, descripcion, nivel_sello FROM entidades
+   WHERE codigo_ine = ? AND fuente = 'starlight' ORDER BY nivel_sello, nombre`
+).bind(codigo).all();
+const starlight = starlightRows as any[];
 
 const totalProvRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios WHERE provincia = ?`).bind(municipio.provincia).first();
 const totalProv = totalProvRow?.n ?? 0;
@@ -701,6 +708,32 @@ const creadores = await getCreadores(
                    href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
                   <Icon name="map_pin" size={14} /> Ver en Google Maps
                 </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  )}
+
+  {starlight.length > 0 && (
+    <section class="mun-section">
+      <h2 class="mun-section-title"><Icon name="nights_stay" size={20} /> Astroturismo · Cielos Starlight</h2>
+      <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
+        {municipio.nombre} forma parte de {starlight.length === 1 ? 'un territorio certificado' : 'territorios certificados'} por la <strong>Fundación Starlight</strong> por la calidad de su cielo nocturno: uno de los mejores lugares para observar las estrellas.
+      </p>
+      <div class="entidades-grid">
+        {starlight.map(e => {
+          const esReserva = (e.nivel_sello || '').includes('Reserva');
+          return (
+            <div class="entidad-card card">
+              <div class="entidad-icon entidad-icon-line entidad-icon-star"><Icon name="nights_stay" size={24} /></div>
+              <div class="entidad-body">
+                <div class="entidad-name">{e.nombre}</div>
+                {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
+                <div class="entidad-badges">
+                  <span class="sello-badge" style={esReserva ? 'background:#ece9fb;color:#4c2fae' : 'background:#eef0fb;color:#3949ab'}>{esReserva ? 'Reserva Starlight' : 'Destino Starlight'}</span>
+                </div>
               </div>
             </div>
           );
@@ -1299,6 +1332,7 @@ window.openSello = openSello;
 .entidad-icon-hotel { background: #efe9df; color: #7a5a2e; }  /* tono cálido parador */
 .entidad-icon-hotel-mk { background: #fdeaef; color: #c8102e; }  /* llave michelin */
 .entidad-icon-hotel-rc { background: #e6f0ea; color: #1f6b4a; }  /* relais & châteaux */
+.entidad-icon-star { background: #ece9fb; color: #4c2fae; }  /* azul noche starlight */
 .desde-item-icon-line :global(svg) { width: 18px; height: 18px; stroke-width: 1.7; color: #8a7a55; vertical-align: middle; }
 .entidad-body { flex: 1; min-width: 0; }
 .entidad-name { font-weight: 700; font-size: .875rem; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
