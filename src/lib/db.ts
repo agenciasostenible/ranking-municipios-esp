@@ -191,6 +191,9 @@ export const SIDEBAR_GROUPS = [
       { key: 'naturaleza',     label: 'Naturaleza',     icon: 'landscape' },
       { key: 'senderismo',     label: 'Senderismo',     icon: 'hiking' },
       { key: 'turismo_activo', label: 'Turismo activo', icon: 'mountain' },
+      { key: 'ciclismo',       label: 'Vías Verdes',    icon: 'pedal_bike' },
+      { key: 'cuevas',         label: 'Cuevas turísticas', icon: 'mountain' },
+      { key: 'estrellas',      label: 'Astroturismo',   icon: 'nights_stay' },
       { key: 'miradores',      label: 'Miradores',      icon: 'binoculars' },
       { key: 'playas',         label: 'Playas',         icon: 'beach_access' },
     ],
@@ -199,6 +202,7 @@ export const SIDEBAR_GROUPS = [
     title: 'Dónde dormir',
     icon: 'cottage',
     items: [
+      { key: 'hoteles_encanto', label: 'Hoteles con encanto', icon: 'cottage' },
       { key: 'TurismoRural',   label: 'Turismo rural',  icon: 'cottage' },
       { key: 'Campings',       label: 'Camping',        icon: 'camping' },
     ],
@@ -208,6 +212,7 @@ export const SIDEBAR_GROUPS = [
     icon: 'auto_awesome',
     items: [
       { key: 'turismo_religioso', label: 'Turismo religioso',   icon: 'church' },
+      { key: 'balnearios',        label: 'Balnearios y termas', icon: 'hot_tub' },
       { key: 'turismo_mascotas',  label: 'Turismo con mascotas', icon: 'pets' },
       { key: 'turismo_lgtbi',     label: 'Turismo LGTBI',       icon: 'rainbow' },
       { key: 'misterioso',        label: 'Turismo misterioso',  icon: 'dark_mode' },
@@ -250,6 +255,11 @@ export const SUBTITLES: Record<string, string> = {
   solteros:          'ambiente y vida social para singles',
   misterioso:        'leyendas, brujería y lugares con misterio',
   notoriedad_instagram: 'los pueblos más populares en redes',
+  hoteles_encanto:   'paradores, hoteles boutique y con encanto (Michelin · Relais)',
+  ciclismo:          'vías verdes y cicloturismo sobre antiguos trenes',
+  estrellas:         'cielos para ver las estrellas (destinos Starlight)',
+  balnearios:        'balnearios y aguas termales para el bienestar',
+  cuevas:            'cuevas y minas turísticas visitables',
 };
 export function getSubtitle(cat: string): string {
   return SUBTITLES[cat] ?? '';
