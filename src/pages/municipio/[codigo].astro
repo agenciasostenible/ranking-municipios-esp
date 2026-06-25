@@ -758,6 +758,10 @@ const creadores = await getCreadores(
                 <div class="entidad-badges">
                   <span class="sello-badge" style={esReserva ? 'background:#ece9fb;color:#4c2fae' : 'background:#eef0fb;color:#3949ab'}>{esReserva ? 'Reserva Starlight' : 'Destino Starlight'}</span>
                 </div>
+                <a class="entidad-maps" target="_blank" rel="noopener"
+                   href={gmapsUrl(municipio.nombre + ' cielo estrellado', municipio.nombre, municipio.provincia)}>
+                  <Icon name="map_pin" size={14} /> Ver en Google Maps
+                </a>
               </div>
             </div>
           );
