@@ -1,0 +1,37 @@
+-- 0344 Cuevas: limpiar artefacto basura (797 munis a 95, pob media 29k) + score real ACTE.
+UPDATE puntuaciones SET puntuacion=0, ranking_nacional=NULL, ranking_provincial=NULL WHERE categoria='cuevas' AND puntuacion=95;
+
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('03046','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('04021','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('06053','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('06055','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('09215','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('10060','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('10109','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('12126','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('14075','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('17003','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('21014','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('22003','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('22004','cuevas',90) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('22250','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('24194','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('30013','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('31144','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('33031','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('34135','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('38006','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('39056','cuevas',92) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('39063','cuevas',90) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('39076','cuevas',95) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('43025','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('43120','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('44151','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('46142','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('48022','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('51001','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('90022','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('90391','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('90651','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('90825','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
+INSERT INTO puntuaciones (codigo_ine,categoria,puntuacion) VALUES ('90839','cuevas',86) ON CONFLICT(codigo_ine,categoria) DO UPDATE SET puntuacion=excluded.puntuacion;
