@@ -49,7 +49,7 @@ const totalNacional = totalNacionalRow?.n ?? 0;
 let { results: entidades } = await DB.prepare(
   `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
    WHERE e.codigo_ine = ?
-     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes')
+     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','hoteles_encanto')
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
        SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
        WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
@@ -105,6 +105,16 @@ const { results: viasVerdesRows } = await DB.prepare(
    WHERE codigo_ine = ? AND fuente = 'vias_verdes' ORDER BY nombre`
 ).bind(codigo).all();
 const viasVerdes = viasVerdesRows as any[];
+
+// Alojamientos con encanto: Paradores + hoteles boutique/lujo (Llave Michelin)
+const { results: hotelesRows } = await DB.prepare(
+  `SELECT nombre, descripcion, nivel_sello FROM entidades
+   WHERE codigo_ine = ? AND fuente = 'hoteles_encanto'
+   ORDER BY CASE nivel_sello
+     WHEN '3 Llaves Michelin' THEN 1 WHEN '2 Llaves Michelin' THEN 2
+     WHEN '1 Llave Michelin' THEN 3 WHEN 'Parador histórico' THEN 4 ELSE 5 END, nombre`
+).bind(codigo).all();
+const hotelesEncanto = hotelesRows as any[];
 
 const totalProvRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios WHERE provincia = ?`).bind(municipio.provincia).first();
 const totalProv = totalProvRow?.n ?? 0;
@@ -661,6 +671,36 @@ const creadores = await getCreadores(
             </div>
           </div>
         ))}
+      </div>
+    </section>
+  )}
+
+  {hotelesEncanto.length > 0 && (
+    <section class="mun-section">
+      <h2 class="mun-section-title"><Icon name="cottage" size={20} /> Alojamientos con encanto</h2>
+      <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
+        {hotelesEncanto.length === 1 ? 'Sitio especial para dormir' : `${hotelesEncanto.length} sitios especiales para dormir`} en {municipio.nombre}: Paradores en edificios históricos y hoteles con encanto distinguidos con Llave MICHELIN.
+      </p>
+      <div class="entidades-grid">
+        {hotelesEncanto.map(e => {
+          const esMichelin = (e.nivel_sello || '').includes('Llave');
+          return (
+            <div class="entidad-card card">
+              <div class:list={['entidad-icon', 'entidad-icon-line', esMichelin ? 'entidad-icon-hotel-mk' : 'entidad-icon-hotel']}><Icon name="cottage" size={24} /></div>
+              <div class="entidad-body">
+                <div class="entidad-name">{e.nombre}</div>
+                {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
+                <div class="entidad-badges">
+                  <span class="sello-badge" style={esMichelin ? 'background:#fdeaef;color:#c8102e' : 'background:#efe9df;color:#7a5a2e'}>{e.nivel_sello}</span>
+                </div>
+                <a class="entidad-maps" target="_blank" rel="noopener"
+                   href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
+                  <Icon name="map_pin" size={14} /> Ver en Google Maps
+                </a>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   )}
@@ -1252,6 +1292,8 @@ window.openSello = openSello;
 .entidad-icon-michelin { background: #fdeaef; color: #c8102e; }  /* rojo Michelin */
 .michelin-stars { color: #c8102e; font-size: .9em; letter-spacing: 1px; white-space: nowrap; }
 .entidad-icon-vv { background: #e6f5ea; color: #1f7a3d; }  /* verde vía verde */
+.entidad-icon-hotel { background: #efe9df; color: #7a5a2e; }  /* tono cálido parador */
+.entidad-icon-hotel-mk { background: #fdeaef; color: #c8102e; }  /* llave michelin */
 .desde-item-icon-line :global(svg) { width: 18px; height: 18px; stroke-width: 1.7; color: #8a7a55; vertical-align: middle; }
 .entidad-body { flex: 1; min-width: 0; }
 .entidad-name { font-weight: 700; font-size: .875rem; color: var(--text); margin-bottom: 4px; line-height: 1.3; }

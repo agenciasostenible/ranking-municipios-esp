@@ -53,6 +53,7 @@ export const ICONS: Record<string, string> = {
   ciclismo:          'pedal_bike',
   escalada:          'climbing',
   pesca:             'phishing',
+  hoteles_encanto:   'cottage',
   mochilero:         'backpack',
   lujo:              'diamond',
   accesible:         'accessible',
@@ -92,6 +93,7 @@ export const LABELS: Record<string, string> = {
   turismo_mascotas:  'Turismo con mascotas',
   turismo_activo:    'Turismo activo',
   oleoturismo:       'Oleoturismo',
+  hoteles_encanto:   'Hoteles con encanto',
   notoriedad_instagram: 'Popularidad en redes',
 
   miradores:         'Miradores',
@@ -264,6 +266,7 @@ export const FICHA_CATS = [
   'vinos','miradores','lujo','solteros','misterioso',
   'pueblo_bonito',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
+  'hoteles_encanto','ciclismo',
   'notoriedad_instagram',
 ];
 
@@ -273,5 +276,6 @@ export const DETAIL_CATS = [
   'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
   'senderismo','naturaleza','TurismoRural','Campings','vinos','miradores','lujo','solteros','misterioso',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
+  'hoteles_encanto','ciclismo',
   'pueblo_bonito','notoriedad_instagram',
 ];

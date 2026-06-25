@@ -107,4 +107,5 @@ export const CAT_COLORS: Record<string, string> = {
   turismo_mascotas:  '#26a69a',
   turismo_activo:    '#d84315',
   oleoturismo:       '#9e9d24',
+  hoteles_encanto:   '#8d6e63',
 };
