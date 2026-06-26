@@ -49,7 +49,7 @@ const totalNacional = totalNacionalRow?.n ?? 0;
 let { results: entidades } = await DB.prepare(
   `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
    WHERE e.codigo_ine = ?
-     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','hoteles_encanto','starlight','balnearios','cuevas')
+     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','eurovelo','caminos_naturales','camino_cid','pirinexus','centros_btt','hoteles_encanto','starlight','balnearios','cuevas')
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
        SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
        WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
@@ -99,12 +99,23 @@ for (const r of comerRows as any[]) {
 const prio = (it: any) => it.stars ? 10 - it.stars : it.solete ? 20 : 30;
 const comer = [...comerMap.values()].sort((a, b) => prio(a) - prio(b) || a.nombre.localeCompare(b.nombre, 'es'));
 
-// Cicloturismo: Vías Verdes (antiguos trazados ferroviarios) que pasan por el municipio
-const { results: viasVerdesRows } = await DB.prepare(
-  `SELECT nombre, descripcion FROM entidades
-   WHERE codigo_ine = ? AND fuente = 'vias_verdes' ORDER BY nombre`
+// Cicloturismo: rutas ciclistas oficiales/homologadas que pasan por el municipio
+const { results: rutasBiciRows } = await DB.prepare(
+  `SELECT nombre, descripcion, fuente FROM entidades
+   WHERE codigo_ine = ? AND fuente IN ('vias_verdes','eurovelo','caminos_naturales','camino_cid','pirinexus','centros_btt')
+   ORDER BY CASE fuente WHEN 'centros_btt' THEN 0 WHEN 'eurovelo' THEN 1 WHEN 'vias_verdes' THEN 2
+                        WHEN 'caminos_naturales' THEN 3 WHEN 'camino_cid' THEN 4 WHEN 'pirinexus' THEN 5 ELSE 6 END, nombre`
 ).bind(codigo).all();
-const viasVerdes = viasVerdesRows as any[];
+const rutasBici = rutasBiciRows as any[];
+// etiqueta + color por red
+const RUTA_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
+  vias_verdes:       { label: 'Vía Verde',      bg: '#e6f5ea', fg: '#1f7a3d' },
+  eurovelo:          { label: 'EuroVelo',        bg: '#e7eefc', fg: '#1b4fb3' },
+  caminos_naturales: { label: 'Camino Natural',  bg: '#e3f4f1', fg: '#0f7a6b' },
+  camino_cid:        { label: 'Camino del Cid',   bg: '#f5ecdf', fg: '#9a6b1e' },
+  pirinexus:         { label: 'Pirinexus',        bg: '#efe7fa', fg: '#6a3db3' },
+  centros_btt:       { label: 'Centro BTT',       bg: '#fdeede', fg: '#c2620f' },
+};
 
 // Alojamientos con encanto: Paradores + hoteles boutique/lujo (Llave Michelin)
 const { results: hotelesRows } = await DB.prepare(
@@ -683,21 +694,21 @@ const creadores = await getCreadores(
     </section>
   )}
 
-  {viasVerdes.length > 0 && desde !== 'ciclismo' && (
+  {rutasBici.length > 0 && desde !== 'ciclismo' && (
     <section class="mun-section">
-      <h2 class="mun-section-title"><Icon name="pedal_bike" size={20} /> Cicloturismo · Vías Verdes</h2>
+      <h2 class="mun-section-title"><Icon name="pedal_bike" size={20} /> Cicloturismo · Rutas oficiales</h2>
       <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
-        {viasVerdes.length === 1 ? 'Vía Verde que pasa' : `${viasVerdes.length} Vías Verdes que pasan`} por {municipio.nombre}: antiguos trazados de ferrocarril acondicionados para recorrer en bici o a pie, sin apenas pendientes.
+        {rutasBici.length === 1 ? 'Ruta ciclista oficial que pasa' : `${rutasBici.length} rutas ciclistas oficiales que pasan`} por {municipio.nombre}: Vías Verdes, itinerarios europeos EuroVelo, Caminos Naturales del Ministerio, el Camino del Cid, Pirinexus y Centros BTT homologados.
       </p>
       <div class="entidades-grid">
-        {viasVerdes.map(e => (
+        {rutasBici.map(e => (
           <div class="entidad-card card">
             <div class="entidad-icon entidad-icon-line entidad-icon-vv"><Icon name="pedal_bike" size={24} /></div>
             <div class="entidad-body">
               <div class="entidad-name">{e.nombre}</div>
               {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
               <div class="entidad-badges">
-                <span class="sello-badge" style="background:#e6f5ea;color:#1f7a3d">Vía Verde</span>
+                <span class="sello-badge" style={`background:${(RUTA_BADGE[e.fuente]||RUTA_BADGE.vias_verdes).bg};color:${(RUTA_BADGE[e.fuente]||RUTA_BADGE.vias_verdes).fg}`}>{(RUTA_BADGE[e.fuente]||RUTA_BADGE.vias_verdes).label}</span>
               </div>
               <a class="entidad-maps" target="_blank" rel="noopener"
                  href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
