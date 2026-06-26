@@ -175,7 +175,10 @@ const MUNI = {
 // Mapa categoría → tipos de entidades relevantes
 const CAT_TIPOS: Record<string, string[]> = {
   senderismo:    ['sendero'],
-  ciclismo:      ['sendero', 'deporte', 'ruta'],
+  ciclismo:      ['ciclismo', 'sendero', 'deporte', 'ruta'],
+  cuevas:        ['cueva'],
+  balnearios:    ['balneario'],
+  hoteles_encanto: ['alojamiento'],
   agua:          ['agua', 'playa_fluvial', 'playa'],
   Playas:        ['playa', 'playa_urbana'],
   playas:        ['playa', 'playa_urbana'],
@@ -195,7 +198,7 @@ const CAT_TIPOS: Record<string, string[]> = {
   turismo_activo:    ['activo'],
   oleoturismo:       ['oleoturismo'],
   TurismoRural:      ['rural'],
-  estrellas:     ['mirador', 'espacio'],
+  estrellas:     ['astro'],
   birdwatching:  ['espacio', 'fauna'],
   aventura:      ['cueva', 'montaña', 'sendero'],
   escapada_rural:['espacio', 'mirador'],
@@ -680,7 +683,7 @@ const creadores = await getCreadores(
     </section>
   )}
 
-  {viasVerdes.length > 0 && (
+  {viasVerdes.length > 0 && desde !== 'ciclismo' && (
     <section class="mun-section">
       <h2 class="mun-section-title"><Icon name="pedal_bike" size={20} /> Cicloturismo · Vías Verdes</h2>
       <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
@@ -707,7 +710,7 @@ const creadores = await getCreadores(
     </section>
   )}
 
-  {hotelesEncanto.length > 0 && (
+  {hotelesEncanto.length > 0 && desde !== 'hoteles_encanto' && (
     <section class="mun-section">
       <h2 class="mun-section-title"><Icon name="cottage" size={20} /> Alojamientos con encanto</h2>
       <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
@@ -740,7 +743,7 @@ const creadores = await getCreadores(
     </section>
   )}
 
-  {starlight.length > 0 && (
+  {starlight.length > 0 && desde !== 'estrellas' && (
     <section class="mun-section">
       <h2 class="mun-section-title"><Icon name="nights_stay" size={20} /> Astroturismo · Cielos Starlight</h2>
       <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
@@ -770,7 +773,7 @@ const creadores = await getCreadores(
     </section>
   )}
 
-  {balnearios.length > 0 && (
+  {balnearios.length > 0 && desde !== 'balnearios' && (
     <section class="mun-section">
       <h2 class="mun-section-title"><Icon name="hot_tub" size={20} /> Balnearios y termalismo</h2>
       <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
@@ -797,7 +800,7 @@ const creadores = await getCreadores(
     </section>
   )}
 
-  {cuevasTuristicas.length > 0 && (
+  {cuevasTuristicas.length > 0 && desde !== 'cuevas' && (
     <section class="mun-section">
       <h2 class="mun-section-title"><Icon name="mountain" size={20} /> Cuevas y minas turísticas</h2>
       <p style="color:#666;font-size:.92rem;line-height:1.5;margin:-4px 0 14px">
