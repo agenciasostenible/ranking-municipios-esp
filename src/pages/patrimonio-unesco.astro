@@ -1,0 +1,74 @@
+---
+import { DB } from '../lib/d1client';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+
+const { results } = await DB.prepare(
+  `SELECT e.nombre AS sitio, e.descripcion, m.codigo_ine, m.nombre, m.provincia
+   FROM entidades e JOIN municipios m ON m.codigo_ine = e.codigo_ine
+   WHERE e.fuente = 'unesco' AND COALESCE(m.es_duplicado,0)=0
+   ORDER BY m.nombre`
+).all();
+const rows = results as any[];
+
+// agrupar por sitio
+const bySite: Record<string, { anio: string; munis: any[] }> = {};
+for (const r of rows) {
+  const y = String(r.descripcion || '').match(/desde\s+(\d{4})/);
+  (bySite[r.sitio] ||= { anio: y ? y[1] : '', munis: [] }).munis.push(r);
+}
+const sites = Object.keys(bySite).sort((a, b) => Number(bySite[a].anio) - Number(bySite[b].anio) || a.localeCompare(b, 'es'));
+const totalSites = sites.length;
+const totalMunis = new Set(rows.map(r => r.codigo_ine)).size;
+---
+<Base
+  title="Patrimonio de la Humanidad UNESCO en España — listado"
+  description={`Los ${totalSites} sitios de España declarados Patrimonio de la Humanidad por la UNESCO y los municipios donde se encuentran.`}>
+
+  <main class="un-page">
+    <header class="un-head">
+      <div class="un-chip"><Icon name="account_balance" size={16} /> UNESCO</div>
+      <h1>Patrimonio de la Humanidad en España</h1>
+      <p class="un-sub">
+        <strong>{totalSites} sitios</strong> declarados Patrimonio de la Humanidad por la UNESCO, repartidos por <strong>{totalMunis} municipios</strong>.
+        Pulsa cualquier municipio para ver su ficha completa.
+      </p>
+    </header>
+
+    <div class="un-list">
+      {sites.map(s => (
+        <article class="un-site">
+          <div class="un-site-head">
+            <span class="un-year">{bySite[s].anio}</span>
+            <h2>{s}</h2>
+          </div>
+          <div class="un-munis">
+            {bySite[s].munis.map(m => (
+              <a class="un-muni" href={`/municipio/${m.codigo_ine}`}>{m.nombre} <span>· {m.provincia}</span></a>
+            ))}
+          </div>
+        </article>
+      ))}
+    </div>
+  </main>
+</Base>
+
+<style>
+.un-page { max-width: 920px; margin: 0 auto; padding: 24px 16px 60px; }
+.un-head { text-align: center; margin: 12px 0 30px; }
+.un-chip { display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; color: #8a6608; background: #fbf3e0; border: 1px solid #e8d39a;
+  padding: 5px 11px; border-radius: 999px; }
+.un-head h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin: 14px 0 8px; }
+.un-sub { color: #555; max-width: 640px; margin: 0 auto; line-height: 1.6; font-size: 1rem; }
+.un-list { display: flex; flex-direction: column; gap: 12px; }
+.un-site { border: 1px solid #eee; border-radius: 14px; padding: 14px 16px; }
+.un-site-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 9px; }
+.un-year { font-size: .78rem; font-weight: 700; color: #fff; background: #b8860b; border-radius: 7px; padding: 2px 8px; flex: 0 0 auto; }
+.un-site-head h2 { font-size: 1.04rem; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+.un-munis { display: flex; flex-wrap: wrap; gap: 8px; }
+.un-muni { font-size: .9rem; font-weight: 600; color: #333; text-decoration: none; background: #faf6ec;
+  border: 1px solid #eee3c8; border-radius: 999px; padding: 5px 12px; transition: border-color .15s; }
+.un-muni:hover { border-color: #b8860b; }
+.un-muni span { color: #999; font-weight: 400; }
+</style>

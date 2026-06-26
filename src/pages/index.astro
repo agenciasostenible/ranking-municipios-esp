@@ -10,6 +10,7 @@ const bannerTop = await getBanner('home_top');
 const bannerCats = await getBanner('home_cats');
 const pmbCount = (await DB.prepare(`SELECT COUNT(DISTINCT codigo_ine) n FROM entidades WHERE fuente='pueblos_mas_bonitos'`).first() as any)?.n ?? 0;
 const baCount  = (await DB.prepare(`SELECT COUNT(DISTINCT codigo_ine) n FROM entidades WHERE fuente='bandera_azul'`).first() as any)?.n ?? 0;
+const unCount  = (await DB.prepare(`SELECT COUNT(DISTINCT nombre) n FROM entidades WHERE fuente='unesco'`).first() as any)?.n ?? 0;
 // @ts-ignore
 
 
@@ -437,6 +438,14 @@ const municipios = (rankingGlobal as any[]).map(r => ({
         <span class="sp-cta">Ver todos →</span>
       </span>
     </a>
+    <a href="/patrimonio-unesco" class="sello-promo sp-un">
+      <span class="sp-ic"><Icon name="account_balance" size={26} /></span>
+      <span class="sp-txt">
+        <span class="sp-title">Patrimonio de la Humanidad</span>
+        <span class="sp-sub">Los <strong>{unCount} sitios UNESCO</strong> de España y dónde verlos.</span>
+        <span class="sp-cta">Ver todos →</span>
+      </span>
+    </a>
   </div>
 </section>
 
@@ -449,16 +458,19 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 .sello-promo:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0,0,0,.08); }
 .sp-pmb { background: linear-gradient(100deg, #fff0f6, #fff7fb); border-color: #f6c6dd; }
 .sp-ba  { background: linear-gradient(100deg, #e8f4fd, #f3faff); border-color: #b9ddf6; }
+.sp-un  { background: linear-gradient(100deg, #fbf3e0, #fdfaf2); border-color: #e8d39a; }
 .sp-ic { flex: 0 0 52px; width: 52px; height: 52px; border-radius: 13px; display: flex; align-items: center;
   justify-content: center; color: #fff; }
 .sp-pmb .sp-ic { background: #ec407a; }
 .sp-ba .sp-ic { background: #1b7fc4; }
+.sp-un .sp-ic { background: #b8860b; }
 .sp-txt { display: flex; flex-direction: column; gap: 3px; }
 .sp-title { font-weight: 700; font-size: 1.04rem; letter-spacing: -.01em; color: #1c1c1c; }
 .sp-sub { font-size: .9rem; color: #555; line-height: 1.45; }
 .sp-cta { font-size: .85rem; font-weight: 600; margin-top: 3px; }
 .sp-pmb .sp-cta { color: #b0245e; }
 .sp-ba .sp-cta { color: #155f93; }
+.sp-un .sp-cta { color: #8a6608; }
 </style>
 
 <!-- ── EXPLORAR POR CATEGORÍA (agrupado) ── -->

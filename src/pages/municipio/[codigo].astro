@@ -49,7 +49,7 @@ const totalNacional = totalNacionalRow?.n ?? 0;
 let { results: entidades } = await DB.prepare(
   `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
    WHERE e.codigo_ine = ?
-     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','eurovelo','caminos_naturales','camino_cid','pirinexus','centros_btt','hoteles_encanto','starlight','balnearios','cuevas','pueblos_mas_bonitos','bandera_azul')
+     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','eurovelo','caminos_naturales','camino_cid','pirinexus','centros_btt','hoteles_encanto','starlight','balnearios','cuevas','pueblos_mas_bonitos','bandera_azul','unesco')
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
        SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
        WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
@@ -162,6 +162,13 @@ const banderaAzulRow = await DB.prepare(
    WHERE codigo_ine = ? AND fuente = 'bandera_azul' LIMIT 1`
 ).bind(codigo).first();
 const banderaAzul = banderaAzulRow as any;
+
+// Patrimonio Mundial UNESCO (puede haber varios sitios por municipio)
+const { results: unescoRows } = await DB.prepare(
+  `SELECT nombre, descripcion FROM entidades
+   WHERE codigo_ine = ? AND fuente = 'unesco' ORDER BY nombre`
+).bind(codigo).all();
+const unesco = unescoRows as any[];
 
 const totalProvRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios WHERE provincia = ?`).bind(municipio.provincia).first();
 const totalProv = totalProvRow?.n ?? 0;
@@ -704,6 +711,18 @@ const creadores = await getCreadores(
             </div>
           );
         })}
+      </div>
+    </section>
+  )}
+
+  {unesco.length > 0 && (
+    <section class="mun-section">
+      <div class="pmb-badge un-badge card">
+        <div class="pmb-icon un-icon"><Icon name="account_balance" size={26} /></div>
+        <div class="pmb-body">
+          <div class="pmb-title un-title">{unesco.length === 1 ? 'Patrimonio de la Humanidad · UNESCO' : `${unesco.length} sitios Patrimonio de la Humanidad · UNESCO`}</div>
+          {unesco.map(u => <div class="pmb-desc">{u.descripcion}</div>)}
+        </div>
       </div>
     </section>
   )}
@@ -1432,6 +1451,9 @@ window.openSello = openSello;
 .ba-badge { background: linear-gradient(100deg, #e8f4fd 0%, #f3faff 100%); border-color: #b9ddf6; }
 .ba-icon { background: #1b7fc4; }
 .ba-title { color: #155f93; }
+.un-badge { background: linear-gradient(100deg, #fbf3e0 0%, #fdfaf2 100%); border-color: #e8d39a; }
+.un-icon { background: #b8860b; }
+.un-title { color: #8a6608; }
 .mun-section-title {
   font-size: .72rem;
   font-weight: 700;
