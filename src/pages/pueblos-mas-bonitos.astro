@@ -1,0 +1,75 @@
+---
+import { DB } from '../lib/d1client';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+
+const { results } = await DB.prepare(
+  `SELECT m.codigo_ine, m.nombre, m.provincia, m.comunidad, e.descripcion
+   FROM entidades e JOIN municipios m ON m.codigo_ine = e.codigo_ine
+   WHERE e.fuente = 'pueblos_mas_bonitos' AND COALESCE(m.es_duplicado,0)=0
+   ORDER BY m.comunidad, m.provincia, m.nombre`
+).all();
+const rows = results as any[];
+const total = rows.length;
+
+// agrupar por comunidad
+const groups: Record<string, any[]> = {};
+for (const r of rows) {
+  const y = String(r.descripcion || '').match(/desde\s+(\d{4})/);
+  r.anio = y ? y[1] : '';
+  (groups[r.comunidad || 'Otras'] ||= []).push(r);
+}
+const comunidades = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length || a.localeCompare(b, 'es'));
+---
+<Base
+  title="Los Pueblos más Bonitos de España — listado completo"
+  description={`Los ${total} municipios que forman parte de la asociación oficial Los Pueblos más Bonitos de España, agrupados por comunidad autónoma. Descubre cada uno y compáralos.`}>
+
+  <main class="pmb-page">
+    <header class="pmb-head">
+      <div class="pmb-chip"><Icon name="auto_awesome" size={16} /> Sello oficial</div>
+      <h1>Los Pueblos más Bonitos de España</h1>
+      <p class="pmb-sub">
+        <strong>{total} pueblos</strong> forman parte de la asociación oficial que distingue a los rincones con más encanto del país.
+        Aquí los tienes todos, ordenados por comunidad. Pulsa cualquiera para ver su ficha completa.
+      </p>
+      <a class="pmb-link" href="/ranking/pueblo_bonito">Ver el ranking de pueblos bonitos →</a>
+    </header>
+
+    {comunidades.map(c => (
+      <section class="pmb-group">
+        <h2>{c} <span class="pmb-count">{groups[c].length}</span></h2>
+        <div class="pmb-grid">
+          {groups[c].map(r => (
+            <a class="pmb-card" href={`/municipio/${r.codigo_ine}`}>
+              <span class="pmb-name">{r.nombre}</span>
+              <span class="pmb-prov">{r.provincia}{r.anio ? ` · desde ${r.anio}` : ''}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))}
+  </main>
+</Base>
+
+<style>
+.pmb-page { max-width: 1040px; margin: 0 auto; padding: 24px 16px 60px; }
+.pmb-head { text-align: center; margin: 12px 0 34px; }
+.pmb-chip { display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; color: #b0245e; background: #fff0f6; border: 1px solid #f6c6dd;
+  padding: 5px 11px; border-radius: 999px; }
+.pmb-head h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin: 14px 0 8px; }
+.pmb-sub { color: #555; max-width: 640px; margin: 0 auto 14px; line-height: 1.6; font-size: 1rem; }
+.pmb-link { color: #b0245e; font-weight: 600; text-decoration: none; }
+.pmb-link:hover { text-decoration: underline; }
+.pmb-group { margin-bottom: 30px; }
+.pmb-group h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; margin: 0 0 14px;
+  display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+.pmb-count { font-size: .8rem; font-weight: 700; color: #b0245e; background: #fff0f6; border-radius: 999px; padding: 2px 9px; }
+.pmb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.pmb-card { display: flex; flex-direction: column; gap: 2px; padding: 11px 13px; border: 1px solid #eee;
+  border-radius: 12px; text-decoration: none; background: #fff; transition: border-color .15s, transform .15s; }
+.pmb-card:hover { border-color: #ec407a; transform: translateY(-1px); }
+.pmb-name { font-weight: 600; color: #222; letter-spacing: -.01em; }
+.pmb-prov { font-size: .8rem; color: #888; }
+</style>
