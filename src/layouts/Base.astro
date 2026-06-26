@@ -594,11 +594,11 @@ const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.
     .ranking-table tbody tr.rank-row.row-open td { background: #FFF8E7 !important; }
     .ranking-table tbody tr.expand-row td { padding: 0 !important; }
 
-    /* Bar cells */
-    .bar-cell { display: flex; align-items: center; gap: 8px; }
-    .pts { font-weight: 700; color: var(--text); min-width: 34px; font-size: .85rem; }
-    .bar-wrap { flex: 1; background: #F0F0F0; border-radius: 4px; height: 6px; }
-    .bar-fill { height: 6px; border-radius: 4px; background: var(--primary); }
+    /* Score (número limpio, sin barra) */
+    .score-cell { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.05; }
+    .pts { font-weight: 700; font-size: 1.3rem; letter-spacing: -.02em; }
+    .pts-sub { font-size: .64rem; color: var(--text-2); margin-top: 2px; }
+    .row-meta { display: none; font-size: .74rem; color: var(--text-2); margin-top: 2px; }
 
     /* Position badges */
     .pos { display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-weight: 800; color: var(--text); text-align: center; min-width: 30px; }
@@ -765,22 +765,28 @@ const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.
       .filters-bar { padding: 10px 16px; }
       .chips-inner { padding: 12px 16px; }
 
-      /* Table → stacked cards on mobile */
+      /* Table → tarjetas en móvil (foto + nombre · nota limpia) */
       .ranking-table thead { display: none; }
-      .ranking-table, .ranking-table tbody, .ranking-table tr, .ranking-table td { display: block; width: 100%; }
+      .ranking-table, .ranking-table tbody, .ranking-table tr { display: block; width: 100%; }
       .ranking-table tbody tr.rank-row {
         background: #fff;
-        border-radius: 12px;
+        border-radius: 14px;
         box-shadow: var(--shadow);
         margin-bottom: 10px;
-        padding: 12px 14px;
+        padding: 12px;
         border: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
       }
-      .ranking-table tbody tr.rank-row td {
-        border: none;
-        padding: 3px 0;
-      }
-      .ranking-table tbody tr.rank-row td:first-child { font-size: 1rem; margin-bottom: 4px; }
+      .ranking-table tbody tr.rank-row td { border: none; padding: 0; display: block; }
+      .ranking-table tbody tr.rank-row td:nth-child(1) { flex: 0 0 auto; }
+      .ranking-table tbody tr.rank-row td:nth-child(2) { flex: 1; min-width: 0; }
+      .ranking-table tbody tr.rank-row td:nth-child(3) { flex: 0 0 auto; }
+      .ranking-table tbody tr.rank-row td:nth-child(4),
+      .ranking-table tbody tr.rank-row td:nth-child(5),
+      .ranking-table tbody tr.rank-row td:nth-child(6) { display: none; }
+      .row-meta { display: block; }
       .ranking-table tbody tr.expand-row { display: block; }
     }
   </style>

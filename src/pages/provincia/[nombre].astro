@@ -187,11 +187,9 @@ const recomProv = await getAnunciosProvincia(provincia, 'ranking_prov');
                 </div>
               </td>
               <td>
-                <div class="bar-cell">
+                <div class="score-cell">
                   <span class="pts">{Number(r.puntuacion).toFixed(1)}</span>
-                  <div class="bar-wrap">
-                    <div class="bar-fill" style={`width:${pct}%`}></div>
-                  </div>
+                  <span class="pts-sub">sobre 100</span>
                 </div>
               </td>
               <td>

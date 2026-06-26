@@ -258,7 +258,7 @@ function buildUrl(overrides: Record<string, string | number>) {
       <tr>
         <th style="width:46px">#</th>
         <th>Municipio</th>
-        <th style="width:200px">Puntuación</th>
+        <th style="width:96px">Puntuación</th>
         <th>Provincia</th>
         <th>CC.AA.</th>
         <th style="width:80px">Hab.</th>
@@ -289,15 +289,14 @@ function buildUrl(overrides: Record<string, string | number>) {
                          class="ver-todo-btn" onclick="event.stopPropagation()">Ver por qué destaca →</a>
                     </div>
                     <div style="font-size:.72rem;color:var(--text-2);margin-top:1px">{r.comarca ?? ''}</div>
+                    <div class="row-meta">{r.provincia}{r.comunidad ? ` · ${r.comunidad}` : ''}</div>
                   </div>
                 </div>
               </td>
               <td>
-                <div class="bar-cell">
+                <div class="score-cell">
                   <span class="pts" style={`color:${catColor}`}>{Number(r.puntuacion).toFixed(1)}</span>
-                  <div class="bar-wrap">
-                    <div class="bar-fill" style={`width:${pct}%;background:${catColor}`}></div>
-                  </div>
+                  <span class="pts-sub">sobre 100</span>
                 </div>
               </td>
               <td><span class="prov-tag">{r.provincia}</span></td>
@@ -601,7 +600,7 @@ document.querySelectorAll('.rank-row').forEach(row => {
 
 // Estilos del thumbnail
 const thumbStyle = document.createElement('style');
-thumbStyle.textContent = `.row-thumb{width:44px;height:44px;border-radius:8px;flex-shrink:0;background:#e8e8e8;}`;
+thumbStyle.textContent = `.row-thumb{width:58px;height:58px;border-radius:10px;flex-shrink:0;background:#e8e8e8;}@media(max-width:768px){.row-thumb{width:72px;height:72px;border-radius:12px;}}`;
 document.head.appendChild(thumbStyle);
 
 </script>
