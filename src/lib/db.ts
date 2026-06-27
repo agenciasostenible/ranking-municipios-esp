@@ -136,6 +136,7 @@ export const TABS = [
   { key: 'Campings',         label: 'Camping',     icon: 'camping' },
   { key: 'TurismoRural',     label: 'Rural',       icon: 'cottage' },
   { key: 'castillos',        label: 'Castillos',   icon: 'castle' },
+  { key: 'museos',           label: 'Museos',      icon: 'museum' },
   { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
   { key: 'pozas',            label: 'Pozas y baños naturales', icon: 'water' },
   { key: 'vinos',            label: 'Vinos',       icon: 'wine_bar' },
@@ -168,6 +169,7 @@ export const SIDEBAR_GROUPS = [
     items: [
       { key: 'monumentos',  label: 'Monumentos',          icon: 'fort' },
       { key: 'castillos',   label: 'Castillos',           icon: 'castle' },
+      { key: 'museos',      label: 'Museos',              icon: 'museum' },
     ],
   },
   {
@@ -238,6 +240,7 @@ export const SUBTITLES: Record<string, string> = {
   ranking_global:    'la mejor valoración global de cada pueblo',
   monumentos:        'catedrales, palacios y patrimonio',
   castillos:         'castillos, fortalezas y murallas',
+  museos:            'museos de todo tipo: arte, historia, ciencia, etnografía y más',
   fiestas:           'fiestas populares y tradiciones',
   festivales:        'festivales de música, cine y arte',
   gastronomia:       'prestigio gastronómico: estrellas, soles, productos y DOP',
@@ -278,7 +281,7 @@ export const ALL_CATS = SIDEBAR_GROUPS.flatMap(g => g.items);
 export const FICHA_CATS = [
   'ranking_global','monumentos','fiestas','festivales','senderismo','naturaleza',
   'gastronomia','Campings','TurismoRural',
-  'castillos',
+  'castillos','museos',
   'Playas','pozas',
   'vinos','miradores','lujo','solteros','misterioso',
   'pueblo_bonito',
@@ -290,7 +293,7 @@ export const FICHA_CATS = [
 // Categorías a mostrar en el gráfico de "Puntuaciones detalladas" (barras)
 // Solo las categorías confirmadas / en uso.
 export const DETAIL_CATS = [
-  'monumentos','gastronomia','Playas','pozas','castillos','fiestas','festivales',
+  'monumentos','museos','gastronomia','Playas','pozas','castillos','fiestas','festivales',
   'senderismo','naturaleza','TurismoRural','Campings','vinos','miradores','lujo','solteros','misterioso',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
   'hoteles_encanto','ciclismo','estrellas','balnearios','cuevas',
