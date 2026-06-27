@@ -4,7 +4,7 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import { getCatInfo } from '../lib/db';
 import { CAT_COLORS } from '../lib/utils';
-import { getPlace, getPlaceOptions, modestIndex, PLACES_ENABLED } from '../lib/places';
+import { modestIndex, PLACES_ENABLED } from '../lib/places';
 import { getAnunciosMunicipio, getAnunciosProvincia } from '../lib/anuncios';
 import { getCreadores } from '../lib/creadores';
 
@@ -145,6 +145,28 @@ function haversine(a: any, b: any) {
   const la1 = a.latitud * t, la2 = b.latitud * t;
   const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+// Entidades propias de nuestra BD (comer/visitar/dormir) sin coste de API
+async function localEntidades(codigo_ine: string, fuentes: string[], limit = 4): Promise<any[]> {
+  const ph = fuentes.map(() => '?').join(',');
+  const rows = await DB.prepare(
+    `SELECT nombre, tipo, fuente, enlace FROM entidades
+     WHERE codigo_ine = ? AND fuente IN (${ph})
+     ORDER BY rowid DESC LIMIT ${limit}`
+  ).bind(codigo_ine, ...fuentes).all();
+  return (rows.results ?? []).map((r: any) => ({
+    place_id: null as string | null,
+    nombre: r.nombre as string,
+    rating: null as number | null,
+    reviews: null as number | null,
+    lat: null as number | null,
+    lng: null as number | null,
+    direccion: null as string | null,
+    foto_ref: null as string | null,
+    foto_attr: null as string | null,
+    url: (r.enlace && String(r.enlace).startsWith('http')) ? r.enlace : null,
+  }));
 }
 
 // "Dentro del pueblo": a menos de NEAR_KM del centro y con calidad → va primero.
@@ -321,59 +343,28 @@ if (selCfgs.length && prov && !pueblo) {
       s.comer  = (s.catKey === 'gastronomia') ? null : nearestWithData(gastroOpts, s);
     }
 
-    // Enriquecimiento con Google Places: mejor sitio para comer y qué visitar
-    // en cada parada (rating + nº de reseñas). Solo si hay clave configurada.
-    if (PLACES_ENABLED) {
-      await Promise.all(stops.map(async (s: any) => {
-        const prof = CAT_PROFILE[s.catKey] ?? {};
-
-        // COMER: lista de restaurantes (para poder cambiar de sitio)
-        const comerKw = prof.comer?.keyword;
-        const comerSpec = { type: 'restaurant', radius: 7000, minReviews: 30, keyword: comerKw, softKeyword: true };
-        const comerKind = 'comer' + (comerKw ? '_' + s.catKey : '');
-        const comerP = s.catKey === 'gastronomia'
-          ? Promise.resolve([] as any[])
-          : getPlaceOptions(s.codigo_ine, comerKind, s.latitud, s.longitud, comerSpec, 4);
-
-        // VISITAR: lista de sitios (null = ocultar; ausente = atracción genérica)
-        const visCfg = ('visitar' in prof) ? prof.visitar : { type: 'tourist_attraction' };
-        let visitarP: Promise<any[]> = Promise.resolve([] as any[]);
-        if (visCfg) {
-          const visSpec = {
-            type: visCfg.type ?? 'tourist_attraction', radius: 12000, minReviews: 15,
-            keyword: visCfg.keyword, excludeTypes: visCfg.excludeTypes,
-          };
-          const visKind = 'visitar' + (visCfg.keyword || visCfg.excludeTypes ? '_' + s.catKey : '');
-          visitarP = getPlaceOptions(s.codigo_ine, visKind, s.latitud, s.longitud, visSpec, 4);
-        }
-
-        // DORMIR: lista de alojamientos (para poder cambiar de sitio / más barato)
-        const dormirKw = prof.dormir?.keyword;
-        const dormirSpec = { type: 'lodging', radius: 9000, minReviews: 15, keyword: dormirKw, softKeyword: true };
-        const dormirKind = 'dormir' + (dormirKw ? '_' + s.catKey : '');
-        const dormirP = s.catKey === 'TurismoRural'
-          ? Promise.resolve([] as any[])
-          : getPlaceOptions(s.codigo_ine, dormirKind, s.latitud, s.longitud, dormirSpec, 4);
-
-        const [comerList, visitarList, dormirList] = await Promise.all([comerP, visitarP, dormirP]);
-        // Localidad/km + "dentro del pueblo con calidad primero"
-        decoratePlaces(comerList, s);
-        decoratePlaces(visitarList, s);
-        decoratePlaces(dormirList, s);
-        s.comerList = comerList;
-        s.dormirList = dormirList;
-        s.visitarList = visitarList;
-        // Índice inicial: en presupuesto "económico", la opción más modesta
-        // (salvo en lujo: ahí siempre la mejor/gama alta, aunque marquen económico).
-        const ecoStop = pres === 'eco' && s.catKey !== 'lujo';
-        s.comerIdx  = ecoStop ? modestIndex(comerList) : 0;
-        s.dormirIdx = ecoStop ? modestIndex(dormirList) : 0;
-        s.visitarIdx = 0; // el presupuesto no aplica a "qué visitar"
-        s.comerCur   = comerList[s.comerIdx] ?? null;
-        s.dormirCur  = dormirList[s.dormirIdx] ?? null;
-        s.visitarCur = visitarList[0] ?? null;
-      }));
-    }
+    // Enriquecimiento con datos propios: comer/visitar/dormir por municipio (sin coste)
+    await Promise.all(stops.map(async (s: any) => {
+      const [comerList, visitarList, dormirList] = await Promise.all([
+        s.catKey === 'gastronomia' ? Promise.resolve([]) :
+          localEntidades(s.codigo_ine, ['guia_repsol_solete', 'guia_michelin', 'gastronomia_ampliacion'], 4),
+        localEntidades(s.codigo_ine, ['inventario_monumentos_pdf', 'inventario_castillos_pdf', 'inventario_naturaleza_pdf', 'wikidata_museos'], 4),
+        s.catKey === 'TurismoRural' ? Promise.resolve([]) :
+          localEntidades(s.codigo_ine, ['hoteles_encanto', 'inventario_turismo_rural_pdf'], 4),
+      ]);
+      decoratePlaces(comerList, s);
+      decoratePlaces(visitarList, s);
+      decoratePlaces(dormirList, s);
+      s.comerList = comerList;
+      s.dormirList = dormirList;
+      s.visitarList = visitarList;
+      s.comerIdx = 0;
+      s.dormirIdx = 0;
+      s.visitarIdx = 0;
+      s.comerCur   = comerList[0] ?? null;
+      s.dormirCur  = dormirList[0] ?? null;
+      s.visitarCur = visitarList[0] ?? null;
+    }));
 
     // Recomendados (publicidad) a nivel PROVINCIA: salen en cualquier ruta de la provincia,
     // aunque su municipio no sea una de las paradas.
@@ -422,40 +413,15 @@ if (pueblo && selCfgs.length) {
     ruralTxt = a || null;
   }
 
-  if (PLACES_ENABLED) {
-    const prof = CAT_PROFILE[primaryCat] ?? {};
-    // En el día SÍ queremos puntos que visitar aunque la categoría los oculte en la zona.
-    // Una búsqueda por cada experiencia elegida (categorías sin keyword comparten
-    // la misma búsqueda genérica, así que getPlaceOptions las cachea como una sola).
-    const visSearches = selCfgs.map((c) => {
-      const p = CAT_PROFILE[c.key] ?? {};
-      const visCfg = (p.visitar && typeof p.visitar === 'object') ? p.visitar : { type: 'tourist_attraction' };
-      const spec = {
-        type: visCfg.type ?? 'tourist_attraction', radius: 5000, minReviews: 10,
-        keyword: visCfg.keyword, excludeTypes: visCfg.excludeTypes,
-      };
-      const kind = 'diavis' + (visCfg.keyword || visCfg.excludeTypes ? '_' + c.key : '');
-      return getPlaceOptions(puebloCode, kind, pueblo.latitud, pueblo.longitud, spec, 10);
-    });
-    const comerKw = prof.comer?.keyword;
-    const dormirKw = prof.dormir?.keyword;
-
-    const [visLists, cafeList, comerList, copaList, dormirList] = await Promise.all([
-      Promise.all(visSearches),
-      getPlaceOptions(puebloCode, 'cafe', pueblo.latitud, pueblo.longitud, { type: 'cafe', radius: 4000, minReviews: 20 }, 2),
-      getPlaceOptions(puebloCode, 'comer' + (comerKw ? '_' + primaryCat : ''), pueblo.latitud, pueblo.longitud, { type: 'restaurant', radius: 7000, minReviews: 30, keyword: comerKw, softKeyword: true }, 4),
-      getPlaceOptions(puebloCode, 'copa', pueblo.latitud, pueblo.longitud, { type: 'bar', radius: 4000, minReviews: 20 }, 2),
-      getPlaceOptions(puebloCode, 'dormir' + (dormirKw ? '_' + primaryCat : ''), pueblo.latitud, pueblo.longitud, { type: 'lodging', radius: 9000, minReviews: 15, keyword: dormirKw, softKeyword: true }, 4),
+  {
+    // Enriquecimiento con datos propios (sin coste de API externa)
+    const [comerList, dormirList, visMerged] = await Promise.all([
+      localEntidades(puebloCode, ['guia_repsol_solete', 'guia_michelin', 'gastronomia_ampliacion'], 4),
+      localEntidades(puebloCode, ['hoteles_encanto', 'inventario_turismo_rural_pdf'], 4),
+      localEntidades(puebloCode, ['inventario_monumentos_pdf', 'inventario_castillos_pdf', 'inventario_naturaleza_pdf', 'wikidata_museos'], 10),
     ]);
-
-    // Fusionar las visitas de todas las experiencias, deduplicando por place_id
-    const visSeen = new Set<string>();
-    const visMerged: any[] = [];
-    for (const list of visLists) for (const v of (list as any[])) {
-      const k = String(v.place_id ?? (v.nombre + '|' + v.lat + '|' + v.lng));
-      if (visSeen.has(k)) continue;
-      visSeen.add(k); visMerged.push(v);
-    }
+    const cafeList: any[] = [];
+    const copaList: any[] = [];
 
     // Quitar casi-duplicados del "qué ver": el mismo conjunto que Google devuelve
     // dos veces (p.ej. la iglesia que está DENTRO de la fortaleza). Criterio:
@@ -570,15 +536,6 @@ if (pueblo && selCfgs.length) {
       catLabel: selCfgs.map(c => c.label).join(' · '), catKey: primaryCat,
       icon: infoByCat[primaryCat].icon, color: colorByCat[primaryCat],
     };
-  } else {
-    // Sin Google: al menos mostramos el recurso estrella y el alojamiento rural
-    diaPlan = {
-      star: starRow ? { nombre: (starRow as any).nombre, desc: (starRow as any).descripcion } : null,
-      manana: [], tarde: [], lejos: [], visPool: [], cafe: null, cafeList: [], comerList: [], comerCur: null,
-      copa: null, copaList: [], cenarList: [], cenarCur: null, dormirList: [], dormirCur: null,
-      rural: ruralTxt, planMin: 0, catLabel: selCfgs.map(c => c.label).join(' · '), catKey: primaryCat,
-      icon: infoByCat[primaryCat].icon, color: colorByCat[primaryCat],
-    };
   }
 }
 // Clave del Maps Embed API (gratis, restringida por dominio) para el panel inferior.
@@ -586,10 +543,13 @@ if (pueblo && selCfgs.length) {
 // Clave restringida a Maps Embed API + referrer rankingspain.com (segura en cliente).
 const EMBED_KEY = import.meta.env.PUBLIC_GOOGLE_MAPS_EMBED_KEY || 'AIzaSyBzJ77nQCGDMpD8ad1lbWvFe6mZXadn2wU';
 
-// Enlace a la ficha del sitio en Google Maps (valoraciones, fotos, cómo llegar)
-const gmaps = (p: any) => p && p.place_id
-  ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nombre || '')}&query_place_id=${encodeURIComponent(p.place_id)}`
-  : '';
+// Enlace: directo (nuestro DB) o Google Maps via place_id
+const gmaps = (p: any) => {
+  if (!p) return '';
+  if (p.url) return p.url;
+  if (p.place_id) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.nombre || '')}&query_place_id=${encodeURIComponent(p.place_id)}`;
+  return '';
+};
 
 // Creadores de Instagram de la zona (provincia de la ruta/pueblo + tema elegido)
 const creadoresRuta = (prov || puebloCode) ? await getCreadores((cats && cats[0]) ? cats[0] : '', prov, '', puebloCode || '') : [];
@@ -763,9 +723,9 @@ const ogDescription = hasDia
                   <div class="rs-place rs-swap" data-emoji="👁️" data-label="Visitar" data-places={JSON.stringify(s.visitarList)} data-idx={s.visitarIdx}>
                     <img class="rs-thumb" src={s.visitarCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(s.visitarCur.foto_ref)}` : ''} alt={s.visitarCur.nombre} loading="lazy" width="56" height="56" style={s.visitarCur.foto_ref ? '' : 'display:none'} />
                     <div class="rs-place-txt">
-                      <div class="rs-line">👁️ Visitar: <strong class="rs-pname">{s.visitarCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.visitarCur)}</span>{s.visitarList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                      <div class="rs-line">👁️ Visitar: <strong class="rs-pname">{s.visitarCur.nombre}</strong>{fmtRating(s.visitarCur) && <span class="rs-star rs-prating">★ {fmtRating(s.visitarCur)}</span>}{s.visitarList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                       {s.visitarCur.locLabel && <div class="rs-loc">📍 {s.visitarCur.locLabel}</div>}
-                      <a class="rs-gmaps" href={gmaps(s.visitarCur)} target="_blank" rel="nofollow noopener" style={s.visitarCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+                      <a class="rs-gmaps" href={gmaps(s.visitarCur)} target="_blank" rel="nofollow noopener" style={gmaps(s.visitarCur) ? '' : 'display:none'}>🔎 Ver en Google</a>
                       <div class="rs-attr rs-pattr" set:html={s.visitarCur.foto_attr ?? ''}></div>
                     </div>
                   </div>
@@ -774,9 +734,9 @@ const ogDescription = hasDia
                   ? <div class="rs-place rs-swap" data-emoji="🍽️" data-label="Comer" data-places={JSON.stringify(s.comerList)} data-idx={s.comerIdx}>
                       <img class="rs-thumb" src={s.comerCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(s.comerCur.foto_ref)}` : ''} alt={s.comerCur.nombre} loading="lazy" width="56" height="56" style={s.comerCur.foto_ref ? '' : 'display:none'} />
                       <div class="rs-place-txt">
-                        <div class="rs-line">🍽️ Comer: <strong class="rs-pname">{s.comerCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.comerCur)}</span>{s.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                        <div class="rs-line">🍽️ Comer: <strong class="rs-pname">{s.comerCur.nombre}</strong>{fmtRating(s.comerCur) && <span class="rs-star rs-prating">★ {fmtRating(s.comerCur)}</span>}{s.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                         {s.comerCur.locLabel && <div class="rs-loc">📍 {s.comerCur.locLabel}</div>}
-                        <a class="rs-gmaps" href={gmaps(s.comerCur)} target="_blank" rel="nofollow noopener" style={s.comerCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+                        <a class="rs-gmaps" href={gmaps(s.comerCur)} target="_blank" rel="nofollow noopener" style={gmaps(s.comerCur) ? '' : 'display:none'}>🔎 Ver en Google</a>
                         <div class="rs-attr rs-pattr" set:html={s.comerCur.foto_attr ?? ''}></div>
                       </div>
                     </div>
@@ -787,9 +747,9 @@ const ogDescription = hasDia
                   ? <div class="rs-place rs-swap" data-emoji="🛏️" data-label="Dormir" data-places={JSON.stringify(s.dormirList)} data-idx={s.dormirIdx}>
                       <img class="rs-thumb" src={s.dormirCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(s.dormirCur.foto_ref)}` : ''} alt={s.dormirCur.nombre} loading="lazy" width="56" height="56" style={s.dormirCur.foto_ref ? '' : 'display:none'} />
                       <div class="rs-place-txt">
-                        <div class="rs-line">🛏️ Dormir: <strong class="rs-pname">{s.dormirCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(s.dormirCur)}</span>{s.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                        <div class="rs-line">🛏️ Dormir: <strong class="rs-pname">{s.dormirCur.nombre}</strong>{fmtRating(s.dormirCur) && <span class="rs-star rs-prating">★ {fmtRating(s.dormirCur)}</span>}{s.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                         {s.dormirCur.locLabel && <div class="rs-loc">📍 {s.dormirCur.locLabel}</div>}
-                        <a class="rs-gmaps" href={gmaps(s.dormirCur)} target="_blank" rel="nofollow noopener" style={s.dormirCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+                        <a class="rs-gmaps" href={gmaps(s.dormirCur)} target="_blank" rel="nofollow noopener" style={gmaps(s.dormirCur) ? '' : 'display:none'}>🔎 Ver en Google</a>
                         <div class="rs-attr rs-pattr" set:html={s.dormirCur.foto_attr ?? ''}></div>
                       </div>
                     </div>
@@ -889,9 +849,9 @@ const ogDescription = hasDia
               <div class="rs-place dia-vis rs-swap" data-places={JSON.stringify(diaPlan.visPool)} data-idx={diaPlan.visPool.findIndex((p: any) => p.place_id === v.place_id)}>
                 <img class="rs-thumb" src={v.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(v.foto_ref)}` : ''} alt={v.nombre} loading="lazy" width="56" height="56" style={v.foto_ref ? '' : 'display:none'} />
                 <div class="rs-place-txt">
-                  <div class="rs-line">👁️ <strong class="rs-pname">{v.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(v)}</span>{diaPlan.visPool.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                  <div class="rs-line">👁️ <strong class="rs-pname">{v.nombre}</strong>{fmtRating(v) && <span class="rs-star rs-prating">★ {fmtRating(v)}</span>}{diaPlan.visPool.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                   <div class="rs-loc" style={v.locLabel ? '' : 'display:none'}>📍 {v.locLabel}</div>
-                  <a class="rs-gmaps" href={gmaps(v)} target="_blank" rel="nofollow noopener" style={v.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+                  <a class="rs-gmaps" href={gmaps(v)} target="_blank" rel="nofollow noopener" style={gmaps(v) ? '' : 'display:none'}>🔎 Ver en Google</a>
                   <div class="rs-attr rs-pattr" set:html={v.foto_attr ?? ''}></div>
                 </div>
               </div>
@@ -910,9 +870,9 @@ const ogDescription = hasDia
           <div class="rs-place rs-swap" data-places={JSON.stringify(diaPlan.cafeList)} data-idx="0">
             <img class="rs-thumb" src={diaPlan.cafe.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.cafe.foto_ref)}` : ''} alt={diaPlan.cafe.nombre} loading="lazy" width="56" height="56" style={diaPlan.cafe.foto_ref ? '' : 'display:none'} />
             <div class="rs-place-txt">
-              <div class="rs-line">☕ Un café en <strong class="rs-pname">{diaPlan.cafe.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.cafe)}</span>{diaPlan.cafeList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+              <div class="rs-line">☕ Un café en <strong class="rs-pname">{diaPlan.cafe.nombre}</strong>{fmtRating(diaPlan.cafe) && <span class="rs-star rs-prating">★ {fmtRating(diaPlan.cafe)}</span>}{diaPlan.cafeList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
               <div class="rs-loc" style={diaPlan.cafe.locLabel ? '' : 'display:none'}>📍 {diaPlan.cafe.locLabel}</div>
-              <a class="rs-gmaps" href={gmaps(diaPlan.cafe)} target="_blank" rel="nofollow noopener" style={diaPlan.cafe.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+              <a class="rs-gmaps" href={gmaps(diaPlan.cafe)} target="_blank" rel="nofollow noopener" style={gmaps(diaPlan.cafe) ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.cafe.foto_attr ?? ''}></div>
             </div>
           </div>
@@ -926,9 +886,9 @@ const ogDescription = hasDia
           <div class="rs-place rs-swap" data-places={JSON.stringify(diaPlan.comerList)} data-idx={diaPlan.comerIdx}>
             <img class="rs-thumb" src={diaPlan.comerCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.comerCur.foto_ref)}` : ''} alt={diaPlan.comerCur.nombre} loading="lazy" width="56" height="56" style={diaPlan.comerCur.foto_ref ? '' : 'display:none'} />
             <div class="rs-place-txt">
-              <div class="rs-line">🍽️ <strong class="rs-pname">{diaPlan.comerCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.comerCur)}</span>{diaPlan.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+              <div class="rs-line">🍽️ <strong class="rs-pname">{diaPlan.comerCur.nombre}</strong>{fmtRating(diaPlan.comerCur) && <span class="rs-star rs-prating">★ {fmtRating(diaPlan.comerCur)}</span>}{diaPlan.comerList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
               {diaPlan.comerCur.locLabel && <div class="rs-loc">📍 {diaPlan.comerCur.locLabel}</div>}
-              <a class="rs-gmaps" href={gmaps(diaPlan.comerCur)} target="_blank" rel="nofollow noopener" style={diaPlan.comerCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+              <a class="rs-gmaps" href={gmaps(diaPlan.comerCur)} target="_blank" rel="nofollow noopener" style={gmaps(diaPlan.comerCur) ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.comerCur.foto_attr ?? ''}></div>
             </div>
           </div>
@@ -944,9 +904,9 @@ const ogDescription = hasDia
               <div class="rs-place dia-vis rs-swap" data-places={JSON.stringify(diaPlan.visPool)} data-idx={diaPlan.visPool.findIndex((p: any) => p.place_id === v.place_id)}>
                 <img class="rs-thumb" src={v.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(v.foto_ref)}` : ''} alt={v.nombre} loading="lazy" width="56" height="56" style={v.foto_ref ? '' : 'display:none'} />
                 <div class="rs-place-txt">
-                  <div class="rs-line">👁️ <strong class="rs-pname">{v.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(v)}</span>{diaPlan.visPool.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                  <div class="rs-line">👁️ <strong class="rs-pname">{v.nombre}</strong>{fmtRating(v) && <span class="rs-star rs-prating">★ {fmtRating(v)}</span>}{diaPlan.visPool.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                   <div class="rs-loc" style={v.locLabel ? '' : 'display:none'}>📍 {v.locLabel}</div>
-                  <a class="rs-gmaps" href={gmaps(v)} target="_blank" rel="nofollow noopener" style={v.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+                  <a class="rs-gmaps" href={gmaps(v)} target="_blank" rel="nofollow noopener" style={gmaps(v) ? '' : 'display:none'}>🔎 Ver en Google</a>
                   <div class="rs-attr rs-pattr" set:html={v.foto_attr ?? ''}></div>
                 </div>
               </div>
@@ -983,9 +943,9 @@ const ogDescription = hasDia
           <div class="rs-place rs-swap" data-places={JSON.stringify(diaPlan.copaList)} data-idx="0">
             <img class="rs-thumb" src={diaPlan.copa.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.copa.foto_ref)}` : ''} alt={diaPlan.copa.nombre} loading="lazy" width="56" height="56" style={diaPlan.copa.foto_ref ? '' : 'display:none'} />
             <div class="rs-place-txt">
-              <div class="rs-line">🍷 Una copa en <strong class="rs-pname">{diaPlan.copa.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.copa)}</span>{diaPlan.copaList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+              <div class="rs-line">🍷 Una copa en <strong class="rs-pname">{diaPlan.copa.nombre}</strong>{fmtRating(diaPlan.copa) && <span class="rs-star rs-prating">★ {fmtRating(diaPlan.copa)}</span>}{diaPlan.copaList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
               <div class="rs-loc" style={diaPlan.copa.locLabel ? '' : 'display:none'}>📍 {diaPlan.copa.locLabel}</div>
-              <a class="rs-gmaps" href={gmaps(diaPlan.copa)} target="_blank" rel="nofollow noopener" style={diaPlan.copa.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+              <a class="rs-gmaps" href={gmaps(diaPlan.copa)} target="_blank" rel="nofollow noopener" style={gmaps(diaPlan.copa) ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.copa.foto_attr ?? ''}></div>
             </div>
           </div>
@@ -999,9 +959,9 @@ const ogDescription = hasDia
           <div class="rs-place rs-swap" data-places={JSON.stringify(diaPlan.cenarList)} data-idx={diaPlan.cenarIdx}>
             <img class="rs-thumb" src={diaPlan.cenarCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.cenarCur.foto_ref)}` : ''} alt={diaPlan.cenarCur.nombre} loading="lazy" width="56" height="56" style={diaPlan.cenarCur.foto_ref ? '' : 'display:none'} />
             <div class="rs-place-txt">
-              <div class="rs-line">🌆 <strong class="rs-pname">{diaPlan.cenarCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.cenarCur)}</span>{diaPlan.cenarList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+              <div class="rs-line">🌆 <strong class="rs-pname">{diaPlan.cenarCur.nombre}</strong>{fmtRating(diaPlan.cenarCur) && <span class="rs-star rs-prating">★ {fmtRating(diaPlan.cenarCur)}</span>}{diaPlan.cenarList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
               {diaPlan.cenarCur.locLabel && <div class="rs-loc">📍 {diaPlan.cenarCur.locLabel}</div>}
-              <a class="rs-gmaps" href={gmaps(diaPlan.cenarCur)} target="_blank" rel="nofollow noopener" style={diaPlan.cenarCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+              <a class="rs-gmaps" href={gmaps(diaPlan.cenarCur)} target="_blank" rel="nofollow noopener" style={gmaps(diaPlan.cenarCur) ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.cenarCur.foto_attr ?? ''}></div>
             </div>
           </div>
@@ -1016,9 +976,9 @@ const ogDescription = hasDia
             <div class="rs-place rs-swap" data-places={JSON.stringify(diaPlan.dormirList)} data-idx={diaPlan.dormirIdx}>
               <img class="rs-thumb" src={diaPlan.dormirCur.foto_ref ? `/api/place-photo?w=200&ref=${encodeURIComponent(diaPlan.dormirCur.foto_ref)}` : ''} alt={diaPlan.dormirCur.nombre} loading="lazy" width="56" height="56" style={diaPlan.dormirCur.foto_ref ? '' : 'display:none'} />
               <div class="rs-place-txt">
-                <div class="rs-line">🛏️ <strong class="rs-pname">{diaPlan.dormirCur.nombre}</strong><span class="rs-star rs-prating">★ {fmtRating(diaPlan.dormirCur)}</span>{diaPlan.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
+                <div class="rs-line">🛏️ <strong class="rs-pname">{diaPlan.dormirCur.nombre}</strong>{fmtRating(diaPlan.dormirCur) && <span class="rs-star rs-prating">★ {fmtRating(diaPlan.dormirCur)}</span>}{diaPlan.dormirList.length > 1 && <button type="button" class="rs-swap-btn">↻ otra opción</button>}</div>
                 {diaPlan.dormirCur.locLabel && <div class="rs-loc">📍 {diaPlan.dormirCur.locLabel}</div>}
-                <a class="rs-gmaps" href={gmaps(diaPlan.dormirCur)} target="_blank" rel="nofollow noopener" style={diaPlan.dormirCur.place_id ? '' : 'display:none'}>🔎 Ver en Google</a>
+                <a class="rs-gmaps" href={gmaps(diaPlan.dormirCur)} target="_blank" rel="nofollow noopener" style={gmaps(diaPlan.dormirCur) ? '' : 'display:none'}>🔎 Ver en Google</a>
               <div class="rs-attr rs-pattr" set:html={diaPlan.dormirCur.foto_attr ?? ''}></div>
               </div>
             </div>
