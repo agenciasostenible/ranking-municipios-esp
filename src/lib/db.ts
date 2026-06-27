@@ -37,6 +37,7 @@ export const ICONS: Record<string, string> = {
   vinos:             'wine_bar',
   playas:            'beach_access',
   Playas:            'beach_access',
+  pozas:             'water',
   pueblo_bonito:     'auto_awesome',
   turismo_religioso: 'church',
   turismo_lgtbi:     'rainbow',
@@ -87,6 +88,7 @@ export const LABELS: Record<string, string> = {
   vinos:             'Vinos',
   playas:            'Playas',
   Playas:            'Playas',
+  pozas:             'Pozas y baños naturales',
   ciclismo:          'Cicloturismo',
   pueblo_bonito:     'Pueblos bonitos',
   turismo_religioso: 'Turismo religioso',
@@ -135,6 +137,7 @@ export const TABS = [
   { key: 'TurismoRural',     label: 'Rural',       icon: 'cottage' },
   { key: 'castillos',        label: 'Castillos',   icon: 'castle' },
   { key: 'playas',           label: 'Playas',      icon: 'beach_access' },
+  { key: 'pozas',            label: 'Pozas y baños naturales', icon: 'water' },
   { key: 'vinos',            label: 'Vinos',       icon: 'wine_bar' },
   { key: 'miradores',        label: 'Miradores',   icon: 'binoculars' },
   { key: 'lujo',             label: 'Lujo',        icon: 'diamond' },
@@ -197,6 +200,7 @@ export const SIDEBAR_GROUPS = [
       { key: 'estrellas',      label: 'Astroturismo',   icon: 'nights_stay' },
       { key: 'miradores',      label: 'Miradores',      icon: 'binoculars' },
       { key: 'playas',         label: 'Playas',         icon: 'beach_access' },
+      { key: 'pozas',          label: 'Pozas y baños naturales', icon: 'water' },
     ],
   },
   {
@@ -245,6 +249,7 @@ export const SUBTITLES: Record<string, string> = {
   miradores:         'vistas y puntos panorámicos',
   playas:            'costa, calas y baño',
   Playas:            'costa, calas y baño',
+  pozas:             'pozas, gargantas y ríos para bañarse',
   naturaleza:        'cascadas, gargantas, embalses y parajes',
   TurismoRural:      'casas rurales y pueblos para desconectar',
   Campings:          'acampada y bungalós en plena naturaleza',
@@ -274,7 +279,7 @@ export const FICHA_CATS = [
   'ranking_global','monumentos','fiestas','festivales','senderismo','naturaleza',
   'gastronomia','Campings','TurismoRural',
   'castillos',
-  'Playas',
+  'Playas','pozas',
   'vinos','miradores','lujo','solteros','misterioso',
   'pueblo_bonito',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
@@ -285,7 +290,7 @@ export const FICHA_CATS = [
 // Categorías a mostrar en el gráfico de "Puntuaciones detalladas" (barras)
 // Solo las categorías confirmadas / en uso.
 export const DETAIL_CATS = [
-  'monumentos','gastronomia','Playas','castillos','fiestas','festivales',
+  'monumentos','gastronomia','Playas','pozas','castillos','fiestas','festivales',
   'senderismo','naturaleza','TurismoRural','Campings','vinos','miradores','lujo','solteros','misterioso',
   'turismo_religioso','turismo_activo','oleoturismo','turismo_mascotas','turismo_lgtbi',
   'hoteles_encanto','ciclismo','estrellas','balnearios','cuevas',

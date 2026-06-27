@@ -69,6 +69,7 @@ export const CAT_COLORS: Record<string, string> = {
   senderismo:        '#00897b',
   agua:              '#1e88e5',
   playas:            '#0097a7',
+  pozas:             '#0288a8',
   Playas:            '#0097a7',
   gastronomia:       '#f4511e',
   soletes:           '#e8a200',
