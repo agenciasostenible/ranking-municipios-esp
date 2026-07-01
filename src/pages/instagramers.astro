@@ -5,6 +5,7 @@ import { DB } from '../lib/d1client';
 // Todos los instagramers verificados con provincias agrupadas
 const { results: igRows } = await DB.prepare(
   `SELECT i.id, i.handle, i.nombre, i.avatar_url, i.especialidad, i.bio, i.seguidores,
+          (i.avatar_data IS NOT NULL) AS has_avatar,
           COUNT(im.id) AS n_munis,
           GROUP_CONCAT(DISTINCT COALESCE(im.provincia,'')) AS provincias
    FROM instagramers i
@@ -17,7 +18,8 @@ const { results: igRows } = await DB.prepare(
 const allCreadores = (igRows as any[]).map((r) => ({
   ...r,
   provincias: r.provincias || '',
-  curado: r.id <= 2,  // los dos migrados de creadores son los primeros
+  curado: r.id <= 2,
+  avatar_url: r.has_avatar ? `/api/instagramer-foto?id=${r.id}` : (r.avatar_url || null),
 }));
 
 const especialidades = [

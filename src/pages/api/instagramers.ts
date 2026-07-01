@@ -21,17 +21,27 @@ export const POST: APIRoute = async ({ request }) => {
   const especialidad = String(b.especialidad || '').trim().slice(0, 200) || null;
   const bio = String(b.bio || '').trim().slice(0, 200) || null;
   const seguidores = parseInt(b.seguidores) || 0;
-  // municipios: array of {nombre_sitio, codigo_ine?, provincia?}
   const munis: any[] = Array.isArray(b.municipios) ? b.municipios.slice(0, 5) : [];
+
+  // Avatar: base64 data URL → Uint8Array
+  let avatarBuf: Uint8Array | null = null;
+  if (b.avatar && typeof b.avatar === 'string' && b.avatar.startsWith('data:image')) {
+    try {
+      const base64 = b.avatar.split(',')[1];
+      const bin = atob(base64);
+      avatarBuf = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) avatarBuf[i] = bin.charCodeAt(i);
+    } catch {}
+  }
 
   if (!handle || munis.length === 0) return new Response('faltan campos', { status: 400 });
 
   let id: any;
   try {
     const row = await DB.prepare(
-      `INSERT INTO instagramers (handle, nombre, especialidad, bio, seguidores, verificado)
-       VALUES (?, ?, ?, ?, ?, 0) RETURNING id`
-    ).bind(handle, nombre, especialidad, bio, seguidores).first();
+      `INSERT INTO instagramers (handle, nombre, especialidad, bio, seguidores, avatar_data, verificado)
+       VALUES (?, ?, ?, ?, ?, ?, 0) RETURNING id`
+    ).bind(handle, nombre, especialidad, bio, seguidores, avatarBuf).first();
     id = row?.id;
     if (!id) throw new Error('no id');
 
