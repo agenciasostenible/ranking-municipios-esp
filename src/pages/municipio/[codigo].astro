@@ -509,12 +509,13 @@ const creadores = await getCreadores(
       {desdeEstrella && (
         <div class="desde-card-hero">
           <div class="desde-card-nombre">{desdeEstrella.nombre}</div>
-          {desdeEstrella.descripcion && <div class="desde-card-desc">{desdeEstrella.descripcion}</div>}
-          {tieneFichaMaps(desdeEstrella.tipo) && (
-            <a class="desde-maps" target="_blank" rel="noopener" href={gmapsUrl(desdeEstrella.nombre, municipio.nombre, municipio.provincia)}>
-              <Icon name="map_pin" size={14} /> Ver en Google Maps
-            </a>
-          )}
+          {desdeEstrella.descripcion
+            ? <div class="desde-card-desc">{desdeEstrella.descripcion}</div>
+            : <div class="desde-card-desc desde-card-desc--fallback">{TIPO_LABEL[desdeEstrella.tipo] ?? desdeInfo.label} en {municipio.nombre}, {municipio.provincia}. Pulsa para verlo en el mapa.</div>
+          }
+          <a class="desde-maps" target="_blank" rel="noopener" href={gmapsUrl(desdeEstrella.nombre, municipio.nombre, municipio.provincia)}>
+            <Icon name="map_pin" size={14} /> Ver en Google Maps
+          </a>
         </div>
       )}
       {!desdeEstrella && (
