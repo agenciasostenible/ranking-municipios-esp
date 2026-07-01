@@ -448,7 +448,8 @@ const municipios = (rankingGlobal as any[]).map(r => ({
           : <span class="ig-p-av ig-p-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
         }
         <span class="ig-p-handle">@{ig.handle}</span>
-        {ig.especialidad && <span class="ig-p-tag">{ig.especialidad}</span>}
+        {ig.seguidores > 0 && <span class="ig-p-seg">{ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(1)+'M' : Math.round(ig.seguidores/1000)+'K'}</span>}
+        {ig.especialidad && <span class="ig-p-tag">{String(ig.especialidad).split(',')[0].trim()}</span>}
       </a>
     ))}
     <a class="ig-join-card" href="/instagramers/unirme">
@@ -997,6 +998,7 @@ function doSearch() {
 .ig-p-ph { display: flex; align-items: center; justify-content: center; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: 1.2rem; }
 .ig-p-handle { font-size: .78rem; font-weight: 700; color: #222; text-align: center; }
 .ig-p-tag { font-size: .68rem; background: #f3f0ff; color: #7c3aed; border-radius: 10px; padding: 2px 8px; font-weight: 600; text-transform: capitalize; }
+.ig-p-seg { font-size: .72rem; color: #16a34a; font-weight: 700; }
 .ig-join-card { flex-shrink: 0; width: 130px; border: 1.5px dashed #c4b5fd; border-radius: 16px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-decoration: none; background: #faf8ff; }
 .ig-join-plus { width: 44px; height: 44px; border-radius: 50%; background: #7c3aed; color: #fff; font-size: 1.5rem; font-weight: 300; display: flex; align-items: center; justify-content: center; }
 .ig-join-text { font-size: .75rem; font-weight: 700; color: #7c3aed; text-align: center; line-height: 1.35; }

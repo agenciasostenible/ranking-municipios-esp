@@ -86,7 +86,16 @@ const especialidades = [
           <div class="ig-card-body">
             {ig.nombre && ig.nombre !== ig.handle && <div class="ig-nombre">{ig.nombre}</div>}
             <div class="ig-handle">@{ig.handle}</div>
-            {ig.especialidad && <span class="ig-tag">{ig.especialidad}</span>}
+            {ig.seguidores > 0 && (
+              <div class="ig-seg">👥 {ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(ig.seguidores%1000000===0?0:1)+'M' : ig.seguidores >= 1000 ? Math.round(ig.seguidores/1000)+'K' : ig.seguidores} seguidores</div>
+            )}
+            {ig.especialidad && (
+              <div class="ig-tags">
+                {ig.especialidad.split(',').slice(0,3).map((e: string) => (
+                  <span class="ig-tag">{e.trim()}</span>
+                ))}
+              </div>
+            )}
             {ig.bio && <p class="ig-bio">"{ig.bio}"</p>}
             {ig.n_munis > 0 && (
               <div class="ig-munis-count">📍 {ig.n_munis} municipio{ig.n_munis !== 1 ? 's' : ''} recomendado{ig.n_munis !== 1 ? 's' : ''}</div>
@@ -266,7 +275,9 @@ const especialidades = [
   .ig-card-body { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; width: 100%; }
   .ig-nombre { font-size: .88rem; font-weight: 700; color: #222; }
   .ig-handle { font-size: .82rem; color: #7c3aed; font-weight: 700; }
-  .ig-tag { display: inline-block; background: #f3f0ff; color: #7c3aed; font-size: .7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: capitalize; }
+  .ig-seg { font-size: .75rem; color: #16a34a; font-weight: 700; margin: 1px 0; }
+  .ig-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 2px 0; }
+  .ig-tag { display: inline-block; background: #f3f0ff; color: #7c3aed; font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: capitalize; white-space: nowrap; }
   .ig-bio { color: #777; font-size: .8rem; font-style: italic; line-height: 1.4; margin: 2px 0 0; }
   .ig-munis-count { font-size: .75rem; color: #999; margin-top: 2px; }
 
@@ -279,6 +290,6 @@ const especialidades = [
   .ig-join-banner strong { font-size: 1.1rem; color: #3b1fa0; display: block; margin-bottom: 6px; }
   .ig-join-banner p { color: #7c3aed; margin: 0 0 16px; }
 
-  @media (max-width: 480px) { .ig-grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+  @media (max-width: 600px) { .ig-grid { grid-template-columns: 1fr; gap: 12px; } }
 </style>
 </Base>
