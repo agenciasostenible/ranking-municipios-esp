@@ -15,7 +15,7 @@ if (ok) {
   cEncuesta   = await num(`SELECT COUNT(*) n FROM encuesta WHERE publicado=0`);
   cVotosMunis = await num(`SELECT COUNT(*) n FROM votos WHERE votos>0`);
   cAnunPend   = await num(`SELECT COUNT(*) n FROM anuncios WHERE estado='pendiente'`);
-  cCreadPend  = await num(`SELECT COUNT(*) n FROM creadores WHERE aprobado=0`);
+  cCreadPend  = await num(`SELECT COUNT(*) n FROM instagramers WHERE verificado=0`);
   cBanners    = await num(`SELECT COUNT(*) n FROM banners`);
 }
 const k = encodeURIComponent(key);
@@ -24,7 +24,7 @@ const PANELES = [
   { t: '📸 Encuestas', d: 'Instagramers · municipio favorito', href: `/admin/encuesta?key=${k}`, badge: cEncuesta, badgeLbl: 'sin publicar' },
   { t: '🏆 Voto del público', d: 'Ranking + editar votos', href: `/admin/votos?key=${k}`, badge: cVotosMunis, badgeLbl: 'municipios' },
   { t: '📢 Publicidad / Anunciantes', d: 'Negocios y establecimientos', href: `/admin/anuncios?key=${k}`, badge: cAnunPend, badgeLbl: 'pendientes' },
-  { t: '👤 Instagramers', d: 'Creadores recomendados', href: `/admin/creadores?key=${k}`, badge: cCreadPend, badgeLbl: 'pendientes' },
+  { t: '📸 Instagramers', d: 'Directorio de creadores', href: `/admin/instagramers?key=${k}`, badge: cCreadPend, badgeLbl: 'pendientes' },
   { t: '🖼️ Banners', d: 'Anuncios de imagen en la home', href: `/admin/banners?key=${k}`, badge: cBanners, badgeLbl: 'activos' },
 ];
 
@@ -32,7 +32,7 @@ const COMPARTIR = [
   { t: '📸 Encuesta a instagramers', url: `${origin}/encuesta`, msg: '¿Cuál es tu municipio favorito de España para pasar 2 días? Cuéntamelo aquí 👇' },
   { t: '🏆 Voto del público', url: `${origin}/votar`, msg: '🏆 Vota cuál es el mejor municipio turístico de España:' },
   { t: '📢 Anúnciate (negocios)', url: `${origin}/anunciate`, msg: '¿Tienes un negocio turístico? Anúncialo en Ranking Spain:' },
-  { t: '🤝 Colabora (creadores)', url: `${origin}/colabora`, msg: '¿Creas contenido de viajes en Instagram? Sal recomendado en Ranking Spain:' },
+  { t: '📸 Únete como instagramer', url: `${origin}/instagramers/unirme`, msg: '¿Creas contenido de viajes en España? Únete a nuestro directorio de instagramers:' },
 ];
 ---
 <html lang="es">
