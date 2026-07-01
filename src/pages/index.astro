@@ -433,48 +433,39 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 
 <!-- ── INSTAGRAMERS ── -->
 <section class="ig-home-sec">
-  <div class="ig-banner">
-    <img src="/instagramers-banner.jpg" alt="" class="ig-banner-img" aria-hidden="true" />
-    <div class="ig-banner-overlay"></div>
-    <div class="ig-banner-content">
-      <div class="ig-banner-text">
-        <span class="ig-banner-kicker">📸 Comunidad</span>
-        <h2 class="ig-banner-title">Instagramers que recorren España</h2>
-        <p class="ig-banner-sub">Creadores especializados en turismo. Descubre sus rincones favoritos.</p>
-      </div>
-      <a href="/instagramers/unirme" class="ig-banner-cta">¿Eres creador? Únete →</a>
+  <div class="ig-home-header">
+    <h2 class="ig-home-title">Instagramers de España</h2>
+    <p class="ig-home-sub">Creadores que recorren el país y comparten sus rincones favoritos</p>
+  </div>
+  <div class="ig-hero-card">
+    <img src="/instagramers-banner.jpg" alt="" class="ig-hero-img" aria-hidden="true" />
+    <div class="ig-hero-grad"></div>
+    <div class="ig-hero-top">
+      <span class="ig-hero-pill">📸 Comunidad</span>
+    </div>
+    <div class="ig-hero-bottom">
+      <h3 class="ig-hero-title">Descubre quién visita cada municipio</h3>
+      <p class="ig-hero-sub">Instagramers verificados especializados en turismo por España</p>
+      <a href="/instagramers/unirme" class="ig-hero-btn">¿Eres creador? Únete gratis →</a>
     </div>
   </div>
-  <div class="ig-home-chips-wrap">
-    {igHome.length > 0 ? (
-      <div class="ig-home-row">
-        {igHome.map((ig: any) => (
-          <a class="ig-home-chip" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
-            {ig.avatar_url
-              ? <img class="ig-home-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
-              : <span class="ig-home-av ig-home-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
-            }
-            <span class="ig-home-info">
-              <span class="ig-home-handle">@{ig.handle}</span>
-              {ig.especialidad && <span class="ig-home-esp">{ig.especialidad}</span>}
-            </span>
-          </a>
-        ))}
-        <a class="ig-home-chip ig-home-join" href="/instagramers/unirme">
-          <span class="ig-home-av ig-home-plus">+</span>
-          <span class="ig-home-info">
-            <span class="ig-home-handle">¿Eres creador?</span>
-            <span class="ig-home-esp">Únete gratis</span>
-          </span>
-        </a>
-      </div>
-    ) : (
-      <div class="ig-home-empty">
-        <p>Sé el primero en unirte. <a href="/instagramers/unirme">Regístrate gratis →</a></p>
-      </div>
-    )}
-    <a href="/instagramers" class="ig-home-all">Ver todos los instagramers →</a>
+  <div class="ig-profiles-scroll">
+    {igHome.map((ig: any) => (
+      <a class="ig-profile-card" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
+        {ig.avatar_url
+          ? <img class="ig-p-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
+          : <span class="ig-p-av ig-p-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
+        }
+        <span class="ig-p-handle">@{ig.handle}</span>
+        {ig.especialidad && <span class="ig-p-tag">{ig.especialidad}</span>}
+      </a>
+    ))}
+    <a class="ig-join-card" href="/instagramers/unirme">
+      <span class="ig-join-plus">+</span>
+      <span class="ig-join-text">¿Eres creador?<br/>Únete gratis</span>
+    </a>
   </div>
+  <a href="/instagramers" class="ig-see-all">Ver todos los instagramers →</a>
 </section>
 
 <!-- ── SELLOS Y DISTINCIONES ── -->
@@ -988,35 +979,35 @@ function doSearch() {
 .joyas-promo:hover .jp-cta { background: #256628; }
 @media (max-width: 560px) { .joyas-promo { padding: 16px; gap: 12px; } .jp-cta { align-self: stretch; justify-content: center; } }
 
-/* Instagramers home */
-.ig-home-sec { max-width: 1100px; margin: 22px auto 0; padding: 0 16px; }
-.ig-banner { position: relative; border-radius: 18px; overflow: hidden; height: 220px; }
-.ig-banner-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
-.ig-banner-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.28) 60%, rgba(0,0,0,.08) 100%); }
-.ig-banner-content { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; gap: 16px; }
-.ig-banner-kicker { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.72); margin-bottom: 6px; }
-.ig-banner-title { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -.02em; line-height: 1.2; margin: 0 0 8px; }
-.ig-banner-sub { font-size: .88rem; color: rgba(255,255,255,.8); margin: 0; line-height: 1.45; max-width: 380px; }
-.ig-banner-cta { flex-shrink: 0; background: #fff; color: #7c3aed; font-weight: 800; font-size: .88rem; padding: 12px 22px; border-radius: 12px; text-decoration: none; white-space: nowrap; }
-.ig-banner-cta:hover { background: #f3f0ff; }
-.ig-home-chips-wrap { padding: 14px 2px 2px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.ig-home-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.ig-home-chip { display: inline-flex; align-items: center; gap: 7px; background: #fff; border: 1px solid #e5e5e5; border-radius: 30px; padding: 5px 12px 5px 5px; text-decoration: none; color: #222; transition: border-color .15s; }
-.ig-home-chip:hover { border-color: #c4b5fd; }
-.ig-home-av { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.ig-home-ph { display: flex; align-items: center; justify-content: center; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: .85rem; }
-.ig-home-plus { background: #7c3aed; color: #fff; font-weight: 800; font-size: 1rem; }
-.ig-home-join { border-style: dashed; border-color: #c4b5fd; }
-.ig-home-info { display: flex; flex-direction: column; gap: 1px; }
-.ig-home-handle { font-weight: 700; font-size: .8rem; color: #222; }
-.ig-home-join .ig-home-handle { color: #7c3aed; }
-.ig-home-esp { font-size: .7rem; color: #999; text-transform: capitalize; }
-.ig-home-join .ig-home-esp { color: #a78bfa; }
-.ig-home-all { font-size: .82rem; font-weight: 700; color: #7c3aed; text-decoration: none; white-space: nowrap; }
-.ig-home-all:hover { text-decoration: underline; }
-.ig-home-empty { color: #999; font-size: .9rem; }
-.ig-home-empty a { color: #7c3aed; font-weight: 700; text-decoration: none; }
-@media (max-width: 600px) { .ig-banner { height: 175px; } .ig-banner-content { padding: 0 18px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; } .ig-banner-title { font-size: 1.15rem; } .ig-banner-cta { display: none; } }
+/* Instagramers home — estilo Airbnb */
+.ig-home-sec { max-width: 1100px; margin: 28px auto 0; padding: 0 16px; }
+.ig-home-header { margin-bottom: 14px; }
+.ig-home-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em; color: #222; margin: 0 0 4px; }
+.ig-home-sub { font-size: .9rem; color: #666; margin: 0; }
+.ig-hero-card { position: relative; border-radius: 20px; overflow: hidden; height: 340px; }
+.ig-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+.ig-hero-grad { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.78) 0%, rgba(0,0,0,.25) 50%, rgba(0,0,0,0) 75%); }
+.ig-hero-top { position: absolute; top: 16px; left: 18px; }
+.ig-hero-pill { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,.18); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.28); border-radius: 20px; padding: 5px 13px; font-size: .75rem; font-weight: 700; color: #fff; letter-spacing: .03em; }
+.ig-hero-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 22px 22px 24px; }
+.ig-hero-title { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -.02em; line-height: 1.2; margin: 0 0 6px; }
+.ig-hero-sub { font-size: .88rem; color: rgba(255,255,255,.82); line-height: 1.45; margin: 0 0 16px; max-width: 440px; }
+.ig-hero-btn { display: inline-block; background: #fff; color: #1a1a1a; font-size: .88rem; font-weight: 700; padding: 12px 22px; border-radius: 10px; text-decoration: none; }
+.ig-hero-btn:hover { background: #f5f5f5; }
+.ig-profiles-scroll { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 16px 0 4px; }
+.ig-profiles-scroll::-webkit-scrollbar { display: none; }
+.ig-profile-card { flex-shrink: 0; width: 130px; background: #fff; border: 1px solid #e8e8e8; border-radius: 16px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 7px; text-decoration: none; transition: border-color .15s; }
+.ig-profile-card:hover { border-color: #c4b5fd; }
+.ig-p-av { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.ig-p-ph { display: flex; align-items: center; justify-content: center; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: 1.2rem; }
+.ig-p-handle { font-size: .78rem; font-weight: 700; color: #222; text-align: center; }
+.ig-p-tag { font-size: .68rem; background: #f3f0ff; color: #7c3aed; border-radius: 10px; padding: 2px 8px; font-weight: 600; text-transform: capitalize; }
+.ig-join-card { flex-shrink: 0; width: 130px; border: 1.5px dashed #c4b5fd; border-radius: 16px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-decoration: none; background: #faf8ff; }
+.ig-join-plus { width: 44px; height: 44px; border-radius: 50%; background: #7c3aed; color: #fff; font-size: 1.5rem; font-weight: 300; display: flex; align-items: center; justify-content: center; }
+.ig-join-text { font-size: .75rem; font-weight: 700; color: #7c3aed; text-align: center; line-height: 1.35; }
+.ig-see-all { display: block; text-align: center; font-size: .85rem; font-weight: 700; color: #7c3aed; text-decoration: none; padding: 4px 0 0; }
+.ig-see-all:hover { text-decoration: underline; }
+@media (max-width: 600px) { .ig-hero-card { height: 280px; } .ig-hero-title { font-size: 1.25rem; } }
 
 /* Explorar por categoría (agrupado, con microdescripción) */
 .cat-explore { max-width: 1100px; margin: 18px auto 0; padding: 0 16px; }
