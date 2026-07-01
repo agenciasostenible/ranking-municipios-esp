@@ -20,23 +20,17 @@ const { results: curRows } = await DB.prepare(
    FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, seguidores DESC`
 ).all();
 
-// Creadores curados: también traemos sus provincias de la tabla municipios
-const { results: curMuniRows } = await DB.prepare(
-  `SELECT instagramer_id, GROUP_CONCAT(DISTINCT COALESCE(provincia,'')) AS provincias
-   FROM creador_municipios GROUP BY instagramer_id`
-).all().catch(() => ({ results: [] as any[] }));
-const curMuniMap: Record<number, string> = {};
-for (const r of (curMuniRows as any[])) curMuniMap[r.instagramer_id] = r.provincias || '';
-
 // Mezcla: curados con estructura unificada
+// provincias viene directamente de creadores.provincias (ej. "Granada,Madrid,...")
+// especialidades es una lista CSV — guardamos todas para el filtro client-side
 const curados = (curRows as any[]).map((r) => ({
   handle: String(r.handle || '').replace(/^@/, ''),
   nombre: r.nombre || null,
   avatar_url: r.has_avatar ? `/api/creador-foto?id=${r.id}` : (r.avatar_url || null),
-  especialidad: (r.especialidades || '').split(',')[0]?.trim() || null,
+  especialidad: (r.especialidades || '').trim() || null,  // todas, CSV
   bio: r.bio || null,
   n_munis: 0,
-  provincias: curMuniMap[r.id] || '',
+  provincias: (r.provincias || '').trim(),
   curado: true,
 }));
 
@@ -156,7 +150,7 @@ const especialidades = [
   function applyFilters() {
     let visible = 0;
     cards.forEach((c) => {
-      const espMatch = !activeEsp || (c.dataset.esp || '') === activeEsp;
+      const espMatch = !activeEsp || (',' + (c.dataset.esp || '') + ',').includes(',' + activeEsp + ',');
       const provMatch = !searchQ || (c.dataset.provincias || '').includes(searchQ);
       const show = espMatch && provMatch;
       (c as HTMLElement).style.display = show ? '' : 'none';
