@@ -174,6 +174,13 @@ const especialidades = [
     });
   });
 
+  function igEsc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function igHl(str: string, q: string) {
+    const i = str.toLowerCase().indexOf(q.toLowerCase());
+    if (i < 0) return igEsc(str);
+    return igEsc(str.slice(0,i)) + `<strong>${igEsc(str.slice(i,i+q.length))}</strong>` + igEsc(str.slice(i+q.length));
+  }
+
   // Autocomplete: busca municipios y provincias via /api/search
   let stmr: any;
   searchEl.addEventListener('input', () => {
@@ -188,24 +195,30 @@ const especialidades = [
       try {
         const r = await fetch('/api/search?q=' + encodeURIComponent(q));
         const d = await r.json() as any[];
-        // Mostrar municipios y también agrupar provincias únicas
-        const provSet = new Set<string>();
+        const provSet = new Map<string, string>(); // nombre → nombre
         const munis: any[] = [];
         for (const item of (d || [])) {
-          if (item.tipo === 'municipio') {
+          if (item.tipo === 'provincia') { provSet.set(item.nombre, item.nombre); }
+          else if (item.tipo === 'municipio') {
             munis.push(item);
-            if (item.provincia) provSet.add(item.provincia);
+            if (item.provincia) provSet.set(item.provincia, item.provincia);
           }
         }
-        const provItems = [...provSet].slice(0, 3).map(p =>
-          `<a href="#" class="ig-ac-prov" data-q="${p.toLowerCase()}" data-label="${p}">
-            <span class="ig-ac-ic">📍</span> <span>${p}</span> <small>Provincia</small>
-           </a>`
+        const provItems = [...provSet.values()].slice(0, 3).map(p =>
+          `<a href="#" data-q="${igEsc(p.toLowerCase())}" data-label="${igEsc(p)}" style="display:flex;align-items:center;gap:12px;padding:11px 16px;text-decoration:none;color:#222;border-bottom:1px solid #f5f5f5;cursor:pointer">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:#f3f0ff;display:flex;align-items:center;justify-content:center;font-size:.9rem">📍</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:.88rem;font-weight:600">${igHl(p,q)}</span>
+              <span style="display:block;font-size:.75rem;color:#888">Provincia</span>
+            </span></a>`
         );
         const muniItems = munis.slice(0, 5).map(m =>
-          `<a href="#" class="ig-ac-muni" data-q="${(m.provincia||'').toLowerCase()}" data-label="${m.nombre} · ${m.provincia||''}">
-            <span class="ig-ac-ic">🏘️</span> <span>${m.nombre}</span> <small>${m.provincia||''}</small>
-           </a>`
+          `<a href="#" data-q="${igEsc((m.provincia||'').toLowerCase())}" data-label="${igEsc(m.nombre)}" style="display:flex;align-items:center;gap:12px;padding:11px 16px;text-decoration:none;color:#222;border-bottom:1px solid #f5f5f5;cursor:pointer">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:#fff1f3;display:flex;align-items:center;justify-content:center;font-size:.9rem">🏘️</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:.88rem;font-weight:600">${igHl(m.nombre,q)}</span>
+              ${m.provincia?`<span style="display:block;font-size:.75rem;color:#888">${igEsc(m.provincia)}</span>`:''}
+            </span></a>`
         );
         ac.innerHTML = [...provItems, ...muniItems].join('');
       } catch {}
