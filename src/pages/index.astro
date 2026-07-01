@@ -433,40 +433,48 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 
 <!-- ── INSTAGRAMERS ── -->
 <section class="ig-home-sec">
-  <div class="ig-home-head">
-    <div>
-      <h2 class="ig-home-title">📸 Instagramers que recorren España</h2>
-      <p class="ig-home-sub">Creadores especializados en turismo por España. Descubre sus municipios favoritos.</p>
+  <div class="ig-banner">
+    <img src="/instagramers-banner.jpg" alt="" class="ig-banner-img" aria-hidden="true" />
+    <div class="ig-banner-overlay"></div>
+    <div class="ig-banner-content">
+      <div class="ig-banner-text">
+        <span class="ig-banner-kicker">📸 Comunidad</span>
+        <h2 class="ig-banner-title">Instagramers que recorren España</h2>
+        <p class="ig-banner-sub">Creadores especializados en turismo. Descubre sus rincones favoritos.</p>
+      </div>
+      <a href="/instagramers/unirme" class="ig-banner-cta">¿Eres creador? Únete →</a>
     </div>
-    <a href="/instagramers" class="ig-home-all">Ver todos →</a>
   </div>
-  {igHome.length > 0 ? (
-    <div class="ig-home-row">
-      {igHome.map((ig: any) => (
-        <a class="ig-home-chip" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
-          {ig.avatar_url
-            ? <img class="ig-home-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
-            : <span class="ig-home-av ig-home-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
-          }
+  <div class="ig-home-chips-wrap">
+    {igHome.length > 0 ? (
+      <div class="ig-home-row">
+        {igHome.map((ig: any) => (
+          <a class="ig-home-chip" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
+            {ig.avatar_url
+              ? <img class="ig-home-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
+              : <span class="ig-home-av ig-home-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
+            }
+            <span class="ig-home-info">
+              <span class="ig-home-handle">@{ig.handle}</span>
+              {ig.especialidad && <span class="ig-home-esp">{ig.especialidad}</span>}
+            </span>
+          </a>
+        ))}
+        <a class="ig-home-chip ig-home-join" href="/instagramers/unirme">
+          <span class="ig-home-av ig-home-plus">+</span>
           <span class="ig-home-info">
-            <span class="ig-home-handle">@{ig.handle}</span>
-            {ig.especialidad && <span class="ig-home-esp">{ig.especialidad}</span>}
+            <span class="ig-home-handle">¿Eres creador?</span>
+            <span class="ig-home-esp">Únete gratis</span>
           </span>
         </a>
-      ))}
-      <a class="ig-home-chip ig-home-join" href="/instagramers/unirme">
-        <span class="ig-home-av ig-home-plus">+</span>
-        <span class="ig-home-info">
-          <span class="ig-home-handle">¿Eres creador?</span>
-          <span class="ig-home-esp">Únete gratis</span>
-        </span>
-      </a>
-    </div>
-  ) : (
-    <div class="ig-home-empty">
-      <p>Sé el primero en unirte. <a href="/instagramers/unirme">Regístrate gratis →</a></p>
-    </div>
-  )}
+      </div>
+    ) : (
+      <div class="ig-home-empty">
+        <p>Sé el primero en unirte. <a href="/instagramers/unirme">Regístrate gratis →</a></p>
+      </div>
+    )}
+    <a href="/instagramers" class="ig-home-all">Ver todos los instagramers →</a>
+  </div>
 </section>
 
 <!-- ── SELLOS Y DISTINCIONES ── -->
@@ -982,25 +990,33 @@ function doSearch() {
 
 /* Instagramers home */
 .ig-home-sec { max-width: 1100px; margin: 22px auto 0; padding: 0 16px; }
-.ig-home-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-.ig-home-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; margin: 0 0 3px; }
-.ig-home-sub { color: #666; font-size: .88rem; margin: 0; }
-.ig-home-all { font-size: .85rem; font-weight: 700; color: #7c3aed; text-decoration: none; white-space: nowrap; padding-top: 4px; }
-.ig-home-all:hover { text-decoration: underline; }
-.ig-home-row { display: flex; gap: 10px; flex-wrap: wrap; }
-.ig-home-chip { display: inline-flex; align-items: center; gap: 9px; background: #fff; border: 1px solid #e5e5e5; border-radius: 30px; padding: 6px 14px 6px 6px; text-decoration: none; color: #222; transition: box-shadow .15s, border-color .15s; }
-.ig-home-chip:hover { border-color: #c4b5fd; box-shadow: 0 2px 10px rgba(124,58,237,.1); }
-.ig-home-av { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.ig-home-ph { background: #f3f0ff; color: #7c3aed; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .95rem; }
-.ig-home-plus { background: #7c3aed; color: #fff; font-weight: 800; font-size: 1.1rem; }
-.ig-home-join { border-style: dashed; border-color: #c4b5fd; background: #faf8ff; }
+.ig-banner { position: relative; border-radius: 18px; overflow: hidden; height: 220px; }
+.ig-banner-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+.ig-banner-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.28) 60%, rgba(0,0,0,.08) 100%); }
+.ig-banner-content { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; gap: 16px; }
+.ig-banner-kicker { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.72); margin-bottom: 6px; }
+.ig-banner-title { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -.02em; line-height: 1.2; margin: 0 0 8px; }
+.ig-banner-sub { font-size: .88rem; color: rgba(255,255,255,.8); margin: 0; line-height: 1.45; max-width: 380px; }
+.ig-banner-cta { flex-shrink: 0; background: #fff; color: #7c3aed; font-weight: 800; font-size: .88rem; padding: 12px 22px; border-radius: 12px; text-decoration: none; white-space: nowrap; }
+.ig-banner-cta:hover { background: #f3f0ff; }
+.ig-home-chips-wrap { padding: 14px 2px 2px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ig-home-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.ig-home-chip { display: inline-flex; align-items: center; gap: 7px; background: #fff; border: 1px solid #e5e5e5; border-radius: 30px; padding: 5px 12px 5px 5px; text-decoration: none; color: #222; transition: border-color .15s; }
+.ig-home-chip:hover { border-color: #c4b5fd; }
+.ig-home-av { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.ig-home-ph { display: flex; align-items: center; justify-content: center; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: .85rem; }
+.ig-home-plus { background: #7c3aed; color: #fff; font-weight: 800; font-size: 1rem; }
+.ig-home-join { border-style: dashed; border-color: #c4b5fd; }
 .ig-home-info { display: flex; flex-direction: column; gap: 1px; }
-.ig-home-handle { font-weight: 700; font-size: .82rem; color: #222; }
+.ig-home-handle { font-weight: 700; font-size: .8rem; color: #222; }
 .ig-home-join .ig-home-handle { color: #7c3aed; }
-.ig-home-esp { font-size: .72rem; color: #888; text-transform: capitalize; }
-.ig-home-join .ig-home-esp { color: #7c3aed; }
+.ig-home-esp { font-size: .7rem; color: #999; text-transform: capitalize; }
+.ig-home-join .ig-home-esp { color: #a78bfa; }
+.ig-home-all { font-size: .82rem; font-weight: 700; color: #7c3aed; text-decoration: none; white-space: nowrap; }
+.ig-home-all:hover { text-decoration: underline; }
 .ig-home-empty { color: #999; font-size: .9rem; }
 .ig-home-empty a { color: #7c3aed; font-weight: 700; text-decoration: none; }
+@media (max-width: 600px) { .ig-banner { height: 175px; } .ig-banner-content { padding: 0 18px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; } .ig-banner-title { font-size: 1.15rem; } .ig-banner-cta { display: none; } }
 
 /* Explorar por categoría (agrupado, con microdescripción) */
 .cat-explore { max-width: 1100px; margin: 18px auto 0; padding: 0 16px; }
