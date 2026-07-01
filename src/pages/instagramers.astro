@@ -4,7 +4,7 @@ import { DB } from '../lib/d1client';
 
 // Todos los instagramers verificados con provincias agrupadas
 const { results: igRows } = await DB.prepare(
-  `SELECT i.id, i.handle, i.nombre, i.avatar_url, i.especialidad, i.bio,
+  `SELECT i.id, i.handle, i.nombre, i.avatar_url, i.especialidad, i.bio, i.seguidores,
           COUNT(im.id) AS n_munis,
           GROUP_CONCAT(DISTINCT COALESCE(im.provincia,'')) AS provincias
    FROM instagramers i
