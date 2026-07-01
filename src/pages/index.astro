@@ -50,26 +50,14 @@ const { results: ccaas } = await DB.prepare(
 const totalRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios`).first();
 const total = totalRow?.n ?? 0;
 
-// Instagramers para home: mezcla curados + user-submitted (hasta 6)
-const { results: _igCurados } = await DB.prepare(
-  `SELECT id, handle, nombre, avatar_url, (avatar_data IS NOT NULL) AS has_avatar,
-          especialidades AS especialidad, 1 AS curado
-   FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, seguidores DESC LIMIT 6`
+// Instagramers para home: directo de instagramers (verificado=1), ya incluye los migrados de creadores
+const { results: _igAll } = await DB.prepare(
+  `SELECT id, handle, nombre, avatar_url, especialidad, seguidores FROM instagramers WHERE verificado=1 ORDER BY seguidores DESC LIMIT 6`
 ).all();
-const { results: _igSubmitted } = await DB.prepare(
-  `SELECT id, handle, nombre, avatar_url, 0 AS has_avatar, especialidad, 0 AS curado
-   FROM instagramers WHERE verificado=1 ORDER BY id DESC LIMIT 6`
-).all();
-const _igSeen = new Set<string>();
-const igHome = [...(_igCurados as any[]), ...(_igSubmitted as any[])].filter((c) => {
-  const h = String(c.handle || '').replace(/^@/, '').toLowerCase();
-  if (_igSeen.has(h)) return false;
-  _igSeen.add(h); return true;
-}).slice(0, 6).map((c) => ({
+const igHome = (_igAll as any[]).map((c) => ({
   ...c,
   handle: String(c.handle || '').replace(/^@/, ''),
-  especialidad: String(c.especialidad || '').split(',')[0]?.trim() || null,
-  avatar_url: c.has_avatar ? `/api/creador-foto?id=${c.id}` : (c.avatar_url || null),
+  avatar_url: c.avatar_url || null,
 }));
 
 // Top 3 del voto del público (para el CTA de la home)
