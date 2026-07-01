@@ -101,31 +101,32 @@ const especialidades = [
   ) : (
     <div class="ig-grid" id="ig-grid">
       {allCreadores.map((ig) => (
-        <a
+        <div
           class="ig-card"
-          href={`https://instagram.com/${ig.handle}`}
-          target="_blank"
-          rel="noopener noreferrer"
           data-esp={ig.especialidad || ''}
           data-provincias={(ig.provincias || '').toLowerCase()}
         >
           {ig.curado && <span class="ig-badge-curado">⭐ Destacado</span>}
-          <div class="ig-card-top">
+          <div class="ig-card-av-wrap">
             {ig.avatar_url
               ? <img class="ig-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
               : <span class="ig-av ig-av-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
             }
-            <div class="ig-card-info">
-              <span class="ig-handle">@{ig.handle}</span>
-              {ig.nombre && ig.nombre !== ig.handle && <div class="ig-nombre">{ig.nombre}</div>}
-              {ig.especialidad && <span class="ig-tag">{ig.especialidad}</span>}
-            </div>
           </div>
-          {ig.bio && <p class="ig-bio">"{ig.bio}"</p>}
-          {(ig.n_munis > 0) && (
-            <div class="ig-footer">{ig.n_munis} municipio{ig.n_munis !== 1 ? 's' : ''} recomendado{ig.n_munis !== 1 ? 's' : ''}</div>
-          )}
-        </a>
+          <div class="ig-card-body">
+            {ig.nombre && ig.nombre !== ig.handle && <div class="ig-nombre">{ig.nombre}</div>}
+            <div class="ig-handle">@{ig.handle}</div>
+            {ig.especialidad && <span class="ig-tag">{ig.especialidad}</span>}
+            {ig.bio && <p class="ig-bio">"{ig.bio}"</p>}
+            {ig.n_munis > 0 && (
+              <div class="ig-munis-count">📍 {ig.n_munis} municipio{ig.n_munis !== 1 ? 's' : ''} recomendado{ig.n_munis !== 1 ? 's' : ''}</div>
+            )}
+          </div>
+          <a class="ig-ig-btn" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            Ver en Instagram
+          </a>
+        </div>
       ))}
     </div>
   )}
@@ -266,22 +267,35 @@ const especialidades = [
   .ig-filter-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
   .ig-empty, .ig-none { text-align: center; padding: 40px 0; color: #888; }
   .ig-empty a, .ig-none a { color: #7c3aed; font-weight: 700; }
-  .ig-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 40px; }
-  .ig-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; position: relative; transition: border-color .15s, box-shadow .15s; }
-  .ig-card:hover { border-color: #c4b5fd; box-shadow: 0 4px 18px rgba(124,58,237,.1); }
-  .ig-badge-curado { position: absolute; top: 10px; right: 10px; font-size: .68rem; font-weight: 700; background: #fef3c7; color: #92400e; border-radius: 8px; padding: 2px 7px; }
-  .ig-card-top { display: flex; align-items: center; gap: 10px; }
-  .ig-av { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-  .ig-av-ph { display: flex; align-items: center; justify-content: center; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: 1.25rem; }
-  .ig-card-info { min-width: 0; }
-  .ig-handle { color: #7c3aed; font-weight: 800; font-size: .96rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ig-nombre { color: #555; font-size: .8rem; margin-top: 1px; }
-  .ig-tag { display: inline-block; background: #f3f0ff; color: #7c3aed; font-size: .7rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-top: 3px; text-transform: capitalize; }
-  .ig-bio { color: #666; font-size: .83rem; font-style: italic; line-height: 1.45; margin: 0; }
-  .ig-footer { color: #999; font-size: .76rem; border-top: 1px solid #f0f0f0; padding-top: 8px; }
+
+  /* Grid de cards */
+  .ig-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 40px; }
+  .ig-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 18px; padding: 20px 16px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; transition: border-color .15s, box-shadow .15s; }
+  .ig-card:hover { border-color: #c4b5fd; box-shadow: 0 6px 24px rgba(124,58,237,.1); }
+  .ig-badge-curado { position: absolute; top: 12px; right: 12px; font-size: .68rem; font-weight: 700; background: #fef3c7; color: #92400e; border-radius: 8px; padding: 3px 8px; }
+
+  /* Avatar */
+  .ig-card-av-wrap { width: 76px; height: 76px; flex-shrink: 0; }
+  .ig-av { width: 76px !important; height: 76px !important; max-width: 76px !important; max-height: 76px !important; border-radius: 50%; object-fit: cover; display: block; border: 3px solid #f3f0ff; }
+  .ig-av-ph { width: 76px; height: 76px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: 1.8rem; border: 3px solid #ede9fe; }
+
+  /* Cuerpo */
+  .ig-card-body { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; width: 100%; }
+  .ig-nombre { font-size: .88rem; font-weight: 700; color: #222; }
+  .ig-handle { font-size: .82rem; color: #7c3aed; font-weight: 700; }
+  .ig-tag { display: inline-block; background: #f3f0ff; color: #7c3aed; font-size: .7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: capitalize; }
+  .ig-bio { color: #777; font-size: .8rem; font-style: italic; line-height: 1.4; margin: 2px 0 0; }
+  .ig-munis-count { font-size: .75rem; color: #999; margin-top: 2px; }
+
+  /* Botón Instagram */
+  .ig-ig-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; margin-top: 6px; padding: 10px; background: #f3f0ff; color: #7c3aed; font-size: .84rem; font-weight: 700; border-radius: 12px; text-decoration: none; transition: background .15s; }
+  .ig-ig-btn:hover { background: #ede9fe; }
+
+  /* Banner join */
   .ig-join-banner { text-align: center; background: #f3f0ff; border-radius: 18px; padding: 32px 24px; margin-top: 8px; }
   .ig-join-banner strong { font-size: 1.1rem; color: #3b1fa0; display: block; margin-bottom: 6px; }
   .ig-join-banner p { color: #7c3aed; margin: 0 0 16px; }
+
   @media (max-width: 480px) { .ig-grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
 </style>
 </Base>
