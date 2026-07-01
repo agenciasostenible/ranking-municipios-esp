@@ -50,7 +50,7 @@ const totalNacional = totalNacionalRow?.n ?? 0;
 let { results: entidades } = await DB.prepare(
   `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
    WHERE e.codigo_ine = ?
-     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','eurovelo','caminos_naturales','camino_cid','pirinexus','centros_btt','hoteles_encanto','starlight','balnearios','cuevas','pueblos_mas_bonitos','bandera_azul','unesco')
+     AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','eurovelo','caminos_naturales','camino_cid','pirinexus','centros_btt','hoteles_encanto','starlight','balnearios','cuevas','pueblos_mas_bonitos','bandera_azul','unesco','wikidata_museos')
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
        SELECT COUNT(DISTINCT e2.codigo_ine) FROM entidades e2
        WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
@@ -63,6 +63,14 @@ let { results: entidades } = await DB.prepare(
      END, tipo, nombre
    LIMIT 40`
 ).bind(codigo).all();
+
+// Museos: sección dedicada (separada del grid general para no ahogar el contenido)
+const { results: museosRows } = await DB.prepare(
+  `SELECT nombre, descripcion, nivel_sello FROM entidades
+   WHERE codigo_ine = ? AND fuente = 'wikidata_museos'
+   ORDER BY nombre LIMIT 20`
+).bind(codigo).all();
+const museos = museosRows as any[];
 entidades = dedupByName(entidades as any[]);
 
 // "Dónde comer": UN solo listado que unifica todas las distinciones gastronómicas
@@ -705,6 +713,28 @@ const creadores = await getCreadores(
             </div>
           );
         })}
+      </div>
+    </section>
+  )}
+
+  {museos.length > 0 && (
+    <section class="mun-section">
+      <h2 class="mun-section-title"><Icon name="building_2" size={20} /> Museos</h2>
+      <div class="entidades-grid">
+        {museos.map((e: any) => (
+          <div class="entidad-card card">
+            <div class="entidad-icon entidad-icon-line"><Icon name="building_2" size={24} /></div>
+            <div class="entidad-body">
+              <div class="entidad-name">{e.nombre}</div>
+              {e.descripcion && <div class="entidad-desc">{e.descripcion}</div>}
+              {e.nivel_sello && <span class="sello-badge" style={getSelloStyle(e.nivel_sello)}>{e.nivel_sello}</span>}
+              <a class="entidad-maps" target="_blank" rel="noopener"
+                 href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
+                <Icon name="map_pin" size={14} /> Ver en Google Maps
+              </a>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   )}
