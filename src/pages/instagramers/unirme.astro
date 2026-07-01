@@ -3,13 +3,13 @@ import Base from '../../layouts/Base.astro';
 ---
 <Base
   title="Únete como instagramer de viajes — Ranking Spain"
-  description="¿Creas contenido sobre turismo en España? Regístrate en nuestro directorio de instagramers y comparte tus municipios favoritos."
+  description="¿Creas contenido sobre turismo en España? Regístrate en nuestro directorio de instagramers y comparte dónde eres experto."
 >
 <div class="uni-page">
   <div class="uni-hero">
     <span class="uni-kicker">📸 Instagramers</span>
     <h1>Únete a nuestra comunidad de creadores</h1>
-    <p>Si creas contenido sobre turismo en España, regístrate y aparecer en nuestro directorio. Cuéntanos qué municipios recomiendas.</p>
+    <p>Si creas contenido sobre turismo en España, regístrate y aparece en nuestro directorio. Cuéntanos en qué zonas y temáticas eres experto.</p>
   </div>
 
   <form class="uni-form" id="uni-form">
@@ -24,17 +24,20 @@ import Base from '../../layouts/Base.astro';
     </div>
 
     <div class="uni-field">
-      <label>Especialidad</label>
-      <select id="u-esp">
-        <option value="">Selecciona…</option>
-        <option value="naturaleza">🌿 Naturaleza</option>
-        <option value="gastronomia">🍽️ Gastronomía</option>
-        <option value="cultura">🏛️ Cultura</option>
-        <option value="aventura">🧗 Aventura</option>
-        <option value="rural">🏡 Rural</option>
-        <option value="playa">🏖️ Playa</option>
-        <option value="general">🗺️ General / viajes</option>
-      </select>
+      <label>Tu número de seguidores <span class="uni-opt">(opcional)</span></label>
+      <input id="u-seg" type="number" min="0" placeholder="Ej. 83200" autocomplete="off" />
+    </div>
+
+    <div class="uni-sep"><span>Tus especialidades</span></div>
+    <p class="uni-hint">Selecciona todas las que apliquen.</p>
+    <div class="uni-checks" id="u-esps">
+      <label class="uni-check"><input type="checkbox" value="gastronomia" /> 🍽️ Gastronomía</label>
+      <label class="uni-check"><input type="checkbox" value="naturaleza" /> 🌿 Naturaleza</label>
+      <label class="uni-check"><input type="checkbox" value="playa" /> 🏖️ Playa</label>
+      <label class="uni-check"><input type="checkbox" value="cultura" /> 🏛️ Cultura</label>
+      <label class="uni-check"><input type="checkbox" value="aventura" /> 🧗 Aventura</label>
+      <label class="uni-check"><input type="checkbox" value="rural" /> 🏡 Rural</label>
+      <label class="uni-check"><input type="checkbox" value="general" /> 🗺️ Viajes en general</label>
     </div>
 
     <div class="uni-field">
@@ -42,23 +45,21 @@ import Base from '../../layouts/Base.astro';
       <textarea id="u-bio" maxlength="200" rows="2" placeholder="Ej. Recorro pueblos con encanto de España buscando los rincones más auténticos."></textarea>
     </div>
 
-    <div class="uni-sep">
-      <span>Municipios que recomiendas</span>
-    </div>
-    <p class="uni-hint">Añade entre 1 y 5 municipios que recomiendas a tus seguidores.</p>
+    <div class="uni-sep"><span>Zonas donde eres experto/a</span></div>
+    <p class="uni-hint">Añade entre 1 y 5 provincias, ciudades o comunidades autónomas donde creas contenido.</p>
 
     <div id="u-munis-list">
       <div class="u-muni-row" data-idx="0">
         <div class="uni-field uni-field-ac">
-          <label>Municipio 1 *</label>
-          <input class="u-muni-input" type="text" maxlength="80" placeholder="Empieza a escribir…" autocomplete="off" />
+          <label>Zona 1 *</label>
+          <input class="u-muni-input" type="text" maxlength="80" placeholder="Ej. Granada, Andalucía, Madrid…" autocomplete="off" />
           <div class="u-ac"></div>
           <span class="u-matched" hidden></span>
         </div>
       </div>
     </div>
 
-    <button type="button" id="u-add" class="uni-add">+ Añadir otro municipio</button>
+    <button type="button" id="u-add" class="uni-add">+ Añadir otra zona</button>
 
     <!-- honeypot -->
     <input id="u-website" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true" />
@@ -78,8 +79,15 @@ import Base from '../../layouts/Base.astro';
 <script>
   const $ = (id: string) => document.getElementById(id) as any;
 
-  // Estado: array de {nombre_sitio, codigo_ine, provincia}
+  // Estado zonas: array de {nombre_sitio, codigo_ine, provincia}
   const muniData: Record<number, { nombre_sitio: string; codigo_ine: string; provincia: string }> = {};
+
+  function igEsc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function igHl(str: string, q: string) {
+    const i = str.toLowerCase().indexOf(q.toLowerCase());
+    if (i < 0) return igEsc(str);
+    return igEsc(str.slice(0,i)) + `<strong>${igEsc(str.slice(i,i+q.length))}</strong>` + igEsc(str.slice(i+q.length));
+  }
 
   function setupRow(row: HTMLElement, idx: number) {
     muniData[idx] = { nombre_sitio: '', codigo_ine: '', provincia: '' };
@@ -88,7 +96,7 @@ import Base from '../../layouts/Base.astro';
     const matched = row.querySelector('.u-matched') as HTMLElement;
 
     function clearMatch() {
-      muniData[idx] = { nombre_sitio: input.value.trim(), codigo_ine: '', provincia: '' };
+      muniData[idx] = { nombre_sitio: input.value.trim(), codigo_ine: '', provincia: input.value.trim() };
       matched.hidden = true;
     }
 
@@ -101,11 +109,22 @@ import Base from '../../layouts/Base.astro';
       tmr = setTimeout(async () => {
         try {
           const r = await fetch('/api/search?q=' + encodeURIComponent(q));
-          const d = await r.json();
-          const muns = ((d as any[]) || []).filter((x: any) => x.tipo === 'municipio').slice(0, 6);
-          ac.innerHTML = muns.map((m: any) =>
-            `<a href="#" data-c="${m.codigo_ine}" data-n="${String(m.nombre || '').replace(/"/g, '')}" data-p="${String(m.provincia || '').replace(/"/g, '')}">${m.nombre} <small>${m.provincia || ''}</small></a>`
-          ).join('');
+          const d = await r.json() as any[];
+          // Provincias y comunidades primero, luego municipios
+          const provs = (d || []).filter((x: any) => x.tipo === 'provincia' || x.tipo === 'comunidad').slice(0, 4);
+          const munis = (d || []).filter((x: any) => x.tipo === 'municipio').slice(0, 4);
+          const items = [...provs, ...munis];
+          ac.innerHTML = items.map((m: any) => {
+            const sub = m.tipo === 'provincia' ? 'Provincia' : m.tipo === 'comunidad' ? 'Comunidad autónoma' : (m.provincia || '');
+            const icon = m.tipo === 'provincia' || m.tipo === 'comunidad' ? '📍' : '🏘️';
+            const bg = m.tipo === 'municipio' ? '#fff1f3' : '#f3f0ff';
+            return `<a href="#" data-n="${igEsc(m.nombre)}" data-c="${igEsc(m.codigo_ine||'')}" data-p="${igEsc(m.tipo==='municipio'?(m.provincia||m.nombre):m.nombre)}" style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-top:1px solid #f0f0f0;text-decoration:none;color:#222">
+              <span style="flex-shrink:0;width:28px;height:28px;border-radius:7px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:.85rem">${icon}</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font-size:.88rem;font-weight:600">${igHl(m.nombre, q)}</span>
+                ${sub ? `<span style="display:block;font-size:.74rem;color:#888">${igEsc(sub)}</span>` : ''}
+              </span></a>`;
+          }).join('');
         } catch {}
       }, 200);
     });
@@ -113,13 +132,11 @@ import Base from '../../layouts/Base.astro';
     ac.addEventListener('click', (e: any) => {
       e.preventDefault();
       const a = e.target.closest('a'); if (!a) return;
-      input.value = a.getAttribute('data-n');
-      muniData[idx] = {
-        nombre_sitio: a.getAttribute('data-n') || '',
-        codigo_ine: a.getAttribute('data-c') || '',
-        provincia: a.getAttribute('data-p') || '',
-      };
-      matched.textContent = '✓ ' + input.value + (muniData[idx].provincia ? ' · ' + muniData[idx].provincia : '');
+      const nombre = a.getAttribute('data-n') || '';
+      const prov   = a.getAttribute('data-p') || nombre;
+      input.value = nombre;
+      muniData[idx] = { nombre_sitio: nombre, codigo_ine: a.getAttribute('data-c') || '', provincia: prov };
+      matched.textContent = '✓ ' + nombre;
       matched.hidden = false;
       ac.innerHTML = '';
     });
@@ -130,8 +147,7 @@ import Base from '../../layouts/Base.astro';
   }
 
   // Init first row
-  const firstRow = document.querySelector('.u-muni-row') as HTMLElement;
-  setupRow(firstRow, 0);
+  setupRow(document.querySelector('.u-muni-row') as HTMLElement, 0);
 
   let rowCount = 1;
   $('u-add').addEventListener('click', () => {
@@ -141,8 +157,8 @@ import Base from '../../layouts/Base.astro';
     div.className = 'u-muni-row';
     div.setAttribute('data-idx', String(idx));
     div.innerHTML = `<div class="uni-field uni-field-ac">
-      <label>Municipio ${idx + 1}</label>
-      <input class="u-muni-input" type="text" maxlength="80" placeholder="Empieza a escribir…" autocomplete="off" />
+      <label>Zona ${idx + 1}</label>
+      <input class="u-muni-input" type="text" maxlength="80" placeholder="Ej. Sevilla, Cataluña, Barcelona…" autocomplete="off" />
       <div class="u-ac"></div>
       <span class="u-matched" hidden></span>
     </div>`;
@@ -154,18 +170,20 @@ import Base from '../../layouts/Base.astro';
   $('uni-form').addEventListener('submit', async (e: any) => {
     e.preventDefault();
     const handle = $('u-handle').value.trim().replace(/^@/, '');
-    const municipios = Object.values(muniData).filter((m) => m.nombre_sitio.trim().length > 0);
-    if (!handle || municipios.length === 0) {
-      alert('Pon tu Instagram y al menos un municipio.');
+    const zonas = Object.values(muniData).filter((m: any) => m.nombre_sitio.trim().length > 0);
+    if (!handle || zonas.length === 0) {
+      alert('Pon tu Instagram y al menos una zona.');
       return;
     }
+    const esps = Array.from(document.querySelectorAll('#u-esps input:checked')).map((cb: any) => cb.value);
     const payload = {
       handle,
-      nombre: $('u-nombre').value.trim() || undefined,
-      especialidad: $('u-esp').value || undefined,
-      bio: $('u-bio').value.trim() || undefined,
-      municipios,
-      website: $('u-website').value, // honeypot
+      nombre:      $('u-nombre').value.trim() || undefined,
+      especialidad: esps.join(',') || undefined,
+      seguidores:  parseInt($('u-seg').value) || undefined,
+      bio:         $('u-bio').value.trim() || undefined,
+      municipios:  zonas,
+      website:     $('u-website').value,
     };
     $('u-go').disabled = true; $('u-go').textContent = 'Enviando…';
     try {
@@ -194,17 +212,19 @@ import Base from '../../layouts/Base.astro';
   .uni-field { display: flex; flex-direction: column; gap: 6px; position: relative; }
   .uni-field label { font-size: .85rem; font-weight: 700; color: #333; }
   .uni-opt { font-weight: 500; color: #999; }
-  .uni-field input[type="text"], .uni-field textarea, .uni-field select {
+  .uni-field input[type="text"], .uni-field input[type="number"], .uni-field textarea {
     padding: 12px 13px; border: 1.5px solid #ddd; border-radius: 12px; font-size: .98rem; font-family: inherit;
   }
-  .uni-field input:focus, .uni-field textarea:focus, .uni-field select:focus { outline: none; border-color: #7c3aed; }
+  .uni-field input:focus, .uni-field textarea:focus { outline: none; border-color: #7c3aed; }
   .uni-field textarea { resize: vertical; min-height: 60px; }
+  .uni-checks { display: flex; flex-wrap: wrap; gap: 10px; }
+  .uni-check { display: flex; align-items: center; gap: 7px; background: #faf9ff; border: 1.5px solid #e0d9ff; border-radius: 10px; padding: 8px 13px; cursor: pointer; font-size: .9rem; font-weight: 600; color: #444; transition: border-color .15s, background .15s; }
+  .uni-check:has(input:checked) { background: #f3f0ff; border-color: #7c3aed; color: #7c3aed; }
+  .uni-check input { display: none; }
   .uni-field-ac { position: relative; }
   .u-ac { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #fff; border-radius: 0 0 12px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); overflow: hidden; }
-  .u-ac a { display: block; padding: 10px 13px; border-top: 1px solid #f0f0f0; text-decoration: none; color: #222; font-size: .92rem; }
-  .u-ac a:first-child { border-top: none; }
-  .u-ac a:hover { background: #f3f0ff; }
-  .u-ac small { color: #888; }
+  .u-ac a:first-child { border-top: none !important; }
+  .u-ac a:hover { background: #f3f0ff !important; }
   .u-matched { font-size: .82rem; color: #16a34a; font-weight: 700; }
   .uni-sep { display: flex; align-items: center; gap: 10px; color: #888; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
   .uni-sep::before, .uni-sep::after { content: ''; flex: 1; height: 1px; background: #e5e5e5; }

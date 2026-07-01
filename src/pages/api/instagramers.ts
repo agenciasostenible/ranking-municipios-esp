@@ -18,8 +18,9 @@ export const POST: APIRoute = async ({ request }) => {
 
   const handle = String(b.handle || '').trim().replace(/^@/, '').slice(0, 60);
   const nombre = String(b.nombre || '').trim().slice(0, 80) || null;
-  const especialidad = String(b.especialidad || '').trim().slice(0, 40) || null;
+  const especialidad = String(b.especialidad || '').trim().slice(0, 200) || null;
   const bio = String(b.bio || '').trim().slice(0, 200) || null;
+  const seguidores = parseInt(b.seguidores) || 0;
   // municipios: array of {nombre_sitio, codigo_ine?, provincia?}
   const munis: any[] = Array.isArray(b.municipios) ? b.municipios.slice(0, 5) : [];
 
@@ -28,9 +29,9 @@ export const POST: APIRoute = async ({ request }) => {
   let id: any;
   try {
     const row = await DB.prepare(
-      `INSERT INTO instagramers (handle, nombre, especialidad, bio, verificado)
-       VALUES (?, ?, ?, ?, 0) RETURNING id`
-    ).bind(handle, nombre, especialidad, bio).first();
+      `INSERT INTO instagramers (handle, nombre, especialidad, bio, seguidores, verificado)
+       VALUES (?, ?, ?, ?, ?, 0) RETURNING id`
+    ).bind(handle, nombre, especialidad, bio, seguidores).first();
     id = row?.id;
     if (!id) throw new Error('no id');
 
