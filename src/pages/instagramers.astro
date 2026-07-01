@@ -87,7 +87,7 @@ const especialidades = [
             {ig.nombre && ig.nombre !== ig.handle && <div class="ig-nombre">{ig.nombre}</div>}
             <div class="ig-handle">@{ig.handle}</div>
             {ig.seguidores > 0 && (
-              <div class="ig-seg">👥 {ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(ig.seguidores%1000000===0?0:1)+'M' : ig.seguidores >= 1000 ? Math.round(ig.seguidores/1000)+'K' : ig.seguidores} seguidores</div>
+              <div class="ig-seg">👥 {ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(ig.seguidores%1000000===0?0:1)+' mill.' : ig.seguidores >= 1000 ? Math.round(ig.seguidores/1000)+' mil' : ig.seguidores} seguidores</div>
             )}
             {ig.especialidad && (
               <div class="ig-tags">

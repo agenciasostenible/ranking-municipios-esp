@@ -448,7 +448,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
           : <span class="ig-p-av ig-p-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
         }
         <span class="ig-p-handle">@{ig.handle}</span>
-        {ig.seguidores > 0 && <span class="ig-p-seg">{ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(1)+'M' : Math.round(ig.seguidores/1000)+'K'}</span>}
+        {ig.seguidores > 0 && <span class="ig-p-seg">{ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(1)+' mill.' : ig.seguidores >= 1000 ? Math.round(ig.seguidores/1000)+' mil' : ig.seguidores} seg.</span>}
         {ig.especialidad && <span class="ig-p-tag">{String(ig.especialidad).split(',')[0].trim()}</span>}
       </a>
     ))}
