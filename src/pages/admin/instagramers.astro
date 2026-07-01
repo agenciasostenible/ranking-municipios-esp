@@ -158,7 +158,12 @@ const fecha = (s: string) => (s ? String(s).slice(0, 10) : '');
             <label>Orden<input type="number" name="orden" value={ig.orden ?? 99} /></label>
             <label class="full">Especialidades (separadas por coma)<input type="text" name="especialidad" value={ig.especialidad || ''} /></label>
             <label class="full">Bio<textarea name="bio" rows="2">{ig.bio || ''}</textarea></label>
-            <label class="full">Avatar URL<input type="text" name="avatar_url" value={ig.avatar_url || ''} /></label>
+            <label class="full">Avatar URL (o sube foto abajo)<input type="text" name="avatar_url" value={ig.avatar_url || ''} /></label>
+            <div class="full">
+              <label style="font-size:.78rem;color:#555;font-weight:600;display:block;margin-bottom:4px">📷 Subir foto de perfil</label>
+              <input type="file" accept="image/jpeg,image/png,image/webp" class="foto-file" data-id={ig.id} style="padding:8px;border:1.5px solid #ddd;border-radius:8px;width:100%;box-sizing:border-box;font-family:inherit;cursor:pointer" />
+              <div class="foto-preview" id={`fp-${ig.id}`} style="margin-top:6px;display:flex;align-items:center;gap:8px"></div>
+            </div>
             <div class="full" style="display:flex;align-items:center;gap:10px">
               <button class="edit-save" onclick={`guardarEdicion(${ig.id},this)`}>💾 Guardar cambios</button>
               <span class="edit-ok" id={`ok-${ig.id}`}>✓ Guardado</span>
@@ -177,6 +182,22 @@ const fecha = (s: string) => (s ? String(s).slice(0, 10) : '');
 )}
 
 <script define:vars={{ adminKey: Astro.url.searchParams.get('key') }}>
+// Preview foto al seleccionar
+document.addEventListener('change', function(e) {
+  const input = e.target;
+  if (!input.classList.contains('foto-file')) return;
+  const id = input.getAttribute('data-id');
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { alert('Máx 3MB'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const prev = document.getElementById('fp-' + id);
+    prev.innerHTML = `<img src="${ev.target.result}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #c4b5fd"><span style="font-size:.78rem;color:#16a34a;font-weight:700">✓ Lista para guardar</span>`;
+  };
+  reader.readAsDataURL(file);
+});
+
 async function guardarOrden(id, btn) {
   const input = document.querySelector(`#card-${id} .ord-input`);
   const orden = parseInt(input.value) || 99;
@@ -191,10 +212,23 @@ async function guardarOrden(id, btn) {
 async function guardarEdicion(id, btn) {
   const form = document.getElementById(`ef-${id}`);
   const get = (name) => form.querySelector(`[name="${name}"]`)?.value?.trim() || '';
+
+  // Leer foto si se seleccionó
+  const fotoFile = form.querySelector('.foto-file');
+  let avatar = null;
+  if (fotoFile && fotoFile.files[0]) {
+    avatar = await new Promise((res) => {
+      const r = new FileReader();
+      r.onload = (e) => res(e.target.result);
+      r.readAsDataURL(fotoFile.files[0]);
+    });
+  }
+
   const data = {
     handle: get('handle'), nombre: get('nombre'), bio: get('bio'),
     especialidad: get('especialidad'), seguidores: parseInt(get('seguidores')) || 0,
     orden: parseInt(get('orden')) || 99, avatar_url: get('avatar_url'),
+    avatar,
   };
   btn.disabled = true; btn.textContent = 'Guardando…';
   try {
@@ -204,6 +238,8 @@ async function guardarEdicion(id, btn) {
     if (!r.ok) throw new Error();
     document.getElementById(`ok-${id}`).style.display = 'inline';
     setTimeout(() => document.getElementById(`ok-${id}`).style.display = 'none', 2500);
+    // Limpiar input foto
+    if (fotoFile) fotoFile.value = '';
   } catch { alert('Error al guardar'); }
   btn.disabled = false; btn.textContent = '💾 Guardar cambios';
 }

@@ -19,14 +19,9 @@ import Base from '../../layouts/Base.astro';
     </div>
 
     <div class="uni-field">
-      <label>Tu foto de perfil *</label>
-      <div class="uni-foto-wrap" id="u-foto-wrap">
-        <div class="uni-foto-preview" id="u-foto-preview">
-          <span class="uni-foto-ph">📷</span>
-          <span class="uni-foto-txt">Toca para subir tu foto</span>
-        </div>
-        <input id="u-foto" type="file" accept="image/*" style="display:none" />
-      </div>
+      <label>Tu foto de perfil</label>
+      <input id="u-foto" type="file" accept="image/jpeg,image/png,image/webp" class="uni-foto-input" />
+      <div id="u-foto-preview" class="uni-foto-preview" hidden></div>
       <p class="uni-hint" style="margin-top:4px">JPG o PNG · máx. 2MB · aparecerá en tu tarjeta</p>
     </div>
 
@@ -97,20 +92,19 @@ import Base from '../../layouts/Base.astro';
   const $ = (id: string) => document.getElementById(id) as any;
 
   // Foto upload
-  const fotoWrap = $('u-foto-wrap');
   const fotoInput = $('u-foto') as HTMLInputElement;
   const fotoPreview = $('u-foto-preview');
   let fotoBase64 = '';
 
-  fotoWrap.addEventListener('click', () => fotoInput.click());
   fotoInput.addEventListener('change', () => {
     const file = fotoInput.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert('La foto no puede superar 2MB.'); return; }
+    if (file.size > 2 * 1024 * 1024) { alert('La foto no puede superar 2MB.'); fotoInput.value = ''; return; }
     const reader = new FileReader();
     reader.onload = (e: any) => {
-      fotoBase64 = e.target.result as string; // data:image/...;base64,...
-      fotoPreview.innerHTML = `<img src="${fotoBase64}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #c4b5fd" />`;
+      fotoBase64 = e.target.result as string;
+      fotoPreview.hidden = false;
+      fotoPreview.innerHTML = `<img src="${fotoBase64}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #c4b5fd;display:block" /><span style="font-size:.78rem;color:#16a34a;font-weight:700;margin-top:4px">✓ Foto seleccionada</span>`;
     };
     reader.readAsDataURL(file);
   });
@@ -280,11 +274,8 @@ import Base from '../../layouts/Base.astro';
   .uni-sep { display: flex; align-items: center; gap: 10px; color: #888; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
   .uni-sep::before, .uni-sep::after { content: ''; flex: 1; height: 1px; background: #e5e5e5; }
   .uni-hint { color: #888; font-size: .85rem; margin: -8px 0 0; }
-  .uni-foto-wrap { cursor: pointer; display: inline-block; }
-  .uni-foto-preview { width: 90px; height: 90px; border-radius: 50%; border: 2.5px dashed #c4b5fd; background: #f3f0ff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: border-color .15s; }
-  .uni-foto-wrap:hover .uni-foto-preview { border-color: #7c3aed; }
-  .uni-foto-ph { font-size: 1.6rem; }
-  .uni-foto-txt { font-size: .65rem; color: #7c3aed; font-weight: 700; text-align: center; line-height: 1.2; }
+  .uni-foto-input { padding: 10px; border: 1.5px solid #ddd; border-radius: 12px; font-size: .92rem; font-family: inherit; background: #fff; cursor: pointer; width: 100%; box-sizing: border-box; }
+  .uni-foto-preview { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
   .uni-add { background: none; border: 1.5px dashed #c4b5fd; color: #7c3aed; font-weight: 700; font-size: .9rem; border-radius: 12px; padding: 11px; cursor: pointer; font-family: inherit; }
   .uni-add:hover { background: #f3f0ff; }
   .uni-add:disabled { opacity: .4; cursor: default; }

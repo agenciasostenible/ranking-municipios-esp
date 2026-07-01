@@ -49,18 +49,45 @@ export const POST: APIRoute = async ({ url, request }) => {
   if (accion === 'editar') {
     let b: any;
     try { b = await request.json(); } catch { return new Response('bad json', { status: 400 }); }
-    await DB.prepare(
-      `UPDATE instagramers SET handle=?, nombre=?, bio=?, especialidad=?, seguidores=?, orden=?, avatar_url=? WHERE id=?`
-    ).bind(
-      String(b.handle || '').trim(),
-      String(b.nombre || '').trim() || null,
-      String(b.bio || '').trim() || null,
-      String(b.especialidad || '').trim() || null,
-      parseInt(b.seguidores) || 0,
-      parseInt(b.orden) || 99,
-      String(b.avatar_url || '').trim() || null,
-      id
-    ).run();
+
+    // Procesar foto si viene en base64
+    let avatarBuf: Uint8Array | null = null;
+    if (b.avatar && typeof b.avatar === 'string' && b.avatar.startsWith('data:image')) {
+      try {
+        const base64 = b.avatar.split(',')[1];
+        const bin = atob(base64);
+        avatarBuf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) avatarBuf[i] = bin.charCodeAt(i);
+      } catch {}
+    }
+
+    if (avatarBuf) {
+      await DB.prepare(
+        `UPDATE instagramers SET handle=?, nombre=?, bio=?, especialidad=?, seguidores=?, orden=?, avatar_url=?, avatar_data=? WHERE id=?`
+      ).bind(
+        String(b.handle || '').trim(),
+        String(b.nombre || '').trim() || null,
+        String(b.bio || '').trim() || null,
+        String(b.especialidad || '').trim() || null,
+        parseInt(b.seguidores) || 0,
+        parseInt(b.orden) || 99,
+        String(b.avatar_url || '').trim() || null,
+        avatarBuf, id
+      ).run();
+    } else {
+      await DB.prepare(
+        `UPDATE instagramers SET handle=?, nombre=?, bio=?, especialidad=?, seguidores=?, orden=?, avatar_url=? WHERE id=?`
+      ).bind(
+        String(b.handle || '').trim(),
+        String(b.nombre || '').trim() || null,
+        String(b.bio || '').trim() || null,
+        String(b.especialidad || '').trim() || null,
+        parseInt(b.seguidores) || 0,
+        parseInt(b.orden) || 99,
+        String(b.avatar_url || '').trim() || null,
+        id
+      ).run();
+    }
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 
