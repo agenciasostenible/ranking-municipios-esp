@@ -52,7 +52,7 @@ const total = totalRow?.n ?? 0;
 
 // Instagramers para home: directo de instagramers (verificado=1), ya incluye los migrados de creadores
 const { results: _igAll } = await DB.prepare(
-  `SELECT id, handle, nombre, avatar_url, especialidad, seguidores FROM instagramers WHERE verificado=1 ORDER BY seguidores DESC LIMIT 6`
+  `SELECT id, handle, nombre, avatar_url, especialidad, seguidores FROM instagramers WHERE verificado=1 ORDER BY orden ASC, seguidores DESC LIMIT 6`
 ).all();
 const igHome = (_igAll as any[]).map((c) => ({
   ...c,

@@ -12,7 +12,7 @@ const { results: igRows } = await DB.prepare(
    LEFT JOIN instagramer_municipios im ON im.instagramer_id = i.id
    WHERE i.verificado = 1
    GROUP BY i.id
-   ORDER BY i.id ASC`
+   ORDER BY i.orden ASC, i.seguidores DESC, i.id ASC`
 ).all();
 
 const allCreadores = (igRows as any[]).map((r) => ({
