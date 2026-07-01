@@ -34,10 +34,20 @@ import Base from '../../layouts/Base.astro';
       <label class="uni-check"><input type="checkbox" value="gastronomia" /> 🍽️ Gastronomía</label>
       <label class="uni-check"><input type="checkbox" value="naturaleza" /> 🌿 Naturaleza</label>
       <label class="uni-check"><input type="checkbox" value="playa" /> 🏖️ Playa</label>
-      <label class="uni-check"><input type="checkbox" value="cultura" /> 🏛️ Cultura</label>
-      <label class="uni-check"><input type="checkbox" value="aventura" /> 🧗 Aventura</label>
-      <label class="uni-check"><input type="checkbox" value="rural" /> 🏡 Rural</label>
+      <label class="uni-check"><input type="checkbox" value="cultura" /> 🏛️ Cultura e historia</label>
+      <label class="uni-check"><input type="checkbox" value="aventura" /> 🧗 Aventura y deporte</label>
+      <label class="uni-check"><input type="checkbox" value="rural" /> 🏡 Turismo rural</label>
+      <label class="uni-check"><input type="checkbox" value="fotografía" /> 📷 Fotografía</label>
+      <label class="uni-check"><input type="checkbox" value="lujo" /> 💎 Lujo y hoteles</label>
+      <label class="uni-check"><input type="checkbox" value="familia" /> 👨‍👩‍👧 Familia y niños</label>
+      <label class="uni-check"><input type="checkbox" value="senderismo" /> 🥾 Senderismo</label>
+      <label class="uni-check"><input type="checkbox" value="vinos" /> 🍷 Vinos y bodegas</label>
+      <label class="uni-check"><input type="checkbox" value="festivales" /> 🎉 Fiestas y festivales</label>
       <label class="uni-check"><input type="checkbox" value="general" /> 🗺️ Viajes en general</label>
+    </div>
+    <div class="uni-field" style="margin-top:4px">
+      <label>Otra especialidad <span class="uni-opt">(escribe la tuya si no está arriba)</span></label>
+      <input id="u-esp-custom" type="text" maxlength="40" placeholder="Ej. Astroturismo, Esquí, Surf…" autocomplete="off" />
     </div>
 
     <div class="uni-field">
@@ -176,6 +186,8 @@ import Base from '../../layouts/Base.astro';
       return;
     }
     const esps = Array.from(document.querySelectorAll('#u-esps input:checked')).map((cb: any) => cb.value);
+    const custom = $('u-esp-custom').value.trim();
+    if (custom) esps.push(custom);
     const payload = {
       handle,
       nombre:      $('u-nombre').value.trim() || undefined,

@@ -184,13 +184,14 @@ const totalProv = totalProvRow?.n ?? 0;
 
 // Instagramers que recomiendan este municipio
 const { results: instagramersRows } = await DB.prepare(
-  `SELECT i.handle, i.nombre, i.avatar_url, i.especialidad, im.url_post
-   FROM instagramer_municipios im
-   JOIN instagramers i ON i.id = im.instagramer_id
-   WHERE im.codigo_ine = ? AND i.verificado = 1
-   ORDER BY im.destacado DESC, i.id DESC
-   LIMIT 8`
-).bind(codigo).all();
+  `SELECT DISTINCT i.id, i.handle, i.nombre, i.avatar_url, i.especialidad, i.seguidores
+   FROM instagramers i
+   JOIN instagramer_municipios im ON im.instagramer_id = i.id
+   WHERE i.verificado = 1
+     AND (im.codigo_ine = ? OR im.provincia = ?)
+   ORDER BY i.seguidores DESC, i.id DESC
+   LIMIT 6`
+).bind(codigo, municipio.provincia).all();
 const instagramersMuni = instagramersRows as any[];
 
 const globalScore = puntuaciones.find((p: any) => p.categoria === 'ranking_global');
