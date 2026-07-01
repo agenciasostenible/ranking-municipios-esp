@@ -160,17 +160,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
       </div>
     </div>
 
-    <!-- Paso 2: Zona opcional + CTA (solo desktop) -->
-    <div class="hero-search-wrap hero-search-desktop">
-      <div class="hero-search-pill">
-        <input id="si" type="text" placeholder="Provincia, comunidad o zona (opcional)" autocomplete="off" class="hsp-input" />
-        <button id="btn-search" class="hsp-btn" aria-label="Buscar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        </button>
-      </div>
-      <!-- Autocomplete desktop -->
-      <div id="ac" class="hero-ac"></div>
-    </div>
   </div>
 </section>
 
@@ -677,75 +666,7 @@ function formatPobJs(n: number) {
 (window as any).loadMore = loadMore;
 // ─────────────────────────────────────────────────────────────────────────────
 
-const si  = document.getElementById('si') as HTMLInputElement;
-const ac  = document.getElementById('ac')!;
-
-function escHtml(s: string) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function highlight(str: string, q: string) {
-  const i = str.toLowerCase().indexOf(q.toLowerCase());
-  if (i < 0) return escHtml(str);
-  return escHtml(str.slice(0,i)) + `<strong>${escHtml(str.slice(i,i+q.length))}</strong>` + escHtml(str.slice(i+q.length));
-}
-const PIN_SVG  = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`;
-const PROV_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5c6bc0" stroke-width="2"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/><path d="M9 3v15M15 6v15"/></svg>`;
-const CCAA_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#43a047" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>`;
-function getIcon(tipo: string) { return tipo==='provincia'?PROV_SVG:tipo==='comunidad'?CCAA_SVG:PIN_SVG; }
-function getIconBg(tipo: string) { return tipo==='provincia'?'#eef0fb':tipo==='comunidad'?'#e8f5e9':'#fff0f2'; }
-function getSubtitle(m: any) {
-  if (m.tipo === 'provincia') return 'Provincia';
-  if (m.tipo === 'comunidad') return 'Comunidad autónoma';
-  const p = m.provincia;
-  return (p && p !== 'undefined' && p !== 'null') ? p : '';
-}
-async function fetchResults(q: string): Promise<any[]> {
-  if (q.length < 2) return [];
-  return fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json());
-}
-function renderItems(container: HTMLElement, data: any[], q: string) {
-  container.innerHTML = data.map(m => {
-    const subtitle = getSubtitle(m);
-    const bg = getIconBg(m.tipo);
-    const cat = selectedCat || 'ranking_global';
-    let href = m.url ?? `/municipio/${m.codigo_ine}`;
-    if (m.tipo === 'provincia') href = `/provincia/${encodeURIComponent(m.nombre)}?categoria=${cat}`;
-    else if (m.tipo === 'comunidad') href = `/ranking/${cat}?ccaa=${encodeURIComponent(m.nombre)}`;
-    else if (selectedCat) href = `/municipio/${m.codigo_ine}?desde=${selectedCat}`;
-    return `<a href="${escHtml(href)}"
-      style="display:flex;align-items:center;gap:14px;padding:12px 20px;text-decoration:none;color:#222;border-bottom:1px solid #f5f5f5;background:#fff;cursor:pointer"
-      onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='#fff'">
-      <span style="flex-shrink:0;width:36px;height:36px;border-radius:9px;background:${bg};display:flex;align-items:center;justify-content:center">${getIcon(m.tipo)}</span>
-      <span style="flex:1;min-width:0;font-size:.9rem;font-weight:600;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-        ${highlight(m.nombre, q)}${subtitle ? `<span style="font-weight:400;color:#888;margin-left:8px;font-size:.82rem">${escHtml(subtitle)}</span>` : ''}
-      </span>
-    </a>`;
-  }).join('');
-}
-
-// ── Autocomplete desktop hero ──
-let timer: ReturnType<typeof setTimeout>;
-si.addEventListener('input', () => {
-  const q = si.value.trim();
-  clearTimeout(timer);
-  if (!q || q.length < 2) { ac.classList.remove('open'); return; }
-  timer = setTimeout(async () => {
-    const data = await fetchResults(q);
-    if (!data.length) { ac.classList.remove('open'); return; }
-    renderItems(ac, data, q);
-    ac.classList.add('open');
-  }, 200);
-});
-si.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') ac.classList.remove('open');
-  if (e.key === 'Enter') doSearch();
-});
-document.getElementById('btn-search')!.addEventListener('click', doSearch);
-document.addEventListener('click', (e) => {
-  if (!(e.target as Element)?.closest?.('.hero-search-wrap')) ac.classList.remove('open');
-});
-
-// selectedCat lo siguen usando el buscador de zona (desktop) y la hoja móvil
+// selectedCat lo sigue usando el buscador de zona móvil
 let selectedCat = '';
 
 // ── Desplegable "Elige una experiencia" (categorías → enlaces a su ranking) ──
@@ -776,36 +697,38 @@ document.getElementById('mcs-close')!.addEventListener('click', closeCatSheet);
 document.getElementById('mcs-all')!.addEventListener('click', () => {
   window.location.href = `/ranking/${selectedCat || 'ranking_global'}`;
 });
+function mcsEsc(s: string) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function mcsHl(str: string, q: string) {
+  const i = str.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return mcsEsc(str);
+  return mcsEsc(str.slice(0,i)) + `<strong>${mcsEsc(str.slice(i,i+q.length))}</strong>` + mcsEsc(str.slice(i+q.length));
+}
 let mcsTimer: ReturnType<typeof setTimeout>;
 mcsInput.addEventListener('input', () => {
   const q = mcsInput.value.trim();
   clearTimeout(mcsTimer);
   if (!q || q.length < 2) { mcsAc.innerHTML = ''; return; }
   mcsTimer = setTimeout(async () => {
-    const data = await fetchResults(q);
-    renderItems(mcsAc, data, q);
+    const data: any[] = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r=>r.json()).catch(()=>[]);
+    const cat = selectedCat || 'ranking_global';
+    mcsAc.innerHTML = data.map(m => {
+      let href = m.url ?? `/municipio/${m.codigo_ine}`;
+      if (m.tipo === 'provincia') href = `/provincia/${mcsEsc(m.nombre)}?categoria=${cat}`;
+      else if (m.tipo === 'comunidad') href = `/ranking/${cat}?ccaa=${encodeURIComponent(m.nombre)}`;
+      else if (m.tipo === 'municipio' && selectedCat) href = `/municipio/${m.codigo_ine}?desde=${selectedCat}`;
+      const sub = m.tipo==='provincia'?'Provincia':m.tipo==='comunidad'?'Comunidad autónoma':m.tipo==='lugar'?(m.subtitulo??''):(m.provincia||'');
+      return `<a href="${mcsEsc(href)}" style="display:flex;align-items:center;gap:12px;padding:11px 16px;text-decoration:none;color:#222;border-bottom:1px solid #f5f5f5">
+        <span style="flex:1;min-width:0">
+          <span style="display:block;font-size:.88rem;font-weight:600">${mcsHl(m.nombre,q)}</span>
+          ${sub?`<span style="display:block;font-size:.75rem;color:#888">${mcsEsc(sub)}</span>`:''}
+        </span></a>`;
+    }).join('');
   }, 200);
 });
 
 function doSearch() {
-  const q = si.value.trim();
   const cat = selectedCat || 'ranking_global';
-  ac.classList.remove('open');
-  if (q.length >= 2) {
-    fetchResults(q).then((data: any[]) => {
-      const first = data[0];
-      if (!first) { window.location.href = `/ranking/${cat}`; return; }
-      if (first.tipo === 'provincia') {
-        window.location.href = `/ranking/${cat}?provincia=${encodeURIComponent(first.nombre)}`;
-      } else if (first.tipo === 'comunidad') {
-        window.location.href = `/ranking/${cat}?ccaa=${encodeURIComponent(first.nombre)}`;
-      } else {
-        window.location.href = selectedCat
-          ? `/municipio/${first.codigo_ine}?desde=${selectedCat}`
-          : `/municipio/${first.codigo_ine}`;
-      }
-    });
-  } else {
+  if (cat !== 'ranking_global') {
     window.location.href = `/ranking/${cat}`;
   }
 }
@@ -892,8 +815,6 @@ function doSearch() {
 .hero-find-ac:empty { display: none; }
 .hero-all-btn { display: inline-flex; align-items: center; gap: 9px; padding: 12px 24px; background: rgba(255,255,255,0.95); color: var(--primary); border-radius: 40px; font-weight: 800; font-size: .95rem; text-decoration: none; box-shadow: 0 4px 16px rgba(0,0,0,.18); transition: all .18s; }
 .hero-all-btn:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
-/* El buscador "Paso 2" antiguo se sustituye por el buscador inline por categoría */
-.hero-search-desktop { display: none !important; }
 
 /* Paso 2 móvil: hoja de selección de zona */
 .mcs-overlay {
@@ -1056,44 +977,48 @@ function doSearch() {
   color: #fff;
 }
 
-/* Hero search */
-.hero-search-wrap { position: relative; width: 100%; max-width: 640px; margin: 0 auto; }
-
-.hero-search-pill {
+/* Hero search — buscador general */
+.hero-gs-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto 22px;
+}
+.hero-gs-pill {
   display: flex;
   align-items: center;
+  gap: 10px;
   background: #fff;
   border-radius: 40px;
   box-shadow: 0 4px 32px rgba(0,0,0,.35);
-  padding: 6px 6px 6px 20px;
+  padding: 10px 8px 10px 18px;
 }
-.hsp-input {
+.hero-gs-input {
   flex: 1;
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: .97rem;
   color: var(--text);
   background: transparent;
   min-width: 0;
 }
-.hsp-input::placeholder { color: #aaa; }
-.hsp-btn {
+.hero-gs-input::placeholder { color: #aaa; }
+.hero-gs-btn {
   background: var(--primary);
   border: none;
-  border-radius: 50%;
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 40px;
+  padding: 10px 20px;
+  color: #fff;
+  font-family: inherit;
+  font-size: .9rem;
+  font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
   transition: background .2s, transform .15s;
   flex-shrink: 0;
 }
-.hsp-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
-.hsp-btn svg { width: 20px; height: 20px; }
+.hero-gs-btn:hover { background: var(--primary-dark); transform: scale(1.03); }
 
 /* Filters row below the pill */
 .hero-filters {

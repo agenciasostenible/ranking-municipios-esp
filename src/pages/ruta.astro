@@ -388,17 +388,35 @@ function legTimes(a: any, b: any) {
   };
 }
 
+// Fuente primaria de cada categoría (para priorizar esas entidades en el plan del día)
+const CAT_FUENTE: Record<string, string> = {
+  castillos:        'inventario_castillos_pdf',
+  monumentos:       'inventario_monumentos_pdf',
+  naturaleza:       'inventario_naturaleza_pdf',
+  museos:           'wikidata_museos',
+  oleoturismo:      'inventario_oleoturismo_pdf',
+  turismo_religioso:'inventario_monumentos_pdf',
+  misterioso:       'inventario_misterioso_pdf',
+};
+
 let diaPlan: any = null;
 if (pueblo && selCfgs.length) {
   const primaryCat = cats[0];
   const tipo = tipoByCat[primaryCat];
+  const primaryFuente = CAT_FUENTE[primaryCat] ?? null;
   const center = { latitud: pueblo.latitud, longitud: pueblo.longitud, nombre: pueblo.nombre };
 
-  // Recurso "estrella" verificado de nuestro inventario (lo que hace destacar al pueblo)
-  const starRow = await DB.prepare(
-    `SELECT nombre, descripcion FROM entidades
-      WHERE codigo_ine=? AND tipo=? ORDER BY length(COALESCE(descripcion,'')) DESC LIMIT 1`
-  ).bind(puebloCode, tipo).first();
+  // Recurso "estrella": buscar por fuente primaria de la categoría (no solo por tipo,
+  // ya que castillos incluye fortalezas, alcazabas, murallas, torres, etc.)
+  const starRow = primaryFuente
+    ? await DB.prepare(
+        `SELECT nombre, descripcion FROM entidades
+          WHERE codigo_ine=? AND fuente=? ORDER BY length(COALESCE(descripcion,'')) DESC LIMIT 1`
+      ).bind(puebloCode, primaryFuente).first()
+    : await DB.prepare(
+        `SELECT nombre, descripcion FROM entidades
+          WHERE codigo_ine=? AND tipo=? ORDER BY length(COALESCE(descripcion,'')) DESC LIMIT 1`
+      ).bind(puebloCode, tipo).first();
 
   // Alojamiento rural propio (respaldo local de "dormir")
   const ruralRow = await DB.prepare(
@@ -414,12 +432,27 @@ if (pueblo && selCfgs.length) {
   }
 
   {
-    // Enriquecimiento con datos propios (sin coste de API externa)
-    const [comerList, dormirList, visMerged] = await Promise.all([
+    // Enriquecimiento con datos propios (sin coste de API externa).
+    // visMerged: primero las entidades de la categoría elegida (prioridad), luego el resto.
+    const allVisFuentes = ['inventario_monumentos_pdf', 'inventario_castillos_pdf', 'inventario_naturaleza_pdf', 'wikidata_museos'];
+    const [comerList, dormirList, primaryVis, otherVis] = await Promise.all([
       localEntidades(puebloCode, ['guia_repsol_solete', 'guia_michelin', 'gastronomia_ampliacion'], 4),
       localEntidades(puebloCode, ['hoteles_encanto', 'inventario_turismo_rural_pdf'], 4),
-      localEntidades(puebloCode, ['inventario_monumentos_pdf', 'inventario_castillos_pdf', 'inventario_naturaleza_pdf', 'wikidata_museos'], 10),
+      primaryFuente && allVisFuentes.includes(primaryFuente)
+        ? localEntidades(puebloCode, [primaryFuente], 5)
+        : Promise.resolve([] as any[]),
+      localEntidades(puebloCode, allVisFuentes, 10),
     ]);
+    // Primero las de la categoría principal, luego el resto (el dedup quita repetidos)
+    const visMerged = [...primaryVis, ...otherVis];
+
+    // Entidades de la BD no llevan lat/lng propio — asignamos el centroide del
+    // municipio y marcamos synth=true para que el dedup no use distancia en ellas.
+    for (const lst of [comerList, dormirList, visMerged]) {
+      for (const it of lst) {
+        if (it.lat == null) { it.lat = pueblo.latitud; it.lng = pueblo.longitud; it.synth = true; }
+      }
+    }
     const cafeList: any[] = [];
     const copaList: any[] = [];
 
@@ -435,7 +468,7 @@ if (pueblo && selCfgs.length) {
       const dup = visRaw.some((k) => {
         const nk = normName(k.nombre);
         if (nv && nk && nv.length >= 5 && nk.length >= 5 && (nk.includes(nv) || nv.includes(nk))) return true;
-        if (v.lat != null && k.lat != null && haversine({ latitud: v.lat, longitud: v.lng }, { latitud: k.lat, longitud: k.lng }) < 0.12) return true;
+        if (!v.synth && !k.synth && v.lat != null && k.lat != null && haversine({ latitud: v.lat, longitud: v.lng }, { latitud: k.lat, longitud: k.lng }) < 0.12) return true;
         return false;
       });
       if (!dup) visRaw.push(v);
@@ -572,7 +605,8 @@ const fmtDur = (min: number) => {
 };
 
 const fmtRating = (h: any) => {
-  const r = Number(h?.rating ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (!h?.rating) return '';
+  const r = Number(h.rating).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const n = h?.reviews ? ` (${Number(h.reviews).toLocaleString('es-ES')})` : '';
   return `${r}${n}`;
 };

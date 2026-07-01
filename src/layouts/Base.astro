@@ -801,7 +801,7 @@ const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.
       <!-- Search pill (hidden on mobile) -->
       <div class="header-search">
         <div class="search-pill">
-          <input id="hsi" type="text" placeholder="Busca municipio, provincia o comunidad..." autocomplete="off"
+          <input id="hsi" type="text" placeholder="Busca municipio, provincia, monumento, restaurante…" autocomplete="off"
             oninput="hSearch(this.value)"
             onkeydown="if(event.key==='Enter'){hSearch(this.value,true)} if(event.key==='Escape'){document.getElementById('hac').classList.remove('open')}" />
           <button class="search-pill-btn" onclick="hSearch(document.getElementById('hsi').value,true)" aria-label="Buscar">
@@ -830,13 +830,13 @@ const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.
     <!-- Estado inactivo: pill tappable -->
     <button class="mob-search-pill" id="mob-search-btn" aria-label="Buscar municipio">
       <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <span>Busca municipio, provincia o comunidad...</span>
+      <span>Busca municipio, provincia, monumento, restaurante…</span>
     </button>
     <!-- Estado activo: input + resultados -->
     <div class="mob-search-active" id="mob-search-active" style="display:none">
       <div class="mob-search-row">
         <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round" width="18" height="18" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="mob-si" type="text" placeholder="Busca municipio, provincia o comunidad..." autocomplete="off" class="mob-input-inline" />
+        <input id="mob-si" type="text" placeholder="Busca municipio, provincia, monumento, restaurante…" autocomplete="off" class="mob-input-inline" />
         <button id="mob-cancel" class="mob-cancel-btn" aria-label="Cancelar">Cancelar</button>
       </div>
       <div id="mob-dropdown" class="mob-dropdown"></div>
@@ -883,9 +883,11 @@ const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.
   </nav>
 
   <script>
-    const PIN_D  = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`;
-    const PROV_D = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5c6bc0" stroke-width="2"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/></svg>`;
-    const CCAA_D = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#43a047" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>`;
+    const PIN_D   = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`;
+    const PROV_D  = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5c6bc0" stroke-width="2"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/></svg>`;
+    const CCAA_D  = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#43a047" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>`;
+    const LUGAR_D = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>`;
+    const CAT_D   = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`;
 
     function dEsc(s: string) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -895,14 +897,28 @@ const ogImageAbs = ogImage.startsWith('http') ? ogImage : 'https://rankingspain.
       if (i < 0) return dEsc(str);
       return dEsc(str.slice(0,i)) + `<strong>${dEsc(str.slice(i,i+q.length))}</strong>` + dEsc(str.slice(i+q.length));
     }
-    function dIcon(tipo: string) { return tipo==='provincia'?PROV_D:tipo==='comunidad'?CCAA_D:PIN_D; }
-    function dIconBg(tipo: string) { return tipo==='provincia'?'#eef0fb':tipo==='comunidad'?'#e8f5e9':'#fff0f2'; }
+    function dIcon(tipo: string) {
+      if (tipo==='provincia') return PROV_D;
+      if (tipo==='comunidad') return CCAA_D;
+      if (tipo==='lugar') return LUGAR_D;
+      if (tipo==='categoria') return CAT_D;
+      return PIN_D;
+    }
+    function dIconBg(tipo: string) {
+      if (tipo==='provincia') return '#eef0fb';
+      if (tipo==='comunidad') return '#e8f5e9';
+      if (tipo==='lugar') return '#fffbeb';
+      if (tipo==='categoria') return '#fff0f2';
+      return '#fff0f2';
+    }
     function dSub(m: any) {
       if (m.tipo==='provincia') return 'Provincia';
       if (m.tipo==='comunidad') return 'Comunidad autónoma';
+      if (m.tipo==='lugar' || m.tipo==='categoria') return m.subtitulo ?? '';
       return (m.provincia && m.provincia!=='undefined') ? m.provincia : '';
     }
     function dHref(m: any) {
+      if (m.url) return m.url;
       if (m.tipo==='provincia') return `/ranking/ranking_global?provincia=${encodeURIComponent(m.nombre)}`;
       if (m.tipo==='comunidad') return `/ranking/ranking_global?ccaa=${encodeURIComponent(m.nombre)}`;
       return `/municipio/${m.codigo_ine}`;

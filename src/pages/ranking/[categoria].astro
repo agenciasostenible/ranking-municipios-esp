@@ -66,6 +66,50 @@ const ranking = (rankingRaw as any[]).map(r => ({
 const { results: provincias } = await DB.prepare(`SELECT DISTINCT provincia FROM municipios ORDER BY provincia`).all();
 const { results: ccaas }     = await DB.prepare(`SELECT DISTINCT comunidad FROM municipios ORDER BY comunidad`).all();
 
+// Count de entidades individuales para el banner de descubrimiento
+const CAT_FUENTES_ENT: Record<string,string[]> = {
+  castillos:['inventario_castillos_pdf'], monumentos:['inventario_monumentos_pdf'],
+  naturaleza:['inventario_naturaleza_pdf'], museos:['wikidata_museos'],
+  fiestas:['inventario_fiestas_pdf'], festivales:['inventario_festivales_pdf'],
+  miradores:['inventario_miradores_pdf'], oleoturismo:['inventario_oleoturismo_pdf'],
+  misterioso:['inventario_misterioso_pdf'], estrellas:['starlight'],
+  Playas:['bandera_azul','inventario_playas_pdf'], hoteles_encanto:['hoteles_encanto'],
+  TurismoRural:['inventario_turismo_rural_pdf'], ciclismo:['vias_verdes','caminos_naturales','eurovelo'],
+  vinos:['inventario_vinos_pdf','rutas_vino'], pueblo_bonito:['pueblos_mas_bonitos'],
+  turismo_religioso:['inventario_turismo_religioso_pdf'], lujo:['inventario_lujo_pdf'],
+  soletes:['guia_repsol_solete'], gastronomia:['gastronomia_ampliacion','guia_michelin'],
+};
+const ENT_PREGUNTAS: Record<string,string> = {
+  castillos:'¿Cuál es el castillo más impresionante?',
+  monumentos:'¿Cuál es el monumento más destacado?',
+  naturaleza:'¿Cuál es el espacio natural más espectacular?',
+  museos:'¿Cuál es el museo más importante?',
+  fiestas:'¿Cuál es la fiesta más popular?',
+  festivales:'¿Cuál es el mejor festival de España?',
+  miradores:'¿Cuál es el mirador con mejores vistas?',
+  oleoturismo:'¿Cuál es la mejor ruta del aceite?',
+  misterioso:'¿Cuál es el lugar más misterioso?',
+  estrellas:'¿Dónde ver mejor el cielo estrellado?',
+  Playas:'¿Cuál es la mejor playa de España?',
+  hoteles_encanto:'¿Cuál es el hotel con más encanto?',
+  TurismoRural:'¿Cuál es el mejor alojamiento rural?',
+  ciclismo:'¿Cuál es la mejor ruta ciclista?',
+  vinos:'¿Cuál es la mejor ruta del vino?',
+  pueblo_bonito:'¿Cuál es el pueblo más bonito?',
+  turismo_religioso:'¿Cuál es el lugar religioso más emblemático?',
+  lujo:'¿Cuál es la experiencia de lujo más exclusiva?',
+  soletes:'¿Cuál es el restaurante más recomendado?',
+  gastronomia:'¿Cuál es el mejor restaurante de España?',
+};
+const entFuentes = CAT_FUENTES_ENT[categoria!];
+let entCount = 0;
+if (entFuentes) {
+  const entCountRow = await DB.prepare(
+    `SELECT COUNT(DISTINCT LOWER(e.nombre)||'|'||e.codigo_ine) AS n FROM entidades e JOIN municipios m ON m.codigo_ine=e.codigo_ine WHERE e.fuente IN (${entFuentes.map(()=>'?').join(',')}) AND COALESCE(m.es_duplicado,0)=0`
+  ).bind(...entFuentes).first() as any;
+  entCount = entCountRow?.n ?? 0;
+}
+
 const maxPts: number = ranking.length ? Math.max(...(ranking as any[]).map((r: any) => r.puntuacion ?? 0)) : 100;
 
 // Datos para "Compartir ranking" (imagen Stories/cuadrada). Solo en la 1ª página
@@ -234,6 +278,17 @@ function buildUrl(overrides: Record<string, string | number>) {
         Mostrando {(page-1)*perPage+1}–{Math.min(page*perPage, totalRows)}
         {prov ? ` en ${prov}` : ccaa ? ` en ${ccaa}` : ''}
       </div>
+      {entFuentes && ENT_PREGUNTAS[categoria!] && (
+        <a href={`/entidades/${categoria}${prov ? `?provincia=${encodeURIComponent(prov)}` : ccaa ? `?ccaa=${encodeURIComponent(ccaa)}` : ''}`} class="ent-banner" style={`--ec:${catColor}`}>
+          <div class="ent-banner-left">
+            <span class="ent-banner-q">{ENT_PREGUNTAS[categoria!]}</span>
+            <span class="ent-banner-cta">
+              Ver los {entCount > 0 ? entCount.toLocaleString('es-ES') : ''} {catLabel.toLowerCase()} por nombre
+            </span>
+          </div>
+          <span class="ent-banner-arrow">›</span>
+        </a>
+      )}
     </div>
     {canShareRanking && (
       <button type="button" class="rank-share-btn" id="rank-share-btn" style={`--rc:${catColor}`}>📲 Compartir ranking</button>
@@ -762,6 +817,25 @@ document.head.appendChild(thumbStyle);
   padding: 16px 20px 0;
   max-width: 1100px;
   margin: 0 auto;
+}
+.ent-banner {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: 16px; text-decoration: none; padding: 16px 20px;
+  width: 100%; box-sizing: border-box;
+  background: linear-gradient(135deg, var(--ec, #FF385C) 0%, color-mix(in srgb, var(--ec, #FF385C) 70%, #000) 100%);
+  border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  transition: transform .15s, box-shadow .15s;
+}
+.ent-banner:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.ent-banner-left { display: flex; flex-direction: column; gap: 4px; }
+.ent-banner-q    { font-size: 1rem; font-weight: 800; color: #fff; line-height: 1.3; }
+.ent-banner-cta  { font-size: .78rem; font-weight: 500; color: rgba(255,255,255,.8); }
+.ent-banner-arrow {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,.25); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; font-weight: 400; line-height: 36px;
+  padding: 0; padding-bottom: 1px; text-align: center;
 }
 .cat-tagline {
   font-size: .92rem;

@@ -1,0 +1,246 @@
+---
+import { DB } from '../../lib/d1client';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { getCatInfo, LABELS } from '../../lib/db';
+import { CAT_COLORS } from '../../lib/utils';
+// @ts-ignore
+
+const { cat } = Astro.params;
+
+// Mapa categoría → fuente(s) de entidades individuales
+const CAT_FUENTES: Record<string, string[]> = {
+  castillos:         ['inventario_castillos_pdf'],
+  monumentos:        ['inventario_monumentos_pdf'],
+  naturaleza:        ['inventario_naturaleza_pdf'],
+  museos:            ['wikidata_museos'],
+  fiestas:           ['inventario_fiestas_pdf'],
+  festivales:        ['inventario_festivales_pdf'],
+  miradores:         ['inventario_miradores_pdf'],
+  oleoturismo:       ['inventario_oleoturismo_pdf'],
+  misterioso:        ['inventario_misterioso_pdf'],
+  estrellas:         ['starlight'],
+  Playas:            ['bandera_azul', 'inventario_playas_pdf'],
+  hoteles_encanto:   ['hoteles_encanto'],
+  TurismoRural:      ['inventario_turismo_rural_pdf'],
+  ciclismo:          ['vias_verdes', 'caminos_naturales', 'eurovelo'],
+  vinos:             ['inventario_vinos_pdf', 'rutas_vino'],
+  pueblo_bonito:     ['pueblos_mas_bonitos'],
+  turismo_religioso: ['inventario_turismo_religioso_pdf'],
+  turismo_activo:    ['inventario_turismo_activo_pdf'],
+  lujo:              ['inventario_lujo_pdf'],
+  soletes:           ['guia_repsol_solete'],
+  gastronomia:       ['gastronomia_ampliacion', 'guia_michelin'],
+};
+
+const fuentes = CAT_FUENTES[cat!];
+if (!fuentes) return Astro.redirect('/ranking/ranking_global');
+
+const url = Astro.url;
+const prov = url.searchParams.get('provincia') ?? url.searchParams.get('prov') ?? '';
+const q    = (url.searchParams.get('q') ?? '').trim();
+const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
+const perPage = 50;
+const offset  = (page - 1) * perPage;
+
+const catInfo  = getCatInfo(cat!);
+const catLabel = LABELS[cat!] ?? cat!;
+const catColor = CAT_COLORS[cat!] ?? '#FF385C';
+
+// Lista de provincias para el filtro
+const { results: provRows } = await DB.prepare(
+  `SELECT DISTINCT m.provincia FROM municipios m
+   JOIN entidades e ON e.codigo_ine = m.codigo_ine
+   WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')}) AND COALESCE(m.es_duplicado,0)=0
+   ORDER BY m.provincia`
+).bind(...fuentes).all();
+const provincias = (provRows as any[]).map(r => r.provincia);
+
+// Condiciones extra
+const provCond  = prov ? `AND m.provincia = ?` : '';
+const qNorm     = q ? q.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase() : '';
+const qCond     = q ? `AND (LOWER(e.nombre) LIKE LOWER(?) OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(e.nombre),'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u') LIKE ?)` : '';
+
+const bindParams: any[] = [...fuentes];
+if (prov) bindParams.push(prov);
+if (q)    bindParams.push(`%${q}%`, `%${qNorm}%`);
+
+// Total para paginación
+const countSql = `
+  SELECT COUNT(*) AS n FROM entidades e
+  JOIN municipios m ON m.codigo_ine = e.codigo_ine
+  WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')})
+    AND COALESCE(m.es_duplicado,0)=0
+    ${provCond} ${qCond}`;
+const totalRow = await DB.prepare(countSql).bind(...bindParams).first() as any;
+const total = totalRow?.n ?? 0;
+const totalPages = Math.ceil(total / perPage);
+
+// Entidades con puntuación del municipio en esa categoría
+const bindAll = [...bindParams, perPage, offset];
+const { results: rows } = await DB.prepare(`
+  SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion, MIN(e.nivel_sello) AS nivel_sello,
+         m.codigo_ine, m.nombre AS municipio, m.provincia,
+         COALESCE(p.puntuacion, 0) AS puntuacion
+  FROM entidades e
+  JOIN municipios m ON m.codigo_ine = e.codigo_ine
+  LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = ?
+  WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')})
+    AND COALESCE(m.es_duplicado,0)=0
+    ${provCond} ${qCond}
+  GROUP BY LOWER(e.nombre), m.codigo_ine
+  ORDER BY puntuacion DESC, nombre ASC
+  LIMIT ? OFFSET ?
+`).bind(cat!, ...bindAll).all();
+
+const entidades = rows as any[];
+
+function setParam(key: string, val: string | null) {
+  const p = new URLSearchParams(url.search);
+  if (val === null) p.delete(key); else p.set(key, val);
+  p.delete('page');
+  return `/entidades/${cat}?${p.toString()}`;
+}
+function pageUrl(n: number) {
+  const p = new URLSearchParams(url.search);
+  p.set('page', String(n));
+  return `/entidades/${cat}?${p.toString()}`;
+}
+
+const selloColor: Record<string,string> = {
+  'UNESCO': '#d4af37', 'Parque Nacional': '#2e7d32', 'BIC Nacional': '#6a1b9a',
+  '3 Estrellas Michelin': '#e31c5f', '2 Estrellas Michelin': '#e31c5f', '1 Estrella Michelin': '#e31c5f',
+  'Reserva Starlight': '#1a237e', 'Destino Starlight': '#283593',
+};
+---
+
+<Base title={`${catLabel} de España — Ranking Spain`} description={`Lista completa de ${catLabel.toLowerCase()} de España ordenados por importancia.`}>
+<div class="ent-page">
+
+  <div class="ent-hero" style={`background:${catColor}`}>
+    <a href={`/ranking/${cat}`} class="ent-back">← Ver ranking de municipios</a>
+    <div class="ent-hero-ic"><Icon name={catInfo.icon} size={28} /></div>
+    <h1 class="ent-title">{catLabel} de España</h1>
+    <p class="ent-sub">{total.toLocaleString('es-ES')} {catLabel.toLowerCase()} · ordenados por importancia</p>
+  </div>
+
+  <div class="ent-controls">
+    <form method="get" action={`/entidades/${cat}`} class="ent-form">
+      <input type="text" name="q" value={q} placeholder={`Buscar ${catLabel.toLowerCase()}…`} class="ent-q" />
+      {prov && <input type="hidden" name="prov" value={prov} />}
+      <button type="submit" class="ent-submit">Buscar</button>
+    </form>
+    <div class="ent-filters">
+      <select class="ent-sel" onchange={`window.location='/entidades/${cat}?prov='+this.value+(${JSON.stringify(q)}?'&q='+encodeURIComponent(${JSON.stringify(q)}):'')+'&page=1'`}>
+        <option value="">Todas las provincias</option>
+        {provincias.map(p => <option value={p} selected={p===prov}>{p}</option>)}
+      </select>
+      {(prov || q) && <a href={`/entidades/${cat}`} class="ent-clear">✕ Limpiar</a>}
+    </div>
+  </div>
+
+  {entidades.length === 0 && (
+    <p class="ent-empty">No hay resultados para esta búsqueda.</p>
+  )}
+
+  <ol class="ent-list" start={(page-1)*perPage+1}>
+    {entidades.map((e, i) => (
+      <li class="ent-row">
+        <span class="ent-num">{(page-1)*perPage + i + 1}</span>
+        <div class="ent-body">
+          <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-name">{e.nombre}</a>
+          {e.nivel_sello && (
+            <span class="ent-sello" style={`background:${selloColor[e.nivel_sello]??catColor}20;color:${selloColor[e.nivel_sello]??catColor}`}>
+              {e.nivel_sello}
+            </span>
+          )}
+          <div class="ent-meta">
+            <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-muni">📍 {e.municipio}</a>
+            <span class="ent-prov">{e.provincia}</span>
+          </div>
+          {e.descripcion && (
+            <p class="ent-desc">{String(e.descripcion).slice(0,160)}{String(e.descripcion).length>160?'…':''}</p>
+          )}
+        </div>
+        <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-score" style={`color:${catColor}`}>
+          {Math.round(e.puntuacion)}<span>/100</span>
+        </a>
+      </li>
+    ))}
+  </ol>
+
+  {totalPages > 1 && (
+    <div class="ent-pag">
+      {page > 1 && <a href={pageUrl(page-1)} class="ent-pg">← Anterior</a>}
+      <span class="ent-pg-info">Página {page} de {totalPages}</span>
+      {page < totalPages && <a href={pageUrl(page+1)} class="ent-pg">Siguiente →</a>}
+    </div>
+  )}
+
+</div>
+
+<style>
+.ent-page { max-width: 860px; margin: 0 auto; padding: 0 0 60px; }
+.ent-hero {
+  padding: 36px 24px 28px;
+  text-align: center;
+  color: #fff;
+  border-radius: 0 0 20px 20px;
+  margin-bottom: 24px;
+}
+.ent-back { display: inline-block; color: rgba(255,255,255,.8); font-size: .82rem; text-decoration: none; margin-bottom: 12px; }
+.ent-back:hover { color: #fff; }
+.ent-hero-ic { font-size: 2rem; margin-bottom: 8px; opacity: .9; }
+.ent-title { font-size: clamp(1.4rem,4vw,1.9rem); font-weight: 700; letter-spacing:-.02em; margin: 0 0 6px; }
+.ent-sub { color: rgba(255,255,255,.82); font-size: .9rem; margin: 0; }
+
+.ent-controls { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ent-form { display: flex; gap: 8px; }
+.ent-q { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 14px; font-family: inherit; font-size: .9rem; outline: none; }
+.ent-q:focus { border-color: var(--primary); }
+.ent-submit { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-family: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; }
+.ent-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ent-sel { border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; font-family: inherit; font-size: .85rem; background: #fff; cursor: pointer; }
+.ent-clear { font-size: .82rem; color: #888; text-decoration: none; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.ent-clear:hover { color: var(--primary); border-color: var(--primary); }
+
+.ent-empty { text-align: center; color: #888; padding: 40px 16px; }
+
+.ent-list { list-style: none; margin: 0; padding: 0 16px; display: flex; flex-direction: column; gap: 0; }
+.ent-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px 0; border-bottom: 1px solid var(--border);
+}
+.ent-num { font-size: .82rem; font-weight: 700; color: #bbb; min-width: 28px; padding-top: 3px; text-align: right; }
+.ent-body { flex: 1; min-width: 0; }
+.ent-name {
+  display: block; font-size: .97rem; font-weight: 700; color: var(--text);
+  text-decoration: none; line-height: 1.3; margin-bottom: 3px;
+}
+.ent-name:hover { color: var(--primary); }
+.ent-sello {
+  display: inline-block; font-size: .72rem; font-weight: 700; padding: 2px 8px;
+  border-radius: 20px; margin-bottom: 4px;
+}
+.ent-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.ent-muni { font-size: .82rem; color: var(--primary); text-decoration: none; font-weight: 600; }
+.ent-muni:hover { text-decoration: underline; }
+.ent-prov { font-size: .78rem; color: #888; }
+.ent-desc { font-size: .8rem; color: #666; line-height: 1.45; margin: 4px 0 0; }
+.ent-score {
+  font-size: 1.15rem; font-weight: 800; min-width: 52px; text-align: right;
+  padding-top: 2px; flex-shrink: 0; letter-spacing: -.02em;
+}
+.ent-score span { font-size: .72rem; font-weight: 500; color: #bbb; }
+
+.ent-pag { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 28px 16px 0; }
+.ent-pg { color: var(--primary); text-decoration: none; font-weight: 700; font-size: .9rem; padding: 8px 18px; border: 2px solid var(--primary); border-radius: 10px; }
+.ent-pg:hover { background: var(--primary); color: #fff; }
+.ent-pg-info { font-size: .85rem; color: #888; }
+
+@media (max-width: 600px) {
+  .ent-score { font-size: 1rem; min-width: 42px; }
+  .ent-row { gap: 10px; }
+}
+</style>
+</Base>

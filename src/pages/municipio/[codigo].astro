@@ -11,6 +11,7 @@ import { getCreadores } from '../../lib/creadores';
 
 const { codigo } = Astro.params;
 const desde = Astro.url.searchParams.get('desde') ?? '';
+const entBuscada = (Astro.url.searchParams.get('ent') ?? '').toLowerCase();
 
 // Dedup por nombre: una misma entidad puede existir en varios tipos (p.ej. la
 // Fortaleza de la Mota como 'fortaleza' y como 'monumento'), y como una categoría
@@ -226,6 +227,15 @@ const CAT_TIPOS: Record<string, string[]> = {
   festivales:    ['festival'],
   turismo_religioso: ['religioso'],
   turismo_lgtbi:     ['lgtbi'],
+  museos:            ['Museo', 'museo'],
+  miradores:         ['mirador'],
+  vinos:             ['vino', 'bodega'],
+  oleoturismo:       ['almazara', 'oleoturismo'],
+  misterioso:        ['misterio'],
+  estrellas:         ['starlight', 'reserva'],
+  lujo:              ['lujo'],
+  pueblo_bonito:     ['pueblo_bonito'],
+  TurismoRural:      ['rural', 'casa_rural'],
   turismo_mascotas:  ['mascotas'],
   turismo_activo:    ['activo'],
   oleoturismo:       ['oleoturismo'],
@@ -269,6 +279,7 @@ if (desde && desde !== 'ranking_global') {
            WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
          ) <= 8)
        ORDER BY
+         CASE WHEN ? != '' AND LOWER(e.nombre) LIKE '%'||LOWER(?)||'%' THEN 0 ELSE 1 END,
          CASE nivel_sello
            WHEN 'UNESCO' THEN 1 WHEN 'Parque Nacional' THEN 2 WHEN 'BIC Nacional' THEN 3
            WHEN '3 Estrellas Michelin' THEN 4 WHEN '2 Estrellas Michelin' THEN 5 WHEN '1 Estrella Michelin' THEN 6
@@ -278,9 +289,17 @@ if (desde && desde !== 'ranking_global') {
          CASE WHEN COALESCE(e.fuente,'')='guia_michelin' THEN 0
               WHEN COALESCE(e.fuente,'')='guia_repsol_solete' THEN 1
               WHEN COALESCE(e.fuente,'')='gastronomia_ampliacion' THEN 2 ELSE 3 END,
-         nombre LIMIT 12`
-    ).bind(codigo, ...tiposDesde).all();
+         nombre LIMIT 15`
+    ).bind(codigo, ...tiposDesde, entBuscada, entBuscada).all();
     desdeEntidades = dedupByName(de as any[]);
+    // Poner la entidad buscada primera si viene de búsqueda específica
+    if (entBuscada) {
+      desdeEntidades.sort((a: any, b: any) => {
+        const aM = a.nombre.toLowerCase().includes(entBuscada) ? 0 : 1;
+        const bM = b.nombre.toLowerCase().includes(entBuscada) ? 0 : 1;
+        return aM - bM;
+      });
+    }
   }
 }
 
@@ -288,6 +307,11 @@ if (desde && desde !== 'ranking_global') {
 const desdeFallbackEntidades = (entidades as any[]).slice(0, 5);
 
 const desdeInfo = desde ? getCatInfo(desde) : null;
+
+// Variables para la desde-card (computadas en frontmatter, no en template)
+const desdeItems = desdeEntidades.length > 0 ? desdeEntidades : desdeWhyJson.map((w: string) => ({ nombre: w }));
+const desdeEstrella: any = desdeItems[0] ?? null;
+const desdeResto: any[] = desdeItems.slice(1, 5);
 
 // Municipios cercanos por distancia geográfica (bounding box ~50km)
 const lat = municipio.latitud as number | null;
@@ -386,9 +410,7 @@ const creadores = await getCreadores(
 
 <!-- ── HERO full-width ── -->
 <div class="mun-hero" id="mun-hero"
-  style={fotoUrl
-    ? `background:url('${fotoUrl}') center/cover no-repeat`
-    : `background:${heroGradient}`}>
+  style={`${fotoUrl ? `background:url('${fotoUrl}') center/cover no-repeat` : `background:${heroGradient}`}${desde ? ';min-height:140px' : ''}`}>
   <div class="mun-hero-overlay"></div>
   <div class="mun-hero-content">
     <!-- Breadcrumb -->
@@ -456,10 +478,71 @@ const creadores = await getCreadores(
       )}
     </div>
   </div>
+
+  {/* Tarjeta flotante dentro del hero cuando venimos del buscador */}
+  {desdeInfo && desdeEntidades.length > 0 && (
+    <div class="hero-desde-card">
+      <div class="hero-desde-cat">
+        <Icon name={desdeInfo.icon} size={15} /> {desdeInfo.label}
+        {desdePuntuacion && <span class="hero-desde-pts">· {Number(desdePuntuacion.puntuacion).toFixed(0)} pts · #{desdePuntuacion.ranking_provincial} en {municipio.provincia}</span>}
+      </div>
+      <ul class="hero-desde-list">
+        {desdeEntidades.slice(0, 4).map((e: any) => (
+          <li>{e.nombre}</li>
+        ))}
+      </ul>
+      <a href={`/ranking/${desde}`} class="hero-desde-back">← Volver al ranking</a>
+    </div>
+  )}
 </div>
 
 <!-- ── BODY ── -->
 <div class="page-content">
+
+  <!-- Lo que buscabas: PRIMERA sección visible tras el hero -->
+  {desdeInfo && (
+    <section class="desde-card" id="desde-block">
+      <div class="desde-card-tag">
+        <Icon name={desdeInfo.icon} size={14} /> {desdeInfo.label} · {municipio.nombre}
+        {desdePuntuacion?.ranking_provincial && <span>· #{desdePuntuacion.ranking_provincial} en {municipio.provincia}</span>}
+      </div>
+      {desdeEstrella && (
+        <div class="desde-card-hero">
+          <div class="desde-card-nombre">{desdeEstrella.nombre}</div>
+          {desdeEstrella.descripcion && <div class="desde-card-desc">{desdeEstrella.descripcion}</div>}
+          {tieneFichaMaps(desdeEstrella.tipo) && (
+            <a class="desde-maps" target="_blank" rel="noopener" href={gmapsUrl(desdeEstrella.nombre, municipio.nombre, municipio.provincia)}>
+              <Icon name="map_pin" size={14} /> Ver en Google Maps
+            </a>
+          )}
+        </div>
+      )}
+      {!desdeEstrella && (
+        <p class="desde-empty">{municipio.nombre} destaca en {desdeInfo.label} en {municipio.provincia}. Descubre todo lo que ofrece en las secciones de abajo 👇</p>
+      )}
+      {desdeResto.length > 0 && (
+        <div class="desde-card-resto">
+          <div class="desde-card-resto-titulo">También en {municipio.nombre}:</div>
+          {desdeResto.map((e: any) => <span class="desde-card-chip">{e.nombre}</span>)}
+        </div>
+      )}
+      <div class="desde-footer">
+        <a href={`/ranking/${desde}`} class="desde-back">← Ver ranking completo de {desdeInfo.label}</a>
+        {desdePuntuacion && (desdePuntuacion.ranking_nacional || desdePuntuacion.ranking_provincial) && (
+          <button class="desde-share" type="button"
+            data-cat={desdeInfo.label}
+            data-nac={desdePuntuacion.ranking_nacional ?? ''}
+            data-prov={desdePuntuacion.ranking_provincial ?? ''}
+            data-pts={Number(desdePuntuacion.puntuacion).toFixed(0)}
+            onclick="openSello(this)"
+            aria-label={`Compartir el puesto en ${desdeInfo.label}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span>Compartir</span>
+          </button>
+        )}
+      </div>
+    </section>
+  )}
 
   <!-- Rankings por categoría (lo más importante: arriba del todo) -->
   <section class="mun-section">
@@ -553,97 +636,7 @@ const creadores = await getCreadores(
     </section>
   )}
 
-  <!-- Bloque "desde categoría" -->
-  {desdeInfo && (
-    <div class="desde-block">
-      <div class="desde-header">
-        <span class="desde-icon"><Icon name={desdeInfo.icon} size={20} /></span>
-        <div>
-          <div class="desde-title">¿Por qué {municipio.nombre} destaca?</div>
-          {desdePuntuacion && (
-            <div class="desde-sub">
-              Puntuación: <strong>{Number(desdePuntuacion.puntuacion).toFixed(1)}</strong> pts
-              {desdePuntuacion.ranking_provincial && ` · #${desdePuntuacion.ranking_provincial} en ${municipio.provincia}`}
-            </div>
-          )}
-        </div>
-      </div>
-      {desdeEntidades.length > 0 ? (
-        <div class="desde-items">
-          {(desdeEntidades as any[]).map((e: any) => (
-            <div class="desde-item">
-              <span class="desde-item-icon desde-item-icon-line"><Icon name={getTipoIconName(e.tipo)} size={18} /></span>
-              <div class="desde-item-content">
-                <span class="desde-item-name">{e.nombre}</span>
-                {e.descripcion && (
-                  <div class="desde-item-desc">{e.descripcion}</div>
-                )}
-                {tieneFichaMaps(e.tipo) && (
-                  <a class="desde-maps" target="_blank" rel="noopener"
-                     href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
-                    <Icon name="map_pin" size={14} /> Ver en Google Maps
-                  </a>
-                )}
-              </div>
-              {e.nivel_sello && e.nivel_sello !== 'Normal' && (
-                <span class="desde-sello" style={getSelloStyle(e.nivel_sello)}>{e.nivel_sello}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : desdeWhyJson.length > 0 ? (
-        <div class="desde-items">
-          {desdeWhyJson.map((item: string) => (
-            <div class="desde-item">
-              <span class="desde-item-name">{item}</span>
-            </div>
-          ))}
-        </div>
-      ) : desdeFallbackEntidades.length > 0 ? (
-        <>
-          <p class="desde-fallback-note">Recursos y atractivos destacados de {municipio.nombre}:</p>
-          <div class="desde-items">
-            {desdeFallbackEntidades.map((e: any) => (
-              <div class="desde-item">
-                <span class="desde-item-icon desde-item-icon-line"><Icon name={getTipoIconName(e.tipo)} size={18} /></span>
-                <div class="desde-item-content">
-                  <span class="desde-item-name">{e.nombre}</span>
-                  {e.descripcion && (
-                    <div class="desde-item-desc">{e.descripcion}</div>
-                  )}
-                  {tieneFichaMaps(e.tipo) && (
-                    <a class="desde-maps" target="_blank" rel="noopener"
-                       href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
-                      <Icon name="map_pin" size={14} /> Ver en Google Maps
-                    </a>
-                  )}
-                </div>
-                {e.nivel_sello && e.nivel_sello !== 'Normal' && (
-                  <span class="desde-sello" style={getSelloStyle(e.nivel_sello)}>{e.nivel_sello}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        <p class="desde-empty">{municipio.nombre} destaca en {desdeInfo.label} en {municipio.provincia}. Descubre todo lo que ofrece en las secciones de abajo 👇</p>
-      )}
-      <div class="desde-footer">
-        <a href={`/ranking/${desde}`} class="desde-back">← Volver al ranking de {desdeInfo.label}</a>
-        {desdePuntuacion && (desdePuntuacion.ranking_nacional || desdePuntuacion.ranking_provincial) && (
-          <button class="desde-share" type="button"
-            data-cat={desdeInfo.label}
-            data-nac={desdePuntuacion.ranking_nacional ?? ''}
-            data-prov={desdePuntuacion.ranking_provincial ?? ''}
-            data-pts={Number(desdePuntuacion.puntuacion).toFixed(0)}
-            onclick="openSello(this)"
-            aria-label={`Compartir el puesto en ${desdeInfo.label}`}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            <span>Compartir</span>
-          </button>
-        )}
-      </div>
-    </div>
+
   )}
 
   <!-- Entidades grid -->
@@ -984,6 +977,23 @@ const creadores = await getCreadores(
   </div>
 </div>
 
+<script>
+// Scroll automático al bloque "desde" cuando venimos del buscador con ?desde=
+if (new URLSearchParams(location.search).get('desde')) {
+  const el = document.getElementById('desde-block');
+  if (el) {
+    // Espera a que la página esté pintada y luego sube al bloque compensando el header sticky
+    const doScroll = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY - 64;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    };
+    setTimeout(doScroll, 100);
+    // Segundo intento por si las imágenes del hero cambian el layout
+    setTimeout(doScroll, 600);
+  }
+}
+</script>
+
 <script define:vars={{ MUNI }}>
 const PAGE_URL = `https://rankingspain.com/municipio/${MUNI.codigo}`;
 let SELLO = { cat: '', pts: '', opts: [], scopeIdx: 0 };
@@ -1185,6 +1195,30 @@ window.openSello = openSello;
   display: flex;
   align-items: flex-end;
 }
+.hero-desde-card {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+  background: rgba(0,0,0,.72); backdrop-filter: blur(6px);
+  padding: 14px 20px; color: #fff;
+}
+.hero-desde-cat {
+  font-size: .78rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: #ffd166; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.hero-desde-pts { font-weight: 400; color: rgba(255,255,255,.7); text-transform: none; letter-spacing: 0; }
+.hero-desde-list {
+  list-style: none; margin: 0 0 8px; padding: 0;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.hero-desde-list li {
+  font-size: .9rem; font-weight: 600; color: #fff;
+  padding-left: 12px; position: relative;
+}
+.hero-desde-list li::before { content: '›'; position: absolute; left: 0; color: #ffd166; }
+.hero-desde-back {
+  font-size: .75rem; color: rgba(255,255,255,.6); text-decoration: none;
+}
+.hero-desde-back:hover { color: #fff; }
 .mun-hero-overlay {
   position: absolute;
   inset: 0;
@@ -1320,6 +1354,35 @@ window.openSello = openSello;
   margin-top: 3px;
 }
 .desde-sub strong { color: var(--primary); }
+.desde-card {
+  background: #fff8f8;
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 8px;
+}
+.desde-card-tag {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--primary); margin-bottom: 10px;
+}
+.desde-card-tag span { font-weight: 400; color: #888; text-transform: none; letter-spacing: 0; }
+.desde-card-nombre {
+  font-size: 1.25rem; font-weight: 800; color: #111;
+  line-height: 1.25; margin-bottom: 6px;
+}
+.desde-card-desc {
+  font-size: .85rem; color: #444; line-height: 1.5;
+  margin-bottom: 8px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.desde-card-resto { margin: 12px 0 8px; }
+.desde-card-resto-titulo { font-size: .72rem; font-weight: 600; color: #888; margin-bottom: 6px; }
+.desde-card-chip {
+  display: inline-block; background: #fff; border: 1px solid #ddd;
+  border-radius: 20px; padding: 3px 10px; font-size: .78rem; color: #444;
+  margin: 2px 3px 2px 0;
+}
 .desde-items {
   display: flex;
   flex-direction: column;
