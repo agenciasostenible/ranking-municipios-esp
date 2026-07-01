@@ -97,8 +97,8 @@ const especialidades = [
               </div>
             )}
             {ig.bio && <p class="ig-bio">"{ig.bio}"</p>}
-            {ig.n_munis > 0 && (
-              <div class="ig-munis-count">📍 {ig.n_munis} municipio{ig.n_munis !== 1 ? 's' : ''} recomendado{ig.n_munis !== 1 ? 's' : ''}</div>
+            {ig.provincias && (
+              <div class="ig-zonas">📍 {ig.provincias.split(',').filter((p: string) => p.trim()).slice(0,5).join(' · ')}</div>
             )}
           </div>
           <a class="ig-ig-btn" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
@@ -279,7 +279,7 @@ const especialidades = [
   .ig-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin: 2px 0; }
   .ig-tag { display: inline-block; background: #f3f0ff; color: #7c3aed; font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: capitalize; white-space: nowrap; }
   .ig-bio { color: #777; font-size: .8rem; font-style: italic; line-height: 1.4; margin: 2px 0 0; }
-  .ig-munis-count { font-size: .75rem; color: #999; margin-top: 2px; }
+  .ig-zonas { font-size: .74rem; color: #888; margin-top: 3px; line-height: 1.4; }
 
   /* Botón Instagram */
   .ig-ig-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; margin-top: 6px; padding: 10px; background: #f3f0ff; color: #7c3aed; font-size: .84rem; font-weight: 700; border-radius: 12px; text-decoration: none; transition: background .15s; }
