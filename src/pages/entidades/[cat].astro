@@ -89,7 +89,10 @@ const { results: rows } = await DB.prepare(`
     AND COALESCE(m.es_duplicado,0)=0
     ${provCond} ${qCond}
   GROUP BY LOWER(e.nombre), m.codigo_ine
-  ORDER BY puntuacion DESC, nombre ASC
+  ORDER BY
+    CASE WHEN MIN(e.descripcion) IS NOT NULL AND MIN(e.descripcion) NOT LIKE 'Museo en%' THEN 0 ELSE 1 END,
+    puntuacion DESC,
+    nombre ASC
   LIMIT ? OFFSET ?
 `).bind(cat!, ...bindAll).all();
 
