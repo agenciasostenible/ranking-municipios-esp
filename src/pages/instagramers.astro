@@ -73,15 +73,17 @@ const especialidades = [
     <a href="/instagramers/unirme" class="ig-cta">¿Eres instagramer? Únete gratis →</a>
   </div>
 
-  <!-- Buscador por zona -->
+  <!-- Buscador por zona con autocomplete -->
   <div class="ig-search-wrap">
     <input
       id="ig-search"
       type="text"
-      placeholder="Busca por provincia o ciudad… (ej. Granada, Andalucía)"
+      placeholder="Filtra por provincia o ciudad… (ej. Granada)"
       autocomplete="off"
       class="ig-search"
     />
+    <div id="ig-search-ac" class="ig-search-ac"></div>
+    <span id="ig-search-matched" class="ig-search-matched" hidden></span>
   </div>
 
   <!-- Filtros por especialidad -->
@@ -144,6 +146,8 @@ const especialidades = [
   const cards    = document.querySelectorAll<HTMLElement>('.ig-card');
   const none     = document.getElementById('ig-none')!;
   const searchEl = document.getElementById('ig-search') as HTMLInputElement;
+  const ac       = document.getElementById('ig-search-ac')!;
+  const matched  = document.getElementById('ig-search-matched')!;
 
   let activeEsp = '';
   let searchQ   = '';
@@ -169,13 +173,70 @@ const especialidades = [
     });
   });
 
+  // Autocomplete: busca municipios y provincias via /api/search
   let stmr: any;
   searchEl.addEventListener('input', () => {
+    // Al editar manualmente limpia la selección confirmada
+    searchQ = '';
+    matched.hidden = true;
+    applyFilters();
     clearTimeout(stmr);
-    stmr = setTimeout(() => {
-      searchQ = searchEl.value.trim().toLowerCase();
-      applyFilters();
+    const q = searchEl.value.trim();
+    if (q.length < 2) { ac.innerHTML = ''; return; }
+    stmr = setTimeout(async () => {
+      try {
+        const r = await fetch('/api/search?q=' + encodeURIComponent(q));
+        const d = await r.json() as any[];
+        // Mostrar municipios y también agrupar provincias únicas
+        const provSet = new Set<string>();
+        const munis: any[] = [];
+        for (const item of (d || [])) {
+          if (item.tipo === 'municipio') {
+            munis.push(item);
+            if (item.provincia) provSet.add(item.provincia);
+          }
+        }
+        const provItems = [...provSet].slice(0, 3).map(p =>
+          `<a href="#" class="ig-ac-prov" data-q="${p.toLowerCase()}" data-label="${p}">
+            <span class="ig-ac-ic">📍</span> <span>${p}</span> <small>Provincia</small>
+           </a>`
+        );
+        const muniItems = munis.slice(0, 5).map(m =>
+          `<a href="#" class="ig-ac-muni" data-q="${(m.provincia||'').toLowerCase()}" data-label="${m.nombre} · ${m.provincia||''}">
+            <span class="ig-ac-ic">🏘️</span> <span>${m.nombre}</span> <small>${m.provincia||''}</small>
+           </a>`
+        );
+        ac.innerHTML = [...provItems, ...muniItems].join('');
+      } catch {}
     }, 200);
+  });
+
+  ac.addEventListener('click', (e: any) => {
+    e.preventDefault();
+    const a = e.target.closest('a[data-q]');
+    if (!a) return;
+    searchQ = a.getAttribute('data-q') || '';
+    searchEl.value = a.getAttribute('data-label') || '';
+    matched.textContent = '✓ ' + searchEl.value;
+    matched.hidden = false;
+    ac.innerHTML = '';
+    applyFilters();
+  });
+
+  // Limpiar ac al hacer clic fuera
+  document.addEventListener('click', (e: any) => {
+    if (!ac.contains(e.target) && e.target !== searchEl) ac.innerHTML = '';
+  });
+
+  // Limpiar búsqueda con Escape
+  searchEl.addEventListener('keydown', (e: any) => {
+    if (e.key === 'Escape') {
+      searchEl.value = '';
+      searchQ = '';
+      matched.hidden = true;
+      ac.innerHTML = '';
+      applyFilters();
+    }
   });
 </script>
 
@@ -187,10 +248,18 @@ const especialidades = [
   .ig-hero p { color: #555; font-size: .98rem; line-height: 1.55; margin: 0 0 20px; }
   .ig-cta { display: inline-block; background: #7c3aed; color: #fff; padding: 13px 24px; border-radius: 12px; font-weight: 800; font-size: .95rem; text-decoration: none; }
   .ig-cta-outline { background: transparent; border: 2px solid #7c3aed; color: #7c3aed; }
-  .ig-search-wrap { margin-bottom: 14px; }
+  .ig-search-wrap { margin-bottom: 14px; position: relative; }
   .ig-search { width: 100%; padding: 12px 16px; border: 1.5px solid #ddd; border-radius: 12px; font-size: .95rem; font-family: inherit; background: #fff; color: #222; }
   .ig-search:focus { outline: none; border-color: #7c3aed; }
   .ig-search::placeholder { color: #aaa; }
+  .ig-search-ac { position: absolute; top: 100%; left: 0; right: 0; z-index: 30; background: #fff; border-radius: 0 0 12px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); overflow: hidden; }
+  .ig-search-ac a { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid #f0f0f0; text-decoration: none; color: #222; font-size: .92rem; }
+  .ig-search-ac a:first-child { border-top: none; }
+  .ig-search-ac a:hover { background: #f3f0ff; }
+  .ig-search-ac small { color: #999; margin-left: auto; font-size: .78rem; }
+  .ig-ac-ic { font-size: .9rem; flex-shrink: 0; }
+  .ig-ac-prov { font-weight: 700; }
+  .ig-search-matched { font-size: .82rem; color: #16a34a; font-weight: 700; display: block; margin-top: 4px; }
   .ig-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
   .ig-filter-btn { background: #f5f5f5; border: 1.5px solid #e5e5e5; color: #555; font-size: .84rem; font-weight: 700; border-radius: 20px; padding: 7px 14px; cursor: pointer; font-family: inherit; transition: all .15s; }
   .ig-filter-btn:hover { border-color: #c4b5fd; color: #7c3aed; }
