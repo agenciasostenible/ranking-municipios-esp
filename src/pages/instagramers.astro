@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { DB } from '../lib/d1client';
 
-// Instagramers verificados (user-submitted) con provincias
+// Todos los instagramers verificados con provincias agrupadas
 const { results: igRows } = await DB.prepare(
   `SELECT i.id, i.handle, i.nombre, i.avatar_url, i.especialidad, i.bio,
           COUNT(im.id) AS n_munis,
@@ -11,38 +11,14 @@ const { results: igRows } = await DB.prepare(
    LEFT JOIN instagramer_municipios im ON im.instagramer_id = i.id
    WHERE i.verificado = 1
    GROUP BY i.id
-   ORDER BY i.id DESC`
+   ORDER BY i.id ASC`
 ).all();
 
-// Creadores curados
-const { results: curRows } = await DB.prepare(
-  `SELECT id, nombre, handle, avatar_url, (avatar_data IS NOT NULL) AS has_avatar, bio, especialidades, destacado
-   FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, seguidores DESC`
-).all();
-
-// Mezcla: curados con estructura unificada
-// provincias viene directamente de creadores.provincias (ej. "Granada,Madrid,...")
-// especialidades es una lista CSV — guardamos todas para el filtro client-side
-const curados = (curRows as any[]).map((r) => ({
-  handle: String(r.handle || '').replace(/^@/, ''),
-  nombre: r.nombre || null,
-  avatar_url: r.has_avatar ? `/api/creador-foto?id=${r.id}` : (r.avatar_url || null),
-  especialidad: (r.especialidades || '').trim() || null,  // todas, CSV
-  bio: r.bio || null,
-  n_munis: 0,
-  provincias: (r.provincias || '').trim(),
-  curado: true,
+const allCreadores = (igRows as any[]).map((r) => ({
+  ...r,
+  provincias: r.provincias || '',
+  curado: r.id <= 2,  // los dos migrados de creadores son los primeros
 }));
-
-const submitted = (igRows as any[]).map((r) => ({ ...r, provincias: r.provincias || '', curado: false }));
-
-// Unión sin duplicados por handle
-const seen = new Set<string>();
-const allCreadores = [...curados, ...submitted].filter((c) => {
-  const h = c.handle.toLowerCase();
-  if (seen.has(h)) return false;
-  seen.add(h); return true;
-});
 
 const especialidades = [
   { slug: 'naturaleza', label: '🌿 Naturaleza' },
