@@ -88,6 +88,7 @@ const link = (c: any, accion: string) => `/api/creador-moderar?key=${encodeURICo
   <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>
 ) : (
   <>
+    <a href={`/admin?key=${key}`} style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#7c3aed;font-weight:700;font-size:.88rem;background:#f3f0ff;border:1.5px solid #e0d9ff;border-radius:999px;padding:7px 14px;margin-bottom:18px">← Panel principal</a>
     <h1>📸 Creadores</h1>
 
     <h2 id="form">{editing ? `✏️ Editar: ${editing.nombre}` : '➕ Añadir creador'}</h2>

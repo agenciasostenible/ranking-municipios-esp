@@ -44,7 +44,8 @@ const mlink = (a: any, accion: string) => `/api/anuncio-moderar?id=${a.id}&token
   {!ok && <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>}
   {ok && (
     <>
-      <h1>Anuncios pendientes <span class="muted">({pendientes.length})</span></h1>
+      <a href={`/admin?key=${key}`} style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#7c3aed;font-weight:700;font-size:.88rem;background:#f3f0ff;border:1.5px solid #e0d9ff;border-radius:999px;padding:7px 14px;margin-bottom:18px">← Panel principal</a>
+    <h1>Anuncios pendientes <span class="muted">({pendientes.length})</span></h1>
       {pendientes.length === 0 && <p class="muted">No hay nada pendiente. 🎉</p>}
       {pendientes.map((a) => (
         <div class="card">

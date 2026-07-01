@@ -97,6 +97,7 @@ const link = (codigo: any, accion: string) => `/api/votos-moderar?key=${encodeUR
   <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>
 ) : (
   <>
+    <a href={`/admin?key=${key}`} style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#7c3aed;font-weight:700;font-size:.88rem;background:#f3f0ff;border:1.5px solid #e0d9ff;border-radius:999px;padding:7px 14px;margin-bottom:18px">← Panel principal</a>
     <h1>🏆 Voto del público</h1>
     <div class="sub">Ranking en directo. Puedes <b>modificar los votos</b> de cualquier municipio; lo que pongas por encima de los votos reales cuenta como <b>inventado</b>.</div>
 
