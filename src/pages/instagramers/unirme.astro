@@ -269,6 +269,14 @@ import Base from '../../layouts/Base.astro';
   .u-ac a:first-child { border-top: none !important; }
   .u-ac a:hover { background: #f3f0ff !important; }
   .u-matched { font-size: .82rem; color: #16a34a; font-weight: 700; }
+
+  /* Estilos globales para filas creadas dinámicamente con JS */
+  :global(.u-muni-row .uni-field) { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  :global(.u-muni-row label) { font-size: .85rem; font-weight: 700; color: #333; }
+  :global(.u-muni-row .u-muni-input) { padding: 12px 13px; border: 1.5px solid #ddd; border-radius: 12px; font-size: .98rem; font-family: inherit; width: 100%; box-sizing: border-box; }
+  :global(.u-muni-row .u-muni-input:focus) { outline: none; border-color: #7c3aed; }
+  :global(.u-muni-row .u-ac) { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: #fff; border-radius: 0 0 12px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); overflow: hidden; }
+  :global(.u-muni-row .u-matched) { font-size: .82rem; color: #16a34a; font-weight: 700; }
   .uni-sep { display: flex; align-items: center; gap: 10px; color: #888; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
   .uni-sep::before, .uni-sep::after { content: ''; flex: 1; height: 1px; background: #e5e5e5; }
   .uni-hint { color: #888; font-size: .85rem; margin: -8px 0 0; }
