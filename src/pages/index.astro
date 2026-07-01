@@ -449,7 +449,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
         }
         <span class="ig-p-handle">@{ig.handle}</span>
         {ig.seguidores > 0 && <span class="ig-p-seg">{ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(1)+' mill.' : ig.seguidores >= 1000 ? Math.round(ig.seguidores/1000)+' mil' : ig.seguidores} seg.</span>}
-        {ig.especialidad && <span class="ig-p-tag">{String(ig.especialidad).split(',')[0].trim()}</span>}
+        {ig.especialidad && (() => { const esp = String(ig.especialidad).split(',').map((s: string) => s.trim()).find((s: string) => s && s.toLowerCase() !== 'general') || String(ig.especialidad).split(',')[0].trim(); return <span class="ig-p-tag">{esp}</span>; })()}
       </a>
     ))}
     <a class="ig-join-card" href="/instagramers/unirme">
