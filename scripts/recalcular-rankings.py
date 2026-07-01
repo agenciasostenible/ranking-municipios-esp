@@ -28,15 +28,17 @@ PESOS = {
     "monumentos":       1.3,
     "pueblo_bonito":    1.2,
     "gastronomia":      1.1,
+    "soletes":          1.0,  # restaurantes Repsol — señal clave de destino gastronómico
     "castillos":        1.0,
     "conjuntos":        1.0,
-    "museos":           0.9,
+    "museos":           1.1,  # ciudades culturales (Madrid, Barcelona) infrarrepresentadas sin esto
     "Playas":           0.8,
     "senderismo":       0.8,
     "fiestas":          0.8,
     # 'TurismoRural' excluido del global desde 2026-06-25 (score casi universal, distorsionaba)
     "vinos":            0.6,
     "festivales":       0.5,
+    "hoteles_encanto":  0.5,  # Paradores + Michelin Keys: lujo y turismo premium
 }
 
 # ── Cómo cada search_X boostea su categoría padre ───────────────────────────
