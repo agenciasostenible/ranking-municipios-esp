@@ -89,8 +89,8 @@ import Base from '../../layouts/Base.astro';
 <script>
   const $ = (id: string) => document.getElementById(id) as any;
 
-  // Estado zonas: array de {nombre_sitio, codigo_ine, provincia}
   const muniData: Record<number, { nombre_sitio: string; codigo_ine: string; provincia: string }> = {};
+  let activeAc: HTMLElement | null = null;
 
   function igEsc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function igHl(str: string, q: string) {
@@ -99,36 +99,39 @@ import Base from '../../layouts/Base.astro';
     return igEsc(str.slice(0,i)) + `<strong>${igEsc(str.slice(i,i+q.length))}</strong>` + igEsc(str.slice(i+q.length));
   }
 
+  // Cierra todos los dropdowns al hacer clic fuera (un solo listener global)
+  document.addEventListener('click', (e: any) => {
+    document.querySelectorAll('.u-ac').forEach((ac: any) => {
+      const input = ac.closest('.uni-field-ac')?.querySelector('.u-muni-input');
+      if (!ac.contains(e.target) && e.target !== input) ac.innerHTML = '';
+    });
+  });
+
   function setupRow(row: HTMLElement, idx: number) {
     muniData[idx] = { nombre_sitio: '', codigo_ine: '', provincia: '' };
     const input = row.querySelector('.u-muni-input') as HTMLInputElement;
-    const ac = row.querySelector('.u-ac') as HTMLElement;
+    const ac    = row.querySelector('.u-ac') as HTMLElement;
     const matched = row.querySelector('.u-matched') as HTMLElement;
-
-    function clearMatch() {
-      muniData[idx] = { nombre_sitio: input.value.trim(), codigo_ine: '', provincia: input.value.trim() };
-      matched.hidden = true;
-    }
 
     let tmr: any;
     input.addEventListener('input', () => {
-      clearMatch();
+      muniData[idx] = { nombre_sitio: input.value.trim(), codigo_ine: '', provincia: input.value.trim() };
+      matched.hidden = true;
       clearTimeout(tmr);
       const q = input.value.trim();
       if (q.length < 2) { ac.innerHTML = ''; return; }
       tmr = setTimeout(async () => {
         try {
-          const r = await fetch('/api/search?q=' + encodeURIComponent(q));
-          const d = await r.json() as any[];
-          // Provincias y comunidades primero, luego municipios
+          const d: any[] = await fetch('/api/search?q=' + encodeURIComponent(q)).then(r => r.json());
           const provs = (d || []).filter((x: any) => x.tipo === 'provincia' || x.tipo === 'comunidad').slice(0, 4);
-          const munis = (d || []).filter((x: any) => x.tipo === 'municipio').slice(0, 4);
-          const items = [...provs, ...munis];
-          ac.innerHTML = items.map((m: any) => {
-            const sub = m.tipo === 'provincia' ? 'Provincia' : m.tipo === 'comunidad' ? 'Comunidad autónoma' : (m.provincia || '');
-            const icon = m.tipo === 'provincia' || m.tipo === 'comunidad' ? '📍' : '🏘️';
-            const bg = m.tipo === 'municipio' ? '#fff1f3' : '#f3f0ff';
-            return `<a href="#" data-n="${igEsc(m.nombre)}" data-c="${igEsc(m.codigo_ine||'')}" data-p="${igEsc(m.tipo==='municipio'?(m.provincia||m.nombre):m.nombre)}" style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-top:1px solid #f0f0f0;text-decoration:none;color:#222">
+          const munis = (d || []).filter((x: any) => x.tipo === 'municipio').slice(0, 3);
+          ac.innerHTML = [...provs, ...munis].map((m: any) => {
+            const sub  = m.tipo === 'provincia' ? 'Provincia' : m.tipo === 'comunidad' ? 'Comunidad autónoma' : (m.provincia || '');
+            const icon = m.tipo === 'municipio' ? '🏘️' : '📍';
+            const bg   = m.tipo === 'municipio' ? '#fff1f3' : '#f3f0ff';
+            const prov = m.tipo === 'municipio' ? (m.provincia || m.nombre) : m.nombre;
+            return `<a href="#" data-n="${igEsc(m.nombre)}" data-c="${igEsc(m.codigo_ine||'')}" data-p="${igEsc(prov)}"
+              style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-top:1px solid #f0f0f0;text-decoration:none;color:#222;background:#fff">
               <span style="flex-shrink:0;width:28px;height:28px;border-radius:7px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:.85rem">${icon}</span>
               <span style="flex:1;min-width:0">
                 <span style="display:block;font-size:.88rem;font-weight:600">${igHl(m.nombre, q)}</span>
@@ -141,7 +144,7 @@ import Base from '../../layouts/Base.astro';
 
     ac.addEventListener('click', (e: any) => {
       e.preventDefault();
-      const a = e.target.closest('a'); if (!a) return;
+      const a = e.target.closest('a[data-n]'); if (!a) return;
       const nombre = a.getAttribute('data-n') || '';
       const prov   = a.getAttribute('data-p') || nombre;
       input.value = nombre;
@@ -150,13 +153,8 @@ import Base from '../../layouts/Base.astro';
       matched.hidden = false;
       ac.innerHTML = '';
     });
-
-    document.addEventListener('click', (e: any) => {
-      if (!ac.contains(e.target) && e.target !== input) ac.innerHTML = '';
-    });
   }
 
-  // Init first row
   setupRow(document.querySelector('.u-muni-row') as HTMLElement, 0);
 
   let rowCount = 1;
@@ -165,7 +163,6 @@ import Base from '../../layouts/Base.astro';
     const idx = rowCount++;
     const div = document.createElement('div');
     div.className = 'u-muni-row';
-    div.setAttribute('data-idx', String(idx));
     div.innerHTML = `<div class="uni-field uni-field-ac">
       <label>Zona ${idx + 1}</label>
       <input class="u-muni-input" type="text" maxlength="80" placeholder="Ej. Sevilla, Cataluña, Barcelona…" autocomplete="off" />
@@ -175,6 +172,12 @@ import Base from '../../layouts/Base.astro';
     $('u-munis-list').appendChild(div);
     setupRow(div, idx);
     if (rowCount >= 5) $('u-add').disabled = true;
+    // Scroll y foco al nuevo input
+    setTimeout(() => {
+      const newInput = div.querySelector('.u-muni-input') as HTMLInputElement;
+      newInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      newInput?.focus();
+    }, 80);
   });
 
   $('uni-form').addEventListener('submit', async (e: any) => {
