@@ -96,6 +96,18 @@ const { results: rows } = await DB.prepare(`
       WHEN 'UNESCO' THEN 2
       ELSE 3
     END,
+    CASE LOWER(MIN(e.nombre))
+      WHEN 'museo del prado' THEN 0
+      WHEN 'museo nacional del prado' THEN 0
+      WHEN 'museo guggenheim bilbao' THEN 1
+      WHEN 'guggenheim bilbao' THEN 1
+      WHEN 'museo nacional centro de arte reina sofía' THEN 2
+      WHEN 'museo thyssen-bornemisza' THEN 3
+      WHEN 'museu nacional d''art de catalunya' THEN 4
+      WHEN 'museu picasso' THEN 5
+      WHEN 'teatre-museu dalí' THEN 6
+      ELSE 99
+    END,
     puntuacion DESC,
     CASE WHEN MIN(e.descripcion) IS NOT NULL AND MIN(e.descripcion) NOT LIKE 'Museo en%' THEN 0 ELSE 1 END,
     nombre ASC
