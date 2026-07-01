@@ -182,6 +182,17 @@ const unesco = unescoRows as any[];
 const totalProvRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios WHERE provincia = ?`).bind(municipio.provincia).first();
 const totalProv = totalProvRow?.n ?? 0;
 
+// Instagramers que recomiendan este municipio
+const { results: instagramersRows } = await DB.prepare(
+  `SELECT i.handle, i.nombre, i.avatar_url, i.especialidad, im.url_post
+   FROM instagramer_municipios im
+   JOIN instagramers i ON i.id = im.instagramer_id
+   WHERE im.codigo_ine = ? AND i.verificado = 1
+   ORDER BY im.destacado DESC, i.id DESC
+   LIMIT 8`
+).bind(codigo).all();
+const instagramersMuni = instagramersRows as any[];
+
 const globalScore = puntuaciones.find((p: any) => p.categoria === 'ranking_global');
 const fichaScores = (puntuaciones as any[]).filter((p: any) => FICHA_CATS.includes(p.categoria));
 const detailScores = (puntuaciones as any[]).filter((p: any) => DETAIL_CATS.includes(p.categoria));
@@ -967,6 +978,32 @@ const creadores = await getCreadores(
     </section>
   )}
 
+  <!-- Instagramers que recomiendan este municipio -->
+  {instagramersMuni.length > 0 && (
+    <section class="mun-section ig-muni-section">
+      <h2 class="mun-section-title">📸 Instagramers que recomiendan {municipio.nombre}</h2>
+      <div class="ig-muni-row">
+        {instagramersMuni.map((ig: any) => (
+          <a
+            class="ig-muni-chip"
+            href={ig.url_post || `https://instagram.com/${ig.handle}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={ig.nombre ? `${ig.nombre} (@${ig.handle})` : `@${ig.handle}`}
+          >
+            {ig.avatar_url
+              ? <img class="ig-chip-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
+              : <span class="ig-chip-av ig-chip-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
+            }
+            <span class="ig-chip-handle">@{ig.handle}</span>
+            {ig.especialidad && <span class="ig-chip-tag">{ig.especialidad}</span>}
+          </a>
+        ))}
+      </div>
+      <a href="/instagramers" class="ig-muni-more">Ver todos los instagramers →</a>
+    </section>
+  )}
+
   <!-- CTA anunciarse -->
   <a href={`/anunciate?muni=${encodeURIComponent(municipio.nombre)}&codigo=${codigo}&prov=${encodeURIComponent(municipio.provincia)}`} class="anunciate-cta">
     <Icon name="megaphone" size={16} /> ¿Tienes un negocio o servicio? <strong>Date de alta para que valoremos tu solicitud</strong> →
@@ -1338,6 +1375,17 @@ window.openSello = openSello;
 .reco-meta a { color: var(--primary); text-decoration: none; font-weight: 600; }
 .reco-act { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px; border: 1.5px solid var(--border); }
 .reco-wa { color: #128c4b !important; border-color: #b7e6c6; background: #e9f9ee; }
+/* Instagramers municipio */
+.ig-muni-section { }
+.ig-muni-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 10px; }
+.ig-muni-chip { display: inline-flex; align-items: center; gap: 7px; background: #f3f0ff; border: 1px solid #c4b5fd; border-radius: 30px; padding: 6px 12px 6px 6px; text-decoration: none; color: #5b21b6; transition: background .15s; }
+.ig-muni-chip:hover { background: #ede9fe; }
+.ig-chip-av { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.ig-chip-ph { display: flex; align-items: center; justify-content: center; background: #c4b5fd; color: #fff; font-weight: 800; font-size: .85rem; }
+.ig-chip-handle { font-weight: 700; font-size: .82rem; }
+.ig-chip-tag { font-size: .68rem; background: #7c3aed; color: #fff; border-radius: 8px; padding: 1px 6px; font-weight: 600; }
+.ig-muni-more { font-size: .8rem; color: #7c3aed; font-weight: 700; text-decoration: none; display: inline-block; margin-top: 4px; }
+.ig-muni-more:hover { text-decoration: underline; }
 .anunciate-cta { display: block; background: #fff7e6; border: 1.5px solid #f5d28a; border-radius: 14px; padding: 14px 18px; margin: 22px 0; color: #92500a; font-size: .92rem; text-decoration: none; text-align: center; }
 .anunciate-cta strong { color: #b45309; }
 .anunciate-cta:hover { background: #fff1d6; }

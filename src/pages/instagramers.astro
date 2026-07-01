@@ -1,0 +1,101 @@
+---
+import Base from '../layouts/Base.astro';
+import { DB } from '../lib/d1client';
+
+const instaList = (await DB.prepare(
+  `SELECT i.id, i.handle, i.nombre, i.avatar_url, i.especialidad, i.bio,
+          COUNT(im.id) AS n_munis
+   FROM instagramers i
+   LEFT JOIN instagramer_municipios im ON im.instagramer_id = i.id
+   WHERE i.verificado = 1
+   GROUP BY i.id
+   ORDER BY i.id DESC`
+).all()).results as any[];
+
+const especialidades = [
+  { slug: 'naturaleza', label: '🌿 Naturaleza' },
+  { slug: 'gastronomia', label: '🍽️ Gastronomía' },
+  { slug: 'cultura', label: '🏛️ Cultura' },
+  { slug: 'aventura', label: '🧗 Aventura' },
+  { slug: 'rural', label: '🏡 Rural' },
+  { slug: 'playa', label: '🏖️ Playa' },
+];
+---
+<Base
+  title="Instagramers de viajes por España — Ranking Spain"
+  description="Descubre instagramers especializados en turismo por España y los municipios que recomiendan."
+>
+
+<div class="ig-page">
+  <div class="ig-hero">
+    <span class="ig-kicker">📸 Instagramers</span>
+    <h1>Creadores que recorren España</h1>
+    <p>Instagramers especializados en turismo por España. Descubre qué municipios recomiendan y síguelos para inspirarte.</p>
+    <a href="/instagramers/unirme" class="ig-cta">¿Eres instagramer? Únete</a>
+  </div>
+
+  {instaList.length === 0 ? (
+    <div class="ig-empty">
+      <p>Aún no hay instagramers verificados. <a href="/instagramers/unirme">¡Sé el primero!</a></p>
+    </div>
+  ) : (
+    <div class="ig-grid">
+      {instaList.map((ig) => (
+        <div class="ig-card">
+          <div class="ig-card-top">
+            {ig.avatar_url
+              ? <img class="ig-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
+              : <span class="ig-av ig-av-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
+            }
+            <div class="ig-card-info">
+              <a class="ig-handle" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
+                @{ig.handle}
+              </a>
+              {ig.nombre && <div class="ig-nombre">{ig.nombre}</div>}
+              {ig.especialidad && <span class="ig-tag">{ig.especialidad}</span>}
+            </div>
+          </div>
+          {ig.bio && <p class="ig-bio">"{ig.bio}"</p>}
+          {ig.n_munis > 0 && (
+            <div class="ig-footer">{ig.n_munis} municipio{ig.n_munis !== 1 ? 's' : ''} recomendado{ig.n_munis !== 1 ? 's' : ''}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  )}
+
+  <div class="ig-join-banner">
+    <strong>¿Creas contenido sobre turismo en España?</strong>
+    <p>Únete a nuestra comunidad de instagramers y aparece en este directorio.</p>
+    <a href="/instagramers/unirme" class="ig-cta ig-cta-outline">Registrarme gratis</a>
+  </div>
+</div>
+
+<style>
+  .ig-page { max-width: 900px; margin: 0 auto; padding: 28px 16px 60px; }
+  .ig-kicker { display: inline-block; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: .78rem; letter-spacing: .04em; padding: 5px 12px; border-radius: 20px; margin-bottom: 12px; }
+  .ig-hero { text-align: center; margin-bottom: 36px; }
+  .ig-hero h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; color: #222; margin: 0 0 10px; }
+  .ig-hero p { color: #555; font-size: .98rem; line-height: 1.55; margin: 0 0 20px; }
+  .ig-cta { display: inline-block; background: #7c3aed; color: #fff; padding: 13px 24px; border-radius: 12px; font-weight: 800; font-size: .95rem; text-decoration: none; }
+  .ig-cta-outline { background: transparent; border: 2px solid #7c3aed; color: #7c3aed; }
+  .ig-empty { text-align: center; padding: 48px 0; color: #888; }
+  .ig-empty a { color: #7c3aed; font-weight: 700; }
+  .ig-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-bottom: 48px; }
+  .ig-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .ig-card-top { display: flex; align-items: center; gap: 12px; }
+  .ig-av { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+  .ig-av-ph { display: flex; align-items: center; justify-content: center; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: 1.3rem; }
+  .ig-card-info { min-width: 0; }
+  .ig-handle { color: #7c3aed; font-weight: 800; font-size: .98rem; text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ig-handle:hover { text-decoration: underline; }
+  .ig-nombre { color: #444; font-size: .82rem; margin-top: 1px; }
+  .ig-tag { display: inline-block; background: #f3f0ff; color: #7c3aed; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-top: 4px; }
+  .ig-bio { color: #666; font-size: .85rem; font-style: italic; line-height: 1.45; margin: 0; }
+  .ig-footer { color: #999; font-size: .78rem; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+  .ig-join-banner { text-align: center; background: #f3f0ff; border-radius: 18px; padding: 32px 24px; }
+  .ig-join-banner strong { font-size: 1.1rem; color: #3b1fa0; }
+  .ig-join-banner p { color: #7c3aed; margin: 8px 0 16px; }
+  @media (max-width: 480px) { .ig-grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+</style>
+</Base>
