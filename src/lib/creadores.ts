@@ -42,6 +42,30 @@ function toCreador(r: any): Creador {
  * El admin (o el propio creador) define ese alcance: toda España, varias provincias
  * y/o varios municipios concretos.
  */
+// Mapa de categoría de ranking → especialidad de instagramer
+const CAT_TO_ESP: Record<string, string[]> = {
+  gastronomia:        ['gastronomia'],
+  soletes:            ['gastronomia'],
+  senderismo:         ['naturaleza','aventura'],
+  Playas:             ['playa'],
+  naturaleza:         ['naturaleza'],
+  turismo_activo:     ['aventura','naturaleza'],
+  TurismoRural:       ['rural'],
+  monumentos:         ['cultura'],
+  castillos:          ['cultura'],
+  museos:             ['cultura'],
+  festivales:         ['cultura'],
+  fiestas:            ['cultura'],
+  vinos:              ['gastronomia'],
+  oleoturismo:        ['gastronomia'],
+  miradores:          ['naturaleza','aventura'],
+  estrellas:          ['naturaleza'],
+  hoteles_encanto:    ['general'],
+  lujo:               ['general'],
+  solteros:           ['general'],
+  pueblo_bonito:      ['rural','cultura'],
+};
+
 export async function getCreadores(categoria: string, prov = '', ccaa = '', codigo = '', limit = 8): Promise<Creador[]> {
   const conTema = !!categoria;
   const temaOk = conTema
@@ -49,14 +73,15 @@ export async function getCreadores(categoria: string, prov = '', ccaa = '', codi
             OR (',' || COALESCE(especialidades,'') || ',') LIKE '%,general,%'
             OR COALESCE(TRIM(especialidades),'') = '')`
     : '';
-  // Zona: nacional; o la provincia está en su lista; o el municipio está en su lista.
   const zonas: string[] = [`nacional = 1`];
   const zonaBinds: any[] = [];
   if (prov) { zonas.push(`(',' || COALESCE(provincias,'') || ',') LIKE '%,' || ? || ',%'`); zonaBinds.push(prov); }
   if (codigo) { zonas.push(`(',' || COALESCE(municipios,'') || ',') LIKE '%,' || ? || ',%'`); zonaBinds.push(codigo); }
+
   try {
+    // 1) Curated creadores table
     const binds: any[] = [...(conTema ? [categoria] : []), ...zonaBinds, limit];
-    const { results } = await DB.prepare(
+    const { results: curados } = await DB.prepare(
       `SELECT id, nombre, handle, avatar_url, bio, especialidades, destacado,
               (avatar_data IS NOT NULL) AS has_avatar
          FROM creadores
@@ -64,8 +89,41 @@ export async function getCreadores(categoria: string, prov = '', ccaa = '', codi
         ORDER BY destacado DESC, seguidores DESC, creado_at DESC
         LIMIT ?`
     ).bind(...binds).all();
-    return (results as any[]).map(toCreador);
+
+    // 2) User-submitted instagramers (verified)
+    const espFiltros = conTema ? (CAT_TO_ESP[categoria] || []) : [];
+    let igQuery = `SELECT id, nombre, handle, avatar_url, bio, especialidad, 0 AS destacado FROM instagramers WHERE verificado=1`;
+    const igBinds: any[] = [];
+    if (espFiltros.length > 0) {
+      igQuery += ` AND (especialidad IN (${espFiltros.map(() => '?').join(',')}) OR especialidad IS NULL OR especialidad = '')`;
+      igBinds.push(...espFiltros);
+    }
+    igQuery += ` ORDER BY id DESC LIMIT ?`;
+    igBinds.push(limit);
+    const { results: submitted } = await DB.prepare(igQuery).bind(...igBinds).all();
+
+    const fromCurados = (curados as any[]).map(toCreador);
+    const fromSubmitted = (submitted as any[]).map((r: any) => ({
+      id: r.id,
+      nombre: r.nombre || r.handle,
+      handle: String(r.handle || '').replace(/^@/, ''),
+      url: `https://instagram.com/${String(r.handle || '').replace(/^@/, '')}`,
+      avatar_url: r.avatar_url || null,
+      bio: r.bio || null,
+      especialidades: r.especialidad ? [r.especialidad] : [],
+      destacado: 0,
+    } as Creador));
+
+    // Merge: curados primero, luego submitted; deduplica por handle
+    const seen = new Set<string>();
+    const merged: Creador[] = [];
+    for (const c of [...fromCurados, ...fromSubmitted]) {
+      const h = c.handle.toLowerCase();
+      if (!seen.has(h)) { seen.add(h); merged.push(c); }
+      if (merged.length >= limit) break;
+    }
+    return merged;
   } catch {
-    return []; // si la tabla aún no existe en algún entorno, no rompemos la página
+    return [];
   }
 }
