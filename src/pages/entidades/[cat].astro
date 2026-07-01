@@ -90,8 +90,14 @@ const { results: rows } = await DB.prepare(`
     ${provCond} ${qCond}
   GROUP BY LOWER(e.nombre), m.codigo_ine
   ORDER BY
-    CASE WHEN MIN(e.descripcion) IS NOT NULL AND MIN(e.descripcion) NOT LIKE 'Museo en%' THEN 0 ELSE 1 END,
+    CASE MIN(e.nivel_sello)
+      WHEN 'Museo de Fama Mundial' THEN 0
+      WHEN 'Museo Nacional' THEN 1
+      WHEN 'UNESCO' THEN 2
+      ELSE 3
+    END,
     puntuacion DESC,
+    CASE WHEN MIN(e.descripcion) IS NOT NULL AND MIN(e.descripcion) NOT LIKE 'Museo en%' THEN 0 ELSE 1 END,
     nombre ASC
   LIMIT ? OFFSET ?
 `).bind(cat!, ...bindAll).all();
