@@ -15,7 +15,7 @@ const { results: igRows } = await DB.prepare(
 
 // Creadores curados
 const { results: curRows } = await DB.prepare(
-  `SELECT id, nombre, handle, avatar_url, bio, especialidades, destacado
+  `SELECT id, nombre, handle, avatar_url, (avatar_data IS NOT NULL) AS has_avatar, bio, especialidades, destacado
    FROM creadores WHERE aprobado=1 ORDER BY destacado DESC, seguidores DESC`
 ).all();
 
@@ -23,7 +23,7 @@ const { results: curRows } = await DB.prepare(
 const curados = (curRows as any[]).map((r) => ({
   handle: String(r.handle || '').replace(/^@/, ''),
   nombre: r.nombre || null,
-  avatar_url: r.avatar_url || null,
+  avatar_url: r.has_avatar ? `/api/creador-foto?id=${r.id}` : (r.avatar_url || null),
   especialidad: (r.especialidades || '').split(',')[0]?.trim() || null,
   bio: r.bio || null,
   n_munis: 0,
