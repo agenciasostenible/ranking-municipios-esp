@@ -173,6 +173,81 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   </div>
 </section>
 
+<!-- ── CATEGORY CHIPS (Airbnb style) ── -->
+<div class="chips-wrap">
+  <button class="chips-arrow chips-arrow-left" id="chips-prev" aria-label="Anterior">&#8249;</button>
+  <div class="chips-bar" id="chips-bar">
+    <div class="chips-inner">
+      {TABS.map((t) => (
+        <a href={`/ranking/${t.key}`} class="chip-cat">
+          <Icon name={t.icon} size={20} />
+          {t.label}
+        </a>
+      ))}
+    </div>
+  </div>
+  <button class="chips-arrow chips-arrow-right" id="chips-next" aria-label="Siguiente">&#8250;</button>
+</div>
+<script>
+  const bar = document.getElementById('chips-bar');
+  document.getElementById('chips-prev')?.addEventListener('click', () => bar?.scrollBy({ left: -300, behavior: 'smooth' }));
+  document.getElementById('chips-next')?.addEventListener('click', () => bar?.scrollBy({ left: 300, behavior: 'smooth' }));
+</script>
+
+<!-- ── TOP MUNICIPIOS GRID ── -->
+<div class="page-content">
+  <!-- Stats -->
+  <div class="info-bar">
+    <div class="istat"><div class="n">{total.toLocaleString('es-ES')}</div><div class="l">Municipios</div></div>
+    <div class="istat"><div class="n">{provincias.length}</div><div class="l">Provincias</div></div>
+    <div class="istat"><div class="n">{ccaas.length}</div><div class="l">CC.AA.</div></div>
+  </div>
+
+  <div class="result-header">
+    <div>
+      <h2><Icon name="emoji_events" size={20} /> Top municipios de España</h2>
+      <div class="sub">Los mejores destinos según nuestro ranking global</div>
+    </div>
+    <a href="/ranking/ranking_global" class="pgb">Ver ranking completo →</a>
+  </div>
+
+  <!-- Grid de tarjetas -->
+  <div class="mun-grid">
+    {municipios.map((m, i) => {
+      const pos = i + 1;
+      const whyChips = (m.why as string[]).slice(0, 3);
+      return (
+        <a href={`/municipio/${m.codigo_ine}`} class="mun-card"
+          data-codigo={m.foto ? null : m.codigo_ine}>
+          <!-- Background: foto real o gradiente -->
+          <div class="mun-card-bg" style={m.foto
+            ? `background:url('${m.foto}') center/cover no-repeat`
+            : `background:${m.gradient}`}
+            data-gradient={m.foto ? null : m.gradient}>
+            <div class="mun-card-overlay"></div>
+            <div class="mun-card-pos">#{pos}</div>
+          </div>
+          <!-- Card content -->
+          <div class="mun-card-body">
+            <div class="mun-card-comarca">{m.comarca ?? m.provincia}</div>
+            <div class="mun-card-name">{m.nombre}</div>
+            <div class="mun-card-score">
+              <span class="mun-score-star">⭐</span>
+              <span class="mun-score-val">{Number(m.puntuacion).toFixed(1)}</span>
+              <span class="mun-card-pob">{m.poblacion ? '· ' + formatPob(m.poblacion) + ' hab.' : ''}</span>
+            </div>
+          </div>
+        </a>
+      );
+    })}
+  </div>
+
+  <div style="text-align:center; margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap">
+    <button class="btn-ver-mas" id="btn-mas" onclick="loadMore()">Ver más municipios ↓</button>
+    <a href="/ranking/ranking_global" class="btn-ver-mas btn-secondary">Ver tabla de rankings →</a>
+  </div>
+</div>
+
 <!-- ── CTA: voto del público (destacado, arriba) ── -->
 <section class="vote-hero">
   <div class="vote-hero-inner">
@@ -387,27 +462,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   : <div class="home-banner"><img src={bannerCats.foto} alt={bannerCats.alt ?? 'Publicidad'} loading="lazy" /></div>
 )}
 
-<!-- ── CATEGORY CHIPS (Airbnb style) ── -->
-<div class="chips-wrap">
-  <button class="chips-arrow chips-arrow-left" id="chips-prev" aria-label="Anterior">&#8249;</button>
-  <div class="chips-bar" id="chips-bar">
-    <div class="chips-inner">
-      {TABS.map((t) => (
-        <a href={`/ranking/${t.key}`} class="chip-cat">
-          <Icon name={t.icon} size={20} />
-          {t.label}
-        </a>
-      ))}
-    </div>
-  </div>
-  <button class="chips-arrow chips-arrow-right" id="chips-next" aria-label="Siguiente">&#8250;</button>
-</div>
-<script>
-  const bar = document.getElementById('chips-bar');
-  document.getElementById('chips-prev')?.addEventListener('click', () => bar?.scrollBy({ left: -300, behavior: 'smooth' }));
-  document.getElementById('chips-next')?.addEventListener('click', () => bar?.scrollBy({ left: 300, behavior: 'smooth' }));
-</script>
-
 <!-- ── JOYAS SIN MASIFICAR (desactivado) ── -->
 
 <!-- ── INSTAGRAMERS ── -->
@@ -564,60 +618,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     });
   })();
 </script>
-
-<!-- ── TOP MUNICIPIOS GRID ── -->
-<div class="page-content">
-  <!-- Stats -->
-  <div class="info-bar">
-    <div class="istat"><div class="n">{total.toLocaleString('es-ES')}</div><div class="l">Municipios</div></div>
-    <div class="istat"><div class="n">{provincias.length}</div><div class="l">Provincias</div></div>
-    <div class="istat"><div class="n">{ccaas.length}</div><div class="l">CC.AA.</div></div>
-  </div>
-
-  <div class="result-header">
-    <div>
-      <h2><Icon name="emoji_events" size={20} /> Top municipios de España</h2>
-      <div class="sub">Los mejores destinos según nuestro ranking global</div>
-    </div>
-    <a href="/ranking/ranking_global" class="pgb">Ver ranking completo →</a>
-  </div>
-
-  <!-- Grid de tarjetas -->
-  <div class="mun-grid">
-    {municipios.map((m, i) => {
-      const pos = i + 1;
-      const whyChips = (m.why as string[]).slice(0, 3);
-      return (
-        <a href={`/municipio/${m.codigo_ine}`} class="mun-card"
-          data-codigo={m.foto ? null : m.codigo_ine}>
-          <!-- Background: foto real o gradiente -->
-          <div class="mun-card-bg" style={m.foto
-            ? `background:url('${m.foto}') center/cover no-repeat`
-            : `background:${m.gradient}`}
-            data-gradient={m.foto ? null : m.gradient}>
-            <div class="mun-card-overlay"></div>
-            <div class="mun-card-pos">#{pos}</div>
-          </div>
-          <!-- Card content -->
-          <div class="mun-card-body">
-            <div class="mun-card-comarca">{m.comarca ?? m.provincia}</div>
-            <div class="mun-card-name">{m.nombre}</div>
-            <div class="mun-card-score">
-              <span class="mun-score-star">⭐</span>
-              <span class="mun-score-val">{Number(m.puntuacion).toFixed(1)}</span>
-              <span class="mun-card-pob">{m.poblacion ? '· ' + formatPob(m.poblacion) + ' hab.' : ''}</span>
-            </div>
-          </div>
-        </a>
-      );
-    })}
-  </div>
-
-  <div style="text-align:center; margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap">
-    <button class="btn-ver-mas" id="btn-mas" onclick="loadMore()">Ver más municipios ↓</button>
-    <a href="/ranking/ranking_global" class="btn-ver-mas btn-secondary">Ver tabla de rankings →</a>
-  </div>
-</div>
 
 <!-- ── SÍGUENOS EN INSTAGRAM ── -->
 <section class="ig-follow">
@@ -981,17 +981,17 @@ function doSearch() {
 .ig-profiles-scroll { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 16px 0 4px; }
 .ig-profiles-scroll::-webkit-scrollbar { display: none; }
 .ig-profile-card { flex-shrink: 0; width: 130px; background: #fff; border: 1px solid #e8e8e8; border-radius: 16px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 7px; text-decoration: none; transition: border-color .15s; }
-.ig-profile-card:hover { border-color: #c4b5fd; }
+.ig-profile-card:hover { border-color: #ffc9d4; }
 .ig-p-av { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.ig-p-ph { display: flex; align-items: center; justify-content: center; background: #f3f0ff; color: #7c3aed; font-weight: 800; font-size: 1.2rem; }
+.ig-p-ph { display: flex; align-items: center; justify-content: center; background: #fff1f3; color: #FF385C; font-weight: 800; font-size: 1.2rem; }
 .ig-p-handle { font-size: .78rem; font-weight: 700; color: #222; text-align: center; }
-.ig-p-tag { font-size: .68rem; background: #f3f0ff; color: #7c3aed; border-radius: 10px; padding: 2px 8px; font-weight: 600; text-transform: capitalize; }
+.ig-p-tag { font-size: .68rem; background: #fff1f3; color: #FF385C; border-radius: 10px; padding: 2px 8px; font-weight: 600; text-transform: capitalize; }
 .ig-p-seg { font-size: .72rem; color: #16a34a; font-weight: 700; }
-.ig-join-card { flex-shrink: 0; width: 130px; border: 1.5px dashed #c4b5fd; border-radius: 16px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-decoration: none; background: #faf8ff; }
-.ig-join-plus { width: 44px; height: 44px; border-radius: 50%; background: #7c3aed; color: #fff; font-size: 1.5rem; font-weight: 300; display: flex; align-items: center; justify-content: center; }
-.ig-join-text { font-size: .75rem; font-weight: 700; color: #7c3aed; text-align: center; line-height: 1.35; }
-.ig-see-all { display: inline-flex; align-items: center; gap: 8px; margin: 18px auto 0; padding: 13px 28px; background: #7c3aed; color: #fff; font-size: .92rem; font-weight: 700; border-radius: 999px; text-decoration: none; transition: background .15s, transform .15s; }
-.ig-see-all:hover { background: #6d28d9; transform: translateY(-1px); }
+.ig-join-card { flex-shrink: 0; width: 130px; border: 1.5px dashed #ffc9d4; border-radius: 16px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-decoration: none; background: #fff8f9; }
+.ig-join-plus { width: 44px; height: 44px; border-radius: 50%; background: #FF385C; color: #fff; font-size: 1.5rem; font-weight: 300; display: flex; align-items: center; justify-content: center; }
+.ig-join-text { font-size: .75rem; font-weight: 700; color: #FF385C; text-align: center; line-height: 1.35; }
+.ig-see-all { display: inline-flex; align-items: center; gap: 8px; margin: 18px auto 0; padding: 13px 28px; background: #FF385C; color: #fff; font-size: .92rem; font-weight: 700; border-radius: 999px; text-decoration: none; transition: background .15s, transform .15s; }
+.ig-see-all:hover { background: #e0314f; transform: translateY(-1px); }
 @media (max-width: 600px) { .ig-hero-card { height: 420px; } .ig-hero-img { object-position: center center; } .ig-hero-title { font-size: 1.25rem; } }
 
 /* Explorar por categoría (agrupado, con microdescripción) */
