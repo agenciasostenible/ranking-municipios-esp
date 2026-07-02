@@ -74,10 +74,13 @@ const CAT_FUENTES_ENT: Record<string,string[]> = {
   miradores:['inventario_miradores_pdf'], oleoturismo:['inventario_oleoturismo_pdf'],
   misterioso:['inventario_misterioso_pdf'], estrellas:['starlight'],
   Playas:['bandera_azul','inventario_playas_pdf'], hoteles_encanto:['hoteles_encanto'],
-  TurismoRural:['inventario_turismo_rural_pdf'], ciclismo:['vias_verdes','caminos_naturales','eurovelo'],
+  TurismoRural:['inventario_turismo_rural_pdf'], ciclismo:['vias_verdes','caminos_naturales','eurovelo','centros_btt','camino_cid','pirinexus'],
   vinos:['inventario_vinos_pdf','rutas_vino'], pueblo_bonito:['pueblos_mas_bonitos'],
   turismo_religioso:['inventario_turismo_religioso_pdf'], lujo:['inventario_lujo_pdf'],
   soletes:['guia_repsol_solete'], gastronomia:['gastronomia_ampliacion','guia_michelin'],
+  pozas:['pozas_bano'], cuevas:['cuevas'], balnearios:['balnearios'],
+  solteros:['inventario_solteros_pdf'], turismo_mascotas:['inventario_turismo_mascotas_pdf'],
+  turismo_lgtbi:['inventario_turismo_lgtbi_pdf'], turismo_activo:['inventario_turismo_activo_pdf'],
 };
 const ENT_PREGUNTAS: Record<string,string> = {
   castillos:'¿Cuál es el castillo más impresionante?',
@@ -100,6 +103,13 @@ const ENT_PREGUNTAS: Record<string,string> = {
   lujo:'¿Cuál es la experiencia de lujo más exclusiva?',
   soletes:'¿Cuál es el restaurante más recomendado?',
   gastronomia:'¿Cuál es el mejor restaurante de España?',
+  pozas:'¿Cuál es la mejor poza natural para bañarse?',
+  cuevas:'¿Cuál es la cueva más espectacular?',
+  balnearios:'¿Cuál es el mejor balneario?',
+  solteros:'¿Cuál es el mejor destino para solteros?',
+  turismo_mascotas:'¿Cuál es el mejor destino con mascotas?',
+  turismo_lgtbi:'¿Cuál es el mejor destino LGTBI?',
+  turismo_activo:'¿Cuál es la mejor experiencia de turismo activo?',
 };
 const entFuentes = CAT_FUENTES_ENT[categoria!];
 let entCount = 0;
