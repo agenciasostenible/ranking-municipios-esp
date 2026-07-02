@@ -248,54 +248,33 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   </div>
 </div>
 
-<!-- ── CTA: voto del público (destacado, arriba) ── -->
-<section class="vote-hero">
-  <div class="vote-hero-inner">
-    <span class="vote-hero-kicker"><Icon name="emoji_events" size={16} /> El voto del público</span>
-    <h2 class="vote-hero-title">Vota el mejor municipio turístico de España</h2>
-    <p class="vote-hero-sub">Elige provincia y municipio, vota y mira el ranking en directo.</p>
-    <a href="/votar" class="vote-hero-btn">Votar ahora →</a>
-    {topVotos.length > 0 && (
-      <div class="vote-hero-top">
-        <span class="vote-hero-top-label">Top 3 ahora mismo</span>
-        <div class="vote-hero-top-list">
-          {topVotos.map((m, i) => (
-            <a href="/votar" class="vt-top-row">
-              <span class="vt-top-medal">{medallas[i]}</span>
-              <span class="vt-top-name">{m.nombre}<small>{m.provincia}</small></span>
-              <span class="vt-top-votes">{Number(m.votos).toLocaleString('es-ES')}<small>votos</small></span>
-            </a>
-          ))}
-        </div>
-        <a href="/votar?ver=ranking" class="vote-hero-rank">Ver ranking completo →</a>
-      </div>
-    )}
-  </div>
-</section>
-
-<!-- ── BANNER PUBLICITARIO (home arriba) ── -->
-{bannerTop && (bannerTop.enlace
-  ? <a href={bannerTop.enlace} target="_blank" rel="noopener sponsored" class="home-banner"><img src={bannerTop.foto} alt={bannerTop.alt ?? 'Publicidad'} loading="lazy" /></a>
-  : <div class="home-banner"><img src={bannerTop.foto} alt={bannerTop.alt ?? 'Publicidad'} loading="lazy" /></div>
-)}
-
-<!-- ── QUÉ VER CERCA DE TI (destacado, geolocalización) ── -->
-<section class="nearby">
-  <div class="nearby-card">
-    <span class="nearby-eyebrow"><Icon name="map_pin" size={14} /> A tu lado · Nuevo</span>
-    <h2 class="nearby-title">¿Qué ver cerca de ti?</h2>
-    <p class="nearby-sub">Comparte tu ubicación y descubre al instante <strong>todo lo que tienes al lado para visitar</strong>.</p>
-    <a href="/cerca" id="home-cerca-btn" class="nearby-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="20" height="20"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
-      Ver qué hay cerca de mí
+<!-- ── PROMOS COMPACTAS: votar / cerca / ruta ── -->
+<section class="promo-row-sec">
+  <div class="promo-row">
+    <a href="/votar" class="promo-card">
+      <span class="promo-ic" style="background:#fff1f3;color:#FF385C"><Icon name="emoji_events" size={22} /></span>
+      <span class="promo-txt">
+        <strong>Vota el mejor municipio</strong>
+        <small>{topVotos.length > 0 ? `${topVotos[0].nombre} lidera ahora mismo` : 'El voto del público, en directo'}</small>
+      </span>
+      <span class="promo-arrow">→</span>
     </a>
-    <div class="nearby-tags">
-      <span><Icon name="account_balance" size={14} /> Monumentos</span>
-      <span><Icon name="landscape" size={14} /> Naturaleza</span>
-      <span><Icon name="binoculars" size={14} /> Miradores</span>
-      <span><Icon name="castle" size={14} /> Castillos</span>
-      <span><Icon name="dark_mode" size={14} /> Misterio</span>
-    </div>
+    <a href="/cerca" id="home-cerca-btn" class="promo-card">
+      <span class="promo-ic" style="background:#eef6ff;color:#2563eb"><Icon name="map_pin" size={22} /></span>
+      <span class="promo-txt">
+        <strong>¿Qué ver cerca de ti?</strong>
+        <small>Monumentos, miradores y castillos a tu lado</small>
+      </span>
+      <span class="promo-arrow">→</span>
+    </a>
+    <a href="/ruta" class="promo-card">
+      <span class="promo-ic" style="background:#f0fdf4;color:#16a34a"><Icon name="map" size={22} /></span>
+      <span class="promo-txt">
+        <strong>Monta tu viaje en 1 minuto</strong>
+        <small>Qué visitar, dónde comer y dónde dormir</small>
+      </span>
+      <span class="promo-arrow">→</span>
+    </a>
   </div>
 </section>
 <script is:inline>
@@ -303,7 +282,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     var b = document.getElementById('home-cerca-btn');
     if (!b) return;
     b.addEventListener('click', function (e) {
-      if (!navigator.geolocation) return; // deja navegar a /cerca
+      if (!navigator.geolocation) return;
       e.preventDefault();
       b.style.opacity = '.75';
       navigator.geolocation.getCurrentPosition(
@@ -315,124 +294,11 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   })();
 </script>
 
-<!-- ── PLANIFICADOR DE RUTAS (destacado) ── -->
-<section class="route-promo">
-  <form class="rp-card" method="get" action="/ruta" id="rp-card" data-mode="zona">
-    <div class="rp-head">
-      <span class="rp-ic"><Icon name="map" size={21} /></span>
-      <div>
-        <span class="rp-eyebrow">Nuevo · Planifica tu ruta</span>
-        <h2 class="rp-title">Monta tu viaje real en 1 minuto</h2>
-      </div>
-    </div>
-    <p class="rp-sub">Te decimos <strong>qué visitar</strong>, <strong>dónde comer</strong> y <strong>dónde dormir</strong>, con la valoración de Google. Elige una <strong>zona</strong>… o el <strong>plan de un día</strong> dentro de un solo pueblo.</p>
-
-    <div class="rp-modes" role="tablist">
-      <button type="button" class="rp-mode on" data-mode="zona"><Icon name="compass" size={15} /> Por la zona</button>
-      <button type="button" class="rp-mode" data-mode="pueblo"><Icon name="map_pin" size={15} /> Un día en un pueblo</button>
-    </div>
-
-    <button type="button" class="rp-label rp-chips-toggle" id="rp-chips-toggle">
-      <span>¿Qué quieres hacer? <span class="rp-hint-zona">(elige una o varias)</span><span class="rp-hint-pueblo">(opcional)</span> <span class="rp-pick-count" id="rp-pick-count"></span></span>
-      <span class="rp-chev">▾</span>
-    </button>
-    <div class="rp-chips">
-      {ROUTE_EXP.map(e => (
-        <label class="rp-chip">
-          <input type="checkbox" name="cat" value={e.key} />
-          <span class="rp-chip-ic"><Icon name={e.icon} size={15} /></span>
-          {e.label}
-        </label>
-      ))}
-    </div>
-
-    <div class="rp-row rp-block-zona">
-      <select name="prov" class="rp-prov">
-        <option value="">Elige provincia…</option>
-        {(provincias as any[]).map(p => <option value={p.provincia}>{p.provincia}</option>)}
-      </select>
-      <input type="hidden" name="dias" value="2" />
-      <button type="submit" class="rp-go"><Icon name="map" size={17} /> Generar ruta</button>
-    </div>
-
-    <div class="rp-block-pueblo">
-      <div class="rp-ac-wrap">
-        <input type="text" id="rp-pueblo-input" class="rp-prov" placeholder="Escribe un municipio… (Granada, Alcalá la Real…)" autocomplete="off" />
-        <div class="rp-ac" id="rp-pueblo-ac"></div>
-      </div>
-    </div>
-  </form>
-</section>
-<script>
-  const rpCard = document.querySelector('.rp-card') as HTMLFormElement | null;
-  // Desplegable de experiencias (compacto): abrir/cerrar + contador
-  const rpToggle = document.getElementById('rp-chips-toggle');
-  const rpCount = document.getElementById('rp-pick-count');
-  rpToggle?.addEventListener('click', () => rpCard?.classList.toggle('chips-open'));
-  function rpUpdateCount() {
-    const n = rpCard?.querySelectorAll('.rp-chip input:checked').length || 0;
-    if (rpCount) rpCount.textContent = n ? `· ${n} elegida${n > 1 ? 's' : ''}` : '';
-  }
-  rpCard?.querySelectorAll('.rp-chip input').forEach((inp) => {
-    inp.addEventListener('change', (e) => {
-      const el = e.target as HTMLInputElement;
-      el.closest('.rp-chip')?.classList.toggle('on', el.checked);
-      rpUpdateCount();
-    });
-  });
-  rpCard?.addEventListener('submit', (e) => {
-    if (rpCard.getAttribute('data-mode') !== 'zona') { e.preventDefault(); return; }
-    const any = rpCard.querySelectorAll('.rp-chip input:checked').length > 0;
-    if (!any) {
-      e.preventDefault();
-      rpCard.classList.add('chips-open');   // abre el desplegable para que elija
-      rpCard.querySelector('.rp-label')?.animate(
-        [{ color: '#FF385C' }, { color: '' }], { duration: 1200 }
-      );
-      (rpCard.querySelector('.rp-chip') as HTMLElement)?.focus();
-    }
-  });
-
-  // Conmutador de modo: "Por la zona" / "Un día en un pueblo"
-  rpCard?.querySelectorAll('.rp-mode').forEach((b) => {
-    b.addEventListener('click', () => {
-      const m = b.getAttribute('data-mode') || 'zona';
-      rpCard.setAttribute('data-mode', m);
-      rpCard.querySelectorAll('.rp-mode').forEach((x) => x.classList.toggle('on', x === b));
-      if (m === 'pueblo') (document.getElementById('rp-pueblo-input') as HTMLInputElement | null)?.focus();
-    });
-  });
-
-  // Autocompletado de municipio para el modo "un día en un pueblo"
-  const rpInput = document.getElementById('rp-pueblo-input') as HTMLInputElement | null;
-  const rpAc = document.getElementById('rp-pueblo-ac');
-  const rpCats = () => {
-    const ks = Array.from(rpCard?.querySelectorAll('.rp-chip input:checked') ?? [])
-      .map((i) => (i as HTMLInputElement).value);
-    return ks.length ? '&' + ks.map((k) => 'cat=' + encodeURIComponent(k)).join('&') : '';
-  };
-  let rpTimer: any;
-  rpInput?.addEventListener('input', () => {
-    const q = rpInput.value.trim();
-    clearTimeout(rpTimer);
-    if (q.length < 2) { if (rpAc) rpAc.innerHTML = ''; return; }
-    rpTimer = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/search?q=' + encodeURIComponent(q));
-        const data = await res.json();
-        const muns = ((data as any[]) || []).filter((d) => d.tipo === 'municipio').slice(0, 6);
-        if (rpAc) rpAc.innerHTML = muns.map((m) => {
-          const nom = String(m.nombre || '').replace(/[&<>]/g, '');
-          const prov = String(m.provincia || '').replace(/[&<>]/g, '');
-          return `<a href="/ruta?pueblo=${m.codigo_ine}${rpCats()}" style="display:flex;align-items:center;gap:10px;padding:11px 15px;text-decoration:none;border-bottom:1px solid #f2f2f2;background:#fff;cursor:pointer" onmouseover="this.style.background='#fff1f3'" onmouseout="this.style.background='#fff'"><span style="flex-shrink:0;color:#FF385C;line-height:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span style="flex:1;min-width:0;font-size:.92rem;font-weight:700;color:#222;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}<span style="font-weight:400;color:#888;font-size:.82rem;margin-left:7px">${prov}</span></span></a>`;
-        }).join('');
-      } catch (e) { if (rpAc) rpAc.innerHTML = ''; }
-    }, 180);
-  });
-  document.addEventListener('click', (e) => {
-    if (rpAc && !rpAc.contains(e.target as Node) && e.target !== rpInput) rpAc.innerHTML = '';
-  });
-</script>
+<!-- ── BANNER PUBLICITARIO (home arriba) ── -->
+{bannerTop && (bannerTop.enlace
+  ? <a href={bannerTop.enlace} target="_blank" rel="noopener sponsored" class="home-banner"><img src={bannerTop.foto} alt={bannerTop.alt ?? 'Publicidad'} loading="lazy" /></a>
+  : <div class="home-banner"><img src={bannerTop.foto} alt={bannerTop.alt ?? 'Publicidad'} loading="lazy" /></div>
+)}
 
 <!-- Paso 2 móvil: elegir zona tras pulsar categoría -->
 <div class="mcs-overlay" id="mob-cat-sheet">
@@ -964,11 +830,22 @@ function doSearch() {
 @media (max-width: 560px) { .joyas-promo { padding: 16px; gap: 12px; } .jp-cta { align-self: stretch; justify-content: center; } }
 
 /* Instagramers home — estilo Airbnb */
+.promo-row-sec { max-width: 1100px; margin: 34px auto 0; padding: 0 16px; }
+.promo-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.promo-card { display: flex; align-items: center; gap: 13px; background: #fff; border: 1px solid #e8e8e8; border-radius: 16px; padding: 16px 18px; text-decoration: none; transition: box-shadow .15s, transform .15s; }
+.promo-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); transform: translateY(-2px); }
+.promo-ic { flex-shrink: 0; width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; }
+.promo-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.promo-txt strong { font-size: .95rem; font-weight: 700; color: #222; letter-spacing: -.01em; }
+.promo-txt small { font-size: .8rem; color: #717171; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.promo-arrow { color: #bbb; font-weight: 700; }
+.promo-card:hover .promo-arrow { color: #FF385C; }
+@media (max-width: 760px) { .promo-row { grid-template-columns: 1fr; } }
 .ig-home-sec { max-width: 1100px; margin: 28px auto 0; padding: 0 16px; }
 .ig-home-header { margin-bottom: 14px; }
 .ig-home-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em; color: #222; margin: 0 0 4px; }
 .ig-home-sub { font-size: .9rem; color: #666; margin: 0; }
-.ig-hero-card { position: relative; border-radius: 20px; overflow: hidden; height: 340px; }
+.ig-hero-card { position: relative; border-radius: 20px; overflow: hidden; height: 220px; }
 .ig-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
 .ig-hero-grad { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.78) 0%, rgba(0,0,0,.25) 50%, rgba(0,0,0,0) 75%); }
 .ig-hero-top { position: absolute; top: 16px; left: 18px; }
@@ -992,7 +869,7 @@ function doSearch() {
 .ig-join-text { font-size: .75rem; font-weight: 700; color: #FF385C; text-align: center; line-height: 1.35; }
 .ig-see-all { display: inline-flex; align-items: center; gap: 8px; margin: 18px auto 0; padding: 13px 28px; background: #FF385C; color: #fff; font-size: .92rem; font-weight: 700; border-radius: 999px; text-decoration: none; transition: background .15s, transform .15s; }
 .ig-see-all:hover { background: #e0314f; transform: translateY(-1px); }
-@media (max-width: 600px) { .ig-hero-card { height: 420px; } .ig-hero-img { object-position: center center; } .ig-hero-title { font-size: 1.25rem; } }
+@media (max-width: 600px) { .ig-hero-card { height: 300px; } .ig-hero-img { object-position: center center; } .ig-hero-title { font-size: 1.25rem; } }
 
 /* Explorar por categoría (agrupado, con microdescripción) */
 .cat-explore { max-width: 1100px; margin: 18px auto 0; padding: 0 16px; }
