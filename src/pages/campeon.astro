@@ -1,0 +1,75 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="¿En qué es campeón tu municipio? — Ranking Spain"
+  description="Escribe tu municipio y descubre al instante en qué es de los mejores de España: fiestas, gastronomía, monumentos, playas… y compártelo.">
+
+<div class="cb-page">
+  <div class="cb-hero">
+    <span class="cb-eyebrow">🏆 Nuevo</span>
+    <h1 class="cb-title">¿En qué es campeón tu municipio?</h1>
+    <p class="cb-sub">Escribe cualquier municipio de España y descubre al instante su palmarés: en qué categorías es de los mejores del país. Y compártelo con quien más presume de pueblo.</p>
+    <div class="cb-search-wrap">
+      <div class="cb-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.2" stroke-linecap="round" width="20" height="20"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="cb-input" type="text" placeholder="Escribe tu municipio… (Frigiliana, Cazorla, Vigo…)" autocomplete="off" autofocus />
+      </div>
+      <div id="cb-ac" class="cb-ac"></div>
+    </div>
+    <div class="cb-hint">9.000+ municipios · 30 categorías · datos verificados</div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    var input = document.getElementById('cb-input');
+    var ac = document.getElementById('cb-ac');
+    var timer;
+    input.addEventListener('input', function () {
+      var q = input.value.trim();
+      clearTimeout(timer);
+      if (q.length < 2) { ac.innerHTML = ''; return; }
+      timer = setTimeout(function () {
+        fetch('/api/search?q=' + encodeURIComponent(q))
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            var muns = (data || []).filter(function (d) { return d.tipo === 'municipio'; }).slice(0, 7);
+            ac.innerHTML = muns.map(function (m) {
+              var nom = String(m.nombre || '').replace(/[&<>]/g, '');
+              var prov = String(m.provincia || '').replace(/[&<>]/g, '');
+              return '<a href="/campeon/' + m.codigo_ine + '" class="cb-ac-row">'
+                + '<span class="cb-ac-ic">🏆</span>'
+                + '<span class="cb-ac-txt">' + nom + '<small>' + prov + '</small></span>'
+                + '<span class="cb-ac-go">→</span></a>';
+            }).join('');
+          })
+          .catch(function () { ac.innerHTML = ''; });
+      }, 180);
+    });
+    document.addEventListener('click', function (e) {
+      if (!ac.contains(e.target) && e.target !== input) ac.innerHTML = '';
+    });
+  })();
+</script>
+
+<style>
+.cb-page { max-width: 640px; margin: 40px auto 80px; padding: 0 16px; }
+.cb-hero { text-align: center; }
+.cb-eyebrow { font-size: .8rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #FF385C; }
+.cb-title { font-size: 2.2rem; font-weight: 700; letter-spacing: -.02em; color: #222; margin: 8px 0 10px; }
+.cb-sub { color: #666; font-size: 1rem; line-height: 1.55; margin: 0 auto 26px; max-width: 520px; }
+.cb-search-wrap { position: relative; max-width: 480px; margin: 0 auto; }
+.cb-search { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid #ddd; border-radius: 999px; padding: 14px 20px; box-shadow: 0 6px 22px rgba(0,0,0,.07); }
+.cb-search:focus-within { border-color: #FF385C; }
+.cb-search input { flex: 1; border: none; outline: none; font-size: 1rem; font-family: inherit; background: transparent; }
+.cb-ac { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #fff; border-radius: 16px; box-shadow: 0 12px 34px rgba(0,0,0,.14); overflow: hidden; z-index: 30; text-align: left; }
+.cb-ac :global(.cb-ac-row) { display: flex; align-items: center; gap: 12px; padding: 13px 18px; text-decoration: none; border-bottom: 1px solid #f4f4f4; }
+.cb-ac :global(.cb-ac-row:hover) { background: #fff1f3; }
+.cb-ac :global(.cb-ac-ic) { font-size: 1.05rem; }
+.cb-ac :global(.cb-ac-txt) { flex: 1; font-weight: 700; color: #222; font-size: .95rem; }
+.cb-ac :global(.cb-ac-txt small) { font-weight: 400; color: #888; margin-left: 8px; font-size: .82rem; }
+.cb-ac :global(.cb-ac-go) { color: #FF385C; font-weight: 700; }
+.cb-hint { margin-top: 18px; color: #999; font-size: .82rem; }
+@media (max-width: 480px) { .cb-title { font-size: 1.7rem; } }
+</style>
+</Base>

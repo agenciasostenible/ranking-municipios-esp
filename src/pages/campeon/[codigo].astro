@@ -1,0 +1,157 @@
+---
+import { DB } from '../../lib/d1client';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { LABELS, getIcon, DETAIL_CATS, formatPob } from '../../lib/db';
+
+const { codigo } = Astro.params;
+
+const muni = await DB.prepare(
+  `SELECT codigo_ine, nombre, provincia, comunidad, poblacion FROM municipios WHERE codigo_ine = ? AND COALESCE(es_duplicado,0)=0`
+).bind(codigo).first() as any;
+if (!muni) return Astro.redirect('/campeon');
+
+// Palmarés: posición nacional y provincial en cada categoría (calculado en vivo)
+const { results: rows } = await DB.prepare(`
+  SELECT p.categoria, p.puntuacion,
+   (SELECT COUNT(*)+1 FROM puntuaciones q JOIN municipios mq ON mq.codigo_ine=q.codigo_ine
+     WHERE q.categoria=p.categoria AND q.puntuacion>p.puntuacion AND COALESCE(mq.es_duplicado,0)=0) rk_nac,
+   (SELECT COUNT(*)+1 FROM puntuaciones q JOIN municipios mq ON mq.codigo_ine=q.codigo_ine
+     WHERE q.categoria=p.categoria AND q.puntuacion>p.puntuacion AND COALESCE(mq.es_duplicado,0)=0 AND mq.provincia=?) rk_prov,
+   (SELECT COUNT(*) FROM puntuaciones q JOIN municipios mq ON mq.codigo_ine=q.codigo_ine
+     WHERE q.categoria=p.categoria AND q.puntuacion>0 AND COALESCE(mq.es_duplicado,0)=0) tot_nac
+  FROM puntuaciones p WHERE p.codigo_ine = ? AND p.puntuacion > 0
+`).bind(muni.provincia, codigo).all();
+
+// Solo categorías públicas + global
+const PUBLIC = new Set([...DETAIL_CATS, 'ranking_global']);
+type Logro = { categoria: string; label: string; icon: string; puntuacion: number; rk_nac: number; rk_prov: number; tot_nac: number; pct: number };
+const logros: Logro[] = (rows as any[])
+  .filter(r => PUBLIC.has(r.categoria))
+  .map(r => ({
+    categoria: r.categoria,
+    label: r.categoria === 'ranking_global' ? 'Ranking global' : (LABELS[r.categoria] ?? r.categoria),
+    icon: getIcon(r.categoria),
+    puntuacion: r.puntuacion, rk_nac: r.rk_nac, rk_prov: r.rk_prov, tot_nac: r.tot_nac,
+    pct: r.tot_nac > 0 ? r.rk_nac / r.tot_nac : 1,
+  }))
+  // Impresionante primero: nº1 provincial, luego mejor percentil nacional
+  .sort((a, b) => {
+    const aTop = a.rk_prov === 1 ? 0 : 1, bTop = b.rk_prov === 1 ? 0 : 1;
+    if (aTop !== bTop) return aTop - bTop;
+    return a.pct - b.pct;
+  });
+
+const top = logros.slice(0, 6);
+const nTop1Prov = logros.filter(l => l.rk_prov === 1).length;
+const mejor = top[0];
+
+function frase(l: Logro): string {
+  if (l.rk_prov === 1) return `#1 de ${muni.provincia}`;
+  if (l.rk_nac <= 10) return `Top ${l.rk_nac} de España`;
+  if (l.rk_prov <= 10) return `#${l.rk_prov} de ${muni.provincia}`;
+  const pct = Math.max(1, Math.round(l.pct * 100));
+  return pct <= 25 ? `Top ${pct}% de España` : `#${l.rk_nac} de España`;
+}
+function medalla(i: number): string { return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🏅'; }
+
+const titulo = mejor
+  ? `${muni.nombre} es ${frase(mejor).startsWith('#1') ? 'campeón' : 'top'} en ${mejor.label.toLowerCase()}`
+  : `${muni.nombre} — palmarés turístico`;
+const ogImg = `${Astro.url.origin}/api/og/campeon/${muni.codigo_ine}`;
+const shareUrl = `https://rankingspain.com/campeon/${muni.codigo_ine}`;
+const shareText = mejor
+  ? `🏆 ${muni.nombre} (${muni.provincia}): ${frase(mejor)} en ${mejor.label.toLowerCase()}${top[1] ? ` y ${frase(top[1]).toLowerCase()} en ${top[1].label.toLowerCase()}` : ''}. Mira su palmarés completo:`
+  : `Mira el palmarés turístico de ${muni.nombre}:`;
+---
+<Base title={`¿En qué es campeón ${muni.nombre}? — Ranking Spain`}
+  description={`El palmarés turístico de ${muni.nombre} (${muni.provincia}): sus mejores posiciones en los rankings de España.`}
+  ogTitle={titulo}
+  ogImage={ogImg}>
+
+<div class="camp-page">
+  <a href="/campeon" class="camp-back">← Buscar otro municipio</a>
+
+  <div class="camp-card">
+    <div class="camp-head">
+      <span class="camp-eyebrow">🏆 Palmarés turístico</span>
+      <h1 class="camp-title">{muni.nombre}</h1>
+      <div class="camp-sub">{muni.provincia}{muni.poblacion ? ` · ${formatPob(muni.poblacion)} hab.` : ''}</div>
+      {nTop1Prov > 0 && (
+        <div class="camp-badge">Campeón provincial en {nTop1Prov} {nTop1Prov === 1 ? 'categoría' : 'categorías'}</div>
+      )}
+    </div>
+
+    {top.length === 0 ? (
+      <p class="camp-empty">Todavía no tenemos suficientes datos de este municipio. <a href={`/municipio/${muni.codigo_ine}`}>Ver su ficha →</a></p>
+    ) : (
+      <div class="camp-list">
+        {top.map((l, i) => (
+          <div class="camp-row">
+            <span class="camp-medal">{medalla(i)}</span>
+            <span class="camp-ic"><Icon name={l.icon} size={20} /></span>
+            <span class="camp-cat">{l.label}</span>
+            <span class="camp-pos">{frase(l)}</span>
+          </div>
+        ))}
+      </div>
+    )}
+
+    <div class="camp-actions">
+      <button class="camp-share camp-wa" id="camp-wa">🟢 Compartir en WhatsApp</button>
+      <button class="camp-share camp-native" id="camp-share">📲 Compartir</button>
+      <button class="camp-share camp-copy" id="camp-copy">📋 Copiar enlace</button>
+    </div>
+    <a href={`/municipio/${muni.codigo_ine}`} class="camp-ficha">Ver ficha completa de {muni.nombre} →</a>
+  </div>
+
+  <div class="camp-cta">
+    <span>¿Y tu municipio, en qué es campeón?</span>
+    <a href="/campeon">Descúbrelo →</a>
+  </div>
+</div>
+
+<script is:inline define:vars={{ shareUrl, shareText }}>
+  var full = shareText + ' ' + shareUrl;
+  document.getElementById('camp-wa')?.addEventListener('click', function () {
+    window.open('https://wa.me/?text=' + encodeURIComponent(full), '_blank');
+  });
+  document.getElementById('camp-share')?.addEventListener('click', function () {
+    if (navigator.share) navigator.share({ title: 'Ranking Spain', text: shareText, url: shareUrl }).catch(function(){});
+    else { navigator.clipboard && navigator.clipboard.writeText(full); alert('Enlace copiado'); }
+  });
+  document.getElementById('camp-copy')?.addEventListener('click', function () {
+    var b = document.getElementById('camp-copy');
+    navigator.clipboard.writeText(full).then(function () {
+      var o = b.textContent; b.textContent = '✓ Copiado'; setTimeout(function () { b.textContent = o; }, 1500);
+    });
+  });
+</script>
+
+<style>
+.camp-page { max-width: 640px; margin: 24px auto 60px; padding: 0 16px; }
+.camp-back { display: inline-block; color: #717171; text-decoration: none; font-size: .88rem; font-weight: 600; margin-bottom: 14px; }
+.camp-card { background: #fff; border: 1px solid #ebebeb; border-radius: 22px; padding: 30px 28px; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+.camp-head { text-align: center; margin-bottom: 22px; }
+.camp-eyebrow { font-size: .8rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #FF385C; }
+.camp-title { font-size: 2rem; font-weight: 700; letter-spacing: -.02em; color: #222; margin: 6px 0 2px; }
+.camp-sub { color: #717171; font-size: .95rem; }
+.camp-badge { display: inline-block; margin-top: 10px; background: #fff1f3; color: #FF385C; font-weight: 700; font-size: .85rem; padding: 6px 14px; border-radius: 999px; }
+.camp-list { display: flex; flex-direction: column; gap: 8px; }
+.camp-row { display: flex; align-items: center; gap: 12px; background: #fafafa; border: 1px solid #f0f0f0; border-radius: 14px; padding: 12px 16px; }
+.camp-medal { font-size: 1.25rem; }
+.camp-ic { color: #FF385C; line-height: 0; }
+.camp-cat { flex: 1; font-weight: 700; color: #222; font-size: .97rem; }
+.camp-pos { font-weight: 700; color: #FF385C; font-size: .93rem; white-space: nowrap; }
+.camp-empty { text-align: center; color: #717171; }
+.camp-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 22px; }
+.camp-share { border: none; cursor: pointer; font-weight: 700; font-size: .9rem; padding: 12px 18px; border-radius: 999px; }
+.camp-wa { background: #25D366; color: #fff; }
+.camp-native { background: #FF385C; color: #fff; }
+.camp-copy { background: #fff; color: #444; border: 1.5px solid #ddd; }
+.camp-ficha { display: block; text-align: center; margin-top: 16px; color: #717171; font-size: .88rem; text-decoration: none; font-weight: 600; }
+.camp-cta { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 22px; color: #444; font-size: .95rem; }
+.camp-cta a { color: #FF385C; font-weight: 700; text-decoration: none; }
+@media (max-width: 480px) { .camp-title { font-size: 1.6rem; } .camp-pos { font-size: .85rem; } }
+</style>
+</Base>
