@@ -205,7 +205,7 @@ const { results: instagramersRows } = await DB.prepare(
      ${espCond}
    ORDER BY i.seguidores DESC, i.id DESC
    LIMIT 6`
-).bind(...espFiltros, codigo, municipio.provincia, ...espFiltros).all();
+).bind(codigo, municipio.provincia, ...espFiltros).all();
 const instagramersMuni = (instagramersRows as any[]).map((r) => ({
   ...r,
   avatar_url: r.has_avatar ? `/api/instagramer-foto?id=${r.id}` : (r.avatar_url || null),
