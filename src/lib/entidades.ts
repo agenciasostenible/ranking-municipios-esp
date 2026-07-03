@@ -69,6 +69,7 @@ export const SELLO_COLORS: Record<string, { bg: string; color: string }> = {
   'BIC Nacional':     { bg: '#fff3e0', color: '#e65100' },
   'IT Nacional':      { bg: '#f3e5f5', color: '#4a148c' },
   'Autonómico':       { bg: '#e0f7fa', color: '#006064' },
+  'Interés Turístico Regional': { bg: '#e0f7fa', color: '#006064' },
 };
 
 export function getSelloStyle(sello: string | null): string {

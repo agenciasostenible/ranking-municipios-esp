@@ -71,7 +71,7 @@ const { results: ccaas }     = await DB.prepare(`SELECT DISTINCT comunidad FROM 
 const CAT_FUENTES_ENT: Record<string,string[]> = {
   castillos:['inventario_castillos_pdf','inventario_monumentos_pdf','monumentos_osm'], monumentos:['inventario_monumentos_pdf','monumentos_osm'],
   naturaleza:['inventario_naturaleza_pdf'], museos:['wikidata_museos'],
-  fiestas:['inventario_fiestas_pdf'], festivales:['inventario_festivales_pdf','festivales_wiki'],
+  fiestas:['inventario_fiestas_pdf','fiestas_wiki'], festivales:['inventario_festivales_pdf','festivales_wiki'],
   miradores:['inventario_miradores_pdf'], oleoturismo:['inventario_oleoturismo_pdf'],
   misterioso:['inventario_misterioso_pdf','misterio_osm'], estrellas:['starlight'], senderismo:['senderos_osm','excel_curado'],
   balnearios:['balnearios','agua_osm'],
