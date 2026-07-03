@@ -8,6 +8,7 @@ import { gmapsUrl } from '../../lib/entidades';
 // @ts-ignore
 
 const { cat } = Astro.params;
+if (cat === 'soletes') return Astro.redirect('/entidades/gastronomia', 301);
 
 // Mapa categoría → fuente(s) de entidades individuales
 const CAT_FUENTES: Record<string, string[]> = {
@@ -37,8 +38,7 @@ const CAT_FUENTES: Record<string, string[]> = {
   turismo_religioso: ['inventario_turismo_religioso_pdf'],
   turismo_activo:    ['inventario_turismo_activo_pdf'],
   lujo:              ['inventario_lujo_pdf'],
-  soletes:           ['guia_repsol_solete'],
-  gastronomia:       ['gastronomia_ampliacion', 'guia_michelin'],
+  gastronomia:       ['guia_michelin', 'gastronomia_ampliacion', 'guia_repsol_solete', 'restaurantes_osm'],
 };
 
 const CAT_TIPOS_F: Record<string,string[]> = { balnearios: ['balneario','termas'], senderismo: ['sendero'], castillos: ['castillo','torre','fortaleza','alcazaba','muralla'] };
@@ -58,7 +58,7 @@ const catLabel = LABELS[cat!] ?? cat!;
 const catColor = CAT_COLORS[cat!] ?? '#FF385C';
 // Sustantivo plural para los contadores ("3.991 senderos", no "3.991 senderismo")
 const PLURAL: Record<string, string> = {
-  senderismo: 'senderos', gastronomia: 'restaurantes', soletes: 'sitios para comer',
+  senderismo: 'senderos', gastronomia: 'sitios para comer',
   ciclismo: 'rutas ciclistas', balnearios: 'balnearios y termas', oleoturismo: 'experiencias de oleoturismo',
   turismo_religioso: 'lugares religiosos', turismo_activo: 'experiencias de turismo activo',
   turismo_mascotas: 'sitios pet-friendly', turismo_lgtbi: 'destinos LGTBI',
@@ -119,6 +119,16 @@ const { results: rows } = await DB.prepare(`
       WHEN 'Museo de Fama Mundial' THEN 0
       WHEN 'Museo Nacional' THEN 1
       WHEN 'UNESCO' THEN 2
+      WHEN '3 Estrellas Michelin' THEN 0
+      WHEN '2 Estrellas Michelin' THEN 1
+      WHEN '1 Estrella Michelin' THEN 2
+      ELSE 3
+    END,
+    CASE MIN(COALESCE(e.fuente,''))
+      WHEN 'guia_michelin' THEN 0
+      WHEN 'guia_repsol_solete' THEN 1
+      WHEN 'gastronomia_ampliacion' THEN 2
+      WHEN 'restaurantes_osm' THEN 8
       ELSE 3
     END,
     CASE LOWER(MIN(e.nombre))

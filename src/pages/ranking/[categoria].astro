@@ -13,6 +13,7 @@ let { categoria } = Astro.params;
 if (categoria === 'campings') categoria = 'Campings';
 if (categoria === 'playas') categoria = 'Playas';
 if (categoria === 'turismo_rural') categoria = 'TurismoRural';
+if (categoria === 'soletes') return Astro.redirect('/ranking/gastronomia', 301);
 
 const url = Astro.url;
 const prov    = url.searchParams.get('provincia') ?? '';
@@ -78,7 +79,7 @@ const CAT_FUENTES_ENT: Record<string,string[]> = {
   TurismoRural:['inventario_turismo_rural_pdf'], ciclismo:['vias_verdes','caminos_naturales','eurovelo','centros_btt','camino_cid','pirinexus'],
   vinos:['inventario_vinos_pdf','rutas_vino'], pueblo_bonito:['pueblos_mas_bonitos'],
   turismo_religioso:['inventario_turismo_religioso_pdf'], lujo:['inventario_lujo_pdf'],
-  soletes:['guia_repsol_solete'], gastronomia:['gastronomia_ampliacion','guia_michelin'],
+  gastronomia:['guia_michelin','gastronomia_ampliacion','guia_repsol_solete','restaurantes_osm'],
   pozas:['pozas_bano','agua_osm'], cuevas:['cuevas'],
   solteros:['inventario_solteros_pdf'], turismo_mascotas:['inventario_turismo_mascotas_pdf'],
   turismo_lgtbi:['inventario_turismo_lgtbi_pdf'], turismo_activo:['inventario_turismo_activo_pdf'],
@@ -115,7 +116,7 @@ const ENT_PREGUNTAS: Record<string,string> = {
 };
 const CAT_TIPOS_ENT: Record<string,string[]> = { balnearios: ['balneario','termas'], senderismo: ['sendero'], castillos: ['castillo','torre','fortaleza','alcazaba','muralla'] };
 const ENT_PLURAL: Record<string,string> = {
-  senderismo:'senderos', gastronomia:'restaurantes', soletes:'sitios para comer', ciclismo:'rutas ciclistas',
+  senderismo:'senderos', gastronomia:'sitios para comer', soletes:'sitios para comer', ciclismo:'rutas ciclistas',
   oleoturismo:'rutas del aceite', turismo_religioso:'lugares religiosos', turismo_activo:'experiencias',
   turismo_mascotas:'sitios pet-friendly', turismo_lgtbi:'destinos LGTBI', TurismoRural:'alojamientos rurales',
   hoteles_encanto:'hoteles', misterioso:'lugares misteriosos', estrellas:'cielos Starlight',
@@ -138,8 +139,7 @@ const RELATED: Record<string, { key: string; hint: string }[]> = {
   monumentos: [ { key:'castillos', hint:'¿Solo castillos?' }, { key:'museos', hint:'¿Museos?' } ],
   castillos:  [ { key:'monumentos', hint:'¿Todo el patrimonio?' } ],
   museos:     [ { key:'monumentos', hint:'¿Monumentos?' } ],
-  gastronomia:[ { key:'soletes', hint:'¿Dónde comer?' }, { key:'vinos', hint:'¿Bodegas?' } ],
-  soletes:    [ { key:'gastronomia', hint:'¿Prestigio gastronómico?' } ],
+  gastronomia:[ { key:'vinos', hint:'¿Bodegas?' }, { key:'oleoturismo', hint:'¿Aceite?' } ],
 };
 const related = (RELATED[categoria!] ?? []).map(r => ({ ...r, info: getCatInfo(r.key), color: CAT_COLORS[r.key] ?? '#FF385C' }));
 let entCount = 0;
