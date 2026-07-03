@@ -36,7 +36,7 @@ const CAT_FUENTES: Record<string, string[]> = {
   vinos:             ['inventario_vinos_pdf', 'rutas_vino'],
   pueblo_bonito:     ['pueblos_mas_bonitos'],
   turismo_religioso: ['inventario_turismo_religioso_pdf', 'religioso_osm'],
-  turismo_activo:    ['inventario_turismo_activo_pdf'],
+  turismo_activo:    ['inventario_turismo_activo_pdf', 'activo_osm'],
   lujo:              ['inventario_lujo_pdf', 'lujo_osm'],
   gastronomia:       ['guia_michelin', 'gastronomia_ampliacion', 'guia_repsol_solete', 'restaurantes_osm'],
 };
@@ -60,7 +60,7 @@ const catColor = CAT_COLORS[cat!] ?? '#FF385C';
 const PLURAL: Record<string, string> = {
   senderismo: 'senderos', gastronomia: 'sitios para comer',
   ciclismo: 'rutas ciclistas', balnearios: 'balnearios y termas', oleoturismo: 'almazaras y experiencias del aceite',
-  turismo_religioso: 'santuarios, monasterios y lugares de devoción', turismo_activo: 'experiencias de turismo activo',
+  turismo_religioso: 'santuarios, monasterios y lugares de devoción', turismo_activo: 'ferratas, escalada, parapente, buceo y esquí',
   turismo_mascotas: 'hoteles, playas y sitios para ir con tu perro', turismo_lgtbi: 'locales, playas y destinos LGTBI',
   TurismoRural: 'alojamientos rurales', hoteles_encanto: 'hoteles con encanto',
   misterioso: 'lugares de misterio y leyenda', estrellas: 'miradores de estrellas',
