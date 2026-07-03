@@ -29,7 +29,7 @@ const catInfo  = getCatInfo(categoria!);
 const catColor = CAT_COLORS[categoria!] ?? '#FF385C';
 
 // Build WHERE
-const whereClauses = [`p.categoria = ?`, `COALESCE(m.es_duplicado, 0) = 0`];
+const whereClauses = [`p.categoria = ?`, `p.puntuacion > 0`, `COALESCE(m.es_duplicado, 0) = 0`];
 const params: any[] = [categoria];
 if (prov)   { whereClauses.push(`m.provincia = ?`);  params.push(prov); }
 if (ccaa)   { whereClauses.push(`m.comunidad = ?`);  params.push(ccaa); }
@@ -73,12 +73,13 @@ const CAT_FUENTES_ENT: Record<string,string[]> = {
   fiestas:['inventario_fiestas_pdf'], festivales:['inventario_festivales_pdf'],
   miradores:['inventario_miradores_pdf'], oleoturismo:['inventario_oleoturismo_pdf'],
   misterioso:['inventario_misterioso_pdf'], estrellas:['starlight'], senderismo:['senderos_osm'],
+  balnearios:['balnearios','agua_osm'],
   Playas:['bandera_azul','inventario_playas_pdf'], hoteles_encanto:['hoteles_encanto'],
   TurismoRural:['inventario_turismo_rural_pdf'], ciclismo:['vias_verdes','caminos_naturales','eurovelo','centros_btt','camino_cid','pirinexus'],
   vinos:['inventario_vinos_pdf','rutas_vino'], pueblo_bonito:['pueblos_mas_bonitos'],
   turismo_religioso:['inventario_turismo_religioso_pdf'], lujo:['inventario_lujo_pdf'],
   soletes:['guia_repsol_solete'], gastronomia:['gastronomia_ampliacion','guia_michelin'],
-  pozas:['pozas_bano','agua_osm'], cuevas:['cuevas'], balnearios:['balnearios'],
+  pozas:['pozas_bano','agua_osm'], cuevas:['cuevas'],
   solteros:['inventario_solteros_pdf'], turismo_mascotas:['inventario_turismo_mascotas_pdf'],
   turismo_lgtbi:['inventario_turismo_lgtbi_pdf'], turismo_activo:['inventario_turismo_activo_pdf'],
 };
@@ -112,12 +113,24 @@ const ENT_PREGUNTAS: Record<string,string> = {
   turismo_lgtbi:'¿Cuál es el mejor destino LGTBI?',
   turismo_activo:'¿Cuál es la mejor experiencia de turismo activo?',
 };
+const CAT_TIPOS_ENT: Record<string,string[]> = { balnearios: ['balneario','termas'] };
+const ENT_PLURAL: Record<string,string> = {
+  senderismo:'senderos', gastronomia:'restaurantes', soletes:'sitios para comer', ciclismo:'rutas ciclistas',
+  oleoturismo:'rutas del aceite', turismo_religioso:'lugares religiosos', turismo_activo:'experiencias',
+  turismo_mascotas:'sitios pet-friendly', turismo_lgtbi:'destinos LGTBI', TurismoRural:'alojamientos rurales',
+  hoteles_encanto:'hoteles', misterioso:'lugares misteriosos', estrellas:'cielos Starlight',
+  lujo:'experiencias de lujo', solteros:'sitios', pueblo_bonito:'pueblos', vinos:'bodegas y rutas',
+  balnearios:'balnearios y termas', pozas:'pozas y baños', cuevas:'cuevas', fiestas:'fiestas',
+  festivales:'festivales', monumentos:'monumentos', castillos:'castillos', museos:'museos',
+  miradores:'miradores', Playas:'playas', naturaleza:'espacios naturales',
+};
 const entFuentes = CAT_FUENTES_ENT[categoria!];
+const entTipos = CAT_TIPOS_ENT[categoria!];
 let entCount = 0;
 if (entFuentes) {
   const entCountRow = await DB.prepare(
-    `SELECT COUNT(DISTINCT LOWER(e.nombre)||'|'||e.codigo_ine) AS n FROM entidades e JOIN municipios m ON m.codigo_ine=e.codigo_ine WHERE e.fuente IN (${entFuentes.map(()=>'?').join(',')}) AND COALESCE(m.es_duplicado,0)=0`
-  ).bind(...entFuentes).first() as any;
+    `SELECT COUNT(DISTINCT LOWER(e.nombre)||'|'||e.codigo_ine) AS n FROM entidades e JOIN municipios m ON m.codigo_ine=e.codigo_ine WHERE e.fuente IN (${entFuentes.map(()=>'?').join(',')})${entTipos ? ` AND e.tipo IN (${entTipos.map(()=>'?').join(',')})` : ''} AND COALESCE(m.es_duplicado,0)=0`
+  ).bind(...entFuentes, ...(entTipos ?? [])).first() as any;
   entCount = entCountRow?.n ?? 0;
 }
 
@@ -289,16 +302,13 @@ function buildUrl(overrides: Record<string, string | number>) {
         Mostrando {(page-1)*perPage+1}–{Math.min(page*perPage, totalRows)}
         {prov ? ` en ${prov}` : ccaa ? ` en ${ccaa}` : ''}
       </div>
-      {entFuentes && ENT_PREGUNTAS[categoria!] && (
-        <a href={`/entidades/${categoria}${prov ? `?provincia=${encodeURIComponent(prov)}` : ccaa ? `?ccaa=${encodeURIComponent(ccaa)}` : ''}`} class="ent-banner" style={`--ec:${catColor}`}>
-          <div class="ent-banner-left">
-            <span class="ent-banner-q">{ENT_PREGUNTAS[categoria!]}</span>
-            <span class="ent-banner-cta">
-              Ver los {entCount > 0 ? entCount.toLocaleString('es-ES') : ''} {catLabel.toLowerCase()} por nombre
-            </span>
-          </div>
-          <span class="ent-banner-arrow">›</span>
-        </a>
+      {entFuentes && entCount > 0 && (
+        <div class="vista-tabs" style={`--ec:${catColor}`}>
+          <span class="vista-tab on">🏆 Ranking de municipios</span>
+          <a href={`/entidades/${categoria}${prov ? `?provincia=${encodeURIComponent(prov)}` : ''}`} class="vista-tab">
+            {ENT_PLURAL[categoria!] === 'cielos Starlight' ? 'Los' : 'Los'} {entCount.toLocaleString('es-ES')} {ENT_PLURAL[categoria!] ?? catLabel.toLowerCase()}, uno a uno →
+          </a>
+        </div>
       )}
     </div>
     {canShareRanking && (
@@ -871,5 +881,12 @@ document.head.appendChild(thumbStyle);
 .cre-ig { font-size: .74rem; font-weight: 700; color: #d63384; white-space: nowrap; flex-shrink: 0; }
 .cre-cta { max-width: 1100px; margin: 16px auto 0; font-size: .82rem; color: #888; }
 .cre-cta a { color: #d63384; font-weight: 700; text-decoration: none; }
+</style>
+<style>
+.vista-tabs { display: inline-flex; gap: 6px; margin-top: 12px; background: #f1f1f1; border-radius: 999px; padding: 4px; flex-wrap: wrap; }
+.vista-tab { padding: 9px 16px; border-radius: 999px; font-size: .87rem; font-weight: 700; text-decoration: none; color: #444; white-space: nowrap; }
+.vista-tab.on { background: #fff; color: #222; box-shadow: 0 1px 6px rgba(0,0,0,.12); }
+.vista-tab:not(.on):hover { color: var(--ec, #FF385C); }
+@media (max-width: 520px) { .vista-tab { font-size: .8rem; padding: 8px 12px; } }
 </style>
 </Base>

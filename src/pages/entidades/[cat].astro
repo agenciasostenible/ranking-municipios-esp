@@ -27,7 +27,7 @@ const CAT_FUENTES: Record<string, string[]> = {
   ciclismo:          ['vias_verdes', 'caminos_naturales', 'eurovelo', 'centros_btt', 'camino_cid', 'pirinexus'],
   pozas:             ['pozas_bano', 'agua_osm'],
   cuevas:            ['cuevas'],
-  balnearios:        ['balnearios'],
+  balnearios:        ['balnearios', 'agua_osm'],
   solteros:          ['inventario_solteros_pdf'],
   turismo_mascotas:  ['inventario_turismo_mascotas_pdf'],
   turismo_lgtbi:     ['inventario_turismo_lgtbi_pdf'],
@@ -40,7 +40,9 @@ const CAT_FUENTES: Record<string, string[]> = {
   gastronomia:       ['gastronomia_ampliacion', 'guia_michelin'],
 };
 
+const CAT_TIPOS_F: Record<string,string[]> = { balnearios: ['balneario','termas'] };
 const fuentes = CAT_FUENTES[cat!];
+const tiposF = CAT_TIPOS_F[cat!];
 if (!fuentes) return Astro.redirect('/ranking/ranking_global');
 
 const url = Astro.url;
@@ -56,7 +58,7 @@ const catColor = CAT_COLORS[cat!] ?? '#FF385C';
 // Sustantivo plural para los contadores ("3.991 senderos", no "3.991 senderismo")
 const PLURAL: Record<string, string> = {
   senderismo: 'senderos', gastronomia: 'restaurantes', soletes: 'sitios para comer',
-  ciclismo: 'rutas ciclistas', oleoturismo: 'experiencias de oleoturismo',
+  ciclismo: 'rutas ciclistas', balnearios: 'balnearios y termas', oleoturismo: 'experiencias de oleoturismo',
   turismo_religioso: 'lugares religiosos', turismo_activo: 'experiencias de turismo activo',
   turismo_mascotas: 'sitios pet-friendly', turismo_lgtbi: 'destinos LGTBI',
   TurismoRural: 'alojamientos rurales', hoteles_encanto: 'hoteles con encanto',
@@ -70,9 +72,9 @@ const catPlural = PLURAL[cat!] ?? catLabel.toLowerCase();
 const { results: provRows } = await DB.prepare(
   `SELECT DISTINCT m.provincia FROM municipios m
    JOIN entidades e ON e.codigo_ine = m.codigo_ine
-   WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')}) AND COALESCE(m.es_duplicado,0)=0
+   WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')})${tiposF ? ` AND e.tipo IN (${tiposF.map(()=>'?').join(',')})` : ''} AND COALESCE(m.es_duplicado,0)=0
    ORDER BY m.provincia`
-).bind(...fuentes).all();
+).bind(...fuentes, ...(tiposF ?? [])).all();
 const provincias = (provRows as any[]).map(r => r.provincia);
 
 // Condiciones extra
@@ -80,7 +82,7 @@ const provCond  = prov ? `AND m.provincia = ?` : '';
 const qNorm     = q ? q.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase() : '';
 const qCond     = q ? `AND (LOWER(e.nombre) LIKE LOWER(?) OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(e.nombre),'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u') LIKE ?)` : '';
 
-const bindParams: any[] = [...fuentes];
+const bindParams: any[] = [...fuentes, ...(tiposF ?? [])];
 if (prov) bindParams.push(prov);
 if (q)    bindParams.push(`%${q}%`, `%${qNorm}%`);
 
@@ -89,6 +91,7 @@ const countSql = `
   SELECT COUNT(*) AS n FROM entidades e
   JOIN municipios m ON m.codigo_ine = e.codigo_ine
   WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')})
+    ${tiposF ? `AND e.tipo IN (${tiposF.map(()=>'?').join(',')})` : ''}
     AND COALESCE(m.es_duplicado,0)=0
     ${provCond} ${qCond}`;
 const totalRow = await DB.prepare(countSql).bind(...bindParams).first() as any;
@@ -105,6 +108,7 @@ const { results: rows } = await DB.prepare(`
   JOIN municipios m ON m.codigo_ine = e.codigo_ine
   LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = ?
   WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')})
+    ${tiposF ? `AND e.tipo IN (${tiposF.map(()=>'?').join(',')})` : ''}
     AND COALESCE(m.es_duplicado,0)=0
     ${provCond} ${qCond}
   GROUP BY LOWER(e.nombre), m.codigo_ine
@@ -158,7 +162,10 @@ const selloColor: Record<string,string> = {
 <div class="ent-page">
 
   <div class="ent-hero" style={`background:${catColor}`}>
-    <a href={`/ranking/${cat}`} class="ent-back">← Ver ranking de municipios</a>
+    <div class="vista-tabs-ent">
+      <a href={`/ranking/${cat}`} class="vt-e">🏆 Ranking de municipios</a>
+      <span class="vt-e on">{catLabel} uno a uno</span>
+    </div>
     <div class="ent-hero-ic"><Icon name={catInfo.icon} size={28} /></div>
     <h1 class="ent-title">{catLabel} de España</h1>
     <p class="ent-sub">{total.toLocaleString('es-ES')} {catPlural} · ordenados por importancia</p>
@@ -282,5 +289,11 @@ const selloColor: Record<string,string> = {
   .ent-score { font-size: 1rem; min-width: 42px; }
   .ent-row { gap: 10px; }
 }
+</style>
+<style>
+.vista-tabs-ent { display: inline-flex; gap: 6px; background: rgba(255,255,255,.18); border-radius: 999px; padding: 4px; margin-bottom: 14px; }
+.vt-e { padding: 8px 15px; border-radius: 999px; font-size: .85rem; font-weight: 700; text-decoration: none; color: #fff; white-space: nowrap; }
+.vt-e.on { background: #fff; color: #222; }
+@media (max-width: 520px) { .vt-e { font-size: .78rem; padding: 7px 11px; } }
 </style>
 </Base>
