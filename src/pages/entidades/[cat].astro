@@ -37,7 +37,7 @@ const CAT_FUENTES: Record<string, string[]> = {
   pueblo_bonito:     ['pueblos_mas_bonitos'],
   turismo_religioso: ['inventario_turismo_religioso_pdf', 'religioso_osm'],
   turismo_activo:    ['inventario_turismo_activo_pdf'],
-  lujo:              ['inventario_lujo_pdf'],
+  lujo:              ['inventario_lujo_pdf', 'lujo_osm'],
   gastronomia:       ['guia_michelin', 'gastronomia_ampliacion', 'guia_repsol_solete', 'restaurantes_osm'],
 };
 
@@ -64,7 +64,7 @@ const PLURAL: Record<string, string> = {
   turismo_mascotas: 'hoteles, playas y sitios para ir con tu perro', turismo_lgtbi: 'locales, playas y destinos LGTBI',
   TurismoRural: 'alojamientos rurales', hoteles_encanto: 'hoteles con encanto',
   misterioso: 'lugares de misterio y leyenda', estrellas: 'miradores de estrellas',
-  lujo: 'experiencias de lujo', solteros: 'discotecas, pubs y beach clubs',
+  lujo: 'hoteles 5 estrellas, casinos y compras de lujo', solteros: 'discotecas, pubs y beach clubs',
   pueblo_bonito: 'pueblos bonitos', vinos: 'bodegas y rutas del vino',
 };
 const catPlural = PLURAL[cat!] ?? catLabel.toLowerCase();
