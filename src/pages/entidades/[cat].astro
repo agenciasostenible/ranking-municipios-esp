@@ -11,7 +11,7 @@ const { cat } = Astro.params;
 // Mapa categoría → fuente(s) de entidades individuales
 const CAT_FUENTES: Record<string, string[]> = {
   castillos:         ['inventario_castillos_pdf'],
-  monumentos:        ['inventario_monumentos_pdf'],
+  monumentos:        ['inventario_monumentos_pdf', 'monumentos_osm'],
   naturaleza:        ['inventario_naturaleza_pdf'],
   museos:            ['wikidata_museos'],
   fiestas:           ['inventario_fiestas_pdf'],
