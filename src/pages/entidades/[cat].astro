@@ -223,7 +223,8 @@ const selloColor: Record<string,string> = {
           </div>
         </div>
         <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-score" style={`color:${catColor}`}>
-          {Math.round(e.puntuacion)}<span>/100</span>
+          {Number(e.puntuacion).toFixed(1)}<span>/100</span>
+          <small class="ent-score-lbl">nota del municipio</small>
         </a>
       </li>
     ))}
@@ -295,6 +296,7 @@ const selloColor: Record<string,string> = {
   padding-top: 2px; flex-shrink: 0; letter-spacing: -.02em;
 }
 .ent-score span { font-size: .72rem; font-weight: 500; color: #bbb; }
+.ent-score-lbl { display: block; font-size: .6rem; font-weight: 600; color: #aaa; letter-spacing: .02em; margin-top: 1px; white-space: nowrap; }
 
 .ent-pag { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 28px 16px 0; }
 .ent-pg { color: var(--primary); text-decoration: none; font-weight: 700; font-size: .9rem; padding: 8px 18px; border: 2px solid var(--primary); border-radius: 10px; }
