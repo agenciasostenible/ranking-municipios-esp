@@ -286,6 +286,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     <a href="/ranking/ranking_global" class="car-more-card">Ver todo el ranking →</a>
   </div>
   <button class="car-arrow car-next" aria-label="Siguiente">›</button>
+  <div class="car-hint">desliza <span>→</span></div>
   </div>
 
   {carruseles.map(c => (
@@ -319,6 +320,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
         <a href={`/ranking/${c.key}`} class="car-more-card">Ver ranking completo →</a>
       </div>
       <button class="car-arrow car-next" aria-label="Siguiente">›</button>
+      <div class="car-hint">desliza <span>→</span></div>
       </div>
     </>
   ))}
@@ -1637,6 +1639,9 @@ function doSearch() {
 .car-next { right: -14px; }
 .car-arrow:hover { background: #FF385C; color: #fff; border-color: #FF385C; }
 @media (max-width: 760px) { .car-arrow { display: none; } .car-wrap::after { width: 36px; } }
+.car-hint { display: flex; justify-content: flex-end; align-items: center; gap: 4px; font-size: .78rem; font-weight: 700; color: #b0b0b0; margin: -8px 4px 0 0; }
+.car-hint span { display: inline-block; animation: carNudge 1.6s ease-in-out infinite; color: #FF385C; font-size: .95rem; }
+@keyframes carNudge { 0%,100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
 .car-row::-webkit-scrollbar { height: 8px; }
 .car-row::-webkit-scrollbar-thumb { background: #ddd; border-radius: 99px; }
 .car-row .mun-card { flex: 0 0 235px; scroll-snap-align: start; }
