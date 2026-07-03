@@ -54,6 +54,11 @@ export const TIPO_LABEL: Record<string, string> = {
   vinoteca:   'Vinoteca',
   heladeria:  'Heladería',
   fast_good:  'Comida rápida',
+  cascada:        'Cascada',
+  poza:           'Poza de baño',
+  termas:         'Termas naturales',
+  playa_fluvial:  'Playa fluvial',
+  senda_fluvial:  'Senda fluvial',
 };
 
 export const SELLO_COLORS: Record<string, { bg: string; color: string }> = {
@@ -87,6 +92,7 @@ export const TIPO_ICON_NAME: Record<string, string> = {
   activo: 'mountain', oleoturismo: 'opacity', rural: 'cottage', misterio: 'dark_mode', misterioso: 'dark_mode',
   restaurante: 'restaurant', bar: 'sports_bar', cafeteria: 'local_cafe', chiringuito: 'local_bar',
   vinoteca: 'wine_bar', heladeria: 'icecream', fast_good: 'fastfood',
+  cascada: 'water', poza: 'water', termas: 'hot_tub', playa_fluvial: 'beach_access', senda_fluvial: 'hiking',
 };
 export function getTipoIconName(tipo: string | null | undefined): string {
   return (tipo && TIPO_ICON_NAME[tipo]) || 'place';
