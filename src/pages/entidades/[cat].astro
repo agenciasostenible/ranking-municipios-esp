@@ -19,7 +19,7 @@ const CAT_FUENTES: Record<string, string[]> = {
   fiestas:           ['inventario_fiestas_pdf', 'fiestas_wiki'],
   festivales:        ['inventario_festivales_pdf', 'festivales_wiki'],
   miradores:         ['inventario_miradores_pdf'],
-  oleoturismo:       ['inventario_oleoturismo_pdf'],
+  oleoturismo:       ['inventario_oleoturismo_pdf', 'oleo_osm'],
   misterioso:        ['inventario_misterioso_pdf', 'misterio_osm'],
   estrellas:         ['starlight'],
   senderismo:        ['senderos_osm', 'excel_curado'],
@@ -59,7 +59,7 @@ const catColor = CAT_COLORS[cat!] ?? '#FF385C';
 // Sustantivo plural para los contadores ("3.991 senderos", no "3.991 senderismo")
 const PLURAL: Record<string, string> = {
   senderismo: 'senderos', gastronomia: 'sitios para comer',
-  ciclismo: 'rutas ciclistas', balnearios: 'balnearios y termas', oleoturismo: 'experiencias de oleoturismo',
+  ciclismo: 'rutas ciclistas', balnearios: 'balnearios y termas', oleoturismo: 'almazaras y experiencias del aceite',
   turismo_religioso: 'santuarios, monasterios y lugares de devoción', turismo_activo: 'experiencias de turismo activo',
   turismo_mascotas: 'sitios pet-friendly', turismo_lgtbi: 'locales, playas y destinos LGTBI',
   TurismoRural: 'alojamientos rurales', hoteles_encanto: 'hoteles con encanto',
