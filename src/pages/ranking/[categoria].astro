@@ -303,12 +303,10 @@ function buildUrl(overrides: Record<string, string | number>) {
         {prov ? ` en ${prov}` : ccaa ? ` en ${ccaa}` : ''}
       </div>
       {entFuentes && entCount > 0 && (
-        <div class="vista-tabs" style={`--ec:${catColor}`}>
-          <span class="vista-tab on">🏆 Ranking de municipios</span>
-          <a href={`/entidades/${categoria}${prov ? `?provincia=${encodeURIComponent(prov)}` : ''}`} class="vista-tab">
-            {ENT_PLURAL[categoria!] === 'cielos Starlight' ? 'Los' : 'Los'} {entCount.toLocaleString('es-ES')} {ENT_PLURAL[categoria!] ?? catLabel.toLowerCase()}, uno a uno →
-          </a>
-        </div>
+        <a href={`/entidades/${categoria}${prov ? `?provincia=${encodeURIComponent(prov)}` : ''}`} class="ver-uno-btn" style={`--ec:${catColor}`}>
+          Ver los {entCount.toLocaleString('es-ES')} {ENT_PLURAL[categoria!] ?? catLabel.toLowerCase()} uno a uno
+          <span class="ver-uno-arrow">→</span>
+        </a>
       )}
     </div>
     {canShareRanking && (
@@ -883,10 +881,9 @@ document.head.appendChild(thumbStyle);
 .cre-cta a { color: #d63384; font-weight: 700; text-decoration: none; }
 </style>
 <style>
-.vista-tabs { display: inline-flex; gap: 6px; margin-top: 12px; background: #f1f1f1; border-radius: 999px; padding: 4px; flex-wrap: wrap; }
-.vista-tab { padding: 9px 16px; border-radius: 999px; font-size: .87rem; font-weight: 700; text-decoration: none; color: #444; white-space: nowrap; }
-.vista-tab.on { background: #fff; color: #222; box-shadow: 0 1px 6px rgba(0,0,0,.12); }
-.vista-tab:not(.on):hover { color: var(--ec, #FF385C); }
-@media (max-width: 520px) { .vista-tab { font-size: .8rem; padding: 8px 12px; } }
+.ver-uno-btn { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; padding: 16px 26px; background: var(--ec, #FF385C); color: #fff; font-size: 1.05rem; font-weight: 700; border-radius: 14px; text-decoration: none; box-shadow: 0 6px 18px rgba(0,0,0,.15); transition: transform .12s, box-shadow .12s; max-width: 560px; }
+.ver-uno-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.2); }
+.ver-uno-arrow { font-size: 1.2rem; }
+@media (max-width: 520px) { .ver-uno-btn { font-size: .95rem; padding: 15px 18px; width: 100%; } }
 </style>
 </Base>
