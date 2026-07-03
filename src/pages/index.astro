@@ -248,6 +248,87 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   })();
 </script>
 
+<!-- ── TOP MUNICIPIOS: CARRUSELES ── -->
+<div class="page-content">
+  <div class="info-bar">
+    <div class="istat"><div class="n">{total.toLocaleString('es-ES')}</div><div class="l">Municipios</div></div>
+    <div class="istat"><div class="n">{provincias.length}</div><div class="l">Provincias</div></div>
+    <div class="istat"><div class="n">{ccaas.length}</div><div class="l">CC.AA.</div></div>
+  </div>
+
+  <div class="result-header">
+    <div>
+      <h2><Icon name="emoji_events" size={20} /> Top ranking España</h2>
+      <div class="sub">Los mejores destinos según nuestro ranking global</div>
+    </div>
+    <a href="/ranking/ranking_global" class="car-verlink">Ver todo el ranking →</a>
+  </div>
+  <div class="car-wrap">
+  <button class="car-arrow car-prev" aria-label="Anterior">‹</button>
+  <div class="car-row">
+    {municipios.slice(0, 14).map((m, i) => (
+      <a href={`/municipio/${m.codigo_ine}`} class="mun-card" data-codigo={m.foto ? null : m.codigo_ine}>
+        <div class="mun-card-bg" style={m.foto ? `background:url('${m.foto}') center/cover no-repeat` : `background:${m.gradient}`} data-gradient={m.foto ? null : m.gradient}>
+          <div class="mun-card-overlay"></div>
+          <div class="mun-card-pos">#{i + 1}</div>
+        </div>
+        <div class="mun-card-body">
+          <div class="mun-card-comarca">{m.comarca ?? m.provincia}</div>
+          <div class="mun-card-name">{m.nombre}</div>
+          <div class="mun-card-score">
+            <span class="mun-score-star">⭐</span>
+            <span class="mun-score-val">{Number(m.puntuacion).toFixed(1)}</span>
+            <span class="mun-card-pob">{m.poblacion ? '· ' + formatPob(m.poblacion) + ' hab.' : ''}</span>
+          </div>
+        </div>
+      </a>
+    ))}
+    <a href="/ranking/ranking_global" class="car-more-card">Ver todo el ranking →</a>
+  </div>
+  <button class="car-arrow car-next" aria-label="Siguiente">›</button>
+  </div>
+
+  {carruseles.map(c => (
+    <>
+      <div class="result-header car-header">
+        <div>
+          <h2><Icon name={c.icon} size={20} /> {c.label}</h2>
+          <div class="sub">{c.sub}</div>
+        </div>
+        <a href={`/ranking/${c.key}`} class="car-verlink">Ver ranking completo →</a>
+      </div>
+      <div class="car-wrap">
+      <button class="car-arrow car-prev" aria-label="Anterior">‹</button>
+      <div class="car-row">
+        {c.items.map((m: any, i: number) => (
+          <a href={`/municipio/${m.codigo_ine}?desde=${c.key}`} class="mun-card" data-codigo={m.foto ? null : m.codigo_ine}>
+            <div class="mun-card-bg" style={m.foto ? `background:url('${m.foto}') center/cover no-repeat` : `background:${m.gradient}`} data-gradient={m.foto ? null : m.gradient}>
+              <div class="mun-card-overlay"></div>
+              <div class="mun-card-pos">#{i + 1}</div>
+            </div>
+            <div class="mun-card-body">
+              <div class="mun-card-comarca">{m.comarca ?? m.provincia}</div>
+              <div class="mun-card-name">{m.nombre}</div>
+              <div class="mun-card-score">
+                <span class="mun-score-star">⭐</span>
+                <span class="mun-score-val">{Number(m.puntuacion).toFixed(1)}</span>
+              </div>
+            </div>
+          </a>
+        ))}
+        <a href={`/ranking/${c.key}`} class="car-more-card">Ver ranking completo →</a>
+      </div>
+      <button class="car-arrow car-next" aria-label="Siguiente">›</button>
+      </div>
+    </>
+  ))}
+
+  <div style="text-align:center; margin-top:34px">
+    <a href="#explora" class="btn-ver-mas">Ver todos los rankings ↓</a>
+  </div>
+</div>
+
+
 <!-- ── CTA: voto del público (destacado, arriba) ── -->
 <section class="vote-hero">
   <div class="vote-hero-inner">
@@ -639,78 +720,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     });
   })();
 </script>
-
-<!-- ── TOP MUNICIPIOS: CARRUSELES ── -->
-<div class="page-content">
-  <div class="info-bar">
-    <div class="istat"><div class="n">{total.toLocaleString('es-ES')}</div><div class="l">Municipios</div></div>
-    <div class="istat"><div class="n">{provincias.length}</div><div class="l">Provincias</div></div>
-    <div class="istat"><div class="n">{ccaas.length}</div><div class="l">CC.AA.</div></div>
-  </div>
-
-  <div class="result-header">
-    <div>
-      <h2><Icon name="emoji_events" size={20} /> Top ranking España</h2>
-      <div class="sub">Los mejores destinos según nuestro ranking global</div>
-    </div>
-    <a href="/ranking/ranking_global" class="car-verlink">Ver todo el ranking →</a>
-  </div>
-  <div class="car-row">
-    {municipios.slice(0, 14).map((m, i) => (
-      <a href={`/municipio/${m.codigo_ine}`} class="mun-card" data-codigo={m.foto ? null : m.codigo_ine}>
-        <div class="mun-card-bg" style={m.foto ? `background:url('${m.foto}') center/cover no-repeat` : `background:${m.gradient}`} data-gradient={m.foto ? null : m.gradient}>
-          <div class="mun-card-overlay"></div>
-          <div class="mun-card-pos">#{i + 1}</div>
-        </div>
-        <div class="mun-card-body">
-          <div class="mun-card-comarca">{m.comarca ?? m.provincia}</div>
-          <div class="mun-card-name">{m.nombre}</div>
-          <div class="mun-card-score">
-            <span class="mun-score-star">⭐</span>
-            <span class="mun-score-val">{Number(m.puntuacion).toFixed(1)}</span>
-            <span class="mun-card-pob">{m.poblacion ? '· ' + formatPob(m.poblacion) + ' hab.' : ''}</span>
-          </div>
-        </div>
-      </a>
-    ))}
-    <a href="/ranking/ranking_global" class="car-more-card">Ver todo el ranking →</a>
-  </div>
-
-  {carruseles.map(c => (
-    <>
-      <div class="result-header car-header">
-        <div>
-          <h2><Icon name={c.icon} size={20} /> {c.label}</h2>
-          <div class="sub">{c.sub}</div>
-        </div>
-        <a href={`/ranking/${c.key}`} class="car-verlink">Ver ranking completo →</a>
-      </div>
-      <div class="car-row">
-        {c.items.map((m: any, i: number) => (
-          <a href={`/municipio/${m.codigo_ine}?desde=${c.key}`} class="mun-card" data-codigo={m.foto ? null : m.codigo_ine}>
-            <div class="mun-card-bg" style={m.foto ? `background:url('${m.foto}') center/cover no-repeat` : `background:${m.gradient}`} data-gradient={m.foto ? null : m.gradient}>
-              <div class="mun-card-overlay"></div>
-              <div class="mun-card-pos">#{i + 1}</div>
-            </div>
-            <div class="mun-card-body">
-              <div class="mun-card-comarca">{m.comarca ?? m.provincia}</div>
-              <div class="mun-card-name">{m.nombre}</div>
-              <div class="mun-card-score">
-                <span class="mun-score-star">⭐</span>
-                <span class="mun-score-val">{Number(m.puntuacion).toFixed(1)}</span>
-              </div>
-            </div>
-          </a>
-        ))}
-        <a href={`/ranking/${c.key}`} class="car-more-card">Ver ranking completo →</a>
-      </div>
-    </>
-  ))}
-
-  <div style="text-align:center; margin-top:34px">
-    <a href="#explora" class="btn-ver-mas">Ver todos los rankings ↓</a>
-  </div>
-</div>
 
 <!-- ── SÍGUENOS EN INSTAGRAM ── -->
 <section class="ig-follow">
@@ -1619,7 +1628,15 @@ function doSearch() {
 </style>
 
 <style>
-.car-row { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 14px; -webkit-overflow-scrolling: touch; }
+.car-wrap { position: relative; }
+.car-wrap::after { content: ''; position: absolute; top: 0; right: 0; bottom: 14px; width: 60px; background: linear-gradient(to left, var(--bg, #fafafa), transparent); pointer-events: none; }
+.car-row { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 14px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.car-row::-webkit-scrollbar { display: none; }
+.car-arrow { position: absolute; top: 42%; transform: translateY(-50%); z-index: 5; width: 40px; height: 40px; border-radius: 50%; border: 1px solid #e5e5e5; background: #fff; color: #222; font-size: 1.4rem; font-weight: 700; cursor: pointer; box-shadow: 0 3px 12px rgba(0,0,0,.14); display: flex; align-items: center; justify-content: center; }
+.car-prev { left: -14px; }
+.car-next { right: -14px; }
+.car-arrow:hover { background: #FF385C; color: #fff; border-color: #FF385C; }
+@media (max-width: 760px) { .car-arrow { display: none; } .car-wrap::after { width: 36px; } }
 .car-row::-webkit-scrollbar { height: 8px; }
 .car-row::-webkit-scrollbar-thumb { background: #ddd; border-radius: 99px; }
 .car-row .mun-card { flex: 0 0 235px; scroll-snap-align: start; }
@@ -1630,4 +1647,13 @@ function doSearch() {
 .car-more-card:hover { border-color: var(--primary, #FF385C); background: #fff8f9; }
 @media (max-width: 600px) { .car-row .mun-card { flex: 0 0 200px; } }
 </style>
+<script is:inline>
+  document.querySelectorAll('.car-wrap').forEach(function (w) {
+    var row = w.querySelector('.car-row');
+    if (!row) return;
+    var prev = w.querySelector('.car-prev'), next = w.querySelector('.car-next');
+    if (prev) prev.addEventListener('click', function () { row.scrollBy({ left: -520, behavior: 'smooth' }); });
+    if (next) next.addEventListener('click', function () { row.scrollBy({ left: 520, behavior: 'smooth' }); });
+  });
+</script>
 </Base>
