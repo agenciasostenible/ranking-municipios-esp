@@ -53,6 +53,18 @@ const offset  = (page - 1) * perPage;
 const catInfo  = getCatInfo(cat!);
 const catLabel = LABELS[cat!] ?? cat!;
 const catColor = CAT_COLORS[cat!] ?? '#FF385C';
+// Sustantivo plural para los contadores ("3.991 senderos", no "3.991 senderismo")
+const PLURAL: Record<string, string> = {
+  senderismo: 'senderos', gastronomia: 'restaurantes', soletes: 'sitios para comer',
+  ciclismo: 'rutas ciclistas', oleoturismo: 'experiencias de oleoturismo',
+  turismo_religioso: 'lugares religiosos', turismo_activo: 'experiencias de turismo activo',
+  turismo_mascotas: 'sitios pet-friendly', turismo_lgtbi: 'destinos LGTBI',
+  TurismoRural: 'alojamientos rurales', hoteles_encanto: 'hoteles con encanto',
+  misterioso: 'lugares misteriosos', estrellas: 'miradores de estrellas',
+  lujo: 'experiencias de lujo', solteros: 'sitios para solteros',
+  pueblo_bonito: 'pueblos bonitos', vinos: 'bodegas y rutas del vino',
+};
+const catPlural = PLURAL[cat!] ?? catLabel.toLowerCase();
 
 // Lista de provincias para el filtro
 const { results: provRows } = await DB.prepare(
@@ -149,12 +161,12 @@ const selloColor: Record<string,string> = {
     <a href={`/ranking/${cat}`} class="ent-back">← Ver ranking de municipios</a>
     <div class="ent-hero-ic"><Icon name={catInfo.icon} size={28} /></div>
     <h1 class="ent-title">{catLabel} de España</h1>
-    <p class="ent-sub">{total.toLocaleString('es-ES')} {catLabel.toLowerCase()} · ordenados por importancia</p>
+    <p class="ent-sub">{total.toLocaleString('es-ES')} {catPlural} · ordenados por importancia</p>
   </div>
 
   <div class="ent-controls">
     <form method="get" action={`/entidades/${cat}`} class="ent-form">
-      <input type="text" name="q" value={q} placeholder={`Buscar ${catLabel.toLowerCase()}…`} class="ent-q" />
+      <input type="text" name="q" value={q} placeholder={`Buscar ${catPlural}…`} class="ent-q" />
       {prov && <input type="hidden" name="prov" value={prov} />}
       <button type="submit" class="ent-submit">Buscar</button>
     </form>
