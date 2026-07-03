@@ -3,7 +3,7 @@ import { DB } from '../../lib/d1client';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import { getCatInfo, formatPob, LABELS, FICHA_CATS, DETAIL_CATS } from '../../lib/db';
-import { getTipoIcon, getTipoIconName, getSelloStyle, TIPO_LABEL, tieneFichaMaps, gmapsUrl } from '../../lib/entidades';
+import { getTipoIcon, getTipoIconName, getSelloStyle, TIPO_LABEL, tieneFichaMaps, gmapsUrl, gmapsUrlAt } from '../../lib/entidades';
 import { getProvGradient, CAT_COLORS } from '../../lib/utils';
 import { getAnunciosMunicipio, ANUNCIO_TIPOS } from '../../lib/anuncios';
 // @ts-ignore
@@ -729,7 +729,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
               <div style="display:flex;gap:14px;flex-wrap:wrap">
                 <a class="entidad-maps" target="_blank" rel="noopener"
                    href={e.latitud != null
-                     ? `https://www.google.com/maps/search/?api=1&query=${e.latitud},${e.longitud}`
+                     ? gmapsUrlAt(e.nombre, e.latitud, e.longitud)
                      : gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
                   <Icon name="map_pin" size={14} /> Ver en Google Maps
                 </a>

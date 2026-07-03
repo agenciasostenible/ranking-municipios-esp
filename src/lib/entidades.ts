@@ -113,3 +113,9 @@ export function gmapsUrl(nombre: string, municipio: string, provincia: string): 
   const q = [nombre, municipio, provincia].filter(Boolean).join(', ');
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 }
+
+// Búsqueda por NOMBRE anclada en unas coordenadas: abre la ficha de Google del sitio
+// (mejor que el pin de coordenadas y mejor que la búsqueda a ciegas por nombre).
+export function gmapsUrlAt(nombre: string, lat: number, lng: number): string {
+  return `https://www.google.com/maps/search/${encodeURIComponent(nombre)}/@${lat},${lng},16z`;
+}

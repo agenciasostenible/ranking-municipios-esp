@@ -4,7 +4,7 @@ import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import { getCatInfo, LABELS } from '../../lib/db';
 import { CAT_COLORS } from '../../lib/utils';
-import { gmapsUrl } from '../../lib/entidades';
+import { gmapsUrl, gmapsUrlAt } from '../../lib/entidades';
 // @ts-ignore
 
 const { cat } = Astro.params;
@@ -228,7 +228,7 @@ const selloColor: Record<string,string> = {
           <div class="ent-links">
             <a class="ent-gmaps" target="_blank" rel="noopener"
                href={e.latitud != null
-                 ? `https://www.google.com/maps/search/?api=1&query=${e.latitud},${e.longitud}`
+                 ? gmapsUrlAt(e.nombre, e.latitud, e.longitud)
                  : gmapsUrl(e.nombre, e.municipio, e.provincia)}>
               📍 Ver en Google Maps
             </a>
