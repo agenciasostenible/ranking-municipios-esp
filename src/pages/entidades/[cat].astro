@@ -4,6 +4,7 @@ import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import { getCatInfo, LABELS } from '../../lib/db';
 import { CAT_COLORS } from '../../lib/utils';
+import { gmapsUrl } from '../../lib/entidades';
 // @ts-ignore
 
 const { cat } = Astro.params;
@@ -102,6 +103,7 @@ const totalPages = Math.ceil(total / perPage);
 const bindAll = [...bindParams, perPage, offset];
 const { results: rows } = await DB.prepare(`
   SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion, MIN(e.nivel_sello) AS nivel_sello,
+         MIN(e.latitud) AS latitud, MIN(e.longitud) AS longitud, MIN(e.enlace) AS enlace,
          m.codigo_ine, m.nombre AS municipio, m.provincia,
          COALESCE(p.puntuacion, 0) AS puntuacion
   FROM entidades e
@@ -206,8 +208,19 @@ const selloColor: Record<string,string> = {
             <span class="ent-prov">{e.provincia}</span>
           </div>
           {e.descripcion && (
-            <p class="ent-desc">{String(e.descripcion).slice(0,160)}{String(e.descripcion).length>160?'…':''}</p>
+            <p class="ent-desc">{e.descripcion}</p>
           )}
+          <div class="ent-links">
+            <a class="ent-gmaps" target="_blank" rel="noopener"
+               href={e.latitud != null
+                 ? `https://www.google.com/maps/search/?api=1&query=${e.latitud},${e.longitud}`
+                 : gmapsUrl(e.nombre, e.municipio, e.provincia)}>
+              📍 Ver en Google Maps
+            </a>
+            {e.enlace && (
+              <a class="ent-gmaps" target="_blank" rel="noopener" href={e.enlace}>🌐 Web oficial</a>
+            )}
+          </div>
         </div>
         <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-score" style={`color:${catColor}`}>
           {Math.round(e.puntuacion)}<span>/100</span>
@@ -274,6 +287,9 @@ const selloColor: Record<string,string> = {
 .ent-muni:hover { text-decoration: underline; }
 .ent-prov { font-size: .78rem; color: #888; }
 .ent-desc { font-size: .8rem; color: #666; line-height: 1.45; margin: 4px 0 0; }
+.ent-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 7px; }
+.ent-gmaps { font-size: .8rem; font-weight: 700; color: #2563eb; text-decoration: none; }
+.ent-gmaps:hover { text-decoration: underline; }
 .ent-score {
   font-size: 1.15rem; font-weight: 800; min-width: 52px; text-align: right;
   padding-top: 2px; flex-shrink: 0; letter-spacing: -.02em;
