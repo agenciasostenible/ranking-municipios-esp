@@ -15,7 +15,7 @@ const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? process.env[k] : undefined);
 
 const TIPOS_OK = ['gastronomia', 'rural', 'hotel', 'cafe', 'bar', 'activo', 'otro'];
-const MAX_FOTO = 900_000;  // ~900 KB de data URL (la foto se redimensiona en el navegador)
+const MAX_FOTO = 1_400_000;  // ~1,4 MB de data URL (colchón; el navegador ya comprime bajo ~820 KB)
 
 const okJson = (o: any, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json' } });

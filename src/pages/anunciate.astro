@@ -154,12 +154,21 @@ const TIPOS = [
     const file = e.target.files?.[0]; if (!file) return;
     const img = new Image();
     img.onload = () => {
-      const max = 1000;
-      let { width: w, height: h } = img;
-      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
-      const c = document.createElement('canvas'); c.width = w; c.height = h;
-      c.getContext('2d')!.drawImage(img, 0, 0, w, h);
-      fotoData = c.toDataURL('image/jpeg', 0.78);
+      let max = 1200, quality = 0.82;
+      const render = () => {
+        let { width: w, height: h } = img;
+        if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        return c.toDataURL('image/jpeg', quality);
+      };
+      // Comprimir en bucle hasta que la foto quepa bajo el límite del servidor (~820 KB)
+      let data = render();
+      while (data.length > 820_000 && (quality > 0.42 || max > 640)) {
+        if (quality > 0.46) quality -= 0.1; else max = Math.round(max * 0.85);
+        data = render();
+      }
+      fotoData = data;
       const prev = $('an-foto-prev'); prev.src = fotoData; prev.style.display = 'block';
     };
     img.src = URL.createObjectURL(file);
@@ -189,13 +198,22 @@ const TIPOS = [
           foto: fotoData || null, website: $('an-website').value,
         }),
       });
-      const j = await r.json();
+      const j = await r.json().catch(() => ({ ok: false, error: 'respuesta' }));
       if (j.ok) {
         $('an-ok-name').textContent = $('an-nombre').value.trim();
         $('an-form').style.display = 'none';
         $('an-ok').hidden = false;
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else { alert('No se pudo enviar. Revisa los datos e inténtalo de nuevo.'); btn.disabled = false; btn.textContent = 'Enviar para revisión'; }
+      } else {
+        const msg = j.error === 'falta_foto'
+          ? 'No se pudo procesar la foto. Prueba con otra imagen (JPG o PNG).'
+          : j.error === 'faltan_datos'
+          ? 'Faltan datos obligatorios: revisa tipo, nombre, provincia, municipio y email.'
+          : j.error === 'email'
+          ? 'El email no es válido. Revísalo e inténtalo de nuevo.'
+          : 'No se pudo enviar. Revisa los datos e inténtalo de nuevo.';
+        alert(msg); btn.disabled = false; btn.textContent = 'Enviar para revisión';
+      }
     } catch { alert('Error de conexión. Inténtalo de nuevo.'); btn.disabled = false; btn.textContent = 'Enviar para revisión'; }
   });
 </script>
