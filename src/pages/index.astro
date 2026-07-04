@@ -86,29 +86,80 @@ const ROUTE_EXP = [
   { key: 'misterioso',        icon: 'dark_mode',       label: 'Turismo misterioso' },
 ];
 
-// Carruseles por categoría (estilo Airbnb): top 10 de cada una
-const CARRUSEL_CATS = [
+// Carruseles rotativos: cada día se muestran categorías y zonas distintas (determinista por fecha)
+const POOL_CATS = [
   { key: 'senderismo',  label: 'Top senderismo',   icon: 'hiking',        sub: 'rutas señalizadas para caminar' },
   { key: 'naturaleza',  label: 'Top naturaleza',   icon: 'landscape',     sub: 'parques, gargantas y parajes' },
   { key: 'Playas',      label: 'Top playas',       icon: 'beach_access',  sub: 'costa, calas y baño' },
   { key: 'gastronomia', label: 'Top gastronomía',  icon: 'restaurant',    sub: 'dónde se come mejor' },
   { key: 'monumentos',  label: 'Top monumentos',   icon: 'fort',          sub: 'patrimonio e historia' },
   { key: 'fiestas',     label: 'Top fiestas',      icon: 'celebration',   sub: 'ferias, romerías y tradición' },
+  { key: 'castillos',   label: 'Top castillos',    icon: 'castle',        sub: 'fortalezas y torres' },
+  { key: 'museos',      label: 'Top museos',       icon: 'museum',        sub: 'arte, historia y ciencia' },
+  { key: 'pozas',       label: 'Top pozas y baños naturales', icon: 'water', sub: 'cascadas y baño de agua dulce' },
+  { key: 'miradores',   label: 'Top miradores',    icon: 'binoculars',    sub: 'las mejores vistas' },
+  { key: 'TurismoRural',label: 'Top turismo rural',icon: 'cottage',       sub: 'pueblos para desconectar' },
+  { key: 'ciclismo',    label: 'Top cicloturismo', icon: 'pedal_bike',    sub: 'vías verdes y rutas en bici' },
+  { key: 'balnearios',  label: 'Top balnearios y termas', icon: 'hot_tub', sub: 'aguas termales y bienestar' },
+  { key: 'misterioso',  label: 'Top misterio',     icon: 'dark_mode',     sub: 'leyendas y megalitos' },
+  { key: 'turismo_religioso', label: 'Top turismo religioso', icon: 'church', sub: 'santuarios y devoción' },
+  { key: 'festivales',  label: 'Top festivales',   icon: 'festival',      sub: 'música, cine y cultura' },
+  { key: 'hoteles_encanto', label: 'Top hoteles con encanto', icon: 'cottage', sub: 'dormir en sitios únicos' },
+  { key: 'vinos',       label: 'Top vinos y bodegas', icon: 'wine_bar',   sub: 'enoturismo' },
+  { key: 'oleoturismo', label: 'Top oleoturismo',  icon: 'opacity',       sub: 'almazaras y mar de olivos' },
+  { key: 'turismo_mascotas', label: 'Top con mascotas', icon: 'pets',     sub: 'viajar con tu perro' },
+  { key: 'estrellas',   label: 'Top astroturismo', icon: 'nights_stay',   sub: 'cielos para ver estrellas' },
+  { key: 'turismo_activo', label: 'Top turismo activo', icon: 'mountain', sub: 'ferratas, escalada y aventura' },
+  { key: 'lujo',        label: 'Top lujo',         icon: 'diamond',       sub: 'hoteles 5 estrellas y exclusividad' },
+  { key: 'pueblo_bonito', label: 'Top pueblos bonitos', icon: 'auto_awesome', sub: 'los pueblos con más encanto' },
+  { key: 'cuevas',      label: 'Top cuevas',       icon: 'mountain',      sub: 'cuevas turísticas' },
 ];
+const dia = Math.floor(Date.now() / 86400000);
+const pick = (arr: any[], n: number, salt: number) => {
+  const out: any[] = [];
+  for (let i = 0; out.length < n && i < arr.length; i++) {
+    out.push(arr[(dia * 7 + salt + i * 5) % arr.length]);
+    // evitar repetidos
+    if (new Set(out.map((x: any) => x.key ?? x)).size < out.length) out.pop();
+  }
+  return out;
+};
+const catsHoy = pick(POOL_CATS, 4, 3);
+
+// zona del día: una comunidad y una provincia
+const ccaaHoy = (ccaas as any[]).map(r => r.comunidad).filter(Boolean)[(dia * 3) % (ccaas as any[]).length];
+const provHoy = (provincias as any[]).map(r => r.provincia).filter(Boolean)[(dia * 11) % (provincias as any[]).length];
+
 const carruseles: any[] = [];
-for (const c of CARRUSEL_CATS) {
+for (const c of catsHoy) {
   const { results } = await DB.prepare(`
     SELECT m.codigo_ine, m.nombre, m.provincia, m.comarca, m.poblacion, m.foto_url, p.puntuacion
     FROM puntuaciones p JOIN municipios m ON p.codigo_ine = m.codigo_ine
     WHERE p.categoria = ? AND p.puntuacion > 0 AND COALESCE(m.es_duplicado,0) = 0
     ORDER BY p.puntuacion DESC LIMIT 10
   `).bind(c.key).all();
-  carruseles.push({ ...c, items: (results as any[]).map(r => ({
-    ...r,
-    gradient: getProvGradient(r.provincia),
-    foto: r.foto_url && r.foto_url !== 'NONE' ? r.foto_url : null,
+  carruseles.push({ ...c, href: `/ranking/${c.key}`, items: (results as any[]).map(r => ({
+    ...r, gradient: getProvGradient(r.provincia), foto: r.foto_url && r.foto_url !== 'NONE' ? r.foto_url : null,
   })) });
 }
+// carruseles geográficos (por ranking global dentro de la zona)
+for (const zona of [
+  { campo: 'comunidad', valor: ccaaHoy, label: `Top ${ccaaHoy}`, icon: 'emoji_events', sub: 'los mejores municipios de la comunidad', href: `/ranking/ranking_global?ccaa=${encodeURIComponent(ccaaHoy)}` },
+  { campo: 'provincia', valor: provHoy, label: `Top ${provHoy}`, icon: 'map_pin', sub: 'los mejores municipios de la provincia', href: `/ranking/ranking_global?provincia=${encodeURIComponent(provHoy)}` },
+]) {
+  const { results } = await DB.prepare(`
+    SELECT m.codigo_ine, m.nombre, m.provincia, m.comarca, m.poblacion, m.foto_url, p.puntuacion
+    FROM puntuaciones p JOIN municipios m ON p.codigo_ine = m.codigo_ine
+    WHERE p.categoria = 'ranking_global' AND p.puntuacion > 0 AND COALESCE(m.es_duplicado,0) = 0 AND m.${zona.campo} = ?
+    ORDER BY p.puntuacion DESC LIMIT 10
+  `).bind(zona.valor).all();
+  carruseles.push({ key: 'ranking_global', label: zona.label, icon: zona.icon, sub: zona.sub, href: zona.href, items: (results as any[]).map(r => ({
+    ...r, gradient: getProvGradient(r.provincia), foto: r.foto_url && r.foto_url !== 'NONE' ? r.foto_url : null,
+  })) });
+}
+// intercalar: 2 categorías, CCAA, 2 categorías, provincia
+const ordenados = [carruseles[0], carruseles[1], carruseles[4], carruseles[2], carruseles[3], carruseles[5]].filter(c => c && c.items.length >= 4);
+carruseles.length = 0; carruseles.push(...ordenados);
 
 const municipios = (rankingGlobal as any[]).map(r => ({
   ...r,
@@ -296,7 +347,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
           <h2><Icon name={c.icon} size={20} /> {c.label}</h2>
           <div class="sub">{c.sub}</div>
         </div>
-        <a href={`/ranking/${c.key}`} class="car-verlink">Ver ranking completo →</a>
+        <a href={c.href} class="car-verlink">Ver ranking completo →</a>
       </div>
       <div class="car-wrap">
       <button class="car-arrow car-prev" aria-label="Anterior">‹</button>
@@ -317,7 +368,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
             </div>
           </a>
         ))}
-        <a href={`/ranking/${c.key}`} class="car-more-card">Ver ranking completo →</a>
+        <a href={c.href} class="car-more-card">Ver ranking completo →</a>
       </div>
       <button class="car-arrow car-next" aria-label="Siguiente">›</button>
       <div class="car-hint">desliza <span>→</span></div>
