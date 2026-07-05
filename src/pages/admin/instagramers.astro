@@ -183,6 +183,23 @@ const fecha = (s: string) => (s ? String(s).slice(0, 10) : '');
 )}
 
 <script define:vars={{ adminKey: Astro.url.searchParams.get('key') }}>
+// Comprime la imagen a un tamaño de avatar (~420px, <700KB) para que el guardado en D1 no falle
+function comprimirImg(file) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 420; let w = img.width, h = img.height;
+      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      let q = 0.82, d = c.toDataURL('image/jpeg', q);
+      while (d.length > 700000 && q > 0.4) { q -= 0.12; d = c.toDataURL('image/jpeg', q); }
+      URL.revokeObjectURL(img.src); res(d);
+    };
+    img.onerror = () => rej(new Error('img'));
+    img.src = URL.createObjectURL(file);
+  });
+}
 // Preview foto al seleccionar
 document.addEventListener('change', function(e) {
   const input = e.target;
@@ -190,7 +207,7 @@ document.addEventListener('change', function(e) {
   const id = input.getAttribute('data-id');
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 3 * 1024 * 1024) { alert('Máx 3MB'); input.value = ''; return; }
+  if (file.size > 8 * 1024 * 1024) { alert('La foto es demasiado grande (máx. 8MB).'); input.value = ''; return; }
   const reader = new FileReader();
   reader.onload = function(ev) {
     const prev = document.getElementById('fp-' + id);
@@ -218,11 +235,8 @@ async function guardarEdicion(id, btn) {
   const fotoFile = form.querySelector('.foto-file');
   let avatar = null;
   if (fotoFile && fotoFile.files[0]) {
-    avatar = await new Promise((res) => {
-      const r = new FileReader();
-      r.onload = (e) => res(e.target.result);
-      r.readAsDataURL(fotoFile.files[0]);
-    });
+    try { avatar = await comprimirImg(fotoFile.files[0]); }
+    catch { alert('No se pudo procesar la imagen. Prueba con otra.'); return; }
   }
 
   const data = {
