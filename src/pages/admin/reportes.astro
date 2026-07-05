@@ -8,7 +8,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 let reportes: any[] = [];
 if (ok) {
   const { results } = await DB.prepare(
-    `SELECT id, municipio, entidad_id, entidad_nombre, motivo, comentario, email, origen, estado, creado_at
+    `SELECT id, codigo_ine, municipio, entidad_id, entidad_nombre, motivo, comentario, email, origen, estado, creado_at
      FROM reportes WHERE estado = 'pendiente' ORDER BY creado_at DESC LIMIT 300`
   ).all();
   reportes = results as any[];
@@ -36,6 +36,7 @@ const k = encodeURIComponent(key);
   .rep-mail { font-size: .8rem; color: #888; margin-top: 4px; }
   .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   .acts a { text-decoration: none; font-weight: 700; font-size: .82rem; padding: 8px 13px; border-radius: 9px; }
+  .b-edit { background: #7c3aed; color: #fff; }
   .b-del { background: #dc2626; color: #fff; }
   .b-res { background: #16a34a; color: #fff; }
   .b-dis { background: #fff; color: #666; border: 1.5px solid #ddd; }
@@ -61,6 +62,7 @@ const k = encodeURIComponent(key);
         {r.comentario && <p class="rep-com">"{r.comentario}"</p>}
         {r.email && <div class="rep-mail">✉️ {r.email}</div>}
         <div class="acts">
+          <a class="b-edit" href={`/admin/municipio?key=${k}&codigo=${r.codigo_ine}`}>✏️ Editar ficha completa</a>
           {r.entidad_id && <a class="b-del" href={`/api/reporte-moderar?key=${k}&id=${r.id}&accion=borrar_sitio`} onclick="return confirm('¿Borrar este sitio de la ficha?')">🗑 Borrar sitio</a>}
           <a class="b-res" href={`/api/reporte-moderar?key=${k}&id=${r.id}&accion=resuelto`}>✓ Marcar resuelto</a>
           <a class="b-dis" href={`/api/reporte-moderar?key=${k}&id=${r.id}&accion=descartar`}>Descartar</a>
