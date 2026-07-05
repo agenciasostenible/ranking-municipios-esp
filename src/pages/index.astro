@@ -52,12 +52,14 @@ const total = totalRow?.n ?? 0;
 
 // Instagramers para home: directo de instagramers (verificado=1), ya incluye los migrados de creadores
 const { results: _igAll } = await DB.prepare(
-  `SELECT id, handle, nombre, avatar_url, especialidad, seguidores FROM instagramers WHERE verificado=1 ORDER BY orden ASC, seguidores DESC LIMIT 6`
+  `SELECT id, handle, nombre, avatar_url, especialidad, seguidores, (avatar_data IS NOT NULL) AS has_avatar
+   FROM instagramers WHERE verificado=1 ORDER BY orden ASC, seguidores DESC LIMIT 6`
 ).all();
 const igHome = (_igAll as any[]).map((c) => ({
   ...c,
   handle: String(c.handle || '').replace(/^@/, ''),
-  avatar_url: c.avatar_url || null,
+  // Foto subida (avatar_data) → se sirve por el endpoint; si no, la avatar_url externa
+  avatar_url: c.has_avatar ? `/api/instagramer-foto?id=${c.id}` : (c.avatar_url || null),
 }));
 
 // Top 3 del voto del público (para el CTA de la home)
@@ -639,7 +641,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   </div>
   <div class="ig-profiles-scroll">
     {igHome.map((ig: any) => (
-      <a class="ig-profile-card" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
+      <a class="ig-profile-card" href={`/instagramers#ig-${ig.id}`}>
         {ig.avatar_url
           ? <img class="ig-p-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
           : <span class="ig-p-av ig-p-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
