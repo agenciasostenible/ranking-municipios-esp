@@ -7,22 +7,11 @@
  */
 import type { APIRoute } from 'astro';
 import { DB } from '../../lib/d1client';
+import { toStorableImage } from '../../lib/imgblob';
 
 const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
 const okJson = (o: any, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'Content-Type': 'application/json' } });
-
-function decodeFoto(foto: any): { buf: Uint8Array; mime: string } | null {
-  if (typeof foto !== 'string') return null;
-  const m = /^data:(image\/(?:jpeg|png|webp));base64,/.exec(foto);
-  if (!m || foto.length > 1_600_000) return null;
-  try {
-    const bin = atob(foto.split(',')[1]);
-    const buf = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-    return { buf, mime: m[1] };
-  } catch { return null; }
-}
 
 export const GET: APIRoute = async ({ url, redirect }) => {
   const key = url.searchParams.get('key') ?? '';
@@ -60,14 +49,14 @@ export const POST: APIRoute = async ({ url, request }) => {
   const enlace = String(b.enlace || '').trim().slice(0, 400) || null;
   const lat = b.latitud !== '' && b.latitud != null ? Number(b.latitud) : null;
   const lon = b.longitud !== '' && b.longitud != null ? Number(b.longitud) : null;
-  const foto = decodeFoto(b.foto);
+  const foto = toStorableImage(b.foto);  // data URL base64 (TEXT) o null
 
   if (accion === 'editar') {
     const id = parseInt(b.id, 10);
     if (!id || !nombre) return okJson({ ok: false, error: 'faltan' }, 400);
     if (foto) {
-      await DB.prepare(`UPDATE entidades SET nombre=?, tipo=?, descripcion=?, enlace=?, latitud=?, longitud=?, foto_data=?, foto_mime=? WHERE id=?`)
-        .bind(nombre, tipo, descripcion, enlace, lat, lon, foto.buf, foto.mime, id).run();
+      await DB.prepare(`UPDATE entidades SET nombre=?, tipo=?, descripcion=?, enlace=?, latitud=?, longitud=?, foto_data=?, foto_mime=NULL WHERE id=?`)
+        .bind(nombre, tipo, descripcion, enlace, lat, lon, foto, id).run();
     } else {
       await DB.prepare(`UPDATE entidades SET nombre=?, tipo=?, descripcion=?, enlace=?, latitud=?, longitud=? WHERE id=?`)
         .bind(nombre, tipo, descripcion, enlace, lat, lon, id).run();
@@ -121,8 +110,8 @@ export const POST: APIRoute = async ({ url, request }) => {
     const idRow = await DB.prepare(`SELECT COALESCE(MAX(id),220000)+1 AS nid FROM entidades`).first() as any;
     const nid = idRow?.nid ?? Date.now();
     if (foto) {
-      await DB.prepare(`INSERT INTO entidades (id, codigo_ine, tipo, nombre, descripcion, enlace, latitud, longitud, fuente, foto_data, foto_mime) VALUES (?,?,?,?,?,?,?,?, 'admin', ?, ?)`)
-        .bind(nid, codigo, tipo, nombre, descripcion, enlace, lat, lon, foto.buf, foto.mime).run();
+      await DB.prepare(`INSERT INTO entidades (id, codigo_ine, tipo, nombre, descripcion, enlace, latitud, longitud, fuente, foto_data) VALUES (?,?,?,?,?,?,?,?, 'admin', ?)`)
+        .bind(nid, codigo, tipo, nombre, descripcion, enlace, lat, lon, foto).run();
     } else {
       await DB.prepare(`INSERT INTO entidades (id, codigo_ine, tipo, nombre, descripcion, enlace, latitud, longitud, fuente) VALUES (?,?,?,?,?,?,?,?, 'admin')`)
         .bind(nid, codigo, tipo, nombre, descripcion, enlace, lat, lon).run();

@@ -4,6 +4,7 @@
  */
 import type { APIRoute } from 'astro';
 import { DB } from '../../lib/d1client';
+import { toStorableImage } from '../../lib/imgblob';
 
 const esc = (s: string) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
 const env = (k: string) =>
@@ -23,16 +24,8 @@ export const POST: APIRoute = async ({ request }) => {
   const seguidores = parseInt(b.seguidores) || 0;
   const munis: any[] = Array.isArray(b.municipios) ? b.municipios.slice(0, 5) : [];
 
-  // Avatar: base64 data URL → Uint8Array
-  let avatarBuf: Uint8Array | null = null;
-  if (b.avatar && typeof b.avatar === 'string' && b.avatar.startsWith('data:image')) {
-    try {
-      const base64 = b.avatar.split(',')[1];
-      const bin = atob(base64);
-      avatarBuf = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) avatarBuf[i] = bin.charCodeAt(i);
-    } catch {}
-  }
+  // Avatar: se guarda como data URL base64 (TEXT). El binario no viaja por la API REST de D1.
+  const avatarBuf = toStorableImage(b.avatar);
 
   if (!handle || munis.length === 0) return new Response('faltan campos', { status: 400 });
 

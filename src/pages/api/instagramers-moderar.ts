@@ -3,6 +3,7 @@
  */
 import type { APIRoute } from 'astro';
 import { DB } from '../../lib/d1client';
+import { toStorableImage } from '../../lib/imgblob';
 
 const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
@@ -50,16 +51,8 @@ export const POST: APIRoute = async ({ url, request }) => {
     let b: any;
     try { b = await request.json(); } catch { return new Response('bad json', { status: 400 }); }
 
-    // Procesar foto si viene en base64
-    let avatarBuf: Uint8Array | null = null;
-    if (b.avatar && typeof b.avatar === 'string' && b.avatar.startsWith('data:image')) {
-      try {
-        const base64 = b.avatar.split(',')[1];
-        const bin = atob(base64);
-        avatarBuf = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) avatarBuf[i] = bin.charCodeAt(i);
-      } catch {}
-    }
+    // Foto: se guarda como data URL base64 (TEXT). El binario no viaja por la API REST de D1.
+    const avatarBuf = toStorableImage(b.avatar);
 
     if (avatarBuf) {
       await DB.prepare(
