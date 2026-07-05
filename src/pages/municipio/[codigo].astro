@@ -1863,6 +1863,80 @@ window.openSello = openSello;
 .scope-pill.on { border-color: #FF385C; background: #fff1f3; color: #FF385C; }
 </style>
 
+<!-- ── Reportar error (colaboración vecinos) ── -->
+<section class="rep-wrap">
+  <button type="button" class="rep-open" id="rep-open">¿Eres de aquí y ves algún error? Ayúdanos a mejorar la ficha de {municipio.nombre} →</button>
+</section>
+<div class="rep-modal" id="rep-modal" hidden>
+  <div class="rep-card">
+    <button class="rep-x" id="rep-x" aria-label="Cerrar">✕</button>
+    <h3>Ayúdanos a mejorar {municipio.nombre}</h3>
+    <p class="rep-sub">¿Hay algo mal en la ficha? Cuéntanoslo y lo revisamos a mano.</p>
+    <label class="rep-lbl">¿Qué sitio está mal? <span>(o déjalo en "en general")</span></label>
+    <input id="rep-sitio" type="text" placeholder="Ej: Torre de Maracena… o «en general»" />
+    <label class="rep-lbl">¿Qué pasa?</label>
+    <select id="rep-motivo">
+      <option value="no_existe">No existe / no está aquí</option>
+      <option value="otro_municipio">Está en otro municipio</option>
+      <option value="nombre_mal">El nombre es incorrecto</option>
+      <option value="falta_info">Falta información o está desactualizado</option>
+      <option value="otro">Otra cosa</option>
+    </select>
+    <label class="rep-lbl">Comentario <span>(opcional)</span></label>
+    <textarea id="rep-com" rows="3" placeholder="Cuéntanos con tus palabras…"></textarea>
+    <label class="rep-lbl">Tu email <span>(opcional, por si necesitamos preguntarte)</span></label>
+    <input id="rep-email" type="email" placeholder="tucorreo@ejemplo.com" />
+    <input id="rep-hp" type="text" style="display:none" tabindex="-1" autocomplete="off" />
+    <button type="button" class="rep-send" id="rep-send">Enviar reporte</button>
+    <div class="rep-ok" id="rep-okmsg" hidden>✅ ¡Gracias! Lo revisaremos pronto.</div>
+  </div>
+</div>
+<style>
+.rep-wrap { max-width: 900px; margin: 30px auto 0; padding: 0 16px; text-align: center; }
+.rep-open { background: none; border: none; color: #999; font-size: .82rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 8px; }
+.rep-open:hover { color: #FF385C; }
+.rep-modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.rep-card { background: #fff; border-radius: 18px; max-width: 440px; width: 100%; padding: 26px 24px; position: relative; max-height: 92vh; overflow-y: auto; }
+.rep-x { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 1.2rem; color: #999; cursor: pointer; }
+.rep-card h3 { font-size: 1.2rem; font-weight: 700; margin: 0 0 4px; color: #222; }
+.rep-sub { color: #717171; font-size: .88rem; margin: 0 0 16px; }
+.rep-lbl { display: block; font-size: .8rem; font-weight: 700; color: #444; margin: 12px 0 5px; }
+.rep-lbl span { font-weight: 400; color: #aaa; }
+.rep-card input, .rep-card select, .rep-card textarea { width: 100%; box-sizing: border-box; padding: 11px 13px; border: 1.5px solid #ddd; border-radius: 11px; font-size: .92rem; font-family: inherit; }
+.rep-send { margin-top: 18px; width: 100%; background: #FF385C; color: #fff; border: none; border-radius: 11px; padding: 13px; font-size: .95rem; font-weight: 700; cursor: pointer; }
+.rep-ok { margin-top: 14px; text-align: center; color: #16a34a; font-weight: 700; }
+</style>
+<script is:inline define:vars={{ repCodigo: codigo, repMuni: municipio.nombre }}>
+  (function () {
+    var modal = document.getElementById('rep-modal');
+    var open = document.getElementById('rep-open');
+    if (!modal || !open) return;
+    modal.hidden = true;
+    open.addEventListener('click', function () { modal.hidden = false; });
+    document.getElementById('rep-x')?.addEventListener('click', function () { modal.hidden = true; });
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.hidden = true; });
+    document.getElementById('rep-send')?.addEventListener('click', function () {
+      if (document.getElementById('rep-hp').value) { modal.hidden = true; return; }
+      var sitio = document.getElementById('rep-sitio').value.trim();
+      var btn = document.getElementById('rep-send'); btn.disabled = true; btn.textContent = 'Enviando…';
+      fetch('/api/reportar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          codigo_ine: repCodigo, municipio: repMuni, origen: 'ficha',
+          email: document.getElementById('rep-email').value.trim(),
+          comentario: document.getElementById('rep-com').value.trim(),
+          items: [{ entidad_nombre: sitio || 'En general', motivo: document.getElementById('rep-motivo').value }],
+        }),
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        if (j.ok) {
+          document.getElementById('rep-okmsg').hidden = false;
+          btn.style.display = 'none';
+        } else { alert('No se pudo enviar. Inténtalo de nuevo.'); btn.disabled = false; btn.textContent = 'Enviar reporte'; }
+      }).catch(function () { alert('Error de conexión.'); btn.disabled = false; btn.textContent = 'Enviar reporte'; });
+    });
+  })();
+</script>
+
 <script define:vars={{ fotoUrl }}>
 if (fotoUrl) document.getElementById('mun-hero')?.classList.add('mun-hero-photo');
 </script>

@@ -1,0 +1,72 @@
+---
+import { DB } from '../../lib/d1client';
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+
+let reportes: any[] = [];
+if (ok) {
+  const { results } = await DB.prepare(
+    `SELECT id, municipio, entidad_id, entidad_nombre, motivo, comentario, email, origen, estado, creado_at
+     FROM reportes WHERE estado = 'pendiente' ORDER BY creado_at DESC LIMIT 300`
+  ).all();
+  reportes = results as any[];
+}
+const MOT: Record<string,string> = {
+  no_existe: '🚫 No existe', otro_municipio: '📍 Otro municipio', nombre_mal: '✏️ Nombre incorrecto',
+  falta_info: '🕓 Desactualizado', otro: '❓ Otro',
+};
+const k = encodeURIComponent(key);
+---
+<html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Reportes — Panel</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; background: #fafafa; color: #222; }
+  a.back { display: inline-flex; gap: 6px; text-decoration: none; color: #7c3aed; font-weight: 700; font-size: .88rem; background: #f3f0ff; border: 1.5px solid #e0d9ff; border-radius: 999px; padding: 7px 14px; margin-bottom: 16px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sub { color: #777; font-size: .9rem; margin-bottom: 20px; }
+  .rep { background: #fff; border: 1px solid #e5e5e5; border-radius: 14px; padding: 15px 16px; margin-bottom: 12px; }
+  .rep-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .rep-muni { font-weight: 800; }
+  .rep-org { font-size: .72rem; color: #999; }
+  .rep-sitio { font-size: 1.02rem; font-weight: 700; margin: 6px 0 2px; }
+  .rep-mot { display: inline-block; font-size: .8rem; background: #fff1f3; color: #c8102e; border-radius: 8px; padding: 2px 8px; font-weight: 700; }
+  .rep-com { color: #555; font-size: .9rem; font-style: italic; margin: 8px 0 0; }
+  .rep-mail { font-size: .8rem; color: #888; margin-top: 4px; }
+  .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .acts a { text-decoration: none; font-weight: 700; font-size: .82rem; padding: 8px 13px; border-radius: 9px; }
+  .b-del { background: #dc2626; color: #fff; }
+  .b-res { background: #16a34a; color: #fff; }
+  .b-dis { background: #fff; color: #666; border: 1.5px solid #ddd; }
+  .empty { text-align: center; color: #999; padding: 40px; }
+</style></head>
+<body>
+{!ok ? (
+  <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>
+) : (
+  <>
+    <a class="back" href={`/admin?key=${k}`}>← Panel principal</a>
+    <h1>🔧 Reportes de errores</h1>
+    <div class="sub">{reportes.length} pendientes. Al borrar un sitio, se elimina de la ficha del municipio.</div>
+    {reportes.length === 0 && <div class="empty">No hay reportes pendientes 🎉</div>}
+    {reportes.map((r) => (
+      <div class="rep">
+        <div class="rep-top">
+          <span class="rep-muni">{r.municipio}</span>
+          <span class="rep-org">{r.origen === 'ayuntamiento' ? 'Ayuntamiento' : 'Ficha pública'} · {r.creado_at}</span>
+        </div>
+        <div class="rep-sitio">{r.entidad_nombre || '(comentario general)'}</div>
+        <span class="rep-mot">{MOT[r.motivo] ?? r.motivo}</span>
+        {r.comentario && <p class="rep-com">"{r.comentario}"</p>}
+        {r.email && <div class="rep-mail">✉️ {r.email}</div>}
+        <div class="acts">
+          {r.entidad_id && <a class="b-del" href={`/api/reporte-moderar?key=${k}&id=${r.id}&accion=borrar_sitio`} onclick="return confirm('¿Borrar este sitio de la ficha?')">🗑 Borrar sitio</a>}
+          <a class="b-res" href={`/api/reporte-moderar?key=${k}&id=${r.id}&accion=resuelto`}>✓ Marcar resuelto</a>
+          <a class="b-dis" href={`/api/reporte-moderar?key=${k}&id=${r.id}&accion=descartar`}>Descartar</a>
+        </div>
+      </div>
+    ))}
+  </>
+)}
+</body></html>
