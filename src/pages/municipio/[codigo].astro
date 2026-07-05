@@ -661,6 +661,31 @@ const recomendados = await getAnunciosMunicipio(codigo);
 
   )}
 
+  <!-- Instagramers expertos en esta zona (justo encima de "Qué tiene este municipio") -->
+  {instagramersMuni.length > 0 && (
+    <section class="mun-section ig-muni-section">
+      <h2 class="mun-section-title">📸 Sigue en Instagram para descubrir {municipio.provincia}{desdeInfo ? ` · ${desdeInfo.label}` : ''}</h2>
+      <div class="ig-muni-grid">
+        {instagramersMuni.map((ig: any) => (
+          <a class="ig-muni-card" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
+            {ig.avatar_url
+              ? <img class="ig-muni-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
+              : <span class="ig-muni-av ig-muni-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
+            }
+            <span class="ig-muni-info">
+              {ig.nombre && <span class="ig-muni-nombre">{ig.nombre}</span>}
+              <span class="ig-muni-handle">@{ig.handle}</span>
+              {ig.seguidores > 0 && <span class="ig-muni-seg">{ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(1)+' mill.' : ig.seguidores >= 1000 ? Math.round(ig.seguidores/1000)+' mil' : ig.seguidores} seg.</span>}
+              {ig.especialidad && <span class="ig-muni-esp">{String(ig.especialidad).split(',').filter((e:string)=>e.trim()&&e.trim()!=='general').slice(0,2).join(' · ')}</span>}
+            </span>
+            <span class="ig-muni-arr">Ver ↗</span>
+          </a>
+        ))}
+      </div>
+      <a href="/instagramers" class="ig-muni-more">Ver todos los instagramers →</a>
+    </section>
+  )}
+
   <!-- Entidades grid -->
   {entidades.length > 0 && (
     <section class="mun-section">
@@ -994,31 +1019,6 @@ const recomendados = await getAnunciosMunicipio(codigo);
           </a>
         ))}
       </div>
-    </section>
-  )}
-
-  <!-- Instagramers expertos en esta zona -->
-  {instagramersMuni.length > 0 && (
-    <section class="mun-section ig-muni-section">
-      <h2 class="mun-section-title">📸 Sigue en Instagram para descubrir {municipio.provincia}{desdeInfo ? ` · ${desdeInfo.label}` : ''}</h2>
-      <div class="ig-muni-grid">
-        {instagramersMuni.map((ig: any) => (
-          <a class="ig-muni-card" href={`https://instagram.com/${ig.handle}`} target="_blank" rel="noopener noreferrer">
-            {ig.avatar_url
-              ? <img class="ig-muni-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
-              : <span class="ig-muni-av ig-muni-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
-            }
-            <span class="ig-muni-info">
-              {ig.nombre && <span class="ig-muni-nombre">{ig.nombre}</span>}
-              <span class="ig-muni-handle">@{ig.handle}</span>
-              {ig.seguidores > 0 && <span class="ig-muni-seg">{ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(1)+' mill.' : ig.seguidores >= 1000 ? Math.round(ig.seguidores/1000)+' mil' : ig.seguidores} seg.</span>}
-              {ig.especialidad && <span class="ig-muni-esp">{String(ig.especialidad).split(',').filter((e:string)=>e.trim()&&e.trim()!=='general').slice(0,2).join(' · ')}</span>}
-            </span>
-            <span class="ig-muni-arr">Ver ↗</span>
-          </a>
-        ))}
-      </div>
-      <a href="/instagramers" class="ig-muni-more">Ver todos los instagramers →</a>
     </section>
   )}
 
