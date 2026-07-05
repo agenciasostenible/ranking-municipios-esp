@@ -107,6 +107,20 @@ for (const r of comerRows as any[]) {
 const prio = (it: any) => it.stars ? 10 - it.stars : it.solete ? 20 : 30;
 const comer = [...comerMap.values()].sort((a, b) => prio(a) - prio(b) || a.nombre.localeCompare(b.nombre, 'es'));
 
+// Fotos propias: cualquier entidad del municipio con foto subida (foto_data) o foto_url.
+// Se indexan por nombre normalizado para poder mostrarlas en CUALQUIER sección sin
+// tener que añadir la columna a cada query. entFoto(nombre) → src de la imagen o null.
+const { results: fotoRows } = await DB.prepare(
+  `SELECT id, nombre, (foto_data IS NOT NULL) AS tiene_foto, foto_url FROM entidades
+   WHERE codigo_ine = ? AND (foto_data IS NOT NULL OR (foto_url IS NOT NULL AND foto_url NOT IN ('','NONE')))`
+).bind(codigo).all();
+const fotoMap = new Map<string, string>();
+for (const r of fotoRows as any[]) {
+  const src = r.tiene_foto ? `/api/entidad-foto?id=${r.id}` : r.foto_url;
+  if (src) fotoMap.set(normName(r.nombre), src);
+}
+const entFoto = (nombre: string): string | null => fotoMap.get(normName(nombre)) || null;
+
 // Cicloturismo: rutas ciclistas oficiales/homologadas que pasan por el municipio
 const { results: rutasBiciRows } = await DB.prepare(
   `SELECT nombre, descripcion, fuente FROM entidades
@@ -536,6 +550,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
       </div>
       {desdeEstrella && (
         <div class="desde-card-hero">
+          {entFoto(desdeEstrella.nombre) && <img class="desde-card-foto" src={entFoto(desdeEstrella.nombre)} alt={desdeEstrella.nombre} loading="lazy" />}
           <div class="desde-card-nombre">{desdeEstrella.nombre}</div>
           {desdeEstrella.descripcion
             ? <div class="desde-card-desc">{desdeEstrella.descripcion}</div>
@@ -653,6 +668,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
       <div class="entidades-grid">
         {(entidades as any[]).map(e => (
           <div class="entidad-card card">
+            {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
             <div class="entidad-icon entidad-icon-line"><Icon name={getTipoIconName(e.tipo)} size={24} /></div>
             <div class="entidad-body">
               <div class="entidad-name">{e.nombre}</div>
@@ -693,6 +709,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
           const iconName = (e.solete && !e.stars) ? getTipoIconName(e.tipo) : 'restaurant';
           return (
             <div class="entidad-card card">
+              {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
               <div class:list={['entidad-icon', 'entidad-icon-line', iconCls]}><Icon name={iconName} size={24} /></div>
               <div class="entidad-body">
                 <div class="entidad-name">{e.nombre}{e.stars > 0 && <span class="michelin-stars" title={micheLabel}> {'★'.repeat(e.stars)}</span>}</div>
@@ -721,6 +738,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
       <div class="entidades-grid">
         {museos.map((e: any) => (
           <div class="entidad-card card">
+            {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
             <div class="entidad-icon entidad-icon-line"><Icon name="building_2" size={24} /></div>
             <div class="entidad-body">
               <div class="entidad-name">{e.nombre}</div>
@@ -791,6 +809,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
       <div class="entidades-grid">
         {rutasBici.map(e => (
           <div class="entidad-card card">
+            {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
             <div class="entidad-icon entidad-icon-line entidad-icon-vv"><Icon name="pedal_bike" size={24} /></div>
             <div class="entidad-body">
               <div class="entidad-name">{e.nombre}</div>
@@ -823,6 +842,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
           const badgeStyle = esMichelin ? 'background:#fdeaef;color:#c8102e' : esRelais ? 'background:#e6f0ea;color:#1f6b4a' : 'background:#efe9df;color:#7a5a2e';
           return (
             <div class="entidad-card card">
+              {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
               <div class:list={['entidad-icon', 'entidad-icon-line', iconCls]}><Icon name="cottage" size={24} /></div>
               <div class="entidad-body">
                 <div class="entidad-name">{e.nombre}</div>
@@ -853,6 +873,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
           const esReserva = (e.nivel_sello || '').includes('Reserva');
           return (
             <div class="entidad-card card">
+              {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
               <div class="entidad-icon entidad-icon-line entidad-icon-star"><Icon name="nights_stay" size={24} /></div>
               <div class="entidad-body">
                 <div class="entidad-name">{e.nombre}</div>
@@ -881,6 +902,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
       <div class="entidades-grid">
         {balnearios.map(e => (
           <div class="entidad-card card">
+            {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
             <div class="entidad-icon entidad-icon-line entidad-icon-balneario"><Icon name="hot_tub" size={24} /></div>
             <div class="entidad-body">
               <div class="entidad-name">{e.nombre}</div>
@@ -908,6 +930,7 @@ const recomendados = await getAnunciosMunicipio(codigo);
       <div class="entidades-grid">
         {cuevasTuristicas.map(e => (
           <div class="entidad-card card">
+            {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
             <div class="entidad-icon entidad-icon-line entidad-icon-cueva"><Icon name="mountain" size={24} /></div>
             <div class="entidad-body">
               <div class="entidad-name">{e.nombre}</div>
@@ -1621,6 +1644,24 @@ window.openSello = openSello;
   transition: transform .2s, box-shadow .2s;
 }
 .entidad-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+/* Foto propia subida por el admin: la tarjeta pasa a columna, foto arriba, sin icono */
+.entidad-foto {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+.entidad-card:has(.entidad-foto) { flex-direction: column; align-items: stretch; gap: 12px; }
+.entidad-card:has(.entidad-foto) .entidad-icon { display: none; }
+.desde-card-foto {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+  margin-bottom: 12px;
+}
 .entidad-icon {
   font-size: 2rem;
   line-height: 1;
@@ -1896,6 +1937,7 @@ window.openSello = openSello;
 .rep-open { background: none; border: none; color: #999; font-size: .82rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 8px; }
 .rep-open:hover { color: #FF385C; }
 .rep-modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.rep-modal[hidden] { display: none; }  /* el atributo hidden debe ganar al display:flex (si no, el modal sale abierto al cargar) */
 .rep-card { background: #fff; border-radius: 18px; max-width: 440px; width: 100%; padding: 26px 24px; position: relative; max-height: 92vh; overflow-y: auto; }
 .rep-x { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 1.2rem; color: #999; cursor: pointer; }
 .rep-card h3 { font-size: 1.2rem; font-weight: 700; margin: 0 0 4px; color: #222; }

@@ -1,6 +1,7 @@
 ---
 import { DB } from '../../lib/d1client';
 import { TIPO_LABEL } from '../../lib/entidades';
+import { ALL_CATS, LABELS } from '../../lib/db';
 const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
 const key = Astro.url.searchParams.get('key') ?? '';
@@ -8,7 +9,14 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 const codigo = Astro.url.searchParams.get('codigo') ?? '';
 const k = encodeURIComponent(key);
 
-let muni: any = null; let ents: any[] = [];
+// Catálogo de categorías puntuables (para el editor de valoraciones)
+const CATS = [
+  { key: 'ranking_global', label: 'Ranking global' },
+  ...ALL_CATS.map((c: any) => ({ key: c.key, label: c.label ?? LABELS[c.key] ?? c.key })),
+].filter((c, i, a) => a.findIndex(x => x.key === c.key) === i);
+const catLabel = (kk: string) => CATS.find(c => c.key === kk)?.label ?? LABELS[kk] ?? kk;
+
+let muni: any = null; let ents: any[] = []; let scores: any[] = [];
 if (ok && codigo) {
   muni = await DB.prepare(`SELECT codigo_ine, nombre, provincia FROM municipios WHERE codigo_ine=?`).bind(codigo).first();
   if (muni) {
@@ -17,6 +25,11 @@ if (ok && codigo) {
        FROM entidades WHERE codigo_ine=? ORDER BY tipo, nombre`
     ).bind(codigo).all();
     ents = results as any[];
+    const { results: sc } = await DB.prepare(
+      `SELECT categoria, puntuacion, ranking_provincial, ranking_nacional FROM puntuaciones
+       WHERE codigo_ine=? ORDER BY puntuacion DESC`
+    ).bind(codigo).all();
+    scores = sc as any[];
   }
 }
 const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','palacio','museo','mirador','espacio','sendero','playa','poza','castillo','fiesta','festival','gastronomia','restaurante','bar','cafeteria','vino','rural','camping','balneario','cueva','religioso','activo','mascotas','lgtbi','lujo','oleoturismo','ocio_nocturno','otro'];
@@ -50,6 +63,18 @@ const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','pal
   .saved { color: #16a34a; font-weight: 700; font-size: .82rem; align-self: center; }
   .addbox { background: #f0fff4; border: 1.5px dashed #86efac; border-radius: 14px; padding: 16px; margin-top: 20px; }
   .addbox h3 { margin: 0 0 10px; font-size: 1rem; }
+  .scorebox { background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 16px; margin: 0 0 24px; }
+  .scorebox h3 { margin: 0 0 6px; font-size: 1rem; }
+  .scorenote { font-size: .78rem; color: #7a6a3a; margin: 0 0 12px; line-height: 1.4; }
+  .scorerow { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f3e9c6; flex-wrap: wrap; }
+  .scorelbl { flex: 1; min-width: 130px; font-weight: 700; font-size: .85rem; }
+  .scorecat { font-weight: 400; color: #b9a35a; font-size: .72rem; }
+  .s-val { width: 78px; padding: 7px 8px; border: 1.5px solid #ddd; border-radius: 8px; font-size: .88rem; }
+  .s-rank { font-size: .72rem; color: #8a7a45; min-width: 118px; }
+  .s-save, .s-del { padding: 7px 11px !important; font-size: .8rem; }
+  .scoreadd { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+  .scoreadd select { flex: 1; min-width: 160px; padding: 8px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: .85rem; }
+  .scoreadd input { width: 90px; padding: 8px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: .85rem; }
 </style></head>
 <body>
 {!ok ? (<p>🔒 Añade <code>?key=TU_CLAVE</code> a la URL.</p>) : (
@@ -75,6 +100,27 @@ const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','pal
     <>
       <h1>✏️ {muni.nombre}</h1>
       <div class="sub">{muni.provincia} · {ents.length} sitios en la ficha. Edita, elimina o añade. <a href={`/municipio/${muni.codigo_ine}`} target="_blank" style="color:#FF385C">Ver ficha pública ↗</a></div>
+
+      <!-- ── Valoraciones / puntuaciones por categoría ── -->
+      <div class="scorebox">
+        <h3>⭐ Valoraciones (puntuación 0–100)</h3>
+        <p class="scorenote">Modifica la valoración de cualquier categoría o añade una nueva. Al guardar se recalcula el puesto de <strong>{muni.nombre}</strong> en su provincia y en España. El <em>ranking global</em> ponderado se recalcula aparte.</p>
+        {scores.map((s: any) => (
+          <div class="scorerow" data-cat={s.categoria}>
+            <div class="scorelbl">{catLabel(s.categoria)} <span class="scorecat">{s.categoria}</span></div>
+            <input class="s-val" type="number" min="0" max="100" step="0.1" value={Number(s.puntuacion).toFixed(1)} />
+            <span class="s-rank">#{s.ranking_provincial ?? '—'} prov · #{s.ranking_nacional ?? '—'} Esp</span>
+            <button class="b-save s-save" type="button">💾</button>
+            <a class="b-del s-del" href={`/api/entidad-admin?key=${k}&accion=score-eliminar&codigo=${muni.codigo_ine}&categoria=${s.categoria}`} onclick="return confirm('¿Borrar esta valoración?')">🗑</a>
+            <span class="saved s-ok" hidden>✓</span>
+          </div>
+        ))}
+        <div class="scoreadd">
+          <select id="s-newcat">{CATS.map((c: any) => <option value={c.key}>{c.label} ({c.key})</option>)}</select>
+          <input id="s-newval" type="number" min="0" max="100" step="0.1" placeholder="0–100" />
+          <button id="s-newsave" class="b-save" type="button">➕ Añadir valoración</button>
+        </div>
+      </div>
 
       {ents.map((e) => (
         <div class="ent" data-id={e.id}>
@@ -155,6 +201,31 @@ const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','pal
               latitud:document.getElementById('a-lat').value,longitud:document.getElementById('a-lon').value,
               foto:document.getElementById('a-foto')._data||null})})
             .then(function(r){return r.json();}).then(function(j){if(j.ok)location.reload();else{alert('Error al añadir');btn.disabled=false;btn.textContent='➕ Añadir sitio';}});
+        });
+        // guardar valoración existente
+        function saveScore(cat,val,cb){
+          fetch('/api/entidad-admin?key='+k+'&accion=score',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({codigo_ine:codigo,categoria:cat,puntuacion:val})})
+            .then(function(r){return r.json();}).then(cb).catch(function(){cb({ok:false});});
+        }
+        document.querySelectorAll('.scorerow').forEach(function(row){
+          row.querySelector('.s-save').addEventListener('click',function(){
+            var v=parseFloat(row.querySelector('.s-val').value);
+            if(isNaN(v)){alert('Pon un número 0–100');return;}
+            var btn=this;btn.disabled=true;
+            saveScore(row.dataset.cat,v,function(j){btn.disabled=false;
+              if(j.ok){var o=row.querySelector('.s-ok');o.hidden=false;
+                row.querySelector('.s-rank').textContent='#'+(j.ranking_provincial||'—')+' prov · #'+(j.ranking_nacional||'—')+' Esp';
+                setTimeout(function(){o.hidden=true;},1800);}else alert('Error al guardar');});
+          });
+        });
+        // añadir valoración nueva
+        document.getElementById('s-newsave').addEventListener('click',function(){
+          var cat=document.getElementById('s-newcat').value;
+          var v=parseFloat(document.getElementById('s-newval').value);
+          if(isNaN(v)){alert('Pon un número 0–100');return;}
+          var btn=this;btn.disabled=true;btn.textContent='Añadiendo…';
+          saveScore(cat,v,function(j){if(j.ok)location.reload();else{alert('Error al añadir valoración');btn.disabled=false;btn.textContent='➕ Añadir valoración';}});
         });
       </script>
     </>
