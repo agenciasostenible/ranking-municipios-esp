@@ -47,7 +47,7 @@ const totalNacionalRow = await DB.prepare(`SELECT COUNT(*) as n FROM municipios`
 const totalNacional = totalNacionalRow?.n ?? 0;
 
 let { results: entidades } = await DB.prepare(
-  `SELECT tipo, nombre, nivel_sello, descripcion FROM entidades e
+  `SELECT tipo, nombre, nivel_sello, descripcion, enlace, latitud, longitud FROM entidades e
    WHERE e.codigo_ine = ?
      AND COALESCE(e.fuente,'') NOT IN ('guia_repsol_solete','gastronomia_ampliacion','guia_michelin','vias_verdes','eurovelo','caminos_naturales','camino_cid','pirinexus','centros_btt','hoteles_encanto','starlight','balnearios','cuevas','pueblos_mas_bonitos','bandera_azul','unesco','wikidata_museos')
      AND (e.tipo NOT IN ('espacio','parque_natural') OR (
@@ -55,6 +55,7 @@ let { results: entidades } = await DB.prepare(
        WHERE e2.nombre = e.nombre AND e2.tipo = e.tipo
      ) <= 8)
    ORDER BY
+     CASE WHEN COALESCE(e.fuente,'')='admin' THEN 0 ELSE 1 END,
      CASE nivel_sello
        WHEN 'UNESCO' THEN 1 WHEN 'IT Internacional' THEN 2
        WHEN 'Parque Nacional' THEN 3 WHEN 'BIC Nacional' THEN 4
@@ -708,9 +709,13 @@ const recomendados = await getAnunciosMunicipio(codigo);
                 )}
                 <span class="tipo-badge">{TIPO_LABEL[e.tipo] ?? e.tipo}</span>
               </div>
-              {tieneFichaMaps(e.tipo) && (
+              {(e.enlace || tieneFichaMaps(e.tipo)) && (
                 <a class="entidad-maps" target="_blank" rel="noopener"
-                   href={gmapsUrl(e.nombre, municipio.nombre, municipio.provincia)}>
+                   href={e.enlace
+                     ? e.enlace
+                     : (e.latitud != null
+                         ? gmapsUrlAt(e.nombre, e.latitud, e.longitud)
+                         : gmapsUrl(e.nombre, municipio.nombre, municipio.provincia))}>
                   <Icon name="map_pin" size={14} /> Ver en Google Maps
                 </a>
               )}
