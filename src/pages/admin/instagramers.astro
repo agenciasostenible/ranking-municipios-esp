@@ -258,6 +258,12 @@ async function guardarEdicion(id, btn) {
   } catch { alert('Error al guardar'); }
   btn.disabled = false; btn.textContent = '💾 Guardar cambios';
 }
+
+// Astro envuelve este script en un IIFE (por define:vars), así que las funciones NO quedan
+// en el ámbito global y los onclick="guardarEdicion(...)" no las encontraban (el botón no
+// hacía nada). Las exponemos explícitamente en window.
+window.guardarEdicion = guardarEdicion;
+window.guardarOrden = guardarOrden;
 </script>
 </body>
 </html>
