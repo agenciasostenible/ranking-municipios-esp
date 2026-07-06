@@ -697,7 +697,10 @@ const recomendados = await getAnunciosMunicipio(codigo);
             {entFoto(e.nombre) && <img class="entidad-foto" src={entFoto(e.nombre)} alt={e.nombre} loading="lazy" />}
             <div class="entidad-icon entidad-icon-line"><Icon name={getTipoIconName(e.tipo)} size={24} /></div>
             <div class="entidad-body">
-              <div class="entidad-name">{e.nombre}</div>
+              <div class="entidad-name">
+                {entFoto(e.nombre) && <span class="entidad-name-ic"><Icon name={getTipoIconName(e.tipo)} size={15} /></span>}
+                {e.nombre}
+              </div>
               {e.descripcion && (
                 <div class="entidad-desc">{e.descripcion}</div>
               )}
@@ -1659,6 +1662,9 @@ window.openSello = openSello;
 }
 .entidad-card:has(.entidad-foto) { flex-direction: column; align-items: stretch; gap: 12px; }
 .entidad-card:has(.entidad-foto) .entidad-icon { display: none; }
+/* Cuando hay foto se oculta el icono grande, pero mostramos uno pequeño junto al nombre */
+.entidad-name-ic { display: inline-flex; vertical-align: -2px; margin-right: 5px; color: #7c3aed; }
+.entidad-name-ic :global(svg) { width: 15px; height: 15px; stroke-width: 1.8; }
 .desde-card-foto {
   width: 100%;
   max-height: 220px;
