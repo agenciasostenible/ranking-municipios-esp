@@ -1,23 +1,24 @@
 /**
  * d1client.ts
  * -----------
- * Cliente compatible con la API de Cloudflare D1.
- * Reproduce la interfaz DB.prepare().all() / .first() / .bind()
- * usando la REST API de Cloudflare D1 (server-side).
+ * Acceso a la base de datos D1.
  *
- * Variables de entorno necesarias:
- *   CF_ACCOUNT_ID   — ID de cuenta Cloudflare
- *   CF_API_TOKEN    — API token con permisos D1
- *   CF_D1_DB_ID     — ID de la base de datos D1
+ * - En Cloudflare (Pages/Workers): usa el **binding nativo** `DB` (rápido, sin token),
+ *   capturado por el middleware en `Astro.locals.runtime.env.DB`.
+ * - Fuera de Cloudflare (build local, otros): usa la **API REST** de D1 con
+ *   CF_ACCOUNT_ID / CF_API_TOKEN / CF_D1_DB_ID.
+ *
+ * La interfaz (`DB.prepare(sql).bind(...).all()/.first()/.run()`) es idéntica en ambos
+ * casos, así que los ~65 ficheros que usan `DB` no cambian.
  */
-
-const CF_ACCOUNT_ID = import.meta.env.CF_ACCOUNT_ID ?? process.env.CF_ACCOUNT_ID;
-const CF_API_TOKEN  = import.meta.env.CF_API_TOKEN  ?? process.env.CF_API_TOKEN;
-const CF_D1_DB_ID   = import.meta.env.CF_D1_DB_ID   ?? process.env.CF_D1_DB_ID;
-
-const BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/d1/database/${CF_D1_DB_ID}/query`;
+import { d1Binding, rtEnv } from './runtime';
 
 async function d1Query(sql: string, params: unknown[] = []) {
+  const CF_ACCOUNT_ID = rtEnv('CF_ACCOUNT_ID');
+  const CF_API_TOKEN = rtEnv('CF_API_TOKEN');
+  const CF_D1_DB_ID = rtEnv('CF_D1_DB_ID');
+  const BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/d1/database/${CF_D1_DB_ID}/query`;
+
   const res = await fetch(BASE_URL, {
     method: 'POST',
     headers: {
@@ -69,7 +70,9 @@ class D1PreparedStatement {
 }
 
 export const DB = {
-  prepare(sql: string): D1PreparedStatement {
-    return new D1PreparedStatement(sql);
+  prepare(sql: string): any {
+    const binding = d1Binding();
+    if (binding) return binding.prepare(sql); // D1 nativo de Cloudflare (misma interfaz)
+    return new D1PreparedStatement(sql);       // fallback API REST
   },
 };

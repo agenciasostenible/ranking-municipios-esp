@@ -15,7 +15,7 @@
     "db:migrate:local": "wrangler d1 execute ranking-municipios --local --file=migrations/0001_schema.sql && wrangler d1 execute ranking-municipios --local --file=migrations/0002_seed_jaen.sql",
     "db:migrate:remote": "wrangler d1 execute ranking-municipios --file=migrations/0001_schema.sql && wrangler d1 execute ranking-municipios --file=migrations/0002_seed_jaen.sql",
     "dev:cf": "npm run build && npm run preview",
-    "deploy": "npm run build && npx wrangler pages deploy --project-name=ranking-municipios-esp"
+    "deploy": "npm run build && npx wrangler deploy -c dist/server/wrangler.json"
   },
   "dependencies": {
     "@astrojs/vercel": "^10.0.8",

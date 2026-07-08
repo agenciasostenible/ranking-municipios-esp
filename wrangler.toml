@@ -1,9 +1,20 @@
 name = "ranking-municipios-esp"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "./dist/client"
+
+# Subdominio de pruebas (para verificar la mudanza sin tocar el dominio principal)
+routes = [
+  { pattern = "nuevo.rankingspain.com", custom_domain = true }
+]
+
+# El adaptador @astrojs/cloudflare añade main (dist/server/entry.mjs) y assets (dist/client)
+# a la config generada en dist/server/wrangler.json al hacer el build.
 
 [[d1_databases]]
 binding = "DB"
 database_name = "ranking-municipios"
 database_id = "d664746a-8439-488d-a42c-73aaf17b2140"
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "fbff1b0954ca4b29905b0309273216a5"

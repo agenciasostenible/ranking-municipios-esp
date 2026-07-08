@@ -49,17 +49,19 @@ export const POST: APIRoute = async ({ url, request }) => {
   const enlace = String(b.enlace || '').trim().slice(0, 400) || null;
   const lat = b.latitud !== '' && b.latitud != null ? Number(b.latitud) : null;
   const lon = b.longitud !== '' && b.longitud != null ? Number(b.longitud) : null;
+  const ordenRaw = b.orden !== '' && b.orden != null ? parseInt(b.orden, 10) : NaN;
+  const orden = Number.isFinite(ordenRaw) ? ordenRaw : null;  // menor = más arriba; null = automático
   const foto = toStorableImage(b.foto);  // data URL base64 (TEXT) o null
 
   if (accion === 'editar') {
     const id = parseInt(b.id, 10);
     if (!id || !nombre) return okJson({ ok: false, error: 'faltan' }, 400);
     if (foto) {
-      await DB.prepare(`UPDATE entidades SET nombre=?, tipo=?, descripcion=?, enlace=?, latitud=?, longitud=?, foto_data=?, foto_mime=NULL WHERE id=?`)
-        .bind(nombre, tipo, descripcion, enlace, lat, lon, foto, id).run();
+      await DB.prepare(`UPDATE entidades SET nombre=?, tipo=?, descripcion=?, enlace=?, latitud=?, longitud=?, orden=?, foto_data=?, foto_mime=NULL WHERE id=?`)
+        .bind(nombre, tipo, descripcion, enlace, lat, lon, orden, foto, id).run();
     } else {
-      await DB.prepare(`UPDATE entidades SET nombre=?, tipo=?, descripcion=?, enlace=?, latitud=?, longitud=? WHERE id=?`)
-        .bind(nombre, tipo, descripcion, enlace, lat, lon, id).run();
+      await DB.prepare(`UPDATE entidades SET nombre=?, tipo=?, descripcion=?, enlace=?, latitud=?, longitud=?, orden=? WHERE id=?`)
+        .bind(nombre, tipo, descripcion, enlace, lat, lon, orden, id).run();
     }
     return okJson({ ok: true, id });
   }
@@ -110,11 +112,11 @@ export const POST: APIRoute = async ({ url, request }) => {
     const idRow = await DB.prepare(`SELECT COALESCE(MAX(id),220000)+1 AS nid FROM entidades`).first() as any;
     const nid = idRow?.nid ?? Date.now();
     if (foto) {
-      await DB.prepare(`INSERT INTO entidades (id, codigo_ine, tipo, nombre, descripcion, enlace, latitud, longitud, fuente, foto_data) VALUES (?,?,?,?,?,?,?,?, 'admin', ?)`)
-        .bind(nid, codigo, tipo, nombre, descripcion, enlace, lat, lon, foto).run();
+      await DB.prepare(`INSERT INTO entidades (id, codigo_ine, tipo, nombre, descripcion, enlace, latitud, longitud, orden, fuente, foto_data) VALUES (?,?,?,?,?,?,?,?,?, 'admin', ?)`)
+        .bind(nid, codigo, tipo, nombre, descripcion, enlace, lat, lon, orden, foto).run();
     } else {
-      await DB.prepare(`INSERT INTO entidades (id, codigo_ine, tipo, nombre, descripcion, enlace, latitud, longitud, fuente) VALUES (?,?,?,?,?,?,?,?, 'admin')`)
-        .bind(nid, codigo, tipo, nombre, descripcion, enlace, lat, lon).run();
+      await DB.prepare(`INSERT INTO entidades (id, codigo_ine, tipo, nombre, descripcion, enlace, latitud, longitud, orden, fuente) VALUES (?,?,?,?,?,?,?,?,?, 'admin')`)
+        .bind(nid, codigo, tipo, nombre, descripcion, enlace, lat, lon, orden).run();
     }
     return okJson({ ok: true, id: nid });
   }

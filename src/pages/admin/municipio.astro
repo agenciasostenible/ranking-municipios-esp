@@ -21,8 +21,8 @@ if (ok && codigo) {
   muni = await DB.prepare(`SELECT codigo_ine, nombre, provincia FROM municipios WHERE codigo_ine=?`).bind(codigo).first();
   if (muni) {
     const { results } = await DB.prepare(
-      `SELECT id, nombre, tipo, descripcion, enlace, latitud, longitud, foto_url, fuente, (foto_data IS NOT NULL) AS tiene_foto
-       FROM entidades WHERE codigo_ine=? ORDER BY tipo, nombre`
+      `SELECT id, nombre, tipo, descripcion, enlace, latitud, longitud, foto_url, fuente, orden, (foto_data IS NOT NULL) AS tiene_foto
+       FROM entidades WHERE codigo_ine=? ORDER BY COALESCE(orden,500), tipo, nombre`
     ).bind(codigo).all();
     ents = results as any[];
     const { results: sc } = await DB.prepare(
@@ -127,6 +127,8 @@ const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','pal
           <div class="ent-h"><strong>{TIPO_LABEL[e.tipo] ?? e.tipo}</strong><span class="src">{e.fuente}</span></div>
           <label class="fld">Nombre</label>
           <input class="f-nombre" value={e.nombre} />
+          <label class="fld">📍 Posición en la ficha <span style="font-weight:400;color:#999">(nº bajo = más arriba · vacío = automático)</span></label>
+          <input class="f-orden" type="number" value={e.orden ?? ''} placeholder="Ej: 1 = primero, 2 = segundo…" />
           <div class="row2">
             <div><label class="fld">Tipo</label>
               <select class="f-tipo">{[...new Set([e.tipo, ...TIPOS])].map(tp => <option value={tp} selected={tp===e.tipo}>{tp}</option>)}</select>
@@ -154,6 +156,7 @@ const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','pal
       <div class="addbox">
         <h3>➕ Añadir un sitio nuevo a {muni.nombre}</h3>
         <label class="fld">Nombre</label><input id="a-nombre" placeholder="Ej: Castillo de…" />
+        <label class="fld">📍 Posición en la ficha <span style="font-weight:400;color:#999">(nº bajo = más arriba · vacío = automático)</span></label><input id="a-orden" type="number" placeholder="Ej: 1 = primero" />
         <div class="row2">
           <div><label class="fld">Tipo</label><select id="a-tipo">{TIPOS.map(tp => <option value={tp}>{tp}</option>)}</select></div>
           <div><label class="fld">Enlace</label><input id="a-enlace" placeholder="https://…" /></div>
@@ -186,6 +189,7 @@ const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','pal
               body:JSON.stringify({id:row.dataset.id,nombre:row.querySelector('.f-nombre').value,tipo:row.querySelector('.f-tipo').value,
                 descripcion:row.querySelector('.f-desc').value,enlace:row.querySelector('.f-enlace').value,
                 latitud:row.querySelector('.f-lat').value,longitud:row.querySelector('.f-lon').value,
+                orden:row.querySelector('.f-orden').value,
                 foto:row.querySelector('.f-foto')._data||null})})
               .then(function(r){return r.json();}).then(function(j){btn.disabled=false;btn.textContent='💾 Guardar';
                 if(j.ok){var s=row.querySelector('.saved');s.hidden=false;setTimeout(function(){s.hidden=true;},2000);}else alert('Error al guardar');});
@@ -199,6 +203,7 @@ const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','pal
             body:JSON.stringify({codigo_ine:codigo,nombre:n,tipo:document.getElementById('a-tipo').value,
               descripcion:document.getElementById('a-desc').value,enlace:document.getElementById('a-enlace').value,
               latitud:document.getElementById('a-lat').value,longitud:document.getElementById('a-lon').value,
+              orden:document.getElementById('a-orden').value,
               foto:document.getElementById('a-foto')._data||null})})
             .then(function(r){return r.json();}).then(function(j){if(j.ok)location.reload();else{alert('Error al añadir');btn.disabled=false;btn.textContent='➕ Añadir sitio';}});
         });
