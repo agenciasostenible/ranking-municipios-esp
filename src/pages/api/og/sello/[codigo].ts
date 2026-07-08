@@ -1,9 +1,7 @@
 import type { APIRoute } from 'astro';
 import { DB } from '../../../../lib/d1client';
 import { LABELS } from '../../../../lib/db';
-// @ts-ignore
-import satori from 'satori';
-import { Resvg, initWasm } from '@resvg/resvg-wasm';
+import { satori, svgToPng, ensureOgWasm, loadInterFonts } from '../../../../lib/og-runtime';
 
 export const prerender = false;
 
@@ -11,27 +9,6 @@ const SHARE_CATS = [
   'monumentos','castillos','fiestas','festivales','gastronomia','senderismo',
   'Playas','TurismoRural','Campings','vinos','pueblo_bonito',
 ];
-
-let wasmReady: Promise<void> | null = null;
-function ensureWasm(origin: string) {
-  if (!wasmReady) {
-    wasmReady = initWasm(fetch(`${origin}/resvg.wasm`)).catch((e) => { wasmReady = null; throw e; });
-  }
-  return wasmReady;
-}
-
-let fontCache: any[] | null = null;
-async function loadFonts(origin: string) {
-  if (fontCache) return fontCache;
-  const grab = async (w: number, file: string) =>
-    ({ name: 'Inter', weight: w, style: 'normal', data: await fetch(`${origin}/fonts/${file}`).then(r => r.arrayBuffer()) });
-  fontCache = await Promise.all([
-    grab(400, 'inter-400.woff'),
-    grab(600, 'inter-600.woff'),
-    grab(800, 'inter-800.woff'),
-  ]);
-  return fontCache;
-}
 
 function tier(rank: number) {
   if (rank === 1)  return 'EL MEJOR EN';
@@ -82,8 +59,8 @@ export const GET: APIRoute = async ({ params, request, redirect }) => {
     const nombreSize = nombre.length > 16 ? 56 : nombre.length > 11 ? 70 : 82;
     const catSize = chosen.catLabel.length > 16 ? 42 : chosen.catLabel.length > 11 ? 50 : 58;
 
-    await ensureWasm(origin);
-    const fonts = await loadFonts(origin);
+    await ensureOgWasm();
+    const fonts = await loadInterFonts(origin);
 
     const node = T([
       T([], { position: 'absolute', top: 0, left: 0, width: 1080, height: 22, background: '#FF385C' }),
@@ -115,7 +92,7 @@ export const GET: APIRoute = async ({ params, request, redirect }) => {
     });
 
     const svg: string = await satori(node, { width: 1080, height: 1080, fonts });
-    const png = new Resvg(svg, { fitTo: { mode: 'width', value: 1080 }, background: '#ffffff' }).render().asPng();
+    const png = svgToPng(svg, 1080);
 
     return new Response(png as any, {
       headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400, s-maxage=86400' },

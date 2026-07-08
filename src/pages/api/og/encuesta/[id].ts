@@ -7,32 +7,9 @@
  */
 import type { APIRoute } from 'astro';
 import { DB } from '../../../../lib/d1client';
-// @ts-ignore
-import satori from 'satori';
-import { Resvg, initWasm } from '@resvg/resvg-wasm';
+import { satori, svgToPng, ensureOgWasm, loadInterFonts } from '../../../../lib/og-runtime';
 
 export const prerender = false;
-
-let wasmReady: Promise<void> | null = null;
-function ensureWasm(origin: string) {
-  if (!wasmReady) {
-    wasmReady = initWasm(fetch(`${origin}/resvg.wasm`)).catch((e) => { wasmReady = null; throw e; });
-  }
-  return wasmReady;
-}
-
-let fontCache: any[] | null = null;
-async function loadFonts(origin: string) {
-  if (fontCache) return fontCache;
-  const grab = async (w: number, file: string) =>
-    ({ name: 'Inter', weight: w, style: 'normal', data: await fetch(`${origin}/fonts/${file}`).then((r) => r.arrayBuffer()) });
-  fontCache = await Promise.all([
-    grab(400, 'inter-400.woff'),
-    grab(600, 'inter-600.woff'),
-    grab(800, 'inter-800.woff'),
-  ]);
-  return fontCache;
-}
 
 const T = (children: any, style: any) => ({ type: 'div', props: { style: { display: 'flex', ...style }, children } });
 
@@ -52,8 +29,8 @@ export const GET: APIRoute = async ({ params, request, redirect }) => {
     const frase = row.frase ? String(row.frase) : '';
     const sitioSize = sitio.length > 18 ? 76 : sitio.length > 12 ? 96 : 120;
 
-    await ensureWasm(origin);
-    const fonts = await loadFonts(origin);
+    await ensureOgWasm();
+    const fonts = await loadInterFonts(origin);
 
     // Avatar: solo si hay foto subida (incrustada como data URL). Si no hay, no se pinta nada.
     const avatarSrc = typeof row.avatar_data === 'string' && row.avatar_data.startsWith('data:') ? row.avatar_data : '';
@@ -94,7 +71,7 @@ export const GET: APIRoute = async ({ params, request, redirect }) => {
     });
 
     const svg: string = await satori(node, { width: 1080, height: 1920, fonts });
-    const png = new Resvg(svg, { fitTo: { mode: 'width', value: 1080 }, background: '#ffffff' }).render().asPng();
+    const png = svgToPng(svg, 1080);
 
     const dl = new URL(request.url).searchParams.get('dl');
     const headers: Record<string, string> = {
