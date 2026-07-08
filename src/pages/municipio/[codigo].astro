@@ -217,11 +217,11 @@ const { results: instagramersRows } = await DB.prepare(
    FROM instagramers i
    JOIN instagramer_municipios im ON im.instagramer_id = i.id
    WHERE i.verificado = 1
-     AND (im.codigo_ine = ? OR im.provincia = ?)
+     AND (im.codigo_ine = ? OR im.provincia = ? OR im.provincia = ?)
      ${espCond}
    ORDER BY i.seguidores DESC, i.id DESC
    LIMIT 6`
-).bind(codigo, municipio.provincia, ...espFiltros).all();
+).bind(codigo, municipio.provincia, municipio.comunidad, ...espFiltros).all();
 const instagramersMuni = (instagramersRows as any[]).map((r) => ({
   ...r,
   avatar_url: r.has_avatar ? `/api/instagramer-foto?id=${r.id}` : (r.avatar_url || null),
@@ -1416,6 +1416,32 @@ window.openSello = openSello;
 .ig-muni-arr { font-size: .8rem; color: #7c3aed; font-weight: 700; flex-shrink: 0; }
 .ig-muni-more { font-size: .8rem; color: #7c3aed; font-weight: 700; text-decoration: none; display: inline-block; margin-top: 6px; }
 .ig-muni-more:hover { text-decoration: underline; }
+/* Panel destacado estilo Instagram — antes el título era gris diminuto y no se veía */
+.ig-muni-section {
+  background: linear-gradient(135deg, #fff3f8 0%, #f7f0ff 55%, #eef2ff 100%);
+  border: 1.5px solid #f0d9fb;
+  border-radius: 20px;
+  padding: 20px 22px 18px;
+  box-shadow: 0 8px 26px rgba(150, 47, 191, .10);
+}
+.ig-muni-section .mun-section-title {
+  font-size: 1.22rem;
+  text-transform: none;
+  letter-spacing: -.01em;
+  font-weight: 800;
+  color: #c1288f;
+  margin-bottom: 4px;
+}
+.ig-muni-section .mun-section-title::after {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 68px;
+  margin-top: 9px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #feda75, #fa7e1e 22%, #d62976 52%, #962fbf 78%, #4f5bd5);
+}
+.ig-muni-section .ig-muni-card { border-color: #ecd6fb; box-shadow: 0 2px 8px rgba(150,47,191,.06); }
 .anunciate-cta { display: block; background: #fff7e6; border: 1.5px solid #f5d28a; border-radius: 14px; padding: 14px 18px; margin: 22px 0; color: #92500a; font-size: .92rem; text-decoration: none; text-align: center; }
 .anunciate-cta strong { color: #b45309; }
 .anunciate-cta:hover { background: #fff1d6; }

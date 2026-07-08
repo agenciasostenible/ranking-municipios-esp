@@ -89,7 +89,7 @@ const TIPOS = ['monumento','castillo','torre','iglesia','ermita','catedral','pal
       <script is:inline define:vars={{ k }}>
         var inp=document.getElementById('mbuscar'), ac=document.getElementById('mac'), t;
         inp.addEventListener('input',function(){var q=inp.value.trim();clearTimeout(t);if(q.length<2){ac.innerHTML='';return;}
-          t=setTimeout(function(){fetch('/api/search?q='+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(d){
+          t=setTimeout(function(){fetch('/api/search?q='+encodeURIComponent(q)+'&muni=1').then(function(r){return r.json();}).then(function(d){
             ac.innerHTML=(d||[]).filter(function(x){return x.tipo==='municipio';}).slice(0,8).map(function(m){
               return '<a href="/admin/municipio?key='+k+'&codigo='+m.codigo_ine+'">'+m.nombre+' <span style=\"color:#999;font-weight:400\">'+(m.provincia||'')+'</span></a>';}).join('');
           });},180);

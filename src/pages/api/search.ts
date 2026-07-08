@@ -116,6 +116,7 @@ export const GET: APIRoute = async ({ request }) => {
   const ccaa = url.searchParams.get('ccaa') ?? '';
   const comarca = url.searchParams.get('comarca') ?? '';
   const tam = url.searchParams.get('tamano') ?? '';
+  const soloMuni = url.searchParams.get('muni') === '1'; // editor admin: solo municipios
 
   if (!q && !prov && !ccaa && !comarca) {
     return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
@@ -135,7 +136,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   // Detectar si la búsqueda coincide con una categoría → sugerir /entidades/[cat]
   let catSuggestions: any[] = [];
-  if (q && q.length >= 3) {
+  if (q && q.length >= 3 && !soloMuni) {
     const qLow = q.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
     for (const { words, cat } of CAT_KEYWORDS) {
       if (words.some(w => qLow.includes(w) || w.includes(qLow))) {
@@ -154,7 +155,7 @@ export const GET: APIRoute = async ({ request }) => {
   let geoResults: any[] = [];
   let entResults: any[] = [];
 
-  if (q && !prov && !ccaa && !comarca) {
+  if (q && !prov && !ccaa && !comarca && !soloMuni) {
     const normProv = (col: string) =>
       `REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER(${col}),'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u')`;
 
@@ -209,9 +210,17 @@ export const GET: APIRoute = async ({ request }) => {
   else if (tam === 'med') sql += ` AND m.poblacion >= 5000 AND m.poblacion < 20000`;
   else if (tam === 'grd') sql += ` AND m.poblacion >= 20000`;
 
-  // Reducimos municipios si ya hay resultados de entidades para no saturar
-  const muniLimit = Math.max(1, 8 - geoResults.length - entResults.length - catSuggestions.length);
-  sql += ` GROUP BY m.codigo_ine ORDER BY p.ranking_provincial ASC NULLS LAST LIMIT ${muniLimit}`;
+  // Reducimos municipios si ya hay resultados de entidades para no saturar (salvo modo solo-municipios)
+  const muniLimit = soloMuni ? 10 : Math.max(1, 8 - geoResults.length - entResults.length - catSuggestions.length);
+  // Prioridad: nombre exacto → empieza por la búsqueda → contiene; dentro, por ranking.
+  sql += ` GROUP BY m.codigo_ine
+    ORDER BY
+      CASE WHEN m.nombre_search = ? THEN 0
+           WHEN m.nombre_search LIKE ? THEN 1
+           ELSE 2 END,
+      p.ranking_provincial ASC NULLS LAST
+    LIMIT ${muniLimit}`;
+  params.push(qNorm, `${qNorm}%`);
 
   const { results } = await DB.prepare(sql).bind(...params).all();
   const municipios = (results as any[]).map((r: any) => ({ ...r, tipo: 'municipio', url: `/municipio/${r.codigo_ine}` }));
