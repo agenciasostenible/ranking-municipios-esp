@@ -2,8 +2,11 @@ name = "ranking-municipios-esp"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-# Subdominio de pruebas (para verificar la mudanza sin tocar el dominio principal)
+# Dominios del Worker. IMPORTANTE: deben estar TODOS aquí — al desplegar, wrangler
+# elimina cualquier custom domain que NO esté listado (una vez tumbó rankingspain.com por faltar).
 routes = [
+  { pattern = "rankingspain.com", custom_domain = true },
+  { pattern = "www.rankingspain.com", custom_domain = true },
   { pattern = "nuevo.rankingspain.com", custom_domain = true }
 ]
 
