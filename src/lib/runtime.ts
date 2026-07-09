@@ -29,7 +29,7 @@ export function rtEnv(k: string): any {
 }
 
 /** Copia los secretos conocidos a process.env para el helper env() de los ~23 ficheros existentes. */
-const SECRET_KEYS = ['ADMIN_KEY', 'RESEND_API_KEY', 'ADMIN_EMAIL', 'GOOGLE_PLACES_API_KEY', 'PLACES_PAUSED', 'CF_ACCOUNT_ID', 'CF_API_TOKEN', 'CF_D1_DB_ID'];
+const SECRET_KEYS = ['ADMIN_KEY', 'RESEND_API_KEY', 'RESEND_WEBHOOK_SECRET', 'ADMIN_EMAIL', 'GOOGLE_PLACES_API_KEY', 'PLACES_PAUSED', 'CF_ACCOUNT_ID', 'CF_API_TOKEN', 'CF_D1_DB_ID'];
 export function mirrorSecretsToProcessEnv(): void {
   if (typeof process === 'undefined' || !process.env) return;
   for (const k of SECRET_KEYS) {

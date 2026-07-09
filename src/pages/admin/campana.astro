@@ -6,6 +6,7 @@ const key = Astro.url.searchParams.get('key') ?? '';
 const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 
 let stats = { total: 0, con_email: 0, enviados: 0, pendientes: 0, con_error: 0 };
+let errores: any[] = [];
 if (ok) {
   const r = await DB.prepare(
     `SELECT
@@ -17,6 +18,14 @@ if (ok) {
      FROM ayuntamientos_contacto`
   ).first();
   stats = { ...stats, ...(r as any) };
+  const e = await DB.prepare(
+    `SELECT c.codigo_ine, COALESCE(m.nombre, c.nombre_bdgel) AS nombre, m.provincia, c.email, c.email_error
+       FROM ayuntamientos_contacto c
+       LEFT JOIN municipios m ON m.codigo_ine = c.codigo_ine
+      WHERE c.email_error IS NOT NULL
+      ORDER BY c.codigo_ine LIMIT 200`
+  ).all();
+  errores = (e.results as any[]) || [];
 }
 const k = encodeURIComponent(key);
 ---
@@ -27,7 +36,14 @@ const k = encodeURIComponent(key);
   a.back { display: inline-flex; gap: 6px; text-decoration: none; color: #7c3aed; font-weight: 700; font-size: .88rem; background: #f3f0ff; border: 1.5px solid #e0d9ff; border-radius: 999px; padding: 7px 14px; margin-bottom: 16px; }
   h1 { font-size: 1.4rem; margin: 0 0 4px; }
   .sub { color: #777; font-size: .9rem; margin-bottom: 20px; }
-  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 22px; }
+  .card.err .n { color: #dc2626; }
+  .errlist { background: #fff; border: 1px solid #fecaca; border-radius: 14px; padding: 16px; margin-top: 18px; }
+  .errlist h2 { font-size: 1rem; margin: 0 0 10px; color: #b91c1c; }
+  .erritem { font-size: .84rem; padding: 7px 0; border-bottom: 1px solid #f3f4f6; }
+  .erritem b { font-weight: 700; }
+  .erritem .em { color: #b91c1c; font-family: ui-monospace, monospace; font-size: .8rem; }
+  .erritem .why { color: #999; font-size: .76rem; }
   .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px; text-align: center; }
   .card .n { font-size: 1.5rem; font-weight: 800; }
   .card .l { font-size: .72rem; color: #888; margin-top: 2px; }
@@ -59,6 +75,7 @@ const k = encodeURIComponent(key);
       <div class="card"><div class="n">{stats.con_email}</div><div class="l">con email</div></div>
       <div class="card env"><div class="n">{stats.enviados}</div><div class="l">enviados</div></div>
       <div class="card pen"><div class="n">{stats.pendientes}</div><div class="l">pendientes</div></div>
+      <div class="card err"><div class="n">{stats.con_error}</div><div class="l">rebotados</div></div>
     </div>
 
     <div class="warn">⚠️ El plan de Resend limita el volumen diario. Envía en tandas y ve viendo cómo llegan. Empieza SIEMPRE por una prueba a ti mismo.</div>
@@ -79,6 +96,18 @@ const k = encodeURIComponent(key);
     </div>
 
     <div id="out"></div>
+
+    {errores.length > 0 && (
+      <div class="errlist">
+        <h2>❌ Direcciones que rebotan ({errores.length})</h2>
+        {errores.map((e) => (
+          <div class="erritem">
+            <b>{e.nombre}</b> {e.provincia ? `(${e.provincia})` : ''} — <span class="em">{e.email}</span>
+            <div class="why">{e.email_error} · <a href={`/admin/municipio?key=${k}&codigo=${e.codigo_ine}`}>ver ficha</a></div>
+          </div>
+        ))}
+      </div>
+    )}
 
     <script is:inline define:vars={{ k }}>
       const out = document.getElementById('out');
