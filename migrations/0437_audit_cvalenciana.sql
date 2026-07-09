@@ -129,3 +129,4 @@ DELETE FROM entidades WHERE id=87956; -- dup-ficha 45012: ya existe en 46213
 UPDATE entidades SET codigo_ine='46250' WHERE id=117; -- movida de 45015
 UPDATE entidades SET codigo_ine='46250' WHERE id=77796; -- movida de 45015
 DELETE FROM entidades WHERE id=80348; -- dup-ficha 45015: ya existe en 46250
+UPDATE entidades SET nombre='Fiesta de la Tostada y el Aceite Nuevo' WHERE id=119806; -- era 'La' (nombre cortado por el parser, Cascante)
