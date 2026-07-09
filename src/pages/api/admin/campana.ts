@@ -60,7 +60,7 @@ function html(nombre: string, codigo: string) {
       <a href="${revisar}" style="display:inline-block;background:#FF385C;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700">✍️ Corregir o completar la ficha</a>
     </p>
     <p>Lo revisamos y lo actualizamos nosotros. Es un servicio <b>gratuito</b> y sin ninguna contrapartida: solo queremos que vuestro municipio esté lo mejor representado posible y que más gente lo descubra.</p>
-    <p>Mil gracias por vuestro tiempo,<br><b>El equipo de Ranking Spain</b><br><a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a></p>
+    <p>Mil gracias por vuestro tiempo,<br><b>El equipo de Ranking Spain</b><br><a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a> · 📞 <a href="tel:+34681248699" style="color:#222;text-decoration:none">681 24 86 99</a> · <a href="mailto:info@rankingspain.com" style="color:#222;text-decoration:none">info@rankingspain.com</a></p>
     <hr style="border:none;border-top:1px solid #e5e5e5;margin:24px 0 12px">
     <p style="font-size:12px;color:#999;line-height:1.5">
       Recibes este correo porque ${n} figura en el directorio público de municipios de España. Ranking Spain es un proyecto informativo independiente, sin ánimo comercial en esta comunicación. Si no deseáis recibir más correos nuestros, respondednos con <b>BAJA</b> y os retiraremos de inmediato.
