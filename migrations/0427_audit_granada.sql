@@ -172,3 +172,4 @@ DELETE FROM entidades WHERE id=87474; -- dup-ficha 19027: ya existe en 18182
 UPDATE entidades SET codigo_ine='18183' WHERE id=100781; -- movida de ficha dup 19028
 UPDATE entidades SET codigo_ine='18183' WHERE id=100782; -- movida de ficha dup 19028
 UPDATE entidades SET codigo_ine='18183' WHERE id=111369; -- movida de ficha dup 19028
+INSERT INTO entidades (id, codigo_ine, tipo, nombre, descripcion, latitud, longitud, fuente) VALUES (87407, '18087', 'alcazaba', 'Alcazaba de la Alhambra (Torre Quebrada)', 'Siglo XIII. Colosal baluarte militar del frente oriental de la Alcazaba. Fábrica maciza de tapial califal reforzado, diseñada para absorber los impactos de proyectiles de catapulta de asedio y proteger la línea de murallas de la Alcazaba.', NULL, NULL, 'inventario_castillos_pdf');
