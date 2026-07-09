@@ -27,10 +27,11 @@ const esc = (s: string) =>
   String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
 
 // Un ayuntamiento puede traer varios emails separados por coma/;. Los normaliza.
+// Solo ASCII: Resend rechaza el batch ENTERO si un email trae ñ/tildes (422).
 function parseEmails(raw: string): string[] {
   return String(raw || '')
     .split(/[;,]/).map((e) => e.trim().toLowerCase())
-    .filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))
+    .filter((e) => /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(e))
     .filter((e, i, a) => a.indexOf(e) === i)
     .slice(0, 3);
 }
@@ -106,24 +107,34 @@ export const POST: APIRoute = async ({ request }) => {
     `SELECT c.codigo_ine, COALESCE(m.nombre, c.nombre_bdgel) AS nombre, c.email
        FROM ayuntamientos_contacto c
        LEFT JOIN municipios m ON m.codigo_ine = c.codigo_ine
-      WHERE c.email LIKE '%@%' AND c.email_enviado_at IS NULL
+      WHERE c.email LIKE '%@%' AND c.email_enviado_at IS NULL AND c.email_error IS NULL
       ORDER BY c.codigo_ine
       LIMIT ?`
   ).bind(limite).all();
   const filas = (results as any[]) || [];
   if (!filas.length) return okJson({ ok: true, modo: 'real', enviados: 0, nota: 'no quedan pendientes' });
 
-  // Construir el batch de Resend (cada item con sus destinatarios)
+  // Construir el batch de Resend (cada item con sus destinatarios).
+  // Los que no tengan ningún email válido tras sanear → se marcan como error
+  // (y al tener email_error dejan de entrar en próximas tandas).
+  const invalidos: string[] = [];
   const batch = filas.map((f) => {
     const dest = parseEmails(f.email);
+    if (!dest.length) { invalidos.push(f.codigo_ine); return null; }
     const nombre = String(f.nombre || '').replace(/^Ayuntamiento de(l| la| los| las)? /i, '') || 'vuestro municipio';
     return {
       _codigo: f.codigo_ine, _dest: dest, nombre,
       email: { from: FROM, to: dest, reply_to: REPLY_TO, subject: asunto(nombre), html: html(nombre, f.codigo_ine) },
     };
-  }).filter((x) => x._dest.length > 0);
+  }).filter(Boolean) as any[];
 
-  if (!batch.length) return okJson({ ok: true, modo: 'real', enviados: 0, nota: 'sin destinatarios válidos' });
+  for (const cod of invalidos) {
+    await DB.prepare(
+      `UPDATE ayuntamientos_contacto SET email_error = 'email inválido (caracteres raros o formato)' WHERE codigo_ine = ?`
+    ).bind(cod).run();
+  }
+
+  if (!batch.length) return okJson({ ok: true, modo: 'real', enviados: 0, invalidos: invalidos.length, nota: 'sin destinatarios válidos en esta tanda' });
 
   const res = await fetch('https://api.resend.com/emails/batch', {
     method: 'POST',
@@ -142,5 +153,5 @@ export const POST: APIRoute = async ({ request }) => {
     ).bind(now, batch[i]._codigo).run();
   }
 
-  return okJson({ ok: true, modo: 'real', enviados: batch.length, ids: ids.slice(0, 3) });
+  return okJson({ ok: true, modo: 'real', enviados: batch.length, invalidos: invalidos.length, ids: ids.slice(0, 3) });
 };
