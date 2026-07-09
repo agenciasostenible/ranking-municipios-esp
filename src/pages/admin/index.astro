@@ -9,7 +9,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 const origin = Astro.url.origin;
 
 // Contadores rápidos (qué necesita atención)
-let cEncuesta = 0, cVotosMunis = 0, cAnunPend = 0, cCreadPend = 0, cBanners = 0, cReportes = 0;
+let cEncuesta = 0, cVotosMunis = 0, cAnunPend = 0, cCreadPend = 0, cBanners = 0, cReportes = 0, cAytoPend = 0;
 const num = async (sql: string) => { try { const r = await DB.prepare(sql).first() as any; return Number(r?.n || 0); } catch { return 0; } };
 if (ok) {
   cEncuesta   = await num(`SELECT COUNT(*) n FROM encuesta WHERE publicado=0`);
@@ -18,6 +18,7 @@ if (ok) {
   cCreadPend  = await num(`SELECT COUNT(*) n FROM instagramers WHERE verificado=0`);
   cBanners    = await num(`SELECT COUNT(*) n FROM banners`);
   cReportes   = await num(`SELECT COUNT(*) n FROM reportes WHERE estado='pendiente'`);
+  cAytoPend   = await num(`SELECT COUNT(*) n FROM ayuntamientos_contacto WHERE email LIKE '%@%' AND email_enviado_at IS NULL`);
 }
 const k = encodeURIComponent(key);
 
@@ -26,6 +27,7 @@ const PANELES = [
   { t: '🏆 Voto del público', d: 'Ranking + editar votos', href: `/admin/votos?key=${k}`, badge: cVotosMunis, badgeLbl: 'municipios' },
   { t: '📢 Publicidad / Anunciantes', d: 'Negocios y establecimientos', href: `/admin/anuncios?key=${k}`, badge: cAnunPend, badgeLbl: 'pendientes' },
   { t: '🔧 Reportes de errores', d: 'Fichas: sitios mal o inexistentes', href: `/admin/reportes?key=${k}`, badge: cReportes, badgeLbl: 'pendientes' },
+  { t: '📣 Campaña ayuntamientos', d: 'Aviso a los ayuntamientos para revisar su ficha', href: `/admin/campana?key=${k}`, badge: cAytoPend, badgeLbl: 'pendientes' },
   { t: '✏️ Editar fichas', d: 'Control total: editar/añadir/borrar sitios y fotos', href: `/admin/municipio?key=${k}`, badge: 0, badgeLbl: '' },
   { t: '📸 Instagramers', d: 'Directorio de creadores', href: `/admin/instagramers?key=${k}`, badge: cCreadPend, badgeLbl: 'pendientes' },
   { t: '🖼️ Banners', d: 'Anuncios de imagen en la home', href: `/admin/banners?key=${k}`, badge: cBanners, badgeLbl: 'activos' },
