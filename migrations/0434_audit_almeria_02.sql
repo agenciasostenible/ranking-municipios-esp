@@ -1,0 +1,16 @@
+-- 0434_02 auditoría Almería: renombre y borrados específicos
+UPDATE entidades SET nombre='Oro del Desierto' WHERE id=84818; -- era '04088'
+DELETE FROM entidades WHERE id=100343; -- Castillo San Andrés copia monumentos (queda 87801)
+DELETE FROM entidades WHERE id=100344; -- Torre del Rayo copia monumentos (queda 87803)
+DELETE FROM entidades WHERE id=100375; -- Castillo Escobas Garrucha copia monumentos (queda 87805)
+DELETE FROM entidades WHERE id=100376; -- Castillo Gérgal copia monumentos (queda 87807)
+DELETE FROM entidades WHERE id=100405; -- Castillo San Felipe Níjar copia monumentos (queda 87809)
+DELETE FROM entidades WHERE id=100423; -- Geoda de Pulpí copia monumentos (queda ACTE 141997)
+DELETE FROM entidades WHERE id=100430; -- Castillo Santa Ana Roquetas copia monumentos (queda 87815)
+DELETE FROM entidades WHERE id=100462; -- Cueva de los Letreros copia monumentos (queda UNESCO 78191)
+DELETE FROM entidades WHERE id=106456; -- Alcazaba Almería copia monumentos (queda 87800)
+DELETE FROM entidades WHERE id=151220; -- Balneario San Nicolás copia agua_osm (queda ANBAL 141988)
+DELETE FROM entidades WHERE id=164560; -- El Molinillo de la Abuela copia OSM (queda solete 138705)
+DELETE FROM entidades WHERE id=207181; -- Castillo de Tabernas como mirador (queda castillo 87817)
+DELETE FROM entidades WHERE id=212079; -- Playa Calypso copia OSM (queda PDF 93207)
+DELETE FROM entidades WHERE id=215240; -- Cortijo El Castaño encanto dup (queda rural 168847)
