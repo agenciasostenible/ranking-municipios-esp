@@ -164,7 +164,7 @@ const k = encodeURIComponent(key);
 
     <script is:inline define:vars={{ k }}>
       const plantilla = (muni, codigo) =>
-        `Hola 👋 Somos Ranking Spain (rankingspain.com): ordenamos los más de 8.000 municipios de España con datos verificados, no opiniones. ${muni} ya tiene su ficha pública con sus rankings por provincia y categoría: https://rankingspain.com/municipio/${codigo}\n\nComo nadie conoce ${muni} mejor que vosotros, nos encantaría que le echarais un vistazo. Si falta algo o hay que corregir, se hace en 2 minutos aquí: https://rankingspain.com/revisar/${codigo}\n\nEs gratuito y sin contrapartidas: solo queremos que el municipio esté bien representado. ¡Gracias! 🙌`;
+        `Hola 👋 Somos Ranking Spain. Hemos creado la ficha turística de ${muni} en nuestra web —con sus rankings por categorías y su posición en la provincia— y nos encantaría enviárosla por si hay algo que retocar o completar de la información que aparece. ¿A qué email os la podemos mandar? ¡Gracias!`;
 
       async function post(ruta, body) {
         const r = await fetch(ruta + '?key=' + k, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
