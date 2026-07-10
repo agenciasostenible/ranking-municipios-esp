@@ -40,7 +40,93 @@ function asunto(nombre: string) {
   return `El Ayuntamiento de ${nombre} ya tiene ficha en Ranking Spain — ¿nos ayudáis a dejarla perfecta?`;
 }
 
-function html(nombre: string, codigo: string) {
+// ---- Personalización: primer párrafo con datos reales del municipio ----
+// Sin puestos de ranking (los almacenados están obsoletos): sellos, joyas con
+// nombre propio y categorías con nota alta. 3 redacciones que rotan por código.
+const SELLOS_FUENTE = ['unesco', 'pueblos_mas_bonitos', 'guia_michelin', 'bandera_azul', 'starlight'];
+const JOYA_TIPOS = ['castillo','alcazaba','fortaleza','monasterio','catedral','conjunto','conjunto_historico','monumento','museo','cueva','palacio','muralla','torre'];
+const JOYA_FUENTES = ['unesco','BIC','excel_curado','inventario_castillos_pdf','inventario_monumentos_pdf'];
+const CAT_LABEL: Record<string, string> = {
+  fiestas: 'sus fiestas', monumentos: 'patrimonio monumental', castillos: 'sus castillos',
+  gastronomia: 'gastronomía', playas: 'sus playas', senderismo: 'senderismo',
+  miradores: 'sus miradores', museos: 'sus museos', TurismoRural: 'turismo rural',
+  estrellas: 'su cielo nocturno', pozas: 'turismo de agua dulce', vinos: 'enoturismo',
+  ciclismo: 'cicloturismo', cuevas: 'sus cuevas', balnearios: 'termalismo',
+  festivales: 'sus festivales', oleoturismo: 'oleoturismo', turismo_religioso: 'turismo religioso',
+  naturaleza: 'naturaleza', misterio: 'turismo misterioso',
+};
+
+type Datos = { sellos: Map<string, { n: number; ej: string }>; joyas: string[]; cats: string[] };
+
+async function cargarDatos(codes: string[]): Promise<Map<string, Datos>> {
+  const out = new Map<string, Datos>();
+  if (!codes.length) return out;
+  for (const c of codes) out.set(c, { sellos: new Map(), joyas: [], cats: [] });
+  const ph = codes.map(() => '?').join(',');
+  const fu = SELLOS_FUENTE.map((s) => `'${s}'`).join(',');
+  const jf = JOYA_FUENTES.map((s) => `'${s}'`).join(',');
+  const jt = JOYA_TIPOS.map((s) => `'${s}'`).join(',');
+  const ents = await DB.prepare(
+    `SELECT codigo_ine, nombre, fuente FROM entidades
+      WHERE codigo_ine IN (${ph}) AND (fuente IN (${fu}) OR (tipo IN (${jt}) AND fuente IN (${jf})))
+      ORDER BY CASE fuente WHEN 'unesco' THEN 0 WHEN 'BIC' THEN 1 WHEN 'inventario_castillos_pdf' THEN 2 ELSE 3 END`
+  ).bind(...codes).all();
+  const cl = Object.keys(CAT_LABEL).map((c) => `'${c}'`).join(',');
+  const punts = await DB.prepare(
+    `SELECT codigo_ine, categoria, puntuacion FROM puntuaciones
+      WHERE codigo_ine IN (${ph}) AND puntuacion >= 82 AND categoria IN (${cl})
+      ORDER BY puntuacion DESC`
+  ).bind(...codes).all();
+  for (const e of (ents.results as any[]) || []) {
+    const d = out.get(e.codigo_ine); if (!d) continue;
+    if (SELLOS_FUENTE.includes(e.fuente)) {
+      const s = d.sellos.get(e.fuente) || { n: 0, ej: e.nombre };
+      s.n++; d.sellos.set(e.fuente, s);
+    } else if (d.joyas.length < 2 && e.nombre && e.nombre.length <= 60 && !/[\[\]{}]/.test(e.nombre) && !/\b(\S+)\s+\1\b/i.test(e.nombre) && !d.joyas.includes(e.nombre)) {
+      d.joyas.push(e.nombre);
+    }
+  }
+  for (const p of (punts.results as any[]) || []) {
+    const d = out.get(p.codigo_ine); if (!d) continue;
+    const l = CAT_LABEL[p.categoria];
+    if (l && d.cats.length < 2 && !d.cats.includes(l)) d.cats.push(l);
+  }
+  return out;
+}
+
+function fraseSellos(sellos: Map<string, { n: number; ej: string }>): string[] {
+  const out: string[] = [];
+  if (sellos.has('unesco')) out.push('reconocido por la UNESCO como Patrimonio Mundial');
+  if (sellos.has('pueblos_mas_bonitos')) out.push('miembro de Los Pueblos Más Bonitos de España');
+  const mi = sellos.get('guia_michelin');
+  if (mi) out.push(mi.n === 1 ? `con la estrella Michelin de ${esc(mi.ej)}` : `con ${mi.n} restaurantes con estrella Michelin`);
+  if (sellos.has('bandera_azul')) out.push('con Bandera Azul en sus playas');
+  if (sellos.has('starlight')) out.push('con certificación Starlight para ver las estrellas');
+  return out;
+}
+
+function intro(nombre: string, codigo: string, d?: Datos): string {
+  if (!d) return '';
+  const n = esc(nombre);
+  const lista = (a: string[]) => (a.length >= 2 ? `${a[0]} y ${a[1]}` : a[0]);
+  const joyas = d.joyas.slice(0, 2).map((j) => `<b>${esc(j)}</b>`);
+  const sellos = fraseSellos(d.sellos).slice(0, 2);
+  const cats = d.cats.slice(0, 2).map((c) => `<b>${c}</b>`);
+  if (!joyas.length && !sellos.length && !cats.length) return '';
+  const partes: string[] = [];
+  if (joyas.length) partes.push(`ahí están ${lista(joyas)}`);
+  if (sellos.length) partes.push(lista(sellos));
+  const motivo = partes.join(', ');
+  const catsTxt = cats.length ? lista(cats) : '';
+  const v = (parseInt(codigo.replace(/\D/g, '') || '0', 10)) % 3;
+  if (v === 0)
+    return `Os lo decimos de entrada: ${n} no es para nosotros un municipio más${motivo ? ` — ${motivo}` : ''}.${catsTxt ? ` En nuestros análisis destaca especialmente en ${catsTxt}.` : ''}`;
+  if (v === 1)
+    return `No escribimos a ciegas: sabemos bien lo que ${n} ofrece${motivo ? ` — ${motivo}` : ''}${catsTxt ? ` — y en nuestros análisis sobresale sobre todo en ${catsTxt}` : ''}.`;
+  return `${n} nos tiene conquistados${motivo ? `: ${motivo}` : ''}.${catsTxt ? ` No nos sorprende que puntúe sobresaliente en ${catsTxt} en nuestros análisis.` : ''}`;
+}
+
+function html(nombre: string, codigo: string, extra = '') {
   const ficha = `${BASE}/municipio/${codigo}`;
   const revisar = `${BASE}/revisar/${codigo}`;
   const n = esc(nombre);
@@ -50,6 +136,7 @@ function html(nombre: string, codigo: string) {
       <span style="color:#FF385C">Ranking</span> <span style="color:#222">Spain</span>
     </div>
     <p>Buenos días:</p>
+    ${extra ? `<p>${extra}</p>` : ''}
     <p>Somos <b>Ranking Spain</b> (<a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a>), un proyecto que ordena los más de 8.000 municipios de España con <b>datos verificados, no opiniones</b>. Nació de una idea sencilla: cuando alguien busca dónde viajar, siempre acaba en los diez sitios de siempre —masificados y caros—, mientras miles de pueblos con muchísimo que ofrecer quedan invisibles solo porque nadie habla de ellos. Nosotros queremos darle la vuelta a eso: que la gente descubra cada lugar <b>por sus méritos, no por su fama</b>.</p>
     <p>Analizamos cada municipio en decenas de categorías —monumentos, naturaleza, gastronomía, castillos, fiestas, senderos, miradores, pueblos bonitos y muchas más— y lo mostramos en una ficha pública, con su ranking por provincia y por categoría.</p>
     <p style="font-weight:700">Y aquí viene el motivo de este correo: ${n} ya tiene la suya.</p>
@@ -90,12 +177,13 @@ export const POST: APIRoute = async ({ request }) => {
     ).first() as any;
     const nombre = muni?.nombre || 'Guadix';
     const codigo = muni?.codigo_ine || '18089';
+    const datosTest = await cargarDatos([codigo]);
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: FROM, to: [adminEmail], reply_to: REPLY_TO,
-        subject: '[PRUEBA] ' + asunto(nombre), html: html(nombre, codigo),
+        subject: '[PRUEBA] ' + asunto(nombre), html: html(nombre, codigo, intro(nombre, codigo, datosTest.get(codigo))),
       }),
     });
     const j = await res.json().catch(() => ({}));
@@ -118,13 +206,15 @@ export const POST: APIRoute = async ({ request }) => {
   // Los que no tengan ningún email válido tras sanear → se marcan como error
   // (y al tener email_error dejan de entrar en próximas tandas).
   const invalidos: string[] = [];
+  const datos = await cargarDatos(filas.map((f) => f.codigo_ine));
   const batch = filas.map((f) => {
     const dest = parseEmails(f.email);
     if (!dest.length) { invalidos.push(f.codigo_ine); return null; }
     const nombre = String(f.nombre || '').replace(/^Ayuntamiento de(l| la| los| las)? /i, '') || 'vuestro municipio';
+    const extra = intro(nombre, f.codigo_ine, datos.get(f.codigo_ine));
     return {
       _codigo: f.codigo_ine, _dest: dest, nombre,
-      email: { from: FROM, to: dest, reply_to: REPLY_TO, subject: asunto(nombre), html: html(nombre, f.codigo_ine) },
+      email: { from: FROM, to: dest, reply_to: REPLY_TO, subject: asunto(nombre), html: html(nombre, f.codigo_ine, extra) },
     };
   }).filter(Boolean) as any[];
 
