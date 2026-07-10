@@ -116,24 +116,24 @@ function intro(nombre: string, codigo: string, d?: Datos): string {
   if (!joyas.length && !sellos.length && !cats.length) return '';
   const v = (parseInt(codigo.replace(/\D/g, '') || '0', 10)) % 3;
 
-  // Frase 1: el gancho
+  // Frase 1: el gancho (cortés, contacto en frío, pero con conocimiento del municipio)
   const gancho = [
-    `Antes de nada, os lo decimos tal cual: en ${n} hay mucho que enseñar.`,
-    `Os lo decimos con franqueza: ${n} nos parece una auténtica joya.`,
-    `Lo primero: no os escribimos por escribir, sabemos muy bien a qué puerta llamamos.`,
+    `Permitidnos comenzar reconociendo lo evidente: ${n} tiene mucho que mostrar.`,
+    `Este correo no es fruto del azar: conocemos bien el patrimonio de ${n}.`,
+    `Os escribimos con conocimiento de causa: ${n} es un municipio que merece atención.`,
   ][v];
 
   // Frase 2: el motivo (joyas y sellos)
   let motivo = '';
-  if (joyas.length && sellos.length) motivo = ` Ahí están ${lista(joyas)}, sin olvidar ${lista(sellos)}.`;
-  else if (joyas.length) motivo = ` Ahí están ${lista(joyas)}, que no es poca cosa.`;
-  else if (sellos.length) motivo = ` Pocos municipios pueden presumir de ${lista(sellos)}.`;
+  if (joyas.length && sellos.length) motivo = ` Buena muestra de ello son ${lista(joyas)}, sin olvidar ${lista(sellos)}.`;
+  else if (joyas.length) motivo = ` Buena muestra de ello son ${lista(joyas)}.`;
+  else if (sellos.length) motivo = ` No todos los municipios pueden presumir de ${lista(sellos)}.`;
 
   // Frase 3: las categorías donde puntúa alto
   const remate = cats.length ? [
-    ` Y los números lo confirman: en nuestros análisis sobresale en ${lista(cats)}.`,
-    ` Así que no nos extraña que en nuestros análisis puntúe tan alto en ${lista(cats)}.`,
-    ` En nuestros análisis, ${n} saca muy buena nota en ${lista(cats)}.`,
+    ` Nuestros análisis así lo reflejan: sobresale especialmente en ${lista(cats)}.`,
+    ` No en vano, en nuestros análisis destaca especialmente en ${lista(cats)}.`,
+    ` De hecho, en nuestros análisis obtiene una puntuación sobresaliente en ${lista(cats)}.`,
   ][v] : '';
 
   return `${gancho}${motivo}${remate}`;
@@ -150,8 +150,12 @@ function html(nombre: string, codigo: string, extra = '') {
     </div>
     <p>Buenos días:</p>
     ${extra ? `<p>${extra}</p>` : ''}
-    <p>Somos <b>Ranking Spain</b> (<a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a>), un proyecto que ordena los más de 8.000 municipios de España con <b>datos verificados, no opiniones</b>. Nació de una idea sencilla: cuando alguien busca dónde viajar, siempre acaba en los diez sitios de siempre, masificados y caros, mientras miles de pueblos con muchísimo que ofrecer se quedan sin visitas solo porque nadie habla de ellos. Nosotros queremos darle la vuelta a eso: que la gente descubra cada lugar <b>por sus méritos, no por su fama</b>.</p>
-    <p>Analizamos cada municipio en decenas de categorías (monumentos, naturaleza, gastronomía, castillos, fiestas, senderos, miradores, pueblos bonitos y muchas más) y lo mostramos en una ficha pública, con su ranking por provincia y por categoría.</p>
+    <p>Nos presentamos: somos <b>Ranking Spain</b> (<a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a>). En tres líneas:</p>
+    <div style="background:#fff;border-radius:14px;padding:16px 18px;margin:16px 0;border:1px solid #eee">
+      <p style="margin:0 0 12px;display:flex;gap:10px"><span style="font-size:20px">📊</span><span>Ordenamos los <b>más de 8.000 municipios de España</b> con datos verificados, no opiniones.</span></p>
+      <p style="margin:0 0 12px;display:flex;gap:10px"><span style="font-size:20px">🏰</span><span>Analizamos <b>decenas de categorías</b>: monumentos, naturaleza, gastronomía, fiestas, playas, senderos y muchas más, con rankings por provincia y por categoría.</span></p>
+      <p style="margin:0;display:flex;gap:10px"><span style="font-size:20px">🧭</span><span>Nuestro objetivo: que cada lugar sea descubierto <b>por sus méritos, no por su fama</b>, y que el viajero no acabe siempre en los diez destinos masificados de siempre.</span></p>
+    </div>
     <p style="font-weight:700">Y aquí viene el motivo de este correo: ${n} ya tiene la suya.</p>
     <p style="text-align:center;margin:26px 0 6px">
       <a href="${ficha}" style="display:inline-block;background:#222;color:#fff;padding:15px 30px;border-radius:12px;text-decoration:none;font-weight:800;font-size:17px;box-shadow:0 4px 14px rgba(0,0,0,.18)">👉 Ver la ficha de ${n}</a>
