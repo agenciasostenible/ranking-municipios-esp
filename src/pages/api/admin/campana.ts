@@ -37,7 +37,7 @@ function parseEmails(raw: string): string[] {
 }
 
 function asunto(nombre: string) {
-  return `El Ayuntamiento de ${nombre} ya tiene ficha en Ranking Spain — ¿nos ayudáis a dejarla perfecta?`;
+  return `El Ayuntamiento de ${nombre} ya tiene ficha en Ranking Spain. ¿Nos ayudáis a dejarla perfecta?`;
 }
 
 // ---- Personalización: primer párrafo con datos reales del municipio ----
@@ -94,14 +94,15 @@ async function cargarDatos(codes: string[]): Promise<Map<string, Datos>> {
   return out;
 }
 
+// Frases nominales para poder decir "presumir de X" o "sin olvidar X"
 function fraseSellos(sellos: Map<string, { n: number; ej: string }>): string[] {
   const out: string[] = [];
-  if (sellos.has('unesco')) out.push('reconocido por la UNESCO como Patrimonio Mundial');
-  if (sellos.has('pueblos_mas_bonitos')) out.push('miembro de Los Pueblos Más Bonitos de España');
+  if (sellos.has('unesco')) out.push('el sello de la UNESCO como Patrimonio Mundial');
+  if (sellos.has('pueblos_mas_bonitos')) out.push('el sello de Los Pueblos Más Bonitos de España');
   const mi = sellos.get('guia_michelin');
-  if (mi) out.push(mi.n === 1 ? `con la estrella Michelin de ${esc(mi.ej)}` : `con ${mi.n} restaurantes con estrella Michelin`);
-  if (sellos.has('bandera_azul')) out.push('con Bandera Azul en sus playas');
-  if (sellos.has('starlight')) out.push('con certificación Starlight para ver las estrellas');
+  if (mi) out.push(mi.n === 1 ? `la estrella Michelin de ${esc(mi.ej)}` : `sus ${mi.n} restaurantes con estrella Michelin`);
+  if (sellos.has('bandera_azul')) out.push('la Bandera Azul de sus playas');
+  if (sellos.has('starlight')) out.push('la certificación Starlight de su cielo nocturno');
   return out;
 }
 
@@ -113,17 +114,29 @@ function intro(nombre: string, codigo: string, d?: Datos): string {
   const sellos = fraseSellos(d.sellos).slice(0, 2);
   const cats = d.cats.slice(0, 2).map((c) => `<b>${c}</b>`);
   if (!joyas.length && !sellos.length && !cats.length) return '';
-  const partes: string[] = [];
-  if (joyas.length) partes.push(`ahí están ${lista(joyas)}`);
-  if (sellos.length) partes.push(lista(sellos));
-  const motivo = partes.join(', ');
-  const catsTxt = cats.length ? lista(cats) : '';
   const v = (parseInt(codigo.replace(/\D/g, '') || '0', 10)) % 3;
-  if (v === 0)
-    return `Os lo decimos de entrada: ${n} no es para nosotros un municipio más${motivo ? ` — ${motivo}` : ''}.${catsTxt ? ` En nuestros análisis destaca especialmente en ${catsTxt}.` : ''}`;
-  if (v === 1)
-    return `No escribimos a ciegas: sabemos bien lo que ${n} ofrece${motivo ? ` — ${motivo}` : ''}${catsTxt ? ` — y en nuestros análisis sobresale sobre todo en ${catsTxt}` : ''}.`;
-  return `${n} nos tiene conquistados${motivo ? `: ${motivo}` : ''}.${catsTxt ? ` No nos sorprende que puntúe sobresaliente en ${catsTxt} en nuestros análisis.` : ''}`;
+
+  // Frase 1: el gancho
+  const gancho = [
+    `Antes de nada, os lo decimos tal cual: en ${n} hay mucho que enseñar.`,
+    `Os lo decimos con franqueza: ${n} nos parece una auténtica joya.`,
+    `Lo primero: no os escribimos por escribir, sabemos muy bien a qué puerta llamamos.`,
+  ][v];
+
+  // Frase 2: el motivo (joyas y sellos)
+  let motivo = '';
+  if (joyas.length && sellos.length) motivo = ` Ahí están ${lista(joyas)}, sin olvidar ${lista(sellos)}.`;
+  else if (joyas.length) motivo = ` Ahí están ${lista(joyas)}, que no es poca cosa.`;
+  else if (sellos.length) motivo = ` Pocos municipios pueden presumir de ${lista(sellos)}.`;
+
+  // Frase 3: las categorías donde puntúa alto
+  const remate = cats.length ? [
+    ` Y los números lo confirman: en nuestros análisis sobresale en ${lista(cats)}.`,
+    ` Así que no nos extraña que en nuestros análisis puntúe tan alto en ${lista(cats)}.`,
+    ` En nuestros análisis, ${n} saca muy buena nota en ${lista(cats)}.`,
+  ][v] : '';
+
+  return `${gancho}${motivo}${remate}`;
 }
 
 function html(nombre: string, codigo: string, extra = '') {
@@ -137,16 +150,19 @@ function html(nombre: string, codigo: string, extra = '') {
     </div>
     <p>Buenos días:</p>
     ${extra ? `<p>${extra}</p>` : ''}
-    <p>Somos <b>Ranking Spain</b> (<a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a>), un proyecto que ordena los más de 8.000 municipios de España con <b>datos verificados, no opiniones</b>. Nació de una idea sencilla: cuando alguien busca dónde viajar, siempre acaba en los diez sitios de siempre —masificados y caros—, mientras miles de pueblos con muchísimo que ofrecer quedan invisibles solo porque nadie habla de ellos. Nosotros queremos darle la vuelta a eso: que la gente descubra cada lugar <b>por sus méritos, no por su fama</b>.</p>
-    <p>Analizamos cada municipio en decenas de categorías —monumentos, naturaleza, gastronomía, castillos, fiestas, senderos, miradores, pueblos bonitos y muchas más— y lo mostramos en una ficha pública, con su ranking por provincia y por categoría.</p>
+    <p>Somos <b>Ranking Spain</b> (<a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a>), un proyecto que ordena los más de 8.000 municipios de España con <b>datos verificados, no opiniones</b>. Nació de una idea sencilla: cuando alguien busca dónde viajar, siempre acaba en los diez sitios de siempre, masificados y caros, mientras miles de pueblos con muchísimo que ofrecer se quedan sin visitas solo porque nadie habla de ellos. Nosotros queremos darle la vuelta a eso: que la gente descubra cada lugar <b>por sus méritos, no por su fama</b>.</p>
+    <p>Analizamos cada municipio en decenas de categorías (monumentos, naturaleza, gastronomía, castillos, fiestas, senderos, miradores, pueblos bonitos y muchas más) y lo mostramos en una ficha pública, con su ranking por provincia y por categoría.</p>
     <p style="font-weight:700">Y aquí viene el motivo de este correo: ${n} ya tiene la suya.</p>
-    <p style="text-align:center;margin:22px 0">
-      <a href="${ficha}" style="display:inline-block;background:#222;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700">Ver la ficha de ${n}</a>
+    <p style="text-align:center;margin:26px 0 6px">
+      <a href="${ficha}" style="display:inline-block;background:#222;color:#fff;padding:15px 30px;border-radius:12px;text-decoration:none;font-weight:800;font-size:17px;box-shadow:0 4px 14px rgba(0,0,0,.18)">👉 Ver la ficha de ${n}</a>
     </p>
-    <p>Como nadie conoce ${n} mejor que vosotros, nos encantaría que le echarais un vistazo: comprobar que <b>todo está correcto</b>, que no falta ningún sitio importante, que los nombres y datos son los buenos… para dejarla <b>redonda</b>. Si veis algo que corregir o que añadir, es tan fácil como decírnoslo aquí (2 minutos, sin registrarse):</p>
-    <p style="text-align:center;margin:22px 0">
-      <a href="${revisar}" style="display:inline-block;background:#FF385C;color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700">✍️ Corregir o completar la ficha</a>
-    </p>
+    <p style="text-align:center;margin:0 0 22px;font-size:12.5px;color:#999">Se abre en el navegador, sin registros ni descargas.</p>
+    <p>Como nadie conoce ${n} mejor que vosotros, nos encantaría que le echarais un vistazo: que <b>todo esté correcto</b>, que no falte ningún sitio importante, que los nombres y datos sean los buenos… vamos, dejarla <b>redonda</b>.</p>
+    <div style="background:#fff;border:2px solid #FF385C;border-radius:14px;padding:18px 16px;margin:24px 0;text-align:center">
+      <p style="margin:0 0 12px;font-weight:700;font-size:15.5px">¿Veis algo que falta o que no está bien?</p>
+      <a href="${revisar}" style="display:inline-block;background:#FF385C;color:#fff;padding:15px 30px;border-radius:12px;text-decoration:none;font-weight:800;font-size:17px;box-shadow:0 4px 14px rgba(255,56,92,.35)">✍️ Corregir o completar la ficha</a>
+      <p style="margin:12px 0 0;font-size:12.5px;color:#999">2 minutos, sin registrarse. Lo cambiamos nosotros.</p>
+    </div>
     <p>Lo revisamos y lo actualizamos nosotros. Es un servicio <b>gratuito</b> y sin ninguna contrapartida: solo queremos que vuestro municipio esté lo mejor representado posible y que más gente lo descubra.</p>
     <p>Mil gracias por vuestro tiempo,<br><b>El equipo de Ranking Spain</b><br><a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a> · 📞 <a href="tel:+34681248699" style="color:#222;text-decoration:none">681 24 86 99</a> · <a href="mailto:info@rankingspain.com" style="color:#222;text-decoration:none">info@rankingspain.com</a></p>
     <hr style="border:none;border-top:1px solid #e5e5e5;margin:24px 0 12px">
