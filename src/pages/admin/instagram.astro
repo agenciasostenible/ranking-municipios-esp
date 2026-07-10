@@ -80,7 +80,7 @@ const k = encodeURIComponent(key);
   .fila button { font: inherit; font-size: .78rem; font-weight: 700; border: none; border-radius: 9px; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
   .b-save { background: #222; color: #fff; }
   .b-copy { background: #f4f4f5; color: #333; }
-  .b-mark { background: #16a34a; color: #fff; }
+  .b-mark { background: #fff; color: #16a34a; border: 1.5px solid #86efac !important; }
   .b-unmark { background: #fff; color: #b91c1c; border: 1.5px solid #fecaca !important; }
   .notas { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
   .notas textarea { flex: 1; font: inherit; font-size: .82rem; padding: 7px 10px; border: 1.5px dashed #e0d9ff; background: #fdfcff; border-radius: 9px; resize: vertical; min-height: 34px; color: #444; }
@@ -134,8 +134,8 @@ const k = encodeURIComponent(key);
                 <button class="b-save" data-save={f.codigo_ine}>💾 Guardar</button>
                 {handles.length > 0 && <button class="b-copy" data-copy={f.codigo_ine} data-muni={f.nombre}>📋 Texto</button>}
                 {handles.length > 0 && (f.ig_dm_enviado_at
-                  ? <button class="b-unmark" data-mark={f.codigo_ine} data-to="0">✕</button>
-                  : <button class="b-mark" data-mark={f.codigo_ine} data-to="1">✓ Enviado</button>)}
+                  ? <button class="b-unmark" data-mark={f.codigo_ine} data-to="0">✕ Quitar marca</button>
+                  : <button class="b-mark" data-mark={f.codigo_ine} data-to="1">Marcar como enviado</button>)}
               </div>
               {handles.length > 0 && (
                 <div class="handles">
