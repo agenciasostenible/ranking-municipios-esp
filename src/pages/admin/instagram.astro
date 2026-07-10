@@ -4,54 +4,88 @@ const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
 const key = Astro.url.searchParams.get('key') ?? '';
 const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+const prov = (Astro.url.searchParams.get('prov') ?? '').slice(0, 40);
+const q = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 60);
 
+let provincias: any[] = [];
 let filas: any[] = [];
-let stats = { total: 0, enviados: 0, pendientes: 0 };
+let stats = { total: 0, con_ig: 0, enviados: 0 };
+
 if (ok) {
-  const r = await DB.prepare(
-    `SELECT c.codigo_ine, COALESCE(m.nombre, c.nombre_bdgel) AS nombre, m.provincia,
-            c.instagram, c.ig_dm_enviado_at
-       FROM ayuntamientos_contacto c
-       LEFT JOIN municipios m ON m.codigo_ine = c.codigo_ine
-      WHERE c.instagram IS NOT NULL AND c.instagram != ''
-      ORDER BY m.provincia, nombre`
+  const g = await DB.prepare(
+    `SELECT m.provincia,
+            COUNT(*) AS total,
+            SUM(CASE WHEN c.instagram IS NOT NULL AND c.instagram != '' THEN 1 ELSE 0 END) AS con_ig,
+            SUM(CASE WHEN c.ig_dm_enviado_at IS NOT NULL THEN 1 ELSE 0 END) AS enviados
+       FROM municipios m
+       LEFT JOIN ayuntamientos_contacto c ON c.codigo_ine = m.codigo_ine
+      WHERE m.es_duplicado = 0 AND m.provincia IS NOT NULL
+      GROUP BY m.provincia ORDER BY m.provincia`
   ).all();
-  filas = (r.results as any[]) || [];
-  stats.total = filas.length;
-  stats.enviados = filas.filter((f) => f.ig_dm_enviado_at).length;
-  stats.pendientes = stats.total - stats.enviados;
+  provincias = (g.results as any[]) || [];
+  for (const p of provincias) {
+    stats.total += p.total; stats.con_ig += p.con_ig; stats.enviados += p.enviados;
+  }
+  if (prov || q) {
+    const where = q ? `m.nombre LIKE ?` : `m.provincia = ?`;
+    const bind = q ? `%${q}%` : prov;
+    const r = await DB.prepare(
+      `SELECT m.codigo_ine, m.nombre, m.provincia, c.instagram, c.ig_dm_enviado_at
+         FROM municipios m
+         LEFT JOIN ayuntamientos_contacto c ON c.codigo_ine = m.codigo_ine
+        WHERE m.es_duplicado = 0 AND ${where}
+        ORDER BY (c.instagram IS NULL OR c.instagram = ''), m.nombre
+        LIMIT 600`
+    ).bind(bind).all();
+    filas = (r.results as any[]) || [];
+  }
 }
 const k = encodeURIComponent(key);
 ---
 <html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Instagram ayuntamientos — Panel</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; background: #fafafa; color: #222; }
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; background: #fafafa; color: #222; }
   a.back { display: inline-flex; gap: 6px; text-decoration: none; color: #7c3aed; font-weight: 700; font-size: .88rem; background: #f3f0ff; border: 1.5px solid #e0d9ff; border-radius: 999px; padding: 7px 14px; margin-bottom: 16px; }
   h1 { font-size: 1.4rem; margin: 0 0 4px; }
-  .sub { color: #777; font-size: .9rem; margin-bottom: 20px; }
+  .sub { color: #777; font-size: .9rem; margin-bottom: 18px; }
   .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
   .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px; text-align: center; }
   .card .n { font-size: 1.5rem; font-weight: 800; }
   .card .l { font-size: .72rem; color: #888; margin-top: 2px; }
+  .card.ig .n { color: #be185d; }
   .card.env .n { color: #16a34a; }
-  .card.pen .n { color: #d97706; }
-  .warn { background: #fff7ed; border: 1.5px solid #fed7aa; color: #9a3412; border-radius: 10px; padding: 11px 14px; font-size: .84rem; margin-bottom: 16px; }
-  input[type=search] { font: inherit; width: 100%; padding: 11px 14px; border: 1.5px solid #ddd; border-radius: 12px; margin-bottom: 14px; box-sizing: border-box; }
-  .item { background: #fff; border: 1px solid #e5e5e5; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
-  .item.done { opacity: .55; background: #f6fef8; border-color: #bbf7d0; }
-  .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .nom { font-weight: 700; font-size: .95rem; }
-  .prov { color: #999; font-weight: 400; font-size: .8rem; }
-  .handles { margin: 6px 0 10px; display: flex; gap: 6px; flex-wrap: wrap; }
-  .handles a { text-decoration: none; font-size: .82rem; font-weight: 700; color: #be185d; background: #fdf2f8; border: 1.5px solid #fbcfe8; border-radius: 999px; padding: 4px 11px; }
-  .acts { display: flex; gap: 8px; flex-wrap: wrap; }
-  .acts button { font: inherit; font-size: .8rem; font-weight: 700; border: none; border-radius: 9px; padding: 8px 13px; cursor: pointer; }
+  form.buscar { display: flex; gap: 8px; margin-bottom: 18px; }
+  form.buscar input { flex: 1; font: inherit; padding: 11px 14px; border: 1.5px solid #ddd; border-radius: 12px; }
+  form.buscar button { font: inherit; font-weight: 700; border: none; border-radius: 12px; padding: 0 18px; background: #222; color: #fff; cursor: pointer; }
+  .provgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  a.prov { display: block; text-decoration: none; color: inherit; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px 14px; }
+  a.prov:hover { border-color: #be185d; }
+  a.prov b { font-size: .92rem; }
+  a.prov .m { font-size: .76rem; color: #888; margin-top: 3px; }
+  a.prov .m .ig { color: #be185d; font-weight: 700; }
+  a.prov .m .ok { color: #16a34a; font-weight: 700; }
+  .volver { margin-bottom: 14px; }
+  .volver a { color: #7c3aed; font-weight: 700; text-decoration: none; font-size: .88rem; }
+  h2.provtit { font-size: 1.1rem; margin: 0 0 12px; }
+  .item { background: #fff; border: 1px solid #e5e5e5; border-radius: 14px; padding: 11px 14px; margin-bottom: 8px; }
+  .item.done { background: #f6fef8; border-color: #bbf7d0; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .nom { font-weight: 700; font-size: .93rem; }
+  .prov2 { color: #999; font-weight: 400; font-size: .78rem; }
+  .when { font-size: .74rem; color: #16a34a; font-weight: 700; }
+  .fila { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .fila input { flex: 1; min-width: 170px; font: inherit; font-size: .86rem; padding: 8px 11px; border: 1.5px solid #ddd; border-radius: 9px; }
+  .fila input.saved { border-color: #86efac; background: #f0fdf4; }
+  .fila button { font: inherit; font-size: .78rem; font-weight: 700; border: none; border-radius: 9px; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+  .b-save { background: #222; color: #fff; }
   .b-copy { background: #f4f4f5; color: #333; }
   .b-mark { background: #16a34a; color: #fff; }
   .b-unmark { background: #fff; color: #b91c1c; border: 1.5px solid #fecaca !important; }
-  .when { font-size: .74rem; color: #16a34a; font-weight: 700; }
+  .handles { margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .handles a { text-decoration: none; font-size: .78rem; font-weight: 700; color: #be185d; background: #fdf2f8; border: 1.5px solid #fbcfe8; border-radius: 999px; padding: 3px 10px; }
   .empty { text-align: center; color: #999; padding: 30px 0; }
+  .aviso { background: #fff7ed; border: 1.5px solid #fed7aa; color: #9a3412; border-radius: 10px; padding: 10px 14px; font-size: .82rem; margin-bottom: 16px; }
 </style></head>
 <body>
 {!ok ? (
@@ -60,67 +94,97 @@ const k = encodeURIComponent(key);
   <>
     <a class="back" href={`/admin?key=${k}`}>← Panel principal</a>
     <h1>📸 Instagram ayuntamientos</h1>
-    <div class="sub">DMs a los ayuntamientos con cuenta de Instagram. El envío es manual: abre el perfil, copia el texto, envía y marca. Si escribes tú a alguno por tu cuenta, márcalo aquí también.</div>
+    <div class="sub">Directorio por provincia. Puedes escribir o corregir el Instagram de cada municipio a mano (admite @usuario, usuario o la URL; varios separados por «;»). Marca «enviado» también si le escribes tú por tu cuenta.</div>
 
     <div class="grid">
-      <div class="card"><div class="n">{stats.total}</div><div class="l">con instagram</div></div>
+      <div class="card"><div class="n">{stats.total}</div><div class="l">municipios</div></div>
+      <div class="card ig"><div class="n">{stats.con_ig}</div><div class="l">con instagram</div></div>
       <div class="card env"><div class="n">{stats.enviados}</div><div class="l">DM enviado</div></div>
-      <div class="card pen"><div class="n">{stats.pendientes}</div><div class="l">pendientes</div></div>
     </div>
 
-    <div class="warn">⚠️ Instagram penaliza los envíos masivos: máximo <b>10-20 DMs al día</b>, con pausas y variando algo el texto. Las cuentas marcadas como <i>no_oficial_verificar</i> en el CSV pueden no ser del ayuntamiento.</div>
+    <form class="buscar" method="get">
+      <input type="hidden" name="key" value={key} />
+      <input type="search" name="q" value={q} placeholder="Buscar municipio en toda España…" />
+      <button>Buscar</button>
+    </form>
 
-    <input type="search" id="buscar" placeholder="Buscar municipio…" />
-
-    {filas.length === 0 && <div class="empty">No hay ayuntamientos con Instagram cargados todavía.</div>}
-    {filas.map((f) => {
-      const handles = String(f.instagram).split(';').filter(Boolean);
-      return (
-        <div class={`item ${f.ig_dm_enviado_at ? 'done' : ''}`} data-nombre={`${f.nombre} ${f.provincia || ''}`.toLowerCase()} data-codigo={f.codigo_ine}>
-          <div class="top">
-            <div class="nom">{f.nombre} <span class="prov">{f.provincia}</span></div>
-            {f.ig_dm_enviado_at && <span class="when">✓ {String(f.ig_dm_enviado_at).slice(0, 10)}</span>}
-          </div>
-          <div class="handles">
-            {handles.map((h) => <a href={`https://www.instagram.com/${h}/`} target="_blank" rel="noopener">@{h}</a>)}
-          </div>
-          <div class="acts">
-            <button class="b-copy" data-copy={f.codigo_ine} data-muni={f.nombre}>📋 Copiar texto</button>
-            {f.ig_dm_enviado_at
-              ? <button class="b-unmark" data-mark={f.codigo_ine} data-to="0">✕ Desmarcar</button>
-              : <button class="b-mark" data-mark={f.codigo_ine} data-to="1">✓ Marcar enviado</button>}
-          </div>
-        </div>
-      );
-    })}
+    {(prov || q) ? (
+      <>
+        <div class="volver"><a href={`/admin/instagram?key=${k}`}>← Todas las provincias</a></div>
+        <h2 class="provtit">{q ? `Resultados de «${q}»` : prov} <span class="prov2">({filas.length}{filas.length === 600 ? '+ · afina la búsqueda' : ''})</span></h2>
+        <div class="aviso">⚠️ Máx. 10-20 DMs al día para que Instagram no restrinja la cuenta.</div>
+        {filas.length === 0 && <div class="empty">Sin resultados.</div>}
+        {filas.map((f) => {
+          const handles = String(f.instagram || '').split(';').filter(Boolean);
+          return (
+            <div class={`item ${f.ig_dm_enviado_at ? 'done' : ''}`}>
+              <div class="top">
+                <div class="nom">{f.nombre} {q && <span class="prov2">{f.provincia}</span>}</div>
+                {f.ig_dm_enviado_at && <span class="when">✓ DM {String(f.ig_dm_enviado_at).slice(0, 10)}</span>}
+              </div>
+              <div class="fila">
+                <input type="text" value={f.instagram || ''} placeholder="instagram (vacío = no tiene)"
+                       data-ig={f.codigo_ine} spellcheck="false" autocomplete="off" />
+                <button class="b-save" data-save={f.codigo_ine}>💾 Guardar</button>
+                {handles.length > 0 && <button class="b-copy" data-copy={f.codigo_ine} data-muni={f.nombre}>📋 Texto</button>}
+                {handles.length > 0 && (f.ig_dm_enviado_at
+                  ? <button class="b-unmark" data-mark={f.codigo_ine} data-to="0">✕</button>
+                  : <button class="b-mark" data-mark={f.codigo_ine} data-to="1">✓ Enviado</button>)}
+              </div>
+              {handles.length > 0 && (
+                <div class="handles">
+                  {handles.map((h) => <a href={`https://www.instagram.com/${h}/`} target="_blank" rel="noopener">@{h}</a>)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </>
+    ) : (
+      <div class="provgrid">
+        {provincias.map((p) => (
+          <a class="prov" href={`/admin/instagram?key=${k}&prov=${encodeURIComponent(p.provincia)}`}>
+            <b>{p.provincia}</b>
+            <div class="m"><span class="ig">{p.con_ig}</span> con IG · {p.total} munis{p.enviados > 0 && <> · <span class="ok">{p.enviados} ✓</span></>}</div>
+          </a>
+        ))}
+      </div>
+    )}
 
     <script is:inline define:vars={{ k }}>
       const plantilla = (muni, codigo) =>
         `Hola 👋 Somos Ranking Spain (rankingspain.com): ordenamos los más de 8.000 municipios de España con datos verificados, no opiniones. ${muni} ya tiene su ficha pública con sus rankings por provincia y categoría: https://rankingspain.com/municipio/${codigo}\n\nComo nadie conoce ${muni} mejor que vosotros, nos encantaría que le echarais un vistazo. Si falta algo o hay que corregir, se hace en 2 minutos aquí: https://rankingspain.com/revisar/${codigo}\n\nEs gratuito y sin contrapartidas: solo queremos que el municipio esté bien representado. ¡Gracias! 🙌`;
 
+      async function post(ruta, body) {
+        const r = await fetch(ruta + '?key=' + k, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        return r.json().catch(() => ({}));
+      }
+      document.querySelectorAll('[data-save]').forEach((b) => {
+        b.onclick = async () => {
+          const inp = document.querySelector(`[data-ig="${b.dataset.save}"]`);
+          b.disabled = true; b.textContent = '…';
+          const j = await post('/api/admin/instagram-editar', { codigo_ine: b.dataset.save, instagram: inp.value });
+          b.disabled = false;
+          if (j.ok) { inp.value = j.instagram; inp.classList.add('saved'); b.textContent = '✅'; setTimeout(() => { b.textContent = '💾 Guardar'; location.reload(); }, 700); }
+          else { b.textContent = '❌'; setTimeout(() => (b.textContent = '💾 Guardar'), 1500); }
+        };
+      });
+      document.querySelectorAll('[data-ig]').forEach((inp) => {
+        inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.querySelector(`[data-save="${inp.dataset.ig}"]`)?.click(); });
+      });
       document.querySelectorAll('[data-copy]').forEach((b) => {
         b.onclick = async () => {
           await navigator.clipboard.writeText(plantilla(b.dataset.muni, b.dataset.copy));
-          b.textContent = '✅ Copiado'; setTimeout(() => (b.textContent = '📋 Copiar texto'), 1600);
+          b.textContent = '✅'; setTimeout(() => (b.textContent = '📋 Texto'), 1500);
         };
       });
       document.querySelectorAll('[data-mark]').forEach((b) => {
         b.onclick = async () => {
           b.disabled = true;
-          const r = await fetch('/api/admin/instagram-dm?key=' + k, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ codigo_ine: b.dataset.mark, enviado: b.dataset.to === '1' }),
-          });
-          const j = await r.json().catch(() => ({}));
+          const j = await post('/api/admin/instagram-dm', { codigo_ine: b.dataset.mark, enviado: b.dataset.to === '1' });
           if (j.ok) location.reload(); else { alert('Error al guardar'); b.disabled = false; }
         };
       });
-      document.getElementById('buscar').oninput = (e) => {
-        const q = e.target.value.toLowerCase().trim();
-        document.querySelectorAll('.item').forEach((it) => {
-          it.style.display = !q || it.dataset.nombre.includes(q) ? '' : 'none';
-        });
-      };
     </script>
   </>
 )}
