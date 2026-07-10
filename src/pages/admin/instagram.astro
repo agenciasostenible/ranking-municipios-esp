@@ -132,7 +132,7 @@ const k = encodeURIComponent(key);
                 <input type="text" value={f.instagram || ''} placeholder="instagram (vacío = no tiene)"
                        data-ig={f.codigo_ine} spellcheck="false" autocomplete="off" />
                 <button class="b-save" data-save={f.codigo_ine}>💾 Guardar</button>
-                {handles.length > 0 && <button class="b-copy" data-copy={f.codigo_ine} data-muni={f.nombre}>📋 Texto</button>}
+                {handles.length > 0 && <button class="b-copy" data-copy={f.codigo_ine} data-muni={f.nombre} title="Copia el mensaje para pegarlo en Instagram">📋 Copiar DM</button>}
                 {handles.length > 0 && (f.ig_dm_enviado_at
                   ? <button class="b-unmark" data-mark={f.codigo_ine} data-to="0">✕ Quitar marca</button>
                   : <button class="b-mark" data-mark={f.codigo_ine} data-to="1">Marcar como enviado</button>)}
@@ -195,8 +195,22 @@ const k = encodeURIComponent(key);
       });
       document.querySelectorAll('[data-copy]').forEach((b) => {
         b.onclick = async () => {
-          await navigator.clipboard.writeText(plantilla(b.dataset.muni, b.dataset.copy));
-          b.textContent = '✅'; setTimeout(() => (b.textContent = '📋 Texto'), 1500);
+          const txt = plantilla(b.dataset.muni, b.dataset.copy);
+          let copiado = false;
+          try { await navigator.clipboard.writeText(txt); copiado = true; } catch {}
+          // vista previa SIEMPRE: se ve qué se va a enviar y se puede copiar a mano
+          let pv = b.closest('.item').querySelector('.preview-dm');
+          if (!pv) {
+            pv = document.createElement('textarea');
+            pv.className = 'preview-dm'; pv.rows = 7; pv.readOnly = true;
+            pv.style.cssText = 'width:100%;box-sizing:border-box;margin-top:8px;font:inherit;font-size:.8rem;padding:9px 11px;border:1.5px solid #fbcfe8;background:#fdf2f8;border-radius:9px;color:#444';
+            b.closest('.item').appendChild(pv);
+          } else if (pv.dataset.abierto === '1') {
+            pv.remove(); b.textContent = '📋 Copiar DM'; return;
+          }
+          pv.value = txt; pv.dataset.abierto = '1';
+          b.textContent = copiado ? '✅ Copiado — este es el texto:' : '⚠️ Cópialo de aquí abajo:';
+          setTimeout(() => (b.textContent = '📋 Copiar DM'), 2500);
         };
       });
       document.querySelectorAll('[data-mark]').forEach((b) => {
