@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request }) => {
         <ul>${lista}</ul>
         ${comentario ? `<p><i>"${esc(comentario)}"</i></p>` : ''}
         ${email ? `<p>Contacto: ${esc(email)}</p>` : ''}
-        <p style="margin-top:16px"><a href="${origin}/admin/reportes?key=REVISAR" style="background:#FF385C;color:#fff;padding:11px 20px;border-radius:8px;text-decoration:none;font-weight:700">Revisar en el panel</a></p>`;
+        <p style="margin-top:16px"><a href="${origin}/admin/reportes?key=${encodeURIComponent(env('ADMIN_KEY') || '')}" style="background:#FF385C;color:#fff;padding:11px 20px;border-radius:8px;text-decoration:none;font-weight:700">Revisar en el panel</a></p>`;
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
