@@ -1,8 +1,9 @@
 /**
  * POST /api/admin/instagram-editar?key=ADMIN_KEY
- * Guarda a mano el instagram de un municipio en ayuntamientos_contacto.
- * body { codigo_ine: string, instagram: string }  (vacío = borrar)
- * Si el municipio aún no tiene fila de contacto, la crea.
+ * Guarda a mano el instagram y/o las notas de un municipio en ayuntamientos_contacto.
+ * body { codigo_ine: string, instagram?: string, notas?: string }  (vacío = borrar)
+ * Solo actualiza los campos presentes en el body. Si el municipio aún no tiene
+ * fila de contacto, la crea.
  */
 import type { APIRoute } from 'astro';
 import { DB } from '../../../lib/d1client';
@@ -35,13 +36,25 @@ export const POST: APIRoute = async ({ request }) => {
   try { b = await request.json(); } catch { return okJson({ ok: false }, 400); }
   const codigo = String(b.codigo_ine || '').trim().slice(0, 12);
   if (!codigo) return okJson({ ok: false, error: 'sin_codigo' }, 400);
-  const ig = limpiar(b.instagram);
+  if (!('instagram' in b) && !('notas' in b)) return okJson({ ok: false, error: 'sin_campos' }, 400);
 
   await DB.prepare(
     `INSERT OR IGNORE INTO ayuntamientos_contacto (codigo_ine, nombre_bdgel, fuente)
      SELECT codigo_ine, nombre, 'manual' FROM municipios WHERE codigo_ine = ?`
   ).bind(codigo).run();
-  await DB.prepare(`UPDATE ayuntamientos_contacto SET instagram = ? WHERE codigo_ine = ?`)
-    .bind(ig || null, codigo).run();
-  return okJson({ ok: true, codigo_ine: codigo, instagram: ig });
+
+  const res: any = { ok: true, codigo_ine: codigo };
+  if ('instagram' in b) {
+    const ig = limpiar(b.instagram);
+    await DB.prepare(`UPDATE ayuntamientos_contacto SET instagram = ? WHERE codigo_ine = ?`)
+      .bind(ig || null, codigo).run();
+    res.instagram = ig;
+  }
+  if ('notas' in b) {
+    const notas = String(b.notas || '').trim().slice(0, 1000);
+    await DB.prepare(`UPDATE ayuntamientos_contacto SET notas = ? WHERE codigo_ine = ?`)
+      .bind(notas || null, codigo).run();
+    res.notas = notas;
+  }
+  return okJson(res);
 };

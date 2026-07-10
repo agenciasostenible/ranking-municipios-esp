@@ -30,7 +30,7 @@ if (ok) {
     const where = q ? `m.nombre LIKE ?` : `m.provincia = ?`;
     const bind = q ? `%${q}%` : prov;
     const r = await DB.prepare(
-      `SELECT m.codigo_ine, m.nombre, m.provincia, c.instagram, c.ig_dm_enviado_at
+      `SELECT m.codigo_ine, m.nombre, m.provincia, c.instagram, c.ig_dm_enviado_at, c.notas
          FROM municipios m
          LEFT JOIN ayuntamientos_contacto c ON c.codigo_ine = m.codigo_ine
         WHERE m.es_duplicado = 0 AND ${where}
@@ -82,6 +82,12 @@ const k = encodeURIComponent(key);
   .b-copy { background: #f4f4f5; color: #333; }
   .b-mark { background: #16a34a; color: #fff; }
   .b-unmark { background: #fff; color: #b91c1c; border: 1.5px solid #fecaca !important; }
+  .notas { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
+  .notas textarea { flex: 1; font: inherit; font-size: .82rem; padding: 7px 10px; border: 1.5px dashed #e0d9ff; background: #fdfcff; border-radius: 9px; resize: vertical; min-height: 34px; color: #444; }
+  .notas textarea:focus { border-style: solid; border-color: #7c3aed; outline: none; }
+  .notas textarea.saved { border-color: #86efac; background: #f0fdf4; }
+  .notas .con { border-style: solid; border-color: #d8b4fe; background: #faf5ff; }
+  .b-nota { background: #f3f0ff; color: #7c3aed; }
   .handles { margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; }
   .handles a { text-decoration: none; font-size: .78rem; font-weight: 700; color: #be185d; background: #fdf2f8; border: 1.5px solid #fbcfe8; border-radius: 999px; padding: 3px 10px; }
   .empty { text-align: center; color: #999; padding: 30px 0; }
@@ -136,6 +142,11 @@ const k = encodeURIComponent(key);
                   {handles.map((h) => <a href={`https://www.instagram.com/${h}/`} target="_blank" rel="noopener">@{h}</a>)}
                 </div>
               )}
+              <div class="notas">
+                <textarea rows="1" placeholder="📝 Anotaciones (ej: me ha dado un email, dice que ok…)"
+                          class={f.notas ? 'con' : ''} data-nota={f.codigo_ine}>{f.notas || ''}</textarea>
+                <button class="b-nota" data-savenota={f.codigo_ine}>💾</button>
+              </div>
             </div>
           );
         })}
@@ -171,6 +182,16 @@ const k = encodeURIComponent(key);
       });
       document.querySelectorAll('[data-ig]').forEach((inp) => {
         inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.querySelector(`[data-save="${inp.dataset.ig}"]`)?.click(); });
+      });
+      document.querySelectorAll('[data-savenota]').forEach((b) => {
+        b.onclick = async () => {
+          const ta = document.querySelector(`[data-nota="${b.dataset.savenota}"]`);
+          b.disabled = true; b.textContent = '…';
+          const j = await post('/api/admin/instagram-editar', { codigo_ine: b.dataset.savenota, notas: ta.value });
+          b.disabled = false;
+          if (j.ok) { ta.classList.add('saved'); b.textContent = '✅'; setTimeout(() => { b.textContent = '💾'; ta.classList.remove('saved'); }, 1400); }
+          else { b.textContent = '❌'; setTimeout(() => (b.textContent = '💾'), 1500); }
+        };
       });
       document.querySelectorAll('[data-copy]').forEach((b) => {
         b.onclick = async () => {
