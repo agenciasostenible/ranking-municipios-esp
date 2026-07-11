@@ -172,10 +172,11 @@ function html(nombre: string, codigo: string, extra = '') {
     <p style="text-align:center;margin:0 0 22px;font-size:12.5px;color:#999">Se abre en el navegador, sin registros ni descargas.</p>
     <p>Como nadie conoce ${n} mejor que vosotros, nos encantaría que le echarais un vistazo: que <b>todo esté correcto</b>, que no falte ningún sitio importante, que los nombres y datos sean los buenos… vamos, dejarla <b>redonda</b>.</p>
     <div style="background:#fff;border:2px solid #FF385C;border-radius:14px;padding:18px 16px;margin:24px 0;text-align:center">
-      <p style="margin:0 0 12px;font-weight:700;font-size:15.5px">¿Veis algo que falta o que no está bien?</p>
-      <a href="${revisar}" style="display:inline-block;background:#FF385C;color:#fff;padding:15px 30px;border-radius:12px;text-decoration:none;font-weight:800;font-size:17px;box-shadow:0 4px 14px rgba(255,56,92,.35)">✍️ Corregir o completar la ficha</a>
-      <p style="margin:12px 0 0;font-size:12.5px;color:#999">2 minutos, sin registrarse. Lo cambiamos nosotros.</p>
+      <p style="margin:0 0 12px;font-weight:700;font-size:15.5px">¿Repasamos la ficha juntos? Reservad 30 minutos con nuestro equipo y apuntamos en directo todos los cambios que queráis.</p>
+      <a href="${BASE}/reunion/${codigo}" style="display:inline-block;background:#FF385C;color:#fff;padding:15px 30px;border-radius:12px;text-decoration:none;font-weight:800;font-size:17px;box-shadow:0 4px 14px rgba(255,56,92,.35)">📅 Agendar una videollamada</a>
+      <p style="margin:12px 0 0;font-size:12.5px;color:#999">Elegís día y hora en un minuto. La llamada se abre en el navegador, sin instalar nada.</p>
     </div>
+    <p style="font-size:14px;color:#555;text-align:center">¿Preferís no reuniros? También podéis <a href="${revisar}" style="color:#FF385C;font-weight:700">enviarnos las correcciones por escrito aquí</a> (2 minutos, sin registrarse).</p>
     <p>Lo revisamos y lo actualizamos nosotros. Es un servicio <b>gratuito</b> y sin ninguna contrapartida: solo queremos que vuestro municipio esté lo mejor representado posible y que más gente lo descubra.</p>
     <p>Mil gracias por vuestro tiempo,<br><b>El equipo de Ranking Spain</b><br><a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a> · 📞 <a href="tel:+34681248699" style="color:#222;text-decoration:none">681 24 86 99</a> · <a href="mailto:info@rankingspain.com" style="color:#222;text-decoration:none">info@rankingspain.com</a></p>
     <hr style="border:none;border-top:1px solid #e5e5e5;margin:24px 0 12px">

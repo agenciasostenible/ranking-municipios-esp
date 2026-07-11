@@ -1,0 +1,126 @@
+---
+import { DB } from '../../lib/d1client';
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+
+let filas: any[] = [];
+if (ok) {
+  const r = await DB.prepare(
+    `SELECT * FROM reuniones WHERE fecha >= date('now') ORDER BY fecha, hora`
+  ).all();
+  filas = (r.results as any[]) || [];
+}
+const reservadas = filas.filter((f) => f.estado === 'reservada');
+const libres = filas.filter((f) => f.estado === 'libre');
+const porDia: Record<string, any[]> = {};
+for (const f of filas) (porDia[f.fecha] = porDia[f.fecha] || []).push(f);
+const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const bonita = (f: string) => { const d = new Date(f + 'T12:00:00'); return `${DIAS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`; };
+const HORAS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
+const k = encodeURIComponent(key);
+---
+<html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Reuniones — Panel</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; background: #fafafa; color: #222; }
+  a.back { display: inline-flex; gap: 6px; text-decoration: none; color: #7c3aed; font-weight: 700; font-size: .88rem; background: #f3f0ff; border: 1.5px solid #e0d9ff; border-radius: 999px; padding: 7px 14px; margin-bottom: 16px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sub { color: #777; font-size: .9rem; margin-bottom: 20px; }
+  .box { background: #fff; border: 1px solid #e5e5e5; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .box h2 { font-size: 1.02rem; margin: 0 0 12px; }
+  input[type=date] { font: inherit; padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 10px; }
+  .horas { display: flex; gap: 7px; flex-wrap: wrap; margin: 12px 0; }
+  .hora-t { font: inherit; font-size: .85rem; font-weight: 700; background: #fff; border: 1.5px solid #ddd; border-radius: 9px; padding: 7px 12px; cursor: pointer; }
+  .hora-t.on { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+  button.crear { font: inherit; font-weight: 800; background: #222; color: #fff; border: none; border-radius: 10px; padding: 11px 20px; cursor: pointer; }
+  .cita { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .cita.res { border-color: #86efac; background: #f6fef8; }
+  .cita .cu { font-weight: 700; }
+  .cita .det { font-size: .84rem; color: #555; }
+  .cita .det a { color: #be185d; }
+  .cita button { font: inherit; font-size: .76rem; font-weight: 700; border: 1.5px solid #fecaca; background: #fff; color: #b91c1c; border-radius: 8px; padding: 6px 11px; cursor: pointer; }
+  .cita a.video { font-size: .8rem; font-weight: 700; color: #16a34a; }
+  .vacio { color: #999; text-align: center; padding: 16px 0; }
+  #out { font-size: .86rem; margin-top: 10px; color: #16a34a; font-weight: 700; }
+</style></head>
+<body>
+{!ok ? (
+  <p>🔒 Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</p>
+) : (
+  <>
+    <a class="back" href={`/admin?key=${k}`}>← Panel principal</a>
+    <h1>📅 Reuniones con ayuntamientos</h1>
+    <div class="sub">Abre los huecos que te vengan bien cada día; los ayuntamientos reservan desde el enlace del email y os llega confirmación a ambos.</div>
+
+    <div class="box">
+      <h2>Abrir huecos</h2>
+      <input type="date" id="fecha" min={new Date().toISOString().slice(0, 10)} />
+      <div class="horas">
+        {HORAS.map((h) => <button type="button" class="hora-t" data-h={h}>{h}</button>)}
+      </div>
+      <button class="crear" id="crear">➕ Abrir huecos seleccionados</button>
+      <div id="out"></div>
+    </div>
+
+    <div class="box">
+      <h2>📌 Reservadas ({reservadas.length})</h2>
+      {reservadas.length === 0 && <div class="vacio">Todavía ninguna. En cuanto un ayuntamiento reserve, aparece aquí y te llega email.</div>}
+      {reservadas.map((f) => (
+        <div class="cita res">
+          <div>
+            <div class="cu">{bonita(f.fecha)} · {f.hora} — {f.municipio || 'sin municipio'}</div>
+            <div class="det">{f.nombre}{f.cargo ? ` (${f.cargo})` : ''} · <a href={`mailto:${f.email}`}>{f.email}</a>{f.telefono ? ` · ${f.telefono}` : ''}</div>
+            {f.enlace && <a class="video" href={f.enlace} target="_blank" rel="noopener">🎥 Entrar a la videollamada</a>}
+          </div>
+          <button data-cancelar={f.id}>Cancelar</button>
+        </div>
+      ))}
+    </div>
+
+    <div class="box">
+      <h2>🟢 Huecos libres ({libres.length})</h2>
+      {libres.length === 0 && <div class="vacio">No hay huecos abiertos. Abre arriba los de los próximos días.</div>}
+      {Object.entries(porDia).map(([fecha, fs]) => {
+        const ls = fs.filter((x: any) => x.estado === 'libre');
+        return ls.length ? (
+          <div class="cita">
+            <div class="cu">{bonita(fecha)}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              {ls.map((f: any) => <button data-borrar={f.id} title="Quitar este hueco">{f.hora} ✕</button>)}
+            </div>
+          </div>
+        ) : null;
+      })}
+    </div>
+
+    <script is:inline define:vars={{ k }}>
+      document.querySelectorAll('.hora-t').forEach((b) => { b.onclick = () => b.classList.toggle('on'); });
+      async function post(body) {
+        const r = await fetch('/api/admin/reuniones?key=' + k, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        return r.json().catch(() => ({}));
+      }
+      document.getElementById('crear').onclick = async () => {
+        const fecha = document.getElementById('fecha').value;
+        const horas = [...document.querySelectorAll('.hora-t.on')].map((b) => b.dataset.h);
+        const out = document.getElementById('out');
+        if (!fecha || !horas.length) { out.textContent = 'Elige fecha y al menos una hora.'; return; }
+        out.textContent = 'Creando…';
+        const j = await post({ accion: 'crear', fecha, horas });
+        if (j.ok) { out.textContent = `✅ ${j.creados} huecos abiertos.`; setTimeout(() => location.reload(), 700); }
+        else out.textContent = '❌ Error.';
+      };
+      document.querySelectorAll('[data-borrar]').forEach((b) => {
+        b.onclick = async () => { await post({ accion: 'borrar', id: b.dataset.borrar }); location.reload(); };
+      });
+      document.querySelectorAll('[data-cancelar]').forEach((b) => {
+        b.onclick = async () => {
+          if (!confirm('¿Cancelar esta reserva? Avísale tú por email: la persona NO recibe aviso automático.')) return;
+          await post({ accion: 'cancelar', id: b.dataset.cancelar }); location.reload();
+        };
+      });
+    </script>
+  </>
+)}
+</body></html>

@@ -9,7 +9,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 const origin = Astro.url.origin;
 
 // Contadores rápidos (qué necesita atención)
-let cEncuesta = 0, cVotosMunis = 0, cAnunPend = 0, cCreadPend = 0, cBanners = 0, cReportes = 0, cAytoPend = 0, cIgPend = 0;
+let cEncuesta = 0, cVotosMunis = 0, cAnunPend = 0, cCreadPend = 0, cBanners = 0, cReportes = 0, cAytoPend = 0, cIgPend = 0, cReuniones = 0;
 const num = async (sql: string) => { try { const r = await DB.prepare(sql).first() as any; return Number(r?.n || 0); } catch { return 0; } };
 if (ok) {
   cEncuesta   = await num(`SELECT COUNT(*) n FROM encuesta WHERE publicado=0`);
@@ -20,6 +20,7 @@ if (ok) {
   cReportes   = await num(`SELECT COUNT(*) n FROM reportes WHERE estado='pendiente'`);
   cAytoPend   = await num(`SELECT COUNT(*) n FROM ayuntamientos_contacto WHERE email LIKE '%@%' AND email_enviado_at IS NULL`);
   cIgPend     = await num(`SELECT COUNT(*) n FROM ayuntamientos_contacto WHERE instagram IS NOT NULL AND instagram != '' AND ig_dm_enviado_at IS NULL`);
+  cReuniones  = await num(`SELECT COUNT(*) n FROM reuniones WHERE estado='reservada' AND fecha >= date('now')`);
 }
 const k = encodeURIComponent(key);
 
@@ -30,6 +31,7 @@ const PANELES = [
   { t: '🔧 Reportes de errores', d: 'Fichas: sitios mal o inexistentes', href: `/admin/reportes?key=${k}`, badge: cReportes, badgeLbl: 'pendientes' },
   { t: '📣 Campaña ayuntamientos', d: 'Aviso a los ayuntamientos para revisar su ficha', href: `/admin/campana?key=${k}`, badge: cAytoPend, badgeLbl: 'pendientes' },
   { t: '📸 Instagram ayuntamientos', d: 'DMs a ayuntamientos con cuenta de Instagram', href: `/admin/instagram?key=${k}`, badge: cIgPend, badgeLbl: 'pendientes' },
+  { t: '📅 Reuniones', d: 'Videollamadas con ayuntamientos: huecos y reservas', href: `/admin/reuniones?key=${k}`, badge: cReuniones, badgeLbl: 'próximas' },
   { t: '✏️ Editar fichas', d: 'Control total: editar/añadir/borrar sitios y fotos', href: `/admin/municipio?key=${k}`, badge: 0, badgeLbl: '' },
   { t: '📸 Instagramers', d: 'Directorio de creadores', href: `/admin/instagramers?key=${k}`, badge: cCreadPend, badgeLbl: 'pendientes' },
   { t: '🖼️ Banners', d: 'Anuncios de imagen en la home', href: `/admin/banners?key=${k}`, badge: cBanners, badgeLbl: 'activos' },

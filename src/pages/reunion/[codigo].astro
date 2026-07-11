@@ -1,0 +1,157 @@
+---
+import Base from '../../layouts/Base.astro';
+import { DB } from '../../lib/d1client';
+
+const { codigo } = Astro.params;
+const muni = await DB.prepare(`SELECT codigo_ine, nombre, provincia FROM municipios WHERE codigo_ine = ?`).bind(codigo).first() as any;
+if (!muni) return Astro.redirect('/');
+
+const { results } = await DB.prepare(
+  `SELECT id, fecha, hora FROM reuniones
+    WHERE estado='libre' AND fecha >= date('now') AND fecha <= date('now','+21 days')
+    ORDER BY fecha, hora`
+).all();
+const huecos = (results as any[]) || [];
+const porDia: Record<string, any[]> = {};
+for (const h of huecos) (porDia[h.fecha] = porDia[h.fecha] || []).push(h);
+
+const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const bonita = (f: string) => { const d = new Date(f + 'T12:00:00'); return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`; };
+---
+<Base title={`Videollamada · ficha de ${muni.nombre} — Ranking Spain`} noindex={true}>
+<div class="ru-page">
+  <div class="ru-head">
+    <span class="ru-kick">Videollamada · Ayuntamiento</span>
+    <h1>Repasemos juntos la ficha de {muni.nombre}</h1>
+    <p class="ru-sub">Reservad <strong>30 minutos</strong> con nuestro equipo y os enseñamos la ficha de <strong>{muni.nombre}</strong> ({muni.provincia}) por videollamada: qué mostramos, cómo se puntúa, y apuntamos en directo todos los cambios que queráis. Sin instalar nada: el enlace se abre en el navegador.</p>
+  </div>
+
+  {huecos.length === 0 ? (
+    <div class="ru-vacio">
+      <p>Ahora mismo no quedan huecos libres. Escribidnos a <a href="mailto:info@rankingspain.com">info@rankingspain.com</a> o llamad al <a href="tel:+34681248699">681 24 86 99</a> y buscamos hueco.</p>
+    </div>
+  ) : (
+    <>
+      <h2 class="ru-h2">1 · Elegid día y hora</h2>
+      <div class="ru-dias">
+        {Object.entries(porDia).map(([fecha, hs]) => (
+          <div class="ru-dia">
+            <div class="ru-fecha">{bonita(fecha)}</div>
+            <div class="ru-horas">
+              {hs.map((h) => <button class="ru-hora" data-id={h.id} data-txt={`${bonita(fecha)} a las ${h.hora}`}>{h.hora}</button>)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="ru-form" id="ru-form" hidden>
+        <h2 class="ru-h2">2 · Vuestros datos</h2>
+        <p class="ru-sel">📅 <b id="ru-cuando"></b> <button id="ru-cambiar" type="button">cambiar</button></p>
+        <label class="ru-lbl">Nombre y apellidos *</label>
+        <input id="ru-nombre" type="text" placeholder="Ej: María López" />
+        <label class="ru-lbl">Cargo (opcional)</label>
+        <input id="ru-cargo" type="text" placeholder="Ej: Concejala de Turismo" />
+        <label class="ru-lbl">Email *</label>
+        <input id="ru-email" type="email" placeholder="ayuntamiento@ejemplo.es" />
+        <label class="ru-lbl">Teléfono (opcional)</label>
+        <input id="ru-tel" type="tel" placeholder="600 000 000" />
+        <input id="ru-hp" type="text" style="display:none" tabindex="-1" autocomplete="off" />
+        <button id="ru-send" class="ru-send">📅 Confirmar la videollamada</button>
+        <div id="ru-err" class="ru-err" hidden></div>
+      </div>
+
+      <div class="ru-ok" id="ru-ok" hidden>
+        <div class="ru-okbox">
+          <div class="ru-okemoji">🎉</div>
+          <h2>¡Videollamada confirmada!</h2>
+          <p id="ru-okcuando"></p>
+          <p>Os hemos enviado un correo con el enlace y el botón para añadirla al calendario. ¡Hasta pronto!</p>
+          <a id="ru-okgcal" href="#" target="_blank" rel="noopener">➕ Añadir a Google Calendar</a>
+        </div>
+      </div>
+    </>
+  )}
+</div>
+
+<script is:inline define:vars={{ codigo: muni.codigo_ine }}>
+  let sel = null;
+  document.querySelectorAll('.ru-hora').forEach((b) => {
+    b.onclick = () => {
+      document.querySelectorAll('.ru-hora').forEach((x) => x.classList.remove('on'));
+      b.classList.add('on');
+      sel = b.dataset.id;
+      document.getElementById('ru-cuando').textContent = b.dataset.txt;
+      const f = document.getElementById('ru-form');
+      f.hidden = false; f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  });
+  const cambiar = document.getElementById('ru-cambiar');
+  if (cambiar) cambiar.onclick = () => { document.querySelector('.ru-dias').scrollIntoView({ behavior: 'smooth' }); };
+  const send = document.getElementById('ru-send');
+  if (send) send.onclick = async () => {
+    const err = document.getElementById('ru-err'); err.hidden = true;
+    const nombre = document.getElementById('ru-nombre').value.trim();
+    const email = document.getElementById('ru-email').value.trim();
+    if (!sel) { err.textContent = 'Elegid primero un día y una hora.'; err.hidden = false; return; }
+    if (!nombre || !email) { err.textContent = 'Necesitamos al menos el nombre y el email.'; err.hidden = false; return; }
+    send.disabled = true; send.textContent = 'Confirmando…';
+    try {
+      const r = await fetch('/api/reunion', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: sel, codigo_ine: codigo, nombre, email,
+          cargo: document.getElementById('ru-cargo').value.trim(),
+          telefono: document.getElementById('ru-tel').value.trim(),
+          website: document.getElementById('ru-hp').value,
+        }),
+      });
+      const j = await r.json();
+      if (j.ok) {
+        document.getElementById('ru-okcuando').innerHTML = '📅 <b>' + j.cuando + '</b>';
+        document.getElementById('ru-okgcal').href = j.gcal;
+        document.querySelector('.ru-dias').hidden = true;
+        document.querySelectorAll('.ru-h2')[0].hidden = true;
+        document.getElementById('ru-form').hidden = true;
+        const ok = document.getElementById('ru-ok'); ok.hidden = false; ok.scrollIntoView({ behavior: 'smooth' });
+      } else if (j.error === 'hueco_ocupado') {
+        err.textContent = 'Vaya, ese hueco lo acaban de reservar. Recargad la página y elegid otro.'; err.hidden = false;
+        send.disabled = false; send.textContent = '📅 Confirmar la videollamada';
+      } else {
+        err.textContent = 'No se pudo confirmar. Revisad los datos e intentadlo otra vez.'; err.hidden = false;
+        send.disabled = false; send.textContent = '📅 Confirmar la videollamada';
+      }
+    } catch {
+      err.textContent = 'Error de conexión. Intentadlo de nuevo.'; err.hidden = false;
+      send.disabled = false; send.textContent = '📅 Confirmar la videollamada';
+    }
+  };
+</script>
+
+<style>
+  .ru-page { max-width: 640px; margin: 0 auto; padding: 28px 18px 80px; }
+  .ru-kick { display: inline-block; background: #fdf2f8; color: #be185d; border: 1.5px solid #fbcfe8; font-weight: 700; font-size: .8rem; border-radius: 999px; padding: 5px 13px; margin-bottom: 12px; }
+  h1 { font-size: 1.6rem; letter-spacing: -.02em; margin: 0 0 10px; }
+  .ru-sub { color: #555; margin: 0 0 26px; }
+  .ru-h2 { font-size: 1.05rem; margin: 22px 0 12px; }
+  .ru-dia { background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+  .ru-fecha { font-weight: 700; margin-bottom: 9px; text-transform: capitalize; }
+  .ru-horas { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ru-hora { font: inherit; font-weight: 700; background: #fff; border: 1.5px solid #ddd; border-radius: 10px; padding: 9px 16px; cursor: pointer; }
+  .ru-hora:hover { border-color: #FF385C; color: #FF385C; }
+  .ru-hora.on { background: #FF385C; border-color: #FF385C; color: #fff; }
+  .ru-form { background: #fff; border: 1px solid #e8e8e8; border-radius: 16px; padding: 20px 18px; margin-top: 22px; }
+  .ru-sel { background: #fdf2f8; border-radius: 10px; padding: 10px 14px; font-size: .92rem; }
+  .ru-sel button { font: inherit; font-size: .8rem; color: #be185d; background: none; border: none; cursor: pointer; text-decoration: underline; }
+  .ru-lbl { display: block; font-weight: 700; font-size: .86rem; margin: 14px 0 6px; }
+  .ru-form input { width: 100%; box-sizing: border-box; font: inherit; padding: 11px 13px; border: 1.5px solid #ddd; border-radius: 10px; }
+  .ru-send { display: block; width: 100%; margin-top: 20px; font: inherit; font-size: 1.05rem; font-weight: 800; background: #FF385C; color: #fff; border: none; border-radius: 12px; padding: 15px; cursor: pointer; box-shadow: 0 4px 14px rgba(255,56,92,.3); }
+  .ru-send:disabled { opacity: .6; }
+  .ru-err { margin-top: 12px; background: #fef2f2; color: #b91c1c; border-radius: 10px; padding: 10px 14px; font-size: .9rem; }
+  .ru-vacio { background: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 14px; padding: 18px; }
+  .ru-okbox { text-align: center; background: #f0fdf4; border: 2px solid #86efac; border-radius: 18px; padding: 30px 20px; }
+  .ru-okemoji { font-size: 3rem; }
+  .ru-okbox h2 { margin: 8px 0 10px; }
+  .ru-okbox a { display: inline-block; margin-top: 8px; color: #16a34a; font-weight: 700; }
+</style>
+</Base>
