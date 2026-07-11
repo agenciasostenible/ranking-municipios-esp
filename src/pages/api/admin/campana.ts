@@ -120,7 +120,7 @@ function intro(nombre: string, codigo: string, d?: Datos): string {
   const gancho = [
     `Permitidnos comenzar reconociendo lo evidente: ${n} tiene mucho que mostrar.`,
     `Este correo no es fruto del azar: conocemos bien el patrimonio de ${n}.`,
-    `Os escribimos con conocimiento de causa: ${n} es un municipio que merece atención.`,
+    `No exageramos si decimos que ${n} merece más atención de la que recibe.`,
   ][v];
 
   // Frase 2: el motivo (joyas y sellos)
@@ -148,14 +148,23 @@ function html(nombre: string, codigo: string, extra = '') {
     <div style="font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:20px">
       <span style="color:#FF385C">Ranking</span> <span style="color:#222">Spain</span>
     </div>
-    <p>Buenos días:</p>
+    <p>Estimado equipo del Ayuntamiento de ${n}:</p>
     ${extra ? `<p>${extra}</p>` : ''}
     <p>Nos presentamos: somos <b>Ranking Spain</b> (<a href="${BASE}" style="color:#FF385C;text-decoration:none">rankingspain.com</a>). En tres líneas:</p>
-    <div style="background:#fff;border-radius:14px;padding:16px 18px;margin:16px 0;border:1px solid #eee">
-      <p style="margin:0 0 12px;display:flex;gap:10px"><span style="font-size:20px">📊</span><span>Ordenamos los <b>más de 8.000 municipios de España</b> con datos verificados, no opiniones.</span></p>
-      <p style="margin:0 0 12px;display:flex;gap:10px"><span style="font-size:20px">🏰</span><span>Analizamos <b>decenas de categorías</b>: monumentos, naturaleza, gastronomía, fiestas, playas, senderos y muchas más, con rankings por provincia y por categoría.</span></p>
-      <p style="margin:0;display:flex;gap:10px"><span style="font-size:20px">🧭</span><span>Nuestro objetivo: que cada lugar sea descubierto <b>por sus méritos, no por su fama</b>, y que el viajero no acabe siempre en los diez destinos masificados de siempre.</span></p>
-    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;margin:16px 0;border:1px solid #eee;width:100%">
+      <tr>
+        <td style="font-size:22px;padding:16px 12px 6px 18px;vertical-align:top;width:26px">📊</td>
+        <td style="padding:16px 18px 6px 0;line-height:1.55">Ordenamos los <b>más de 8.000 municipios de España</b> con datos verificados, no opiniones.</td>
+      </tr>
+      <tr>
+        <td style="font-size:22px;padding:8px 12px 6px 18px;vertical-align:top">🏰</td>
+        <td style="padding:8px 18px 6px 0;line-height:1.55">Analizamos <b>decenas de categorías</b>: monumentos, naturaleza, gastronomía, fiestas, playas, senderos y muchas más, con rankings por provincia y por categoría.</td>
+      </tr>
+      <tr>
+        <td style="font-size:22px;padding:8px 12px 16px 18px;vertical-align:top">🧭</td>
+        <td style="padding:8px 18px 16px 0;line-height:1.55">Nuestro objetivo: que cada lugar sea descubierto <b>por sus méritos, no por su fama</b>, y que el viajero no acabe siempre en los diez destinos masificados de siempre.</td>
+      </tr>
+    </table>
     <p style="font-weight:700">Y aquí viene el motivo de este correo: ${n} ya tiene la suya.</p>
     <p style="text-align:center;margin:26px 0 6px">
       <a href="${ficha}" style="display:inline-block;background:#222;color:#fff;padding:15px 30px;border-radius:12px;text-decoration:none;font-weight:800;font-size:17px;box-shadow:0 4px 14px rgba(0,0,0,.18)">👉 Ver la ficha de ${n}</a>
