@@ -120,7 +120,7 @@ function intro(nombre: string, codigo: string, d?: Datos): string {
   const gancho = [
     `Permitidnos comenzar reconociendo lo evidente: ${n} tiene mucho que mostrar.`,
     `Este correo no es fruto del azar: conocemos bien el patrimonio de ${n}.`,
-    `No exageramos si decimos que ${n} merece más atención de la que recibe.`,
+    `Hay municipios que hablan por sí solos, y ${n} es uno de ellos.`,
   ][v];
 
   // Frase 2: el motivo (joyas y sellos)
