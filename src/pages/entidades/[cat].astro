@@ -43,7 +43,19 @@ const CAT_FUENTES: Record<string, string[]> = {
   Campings:          ['campings_osm'],
 };
 
-const CAT_TIPOS_F: Record<string,string[]> = { balnearios: ['balneario','termas'], senderismo: ['sendero'], castillos: ['castillo','torre','fortaleza','alcazaba','muralla'] };
+const CAT_TIPOS_F: Record<string,string[]> = {
+  balnearios: ['balneario','termas'],
+  senderismo: ['sendero'],
+  castillos: ['castillo','torre','fortaleza','alcazaba','muralla'],
+  Playas: ['playa','playa_urbana'],
+  miradores: ['mirador'],
+  estrellas: ['astro'],
+  pozas: ['poza','cascada','senda_fluvial','playa_fluvial','termas'],
+  cuevas: ['cueva'],
+  ciclismo: ['ciclismo'],
+  turismo_activo: ['activo'],
+  birdwatching: ['fauna'],
+};
 const fuentes = CAT_FUENTES[cat!];
 const tiposF = CAT_TIPOS_F[cat!];
 if (!fuentes) return Astro.redirect('/ranking/ranking_global');
