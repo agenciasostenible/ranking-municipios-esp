@@ -1,0 +1,33 @@
+-- 0453 fix: reubicar entidades/puntuaciones mil_lugares de fichas ocultas (dup) a canónicas
+
+-- borrar las entidades que cayeron en fichas duplicadas ocultas
+DELETE FROM entidades WHERE fuente='mil_lugares' AND codigo_ine='90033';
+DELETE FROM entidades WHERE fuente='mil_lugares' AND codigo_ine='07015';
+DELETE FROM entidades WHERE fuente='mil_lugares' AND codigo_ine='90918';
+DELETE FROM entidades WHERE fuente='mil_lugares' AND codigo_ine='45004';
+DELETE FROM entidades WHERE fuente='mil_lugares' AND codigo_ine='17184';
+DELETE FROM entidades WHERE fuente='mil_lugares' AND codigo_ine='90950';
+
+-- insertar en la ficha canónica visible
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente) VALUES ('03014', 'sendero', 'Camí Natural de l''Antic Trenet', 'La primera línea ferroviaria de vía estrecha que se inauguró en España, allá por el año 1864, unía las estaciones de Carcaixent y Dénia, y ahora se ha convertido en lugar de peregrinaje para adeptos al outdoor de toda condición. En bicicleta de montaña se puede recorrer más de 20 km por un agradable paisaje mediterráneo, en un paseo suave, pero escénico y variado.', 'mil_lugares');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente) VALUES ('07040', 'activo', 'Navegando Mallorca', 'Mallorca es un clásico vacacional que nunca decepciona. Un periplo en catamarán permite descubrir sus tranquilas calas mediterráneas, horizontes abiertos donde avistar delfines y ballenas, y costas abruptas de gran belleza. De vez en cuando se abandona el confort del barco para explorar cuevas con lagos subterráneos o disfrutar de la excelente gastronomía en coquetas villas costeras.', 'mil_lugares');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente) VALUES ('08006', 'activo', 'Costa Brava', 'La Costa Brava ofrece una travesía inolvidable entre calas escondidas, playas, cabos e islotes protegidos por acantilados rugientes vestidos de pinar. Navegar en kayak de mar permite pasar de rincones prístinos a paisajes donde la mano del hombre ha dejado su huella.', 'mil_lugares');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente) VALUES ('08006', 'sendero', 'Camí de Ronda', 'El Camí de Ronda es el sendero mítico que recorre la emblemática Costa Brava. Este camino costero bordea acantilados dramáticos, calas de aguas turquesas y playas salvajes, manteniendo su belleza intacta a pesar de su popularidad entre senderistas, corredores y visitantes.', 'mil_lugares');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente) VALUES ('08022', 'espacio', 'Fageda d''en Jordà', 'Inspiración para artistas y poetas, e imprescindible para los senderistas, este delicioso bosque de hayas crece sobre la colada de lava del volcán del Croscat, en La Garrotxa (Girona). Territorio de sombras alargadas y misticismo, es uno de esos lugares en los que dejarse abrazar por el grito del silencio.', 'mil_lugares');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente) VALUES ('43075', 'activo', 'Margalef', 'Margalef es, sin duda, uno de los mayores paraísos de escalada deportiva del mundo. Con más de 80 sectores y centenares de vías de todos los estilos y dificultades, este rincón del Priorat ofrece una variedad casi infinita. Sus característicos agujeros y regletas en caliza compacta permiten disfrutar tanto de vías cortas y explosivas como de líneas largas y sostenidas.', 'mil_lugares');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente) VALUES ('43075', 'activo', 'Perfecto Mundo', 'Perfecto Mundo es una vía futurista de 9b+ en Margalef. Encadenada por Alexander Megos, esta línea representa la evolución de la escalada deportiva en uno de los mejores sectores de Cataluña.', 'mil_lugares');
+INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente) VALUES ('48085', 'playa', 'Meñakoz', 'Meñakoz es un templo del surf de olas grandes en el País Vasco. Con olas de hasta 7 m y gran potencia, es un spot selecto y exigente que atrae a los mejores surfers del mundo.', 'mil_lugares');
+
+-- puntuaciones MAX en la ficha canónica
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03014', 'naturaleza', 83) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('03014', 'senderismo', 83) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('07040', 'naturaleza', 90) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('07040', 'turismo_activo', 90) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('08006', 'naturaleza', 92) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('08006', 'senderismo', 90) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('08006', 'turismo_activo', 92) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('08022', 'naturaleza', 91) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('43075', 'naturaleza', 95) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('43075', 'turismo_activo', 95) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('48085', 'Playas', 94) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
+INSERT INTO puntuaciones (codigo_ine, categoria, puntuacion) VALUES ('48085', 'naturaleza', 94) ON CONFLICT(codigo_ine, categoria) DO UPDATE SET puntuacion=MAX(puntuaciones.puntuacion, excluded.puntuacion);
