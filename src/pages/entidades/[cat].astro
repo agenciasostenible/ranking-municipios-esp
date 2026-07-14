@@ -123,6 +123,7 @@ const { results: rows } = await DB.prepare(`
   SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion, MIN(e.nivel_sello) AS nivel_sello,
          MIN(e.latitud) AS latitud, MIN(e.longitud) AS longitud, MIN(e.enlace) AS enlace,
          m.codigo_ine, m.nombre AS municipio, m.provincia,
+         MAX(e.puntuacion) AS ent_score,
          COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
   FROM entidades e
   JOIN municipios m ON m.codigo_ine = e.codigo_ine
@@ -222,7 +223,17 @@ const selloColor: Record<string,string> = {
   )}
 
   <ol class="ent-list" start={(page-1)*perPage+1}>
-    {entidades.map((e, i) => (
+    {entidades.map((e, i) => {
+      // "real" = tiene nota propia de sitio (curado) o sello oficial -> ranking de verdad.
+      // El resto solo hereda la nota del municipio: se lista por zona, sin nota por sitio.
+      const isReal = (v: any) => v.ent_score != null || (v.nivel_sello && v.nivel_sello !== '');
+      const real = isReal(e);
+      const prevReal = i > 0 ? isReal(entidades[i-1]) : (page === 1);
+      const showDivider = !real && prevReal;
+      return (<>
+      {showDivider && (
+        <li class="ent-divider">Más {catPlural} de la zona · ordenadas por calidad del municipio</li>
+      )}
       <li class="ent-row">
         <span class="ent-num">{(page-1)*perPage + i + 1}</span>
         <div class="ent-body">
@@ -235,7 +246,7 @@ const selloColor: Record<string,string> = {
           <div class="ent-meta">
             <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-muni">📍 {e.municipio}</a>
             <span class="ent-prov">{e.provincia}</span>
-            {e.puntuacion > 0 && (
+            {real && e.puntuacion > 0 && (
               <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-nota" style={`color:${catColor}`}>
                 · {Number(e.puntuacion).toFixed(1)} en {catLabel.toLowerCase()}
               </a>
@@ -258,7 +269,8 @@ const selloColor: Record<string,string> = {
         </div>
 
       </li>
-    ))}
+      </>);
+    })}
   </ol>
 
   {totalPages > 1 && (
@@ -299,6 +311,11 @@ const selloColor: Record<string,string> = {
 .ent-empty { text-align: center; color: #888; padding: 40px 16px; }
 
 .ent-list { list-style: none; margin: 0; padding: 0 16px; display: flex; flex-direction: column; gap: 0; }
+.ent-divider {
+  margin: 22px 0 6px; padding: 8px 0; font-size: 13px; font-weight: 600;
+  color: var(--muted, #888); text-transform: uppercase; letter-spacing: .04em;
+  border-top: 2px solid var(--border);
+}
 .ent-row {
   display: flex; align-items: flex-start; gap: 14px;
   padding: 16px 0; border-bottom: 1px solid var(--border);
