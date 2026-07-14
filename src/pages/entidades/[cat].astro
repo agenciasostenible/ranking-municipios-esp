@@ -14,29 +14,30 @@ if (cat === 'soletes') return Astro.redirect('/entidades/gastronomia', 301);
 const CAT_FUENTES: Record<string, string[]> = {
   castillos:         ['inventario_castillos_pdf', 'inventario_monumentos_pdf', 'monumentos_osm'],
   monumentos:        ['inventario_monumentos_pdf', 'monumentos_osm'],
-  naturaleza:        ['inventario_naturaleza_pdf'],
+  naturaleza:        ['inventario_naturaleza_pdf', 'mil_lugares'],
   museos:            ['wikidata_museos'],
   fiestas:           ['inventario_fiestas_pdf', 'fiestas_wiki'],
   festivales:        ['inventario_festivales_pdf', 'festivales_wiki'],
-  miradores:         ['inventario_miradores_pdf', 'miradores_osm'],
+  miradores:         ['inventario_miradores_pdf', 'miradores_osm', 'mil_lugares'],
   oleoturismo:       ['inventario_oleoturismo_pdf', 'oleo_osm', 'oleotour_jaen'],
   misterioso:        ['inventario_misterioso_pdf', 'misterio_osm'],
-  estrellas:         ['starlight', 'astro_osm'],
-  senderismo:        ['senderos_osm', 'excel_curado'],
-  Playas:            ['bandera_azul', 'inventario_playas_pdf', 'playas_osm'],
+  estrellas:         ['starlight', 'astro_osm', 'mil_lugares'],
+  senderismo:        ['senderos_osm', 'excel_curado', 'mil_lugares'],
+  birdwatching:      ['mil_lugares'],
+  Playas:            ['bandera_azul', 'inventario_playas_pdf', 'playas_osm', 'mil_lugares'],
   hoteles_encanto:   ['hoteles_encanto', 'encanto_osm'],
   TurismoRural:      ['rural_osm'],
-  ciclismo:          ['vias_verdes', 'caminos_naturales', 'eurovelo', 'centros_btt', 'camino_cid', 'pirinexus'],
-  pozas:             ['pozas_bano', 'agua_osm'],
-  cuevas:            ['cuevas'],
+  ciclismo:          ['vias_verdes', 'caminos_naturales', 'eurovelo', 'centros_btt', 'camino_cid', 'pirinexus', 'mil_lugares'],
+  pozas:             ['pozas_bano', 'agua_osm', 'mil_lugares'],
+  cuevas:            ['cuevas', 'mil_lugares'],
   balnearios:        ['balnearios', 'agua_osm'],
   solteros:          ['ocio_osm'],
-  turismo_mascotas:  ['inventario_turismo_mascotas_pdf', 'mascotas_osm'],
+  turismo_mascotas:  ['inventario_turismo_mascotas_pdf', 'mascotas_osm', 'mil_lugares'],
   turismo_lgtbi:     ['inventario_turismo_lgtbi_pdf', 'lgtbi_osm', 'lgtbi_wiki', 'lgtbi_curado'],
   vinos:             ['inventario_vinos_pdf', 'rutas_vino', 'vinos_osm'],
   pueblo_bonito:     ['pueblos_mas_bonitos'],
   turismo_religioso: ['inventario_turismo_religioso_pdf', 'religioso_osm'],
-  turismo_activo:    ['inventario_turismo_activo_pdf', 'activo_osm'],
+  turismo_activo:    ['inventario_turismo_activo_pdf', 'activo_osm', 'mil_lugares'],
   lujo:              ['inventario_lujo_pdf', 'lujo_osm'],
   gastronomia:       ['guia_michelin', 'gastronomia_ampliacion', 'guia_repsol_solete', 'restaurantes_osm'],
   Campings:          ['campings_osm'],
@@ -88,14 +89,18 @@ const bindParams: any[] = [...fuentes, ...(tiposF ?? [])];
 if (prov) bindParams.push(prov);
 if (q)    bindParams.push(`%${q}%`, `%${qNorm}%`);
 
-// Total para paginación
+// Total para paginación (cuenta grupos: las rutas mil_lugares que cruzan varios
+// municipios cuentan una sola vez)
 const countSql = `
-  SELECT COUNT(*) AS n FROM entidades e
-  JOIN municipios m ON m.codigo_ine = e.codigo_ine
-  WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')})
-    ${tiposF ? `AND e.tipo IN (${tiposF.map(()=>'?').join(',')})` : ''}
-    AND COALESCE(m.es_duplicado,0)=0
-    ${provCond} ${qCond}`;
+  SELECT COUNT(*) AS n FROM (
+    SELECT 1 FROM entidades e
+    JOIN municipios m ON m.codigo_ine = e.codigo_ine
+    WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')})
+      ${tiposF ? `AND e.tipo IN (${tiposF.map(()=>'?').join(',')})` : ''}
+      AND COALESCE(m.es_duplicado,0)=0
+      ${provCond} ${qCond}
+    GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
+  ) t`;
 const totalRow = await DB.prepare(countSql).bind(...bindParams).first() as any;
 const total = totalRow?.n ?? 0;
 const totalPages = Math.ceil(total / perPage);
@@ -106,7 +111,7 @@ const { results: rows } = await DB.prepare(`
   SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion, MIN(e.nivel_sello) AS nivel_sello,
          MIN(e.latitud) AS latitud, MIN(e.longitud) AS longitud, MIN(e.enlace) AS enlace,
          m.codigo_ine, m.nombre AS municipio, m.provincia,
-         COALESCE(p.puntuacion, 0) AS puntuacion
+         COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
   FROM entidades e
   JOIN municipios m ON m.codigo_ine = e.codigo_ine
   LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = ?
@@ -114,7 +119,7 @@ const { results: rows } = await DB.prepare(`
     ${tiposF ? `AND e.tipo IN (${tiposF.map(()=>'?').join(',')})` : ''}
     AND COALESCE(m.es_duplicado,0)=0
     ${provCond} ${qCond}
-  GROUP BY LOWER(e.nombre), m.codigo_ine
+  GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
   ORDER BY
     CASE MIN(e.nivel_sello)
       WHEN 'Museo de Fama Mundial' THEN 0
@@ -144,6 +149,7 @@ const { results: rows } = await DB.prepare(`
       WHEN 'teatre-museu dalí' THEN 6
       ELSE 99
     END,
+    CASE WHEN MAX(e.puntuacion) IS NOT NULL THEN 0 ELSE 1 END,
     puntuacion DESC,
     CASE WHEN MIN(e.descripcion) IS NOT NULL AND MIN(e.descripcion) NOT LIKE 'Museo en%' THEN 0 ELSE 1 END,
     nombre ASC
