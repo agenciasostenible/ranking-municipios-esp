@@ -26,6 +26,7 @@ const k = encodeURIComponent(key);
 
 const PANELES = [
   { t: '📸 Generador de posts', d: 'Rankings para Instagram: carrusel o imagen única', href: `/admin/redes?key=${k}`, badge: 0, badgeLbl: '' },
+  { t: '🗺️ 1000 sitios curados', d: 'Posts por tema (escalada, nieve, surf…) del Word curado', href: `/admin/mil-sitios?key=${k}`, badge: 0, badgeLbl: '' },
   { t: '📸 Encuestas', d: 'Instagramers · municipio favorito', href: `/admin/encuesta?key=${k}`, badge: cEncuesta, badgeLbl: 'sin publicar' },
   { t: '🏆 Voto del público', d: 'Ranking + editar votos', href: `/admin/votos?key=${k}`, badge: cVotosMunis, badgeLbl: 'municipios' },
   { t: '📢 Publicidad / Anunciantes', d: 'Negocios y establecimientos', href: `/admin/anuncios?key=${k}`, badge: cAnunPend, badgeLbl: 'pendientes' },
