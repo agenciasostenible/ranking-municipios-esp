@@ -43,6 +43,10 @@ const CAT_FUENTES: Record<string, string[]> = {
   Campings:          ['campings_osm'],
 };
 
+// etiquetas legibles para distinciones que no están en nivel_sello
+const SELLO_LABEL: Record<string,string> = { Solete: 'Solete Repsol', Balneario: 'Balneario', Cueva_ACTE: 'Cueva turística' };
+const FUENTE_LABEL: Record<string,string> = { bandera_azul: 'Bandera Azul', pueblos_mas_bonitos: 'Pueblo más bonito' };
+
 const CAT_TIPOS_F: Record<string,string[]> = {
   balnearios: ['balneario','termas'],
   senderismo: ['sendero'],
@@ -122,6 +126,7 @@ const bindAll = [...bindParams, perPage, offset];
 const { results: rows } = await DB.prepare(`
   SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion, MIN(e.nivel_sello) AS nivel_sello,
          MIN(e.latitud) AS latitud, MIN(e.longitud) AS longitud, MIN(e.enlace) AS enlace,
+         MIN(e.sello_oficial) AS sello_of, MIN(e.fuente) AS fuente_g,
          m.codigo_ine, m.nombre AS municipio, m.provincia,
          MAX(e.puntuacion) AS ent_score,
          COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
@@ -134,6 +139,12 @@ const { results: rows } = await DB.prepare(`
     ${provCond} ${qCond}
   GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
   ORDER BY
+    -- 1) sitios DISTINGUIDOS (nota curada, sello, o distincion oficial) primero; genericos despues
+    CASE WHEN MAX(e.puntuacion) IS NOT NULL
+           OR (MIN(e.nivel_sello) IS NOT NULL AND MIN(e.nivel_sello)!='')
+           OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
+           OR MIN(e.fuente) IN ('bandera_azul','pueblos_mas_bonitos')
+         THEN 0 ELSE 1 END,
     CASE MIN(e.nivel_sello)
       WHEN 'Museo de Fama Mundial' THEN 0
       WHEN 'Museo Nacional' THEN 1
@@ -224,29 +235,39 @@ const selloColor: Record<string,string> = {
 
   <ol class="ent-list" start={(page-1)*perPage+1}>
     {entidades.map((e, i) => {
-      // "real" = tiene nota propia de sitio (curado) o sello oficial -> ranking de verdad.
+      // "distinguido" = tiene nota propia de sitio (curado), sello, o distinción oficial -> va arriba (ranking).
       // El resto solo hereda la nota del municipio: se lista por zona, sin nota por sitio.
-      const isReal = (v: any) => v.ent_score != null || (v.nivel_sello && v.nivel_sello !== '');
+      const isReal = (v: any) => v.ent_score != null
+        || (v.nivel_sello && v.nivel_sello !== '')
+        || (v.sello_of && v.sello_of !== '')
+        || v.fuente_g === 'bandera_azul' || v.fuente_g === 'pueblos_mas_bonitos';
+      // nota numérica solo cuando es una nota real de sitio o un sello graduado (Michelin/llaves/Starlight)
+      const graded = e.ent_score != null || (e.nivel_sello && e.nivel_sello !== '');
+      const badge = e.nivel_sello || SELLO_LABEL[e.sello_of] || FUENTE_LABEL[e.fuente_g] || '';
       const real = isReal(e);
       const prevReal = i > 0 ? isReal(entidades[i-1]) : (page === 1);
       const showDivider = !real && prevReal;
       return (<>
       {showDivider && (
-        <li class="ent-divider">Más {catPlural} de la zona · ordenadas por calidad del municipio</li>
+        <li class="ent-divider">
+          {i === 0
+            ? `Ordenados por calidad del municipio · sin distinción por sitio`
+            : `Más ${catPlural} de la zona · ordenados por calidad del municipio`}
+        </li>
       )}
       <li class="ent-row">
         <span class="ent-num">{(page-1)*perPage + i + 1}</span>
         <div class="ent-body">
           <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-name">{e.nombre}</a>
-          {e.nivel_sello && (
-            <span class="ent-sello" style={`background:${selloColor[e.nivel_sello]??catColor}20;color:${selloColor[e.nivel_sello]??catColor}`}>
-              {e.nivel_sello}
+          {badge && (
+            <span class="ent-sello" style={`background:${selloColor[badge]??catColor}20;color:${selloColor[badge]??catColor}`}>
+              {badge}
             </span>
           )}
           <div class="ent-meta">
             <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-muni">📍 {e.municipio}</a>
             <span class="ent-prov">{e.provincia}</span>
-            {real && e.puntuacion > 0 && (
+            {graded && e.puntuacion > 0 && (
               <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-nota" style={`color:${catColor}`}>
                 · {Number(e.puntuacion).toFixed(1)} en {catLabel.toLowerCase()}
               </a>
