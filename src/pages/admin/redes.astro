@@ -68,6 +68,8 @@ const cat  = Astro.url.searchParams.get('cat') || 'museos';
 const prov = Astro.url.searchParams.get('prov') || '';
 const n    = Math.min(10, Math.max(3, parseInt(Astro.url.searchParams.get('n') || '10')));
 const fmt  = Astro.url.searchParams.get('fmt') || 'carrusel';
+const q    = (Astro.url.searchParams.get('q') || '').trim();
+const spot = Astro.url.searchParams.get('spot') || '';   // "codigo|nombre" seleccionado
 
 let rows: any[] = [];
 let provincias: string[] = [];
@@ -79,11 +81,12 @@ if (ok) {
   const tipos   = CAT_TIPOS_F[cat];
   if (fuentes.length) {
     const params: any[] = [cat, ...fuentes, ...(tipos ?? [])];
+    if (q) params.push('%' + q + '%');
     if (prov) params.push(prov);
     const sql = `
       SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion, MIN(e.nivel_sello) AS nivel_sello,
              MIN(e.sello_oficial) AS sello_of, MIN(e.fuente) AS fuente_g,
-             m.nombre AS municipio, m.provincia, m.foto_url,
+             m.codigo_ine, m.nombre AS municipio, m.provincia, m.foto_url,
              MAX(e.puntuacion) AS ent_score,
              COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
       FROM entidades e
@@ -93,6 +96,7 @@ if (ok) {
         ${tipos ? `AND e.tipo IN (${tipos.map(()=>'?').join(',')})` : ''}
         AND COALESCE(m.es_duplicado,0)=0
         AND e.nombre NOT LIKE 'Bandera Azul %'
+        ${q ? 'AND e.nombre LIKE ?' : ''}
         ${prov ? 'AND m.provincia = ?' : ''}
       GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
       ORDER BY
@@ -115,20 +119,21 @@ if (ok) {
           WHEN 'teatre-museu dalí' THEN 6 ELSE 99 END,
         puntuacion DESC, nombre ASC
       LIMIT ?`;
-    params.push(n);
+    params.push(fmt === 'spotlight' ? 60 : n);
     const r = await DB.prepare(sql).bind(...params).all();
     rows = (r.results as any[]).map((x, i) => {
       const SELLO_LABEL: Record<string,string> = { Solete:'Solete Repsol', Balneario:'Balneario', Cueva_ACTE:'Cueva turística', Michelin_Estrella:'Estrella Michelin', Hotel_Encanto:'Hotel con encanto', Starlight:'Starlight' };
       const FUENTE_LABEL: Record<string,string> = { bandera_azul:'Bandera Azul', pueblos_mas_bonitos:'Pueblo más bonito' };
       const graded = x.ent_score != null || (x.nivel_sello && x.nivel_sello !== '');
       const badge = x.nivel_sello || SELLO_LABEL[x.sello_of] || FUENTE_LABEL[x.fuente_g] || '';
-      let desc = (x.descripcion || '').replace(/\s+/g,' ').trim();
+      const descFull = (x.descripcion || '').replace(/\s+/g,' ').trim();
+      let desc = descFull;
       if (desc.length > 120) desc = desc.slice(0, 117).replace(/[,;.\s]+\S*$/,'') + '…';
       // solo fotos directas de Wikimedia (las URLs de página de Commons no cargan como <img>)
       const foto = /^https:\/\/upload\.wikimedia\.org\//.test(x.foto_url || '') ? x.foto_url : '';
       return {
-        pos: i + 1, nombre: x.nombre, municipio: x.municipio, provincia: x.provincia,
-        foto, badge, desc,
+        pos: i + 1, codigo: x.codigo_ine, nombre: x.nombre, municipio: x.municipio, provincia: x.provincia,
+        foto, badge, desc, descFull,
         nota: graded && x.puntuacion > 0 ? Number(x.puntuacion).toFixed(1) : '',
       };
     });
@@ -140,6 +145,48 @@ const color = COLORS[cat] ?? '#FF385C';
 const ambito = prov || 'España';
 const tituloPost = `${TIT[cat] ?? ('Los mejores ' + catLabel.toLowerCase())} de ${ambito}`;
 const catOrder = Object.keys(LABELS);
+
+const HASH: Record<string,string> = {
+  senderismo:'senderismo', naturaleza:'naturaleza', Playas:'playa', cuevas:'cuevas', miradores:'miradores',
+  estrellas:'astroturismo', ciclismo:'cicloturismo', pozas:'pozasnaturales', turismo_activo:'turismoactivo',
+  birdwatching:'birdwatching', gastronomia:'gastronomia', museos:'museos', monumentos:'monumentos',
+  castillos:'castillos', fiestas:'fiestas', festivales:'festivales', hoteles_encanto:'hotelesconencanto',
+  balnearios:'balnearios', vinos:'enoturismo', pueblo_bonito:'pueblosbonitos', oleoturismo:'oleoturismo',
+  turismo_religioso:'turismoreligioso',
+};
+
+// datos del spotlight (un solo sitio destacado)
+let spotSel: any = null, spotCands: any[] = [], taglines: string[] = [], captionIG = '';
+if (fmt === 'spotlight' && rows.length) {
+  spotCands = rows.map(r => ({ id: `${r.codigo}|${r.nombre}`, nombre: r.nombre, municipio: r.municipio }));
+  spotSel = rows.find(r => `${r.codigo}|${r.nombre}` === spot) || rows[0];
+  const donde = prov || 'España';
+  const frase1 = spotSel.descFull ? (spotSel.descFull.split(/(?<=[.!?])\s/)[0]).trim() : '';
+  const titBase = TIT[cat] ?? ('Los mejores ' + catLabel.toLowerCase());
+  const superl = titBase
+    .replace('Los mejores', 'Uno de los mejores')
+    .replace('Las mejores', 'Una de las mejores')
+    .replace('Los pueblos más bonitos', 'Uno de los pueblos más bonitos');
+  const supFull = `${superl} de ${donde}${spotSel.badge ? ' · ' + spotSel.badge : ''}.`;
+  taglines = [
+    frase1 || supFull,
+    supFull,
+    `¿Ya conocías ${spotSel.nombre}? ${frase1 || 'Un imprescindible en ' + donde + '.'}`,
+    `Apunta este sitio para tu próxima escapada por ${donde}.`,
+    spotSel.badge ? `${spotSel.badge}. ${frase1}`.trim() : (frase1 || supFull),
+  ].map(t => t.replace(/\s+/g,' ').trim()).filter((t,i,a) => t && a.indexOf(t) === i);
+  const hash = HASH[cat] ?? 'espana';
+  const provHash = prov ? ' #' + prov.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]/g,'') : '';
+  captionIG = [
+    `📍 ${spotSel.nombre} — ${spotSel.municipio} (${spotSel.provincia})`,
+    '',
+    (spotSel.descFull || supFull),
+    spotSel.badge ? `\n🏅 ${spotSel.badge}` : '',
+    `\n👉 Descúbrelo en rankingspain.com`,
+    `\n#${hash}${provHash} #España #turismo #viajar #escapada`,
+  ].filter(x => x !== '').join('\n');
+}
+
 const rowsJson = JSON.stringify(rows);
 ---
 <html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -216,7 +263,14 @@ const rowsJson = JSON.stringify(rows);
       <select name="n">{[5,10].map(v => <option value={v} selected={v===n}>Top {v}</option>)}</select>
     </div>
     <div class="fld"><label>Formato</label>
-      <select name="fmt"><option value="carrusel" selected={fmt==='carrusel'}>Carrusel</option><option value="unica" selected={fmt==='unica'}>Imagen única</option></select>
+      <select name="fmt">
+        <option value="carrusel" selected={fmt==='carrusel'}>Carrusel (top)</option>
+        <option value="unica" selected={fmt==='unica'}>Imagen única (top)</option>
+        <option value="spotlight" selected={fmt==='spotlight'}>Sitio destacado</option>
+      </select>
+    </div>
+    <div class="fld"><label>Buscar sitio</label>
+      <input type="text" name="q" value={q} placeholder="nombre del sitio…" style="min-width:180px" />
     </div>
     <button class="go" type="submit">Generar</button>
     <button class="dl" type="button" id="dlall">⬇ Descargar todo</button>
@@ -225,6 +279,8 @@ const rowsJson = JSON.stringify(rows);
   <div class="hint">
     {rows.length === 0
       ? 'No hay resultados para esa combinación.'
+      : fmt === 'spotlight'
+      ? `Sitio destacado · ${catLabel} · ${ambito}. Elige un sitio de la lista, pulsa “✨ otra frase” para variar el texto, “cambiar foto” para tu imagen y “📋 copiar pie” para el texto de Instagram.`
       : `Top ${rows.length} · ${catLabel} · ${ambito}. La foto de fondo es la del municipio; pulsa “cambiar foto” en cualquier tarjeta para subir la tuya. Descarga en 1080×1350.`}
   </div>
 
@@ -290,11 +346,53 @@ const rowsJson = JSON.stringify(rows);
         <div class="cap">Imagen única <span class="up" data-for="lista">cambiar foto</span><input type="file" accept="image/*" data-file="lista" /><button class="dl" data-dl="lista">⬇</button></div>
       </div>
     )}
+
+    { fmt === 'spotlight' && spotSel && (
+      <div style="display:flex; gap:26px; flex-wrap:wrap; align-items:flex-start">
+        <div class="cell">
+          <div class="slide" data-slide="spot" data-kind="spot" style={`--rausch:${color}; background:linear-gradient(155deg, ${color} 0%, #17120e 85%)`}>
+            {spotSel.foto && <img class="ph" crossorigin="anonymous" src={spotSel.foto} />}
+            <div class="scrim item"></div>
+            <div class="pad">
+              <div class="brand"><span class="dot"></span>rankingspain.com</div>
+              <div style="margin-top:auto">
+                {spotSel.badge && <span class="chip" style={`background:${color}`}>{spotSel.badge}</span>}
+                <div class="iname" style="font-size:34px; margin-top:10px">{spotSel.nombre}</div>
+                <div class="iplace">📍 {spotSel.municipio}{spotSel.provincia && spotSel.municipio!==spotSel.provincia ? ` · ${spotSel.provincia}` : ''}</div>
+                <div class="idesc" id="spot-tag" style="font-size:15px; margin-top:12px">{taglines[0]}</div>
+              </div>
+              <div class="foot">
+                {spotSel.nota ? <span class="score">{spotSel.nota} / 100 en {catLabel.toLowerCase()}</span> : <span></span>}
+                <span style="font-size:12px;opacity:.75">rankingspain.com</span>
+              </div>
+            </div>
+          </div>
+          <div class="cap">
+            <span class="up" data-for="spot">cambiar foto</span>
+            <input type="file" accept="image/*" data-file="spot" />
+            <button class="dl" type="button" id="spot-frase">✨ otra frase</button>
+            <button class="dl" type="button" id="spot-copiar">📋 copiar pie</button>
+            <button class="dl" data-dl="spot">⬇</button>
+          </div>
+        </div>
+        <div style="flex:1; min-width:230px; max-width:340px">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a7f70;font-weight:700;margin-bottom:8px">Elige el sitio</div>
+          <div style="display:flex; flex-direction:column; gap:2px; max-height:430px; overflow:auto">
+            {spotCands.map((c) => (
+              <a href={`/admin/redes?key=${key}&cat=${cat}&prov=${encodeURIComponent(prov)}&fmt=spotlight&q=${encodeURIComponent(q)}&spot=${encodeURIComponent(c.id)}`}
+                 style={`padding:8px 10px;border-radius:8px;text-decoration:none;font-size:13px;${c.id===`${spotSel.codigo}|${spotSel.nombre}`?`background:${color}20;color:${color};font-weight:700`:'color:#171412'}`}>
+                {c.nombre} <span style="color:#8a7f70">· {c.municipio}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 </div>
 ) }
 
-<script type="application/json" id="postdata" set:html={JSON.stringify({ color, ambito, catLabel, tituloPost, n: rows.length, rows })}></script>
+<script type="application/json" id="postdata" set:html={JSON.stringify({ color, ambito, catLabel, tituloPost, n: rows.length, rows, spot: spotSel, taglines, captionIG })}></script>
 
 <script>
   const D = JSON.parse(document.getElementById('postdata')?.textContent || '{"rows":[]}');
@@ -343,9 +441,10 @@ const rowsJson = JSON.stringify(rows);
     const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
     const ctx=cv.getContext('2d');
     // fondo: foto de la tarjeta o degradado de categoría
-    const id = kind==='item' ? 'p'+(idx+1) : (kind==='list'?'lista':'cover');
+    const id = kind==='item' ? 'p'+(idx+1) : (kind==='list'?'lista':(kind==='spot'?'spot':'cover'));
     const domImg = document.querySelector(`.slide[data-slide="${id}"] img.ph`);
-    const im = await loadImg(domImg?.getAttribute('src') || (D.rows[idx>=0?idx:0]||{}).foto || '');
+    const fallbackFoto = kind==='spot' ? (D.spot||{}).foto : (D.rows[idx>=0?idx:0]||{}).foto;
+    const im = await loadImg(domImg?.getAttribute('src') || fallbackFoto || '');
     if (im) coverDraw(ctx, im, W, H);
     else { const g=ctx.createLinearGradient(0,0,W*0.4,H); g.addColorStop(0,color); g.addColorStop(0.85,'#17120e'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
     scrim(ctx, W, H, kind==='cover'
@@ -382,7 +481,7 @@ const rowsJson = JSON.stringify(rows);
           ctx.font=`400 32px ${FF}`; ctx.fillStyle='rgba(255,255,255,.72)'; ctx.textAlign='right'; ctx.fillText(r.municipio, W-P, cy); ctx.textAlign='left';
         });
       }
-    } else {
+    } else if (kind==='item') {
       const r = D.rows[idx];
       // pie: nota + contador
       ctx.font=`bold 40px ${FF}`;
@@ -395,6 +494,18 @@ const rowsJson = JSON.stringify(rows);
       ctx.font=`800 84px ${FF}`; ctx.fillStyle='#fff'; const nl=wrap(ctx,r.nombre,W-2*P); for(let i=nl.length-1;i>=0;i--){ ctx.fillText(nl[i],P,y); y-=84; } y-=6;
       ctx.font=`800 300px ${FF}`; ctx.fillText(String(r.pos).padStart(2,'0'), P-6, y); y-=300;
       if (r.badge) { ctx.font=`bold 30px ${FF}`; const bw=ctx.measureText(r.badge.toUpperCase()).width; ctx.fillStyle=color; rr(ctx,P,y-46,bw+44,58,29); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(r.badge.toUpperCase(),P+22,y-6); }
+    } else if (kind==='spot') {
+      const r = D.spot || {};
+      const tag = (document.getElementById('spot-tag')?.textContent || (D.taglines||[])[0] || '').trim();
+      // pie: nota + marca
+      if (r.nota) { ctx.font=`bold 38px ${FF}`; ctx.fillStyle=hex2rgba('#ffffff',.18); const t=`${r.nota} / 100 en ${D.catLabel.toLowerCase()}`; const tw=ctx.measureText(t).width; rr(ctx,P,H-P-56,tw+52,64,32); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.30)'; ctx.lineWidth=2; ctx.stroke(); ctx.fillStyle='#fff'; ctx.fillText(t, P+26, H-P-12); }
+      ctx.font=`400 30px ${FF}`; ctx.fillStyle='rgba(255,255,255,.72)'; ctx.textAlign='right'; ctx.fillText('rankingspain.com', W-P, H-P-14); ctx.textAlign='left';
+      // grupo inferior (de abajo a arriba): frase, municipio, nombre, badge
+      let y = H-P-118;
+      if (tag) { ctx.font=`400 40px ${FF}`; ctx.fillStyle='rgba(255,255,255,.90)'; const dl=wrap(ctx,tag,W-2*P).slice(0,4); for(let i=dl.length-1;i>=0;i--){ ctx.fillText(dl[i],P,y); y-=50; } y-=8; }
+      ctx.font=`400 42px ${FF}`; ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillText(`${r.municipio}${r.provincia&&r.provincia!==r.municipio?' · '+r.provincia:''}`, P, y); y-=22;
+      ctx.font=`800 92px ${FF}`; ctx.fillStyle='#fff'; const nl=wrap(ctx,r.nombre,W-2*P); for(let i=nl.length-1;i>=0;i--){ ctx.fillText(nl[i],P,y); y-=92; } y-=10;
+      if (r.badge) { ctx.font=`bold 32px ${FF}`; const bw=ctx.measureText(r.badge.toUpperCase()).width; ctx.fillStyle=color; rr(ctx,P,y-50,bw+48,62,31); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(r.badge.toUpperCase(),P+24,y-8); }
     }
     ctx.shadowColor='transparent';
     return cv;
@@ -418,6 +529,20 @@ const rowsJson = JSON.stringify(rows);
       await sleep(500);
     }
     btn.textContent='⬇ Descargar todo';
+  });
+
+  // spotlight: rotar frase espectacular + copiar pie de foto
+  let tagIdx = 0;
+  document.getElementById('spot-frase')?.addEventListener('click', () => {
+    const tags = D.taglines || []; if (!tags.length) return;
+    tagIdx = (tagIdx + 1) % tags.length;
+    const el = document.getElementById('spot-tag'); if (el) el.textContent = tags[tagIdx];
+  });
+  document.getElementById('spot-copiar')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    try { await navigator.clipboard.writeText(D.captionIG || ''); btn.textContent='✓ copiado'; }
+    catch { const ta=document.createElement('textarea'); ta.value=D.captionIG||''; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); btn.textContent='✓ copiado'; }
+    setTimeout(()=>{ btn.textContent='📋 copiar pie'; }, 1500);
   });
 </script>
 </body></html>
