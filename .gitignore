@@ -26,3 +26,5 @@ npm-debug.log*
 # local db
 ranking.db
 .vercel
+
+.dev.vars

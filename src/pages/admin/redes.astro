@@ -1,0 +1,423 @@
+---
+import { DB } from '../../lib/d1client';
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+
+// Fuentes y tipos por categoría (mismo criterio que /entidades)
+const CAT_FUENTES: Record<string,string[]> = {
+  senderismo:['senderos_osm','excel_curado','mil_lugares'],
+  naturaleza:['inventario_naturaleza_pdf','mil_lugares'],
+  Playas:['bandera_azul','inventario_playas_pdf','playas_osm','mil_lugares'],
+  cuevas:['cuevas','mil_lugares'],
+  miradores:['inventario_miradores_pdf','miradores_osm','mil_lugares'],
+  estrellas:['starlight','astro_osm','mil_lugares'],
+  ciclismo:['vias_verdes','caminos_naturales','eurovelo','centros_btt','camino_cid','pirinexus','mil_lugares'],
+  pozas:['pozas_bano','agua_osm','mil_lugares'],
+  turismo_activo:['inventario_turismo_activo_pdf','activo_osm','mil_lugares'],
+  birdwatching:['mil_lugares'],
+  gastronomia:['guia_michelin','gastronomia_ampliacion','guia_repsol_solete','restaurantes_osm'],
+  museos:['wikidata_museos'],
+  monumentos:['inventario_monumentos_pdf','monumentos_osm'],
+  castillos:['inventario_castillos_pdf','inventario_monumentos_pdf','monumentos_osm'],
+  fiestas:['inventario_fiestas_pdf','fiestas_wiki'],
+  festivales:['inventario_festivales_pdf','festivales_wiki'],
+  hoteles_encanto:['hoteles_encanto','encanto_osm'],
+  balnearios:['balnearios'],
+  vinos:['inventario_vinos_pdf','rutas_vino','vinos_osm'],
+  pueblo_bonito:['pueblos_mas_bonitos'],
+  oleoturismo:['inventario_oleoturismo_pdf','oleo_osm','oleotour_jaen'],
+  turismo_religioso:['inventario_turismo_religioso_pdf','religioso_osm'],
+};
+const CAT_TIPOS_F: Record<string,string[]> = {
+  senderismo:['sendero'], Playas:['playa','playa_urbana'], miradores:['mirador'], estrellas:['astro'],
+  pozas:['poza','cascada','senda_fluvial','playa_fluvial','termas'], cuevas:['cueva'], ciclismo:['ciclismo'],
+  turismo_activo:['activo'], birdwatching:['fauna'], castillos:['castillo','torre','fortaleza','alcazaba','muralla'],
+  balnearios:['balneario','termas'],
+};
+const LABELS: Record<string,string> = {
+  senderismo:'Senderismo', naturaleza:'Naturaleza', Playas:'Playas', cuevas:'Cuevas', miradores:'Miradores',
+  estrellas:'Astroturismo', ciclismo:'Cicloturismo', pozas:'Pozas y baños', turismo_activo:'Turismo activo',
+  birdwatching:'Birdwatching', gastronomia:'Gastronomía', museos:'Museos', monumentos:'Monumentos',
+  castillos:'Castillos', fiestas:'Fiestas', festivales:'Festivales', hoteles_encanto:'Hoteles con encanto',
+  balnearios:'Balnearios', vinos:'Vinos', pueblo_bonito:'Pueblos bonitos', oleoturismo:'Oleoturismo',
+  turismo_religioso:'Turismo religioso',
+};
+const COLORS: Record<string,string> = {
+  senderismo:'#00897b', naturaleza:'#43a047', Playas:'#0097a7', cuevas:'#6d4c41', miradores:'#5e35b1',
+  estrellas:'#3949ab', ciclismo:'#f9a825', pozas:'#0288a8', turismo_activo:'#d84315', birdwatching:'#2e7d32',
+  gastronomia:'#f4511e', museos:'#455a64', monumentos:'#8d6e63', castillos:'#7b5ea7', fiestas:'#e53935',
+  festivales:'#ad1457', hoteles_encanto:'#00695c', balnearios:'#0277bd', vinos:'#6a1b9a',
+  pueblo_bonito:'#ec407a', oleoturismo:'#9e9d24', turismo_religioso:'#6d4c41',
+};
+// titular con artículo/género correcto ("Las mejores rutas…", "Los mejores museos…")
+const TIT: Record<string,string> = {
+  senderismo:'Las mejores rutas de senderismo', naturaleza:'Los mejores espacios naturales',
+  Playas:'Las mejores playas', cuevas:'Las mejores cuevas', miradores:'Los mejores miradores',
+  estrellas:'Los mejores destinos de estrellas', ciclismo:'Las mejores rutas en bici',
+  pozas:'Las mejores pozas y baños', turismo_activo:'Los mejores planes de aventura',
+  birdwatching:'Los mejores lugares para ver aves', gastronomia:'Los mejores sitios para comer',
+  museos:'Los mejores museos', monumentos:'Los mejores monumentos', castillos:'Los mejores castillos',
+  fiestas:'Las mejores fiestas', festivales:'Los mejores festivales', hoteles_encanto:'Los mejores hoteles con encanto',
+  balnearios:'Los mejores balnearios', vinos:'Los mejores planes de vino', pueblo_bonito:'Los pueblos más bonitos',
+  oleoturismo:'Los mejores planes de aceite', turismo_religioso:'Los mejores lugares de fe',
+};
+
+const cat  = Astro.url.searchParams.get('cat') || 'museos';
+const prov = Astro.url.searchParams.get('prov') || '';
+const n    = Math.min(10, Math.max(3, parseInt(Astro.url.searchParams.get('n') || '10')));
+const fmt  = Astro.url.searchParams.get('fmt') || 'carrusel';
+
+let rows: any[] = [];
+let provincias: string[] = [];
+if (ok) {
+  const provRes = await DB.prepare(`SELECT DISTINCT provincia FROM municipios WHERE provincia IS NOT NULL ORDER BY provincia`).all();
+  provincias = (provRes.results as any[]).map(r => r.provincia);
+
+  const fuentes = CAT_FUENTES[cat] ?? [];
+  const tipos   = CAT_TIPOS_F[cat];
+  if (fuentes.length) {
+    const params: any[] = [cat, ...fuentes, ...(tipos ?? [])];
+    if (prov) params.push(prov);
+    const sql = `
+      SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion, MIN(e.nivel_sello) AS nivel_sello,
+             MIN(e.sello_oficial) AS sello_of, MIN(e.fuente) AS fuente_g,
+             m.nombre AS municipio, m.provincia, m.foto_url,
+             MAX(e.puntuacion) AS ent_score,
+             COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
+      FROM entidades e
+      JOIN municipios m ON m.codigo_ine = e.codigo_ine
+      LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = ?
+      WHERE e.fuente IN (${fuentes.map(()=>'?').join(',')})
+        ${tipos ? `AND e.tipo IN (${tipos.map(()=>'?').join(',')})` : ''}
+        AND COALESCE(m.es_duplicado,0)=0
+        AND e.nombre NOT LIKE 'Bandera Azul %'
+        ${prov ? 'AND m.provincia = ?' : ''}
+      GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
+      ORDER BY
+        CASE WHEN MAX(e.puntuacion) IS NOT NULL
+               OR (MIN(e.nivel_sello) IS NOT NULL AND MIN(e.nivel_sello)!='')
+               OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
+               OR MIN(e.fuente) IN ('bandera_azul','pueblos_mas_bonitos') THEN 0 ELSE 1 END,
+        CASE MIN(e.nivel_sello)
+          WHEN 'Museo de Fama Mundial' THEN 0 WHEN 'Museo Nacional' THEN 1 WHEN 'UNESCO' THEN 2
+          WHEN '3 Estrellas Michelin' THEN 0 WHEN '2 Estrellas Michelin' THEN 1 WHEN '1 Estrella Michelin' THEN 2
+          ELSE 3 END,
+        CASE MIN(COALESCE(e.fuente,''))
+          WHEN 'guia_michelin' THEN 0 WHEN 'guia_repsol_solete' THEN 1 WHEN 'gastronomia_ampliacion' THEN 2
+          WHEN 'restaurantes_osm' THEN 8 ELSE 3 END,
+        CASE LOWER(MIN(e.nombre))
+          WHEN 'museo del prado' THEN 0 WHEN 'museo nacional del prado' THEN 0
+          WHEN 'museo guggenheim bilbao' THEN 1 WHEN 'guggenheim bilbao' THEN 1
+          WHEN 'museo nacional centro de arte reina sofía' THEN 2 WHEN 'museo thyssen-bornemisza' THEN 3
+          WHEN 'museu nacional d''art de catalunya' THEN 4 WHEN 'museu picasso' THEN 5
+          WHEN 'teatre-museu dalí' THEN 6 ELSE 99 END,
+        puntuacion DESC, nombre ASC
+      LIMIT ?`;
+    params.push(n);
+    const r = await DB.prepare(sql).bind(...params).all();
+    rows = (r.results as any[]).map((x, i) => {
+      const SELLO_LABEL: Record<string,string> = { Solete:'Solete Repsol', Balneario:'Balneario', Cueva_ACTE:'Cueva turística', Michelin_Estrella:'Estrella Michelin', Hotel_Encanto:'Hotel con encanto', Starlight:'Starlight' };
+      const FUENTE_LABEL: Record<string,string> = { bandera_azul:'Bandera Azul', pueblos_mas_bonitos:'Pueblo más bonito' };
+      const graded = x.ent_score != null || (x.nivel_sello && x.nivel_sello !== '');
+      const badge = x.nivel_sello || SELLO_LABEL[x.sello_of] || FUENTE_LABEL[x.fuente_g] || '';
+      let desc = (x.descripcion || '').replace(/\s+/g,' ').trim();
+      if (desc.length > 120) desc = desc.slice(0, 117).replace(/[,;.\s]+\S*$/,'') + '…';
+      // solo fotos directas de Wikimedia (las URLs de página de Commons no cargan como <img>)
+      const foto = /^https:\/\/upload\.wikimedia\.org\//.test(x.foto_url || '') ? x.foto_url : '';
+      return {
+        pos: i + 1, nombre: x.nombre, municipio: x.municipio, provincia: x.provincia,
+        foto, badge, desc,
+        nota: graded && x.puntuacion > 0 ? Number(x.puntuacion).toFixed(1) : '',
+      };
+    });
+  }
+}
+
+const catLabel = LABELS[cat] ?? cat;
+const color = COLORS[cat] ?? '#FF385C';
+const ambito = prov || 'España';
+const tituloPost = `${TIT[cat] ?? ('Los mejores ' + catLabel.toLowerCase())} de ${ambito}`;
+const catOrder = Object.keys(LABELS);
+const rowsJson = JSON.stringify(rows);
+---
+<html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Generador de posts · Redes</title>
+<style>
+  :root{ --rausch:#FF385C; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Plus Jakarta Sans","Helvetica Neue",Arial,system-ui,sans-serif; background:#faf8f5; color:#171412; }
+  .bar{ padding:14px 20px; border-bottom:1px solid #e7dfd3; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .bar h1{ font-size:17px; margin:0; font-weight:800; letter-spacing:-.02em; }
+  .bar a.back{ font-size:13px; color:#8a7f70; text-decoration:none; }
+  form.controls{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; padding:16px 20px; background:#fff; border-bottom:1px solid #e7dfd3; position:sticky; top:0; z-index:5; }
+  .fld{ display:flex; flex-direction:column; gap:4px; }
+  .fld label{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#8a7f70; font-weight:700; }
+  select,button{ font:inherit; padding:8px 12px; border-radius:10px; border:1px solid #d9cfc0; background:#fff; }
+  button.go{ background:var(--rausch); color:#fff; border:0; font-weight:700; cursor:pointer; }
+  button.dl{ cursor:pointer; }
+  .hint{ padding:10px 20px; font-size:13px; color:#8a7f70; }
+  .stage{ padding:22px 20px 60px; display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
+  .cell{ display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .cap{ font-size:12px; color:#8a7f70; font-weight:600; display:flex; gap:8px; align-items:center; }
+  .cap input[type=file]{ display:none; }
+  .cap .up{ font-size:11px; color:var(--rausch); cursor:pointer; text-decoration:underline; }
+
+  .slide{ width:360px; height:450px; border-radius:0; overflow:hidden; position:relative; color:#fff;
+          box-shadow:0 12px 34px rgba(0,0,0,.18); background:#333; }
+  .slide .ph{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .slide .scrim{ position:absolute; inset:0; }
+  .scrim.cover{ background:linear-gradient(180deg,rgba(0,0,0,.30),rgba(0,0,0,.03) 34%,rgba(0,0,0,.72)); }
+  .scrim.item{ background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.10) 40%,rgba(0,0,0,.83)); }
+  .pad{ position:absolute; inset:0; padding:26px 26px 24px; display:flex; flex-direction:column; }
+  .brand{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; letter-spacing:-.01em; }
+  .dot{ width:18px; height:18px; border-radius:50%; background:var(--rausch); }
+  .kicker{ font-size:13px; letter-spacing:.16em; text-transform:uppercase; font-weight:800; }
+  .kicker .n{ color:var(--rausch); }
+  .headline{ font-size:40px; line-height:.98; font-weight:800; letter-spacing:-.03em; margin-top:8px; }
+  .sub{ margin-top:12px; font-size:14px; line-height:1.35; opacity:.88; max-width:90%; }
+  .swipe{ margin-top:14px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; opacity:.85; }
+  .chip{ align-self:flex-start; color:#fff; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:5px 11px; border-radius:999px; }
+  .rank{ font-size:120px; font-weight:800; letter-spacing:-.05em; line-height:.78; }
+  .iname{ margin-top:10px; font-size:32px; font-weight:800; letter-spacing:-.03em; line-height:1.02; }
+  .iplace{ margin-top:7px; font-size:15px; opacity:.92; }
+  .idesc{ margin-top:11px; font-size:14px; line-height:1.4; opacity:.85; max-width:94%; }
+  .foot{ margin-top:auto; display:flex; align-items:center; justify-content:space-between; }
+  .score{ background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.30); padding:6px 13px; border-radius:999px; font-size:14px; font-weight:800; }
+  .list{ margin-top:auto; }
+  .li{ display:flex; align-items:baseline; gap:11px; padding:8px 0; border-top:1px solid rgba(255,255,255,.18); font-size:16px; }
+  .li:first-child{ border-top:0; }
+  .li .lr{ font-weight:800; width:26px; font-size:19px; }
+  .li .ln{ font-weight:700; flex:1; letter-spacing:-.01em; }
+  .li .lp{ opacity:.72; font-size:13px; }
+  .li.top .lr{ color:var(--rausch); }
+  .noauth{ padding:60px; text-align:center; color:#8a7f70; }
+</style></head>
+<body>
+{ !ok ? (
+  <div class="noauth">Acceso restringido. Añade <code>?key=TU_ADMIN_KEY</code> a la URL.</div>
+) : (
+<div>
+  <div class="bar">
+    <h1>📸 Generador de posts para Instagram</h1>
+    <a class="back" href={`/admin?key=${key}`}>← Panel</a>
+  </div>
+
+  <form class="controls" method="get">
+    <input type="hidden" name="key" value={key} />
+    <div class="fld"><label>Categoría</label>
+      <select name="cat">{catOrder.map(c => <option value={c} selected={c===cat}>{LABELS[c]}</option>)}</select>
+    </div>
+    <div class="fld"><label>Ámbito</label>
+      <select name="prov"><option value="" selected={!prov}>España (nacional)</option>{provincias.map(p => <option value={p} selected={p===prov}>{p}</option>)}</select>
+    </div>
+    <div class="fld"><label>Top</label>
+      <select name="n">{[5,10].map(v => <option value={v} selected={v===n}>Top {v}</option>)}</select>
+    </div>
+    <div class="fld"><label>Formato</label>
+      <select name="fmt"><option value="carrusel" selected={fmt==='carrusel'}>Carrusel</option><option value="unica" selected={fmt==='unica'}>Imagen única</option></select>
+    </div>
+    <button class="go" type="submit">Generar</button>
+    <button class="dl" type="button" id="dlall">⬇ Descargar todo</button>
+  </form>
+
+  <div class="hint">
+    {rows.length === 0
+      ? 'No hay resultados para esa combinación.'
+      : `Top ${rows.length} · ${catLabel} · ${ambito}. La foto de fondo es la del municipio; pulsa “cambiar foto” en cualquier tarjeta para subir la tuya. Descarga en 1080×1350.`}
+  </div>
+
+  <div class="stage" id="stage">
+    { fmt === 'carrusel' && rows.length > 0 && (
+      <div class="cell">
+        <div class="slide" data-slide="cover" data-kind="cover" style={`--rausch:${color}; background:linear-gradient(155deg, ${color} 0%, #17120e 85%)`}>
+          {rows[0].foto && <img class="ph" crossorigin="anonymous" src={rows[0].foto} />}
+          <div class="scrim cover"></div>
+          <div class="pad">
+            <div class="brand"><span class="dot"></span>rankingspain.com</div>
+            <div style="margin-top:auto">
+              <div class="kicker">Top <span class="n">{rows.length}</span> · {ambito}</div>
+              <div class="headline">{tituloPost}</div>
+              <div class="sub">El ranking real, del {rows.length} al 1. Desliza →</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">Portada <span class="up" data-for="cover">cambiar foto</span><input type="file" accept="image/*" data-file="cover" /><button class="dl" data-dl="cover">⬇</button></div>
+      </div>
+    )}
+
+    { fmt === 'carrusel' && rows.map((r) => (
+      <div class="cell">
+        <div class="slide" data-slide={`p${r.pos}`} data-kind="item" data-idx={r.pos-1} style={`--rausch:${color}; background:linear-gradient(155deg, ${color} 0%, #17120e 85%)`}>
+          {r.foto && <img class="ph" crossorigin="anonymous" src={r.foto} />}
+          <div class="scrim item"></div>
+          <div class="pad">
+            <div class="brand"><span class="dot"></span>rankingspain.com</div>
+            <div style="margin-top:auto">
+              {r.badge && <span class="chip" style={`background:${color}`}>{r.badge}</span>}
+              <div class="rank">{String(r.pos).padStart(2,'0')}</div>
+              <div class="iname">{r.nombre}</div>
+              <div class="iplace">📍 {r.municipio}{r.provincia && r.municipio!==r.provincia ? ` · ${r.provincia}` : ''}</div>
+              {r.desc && <div class="idesc">{r.desc}</div>}
+            </div>
+            <div class="foot">
+              {r.nota ? <span class="score">{r.nota} / 100</span> : <span></span>}
+              <span style="font-size:13px;opacity:.7">{r.pos} / {rows.length}</span>
+            </div>
+          </div>
+        </div>
+        <div class="cap">Puesto {r.pos} <span class="up" data-for={`p${r.pos}`}>cambiar foto</span><input type="file" accept="image/*" data-file={`p${r.pos}`} /><button class="dl" data-dl={`p${r.pos}`}>⬇</button></div>
+      </div>
+    )) }
+
+    { fmt === 'unica' && rows.length > 0 && (
+      <div class="cell">
+        <div class="slide" data-slide="lista" data-kind="list" style={`--rausch:${color}; background:linear-gradient(155deg, ${color} 0%, #17120e 85%)`}>
+          {rows[0].foto && <img class="ph" crossorigin="anonymous" src={rows[0].foto} />}
+          <div class="scrim item"></div>
+          <div class="pad">
+            <div class="brand"><span class="dot"></span>rankingspain.com</div>
+            <div class="kicker" style="margin-top:16px">Top {rows.length} · {catLabel} · {ambito}</div>
+            <div class="headline" style="font-size:30px">{tituloPost}</div>
+            <div class="list">
+              {rows.map((r) => (
+                <div class={`li ${r.nota ? 'top' : ''}`}><span class="lr">{r.pos}</span><span class="ln">{r.nombre}</span><span class="lp">{r.municipio}</span></div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div class="cap">Imagen única <span class="up" data-for="lista">cambiar foto</span><input type="file" accept="image/*" data-file="lista" /><button class="dl" data-dl="lista">⬇</button></div>
+      </div>
+    )}
+  </div>
+</div>
+) }
+
+<script type="application/json" id="postdata" set:html={JSON.stringify({ color, ambito, catLabel, tituloPost, n: rows.length, rows })}></script>
+
+<script>
+  const D = JSON.parse(document.getElementById('postdata')?.textContent || '{"rows":[]}');
+  const FF = '"Helvetica Neue",Arial,sans-serif';
+  const slug = (s) => (s||'post').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const base = slug(`${D.catLabel||''}-${D.ambito||''}`) || 'post';
+
+  // sustituir la foto de una tarjeta (preview + export usan la misma fuente)
+  document.querySelectorAll('.up').forEach(el => el.addEventListener('click', () =>
+    document.querySelector(`input[data-file="${el.getAttribute('data-for')}"]`)?.click()));
+  document.querySelectorAll('input[data-file]').forEach(inp => inp.addEventListener('change', () => {
+    const f = inp.files?.[0]; if (!f) return;
+    const slide = document.querySelector(`.slide[data-slide="${inp.getAttribute('data-file')}"]`);
+    let img = slide?.querySelector('img.ph');
+    if (!img) { img = document.createElement('img'); img.className='ph'; slide?.insertBefore(img, slide.firstChild); }
+    img.removeAttribute('crossorigin'); img.src = URL.createObjectURL(f);
+  }));
+
+  function loadImg(src) {
+    return new Promise((res) => {
+      if (!src) return res(null);
+      const im = new Image();
+      if (!src.startsWith('data:') && !src.startsWith('blob:')) im.crossOrigin = 'anonymous';
+      im.onload = () => res(im.naturalWidth ? im : null);
+      im.onerror = () => res(null);
+      im.src = src;
+      setTimeout(() => res(im.complete && im.naturalWidth ? im : null), 5000);
+    });
+  }
+  function coverDraw(ctx, im, W, H) {
+    const ir = im.width/im.height, cr = W/H; let dw,dh,dx,dy;
+    if (ir > cr) { dh=H; dw=H*ir; dx=(W-dw)/2; dy=0; } else { dw=W; dh=W/ir; dx=0; dy=(H-dh)/2; }
+    ctx.drawImage(im, dx, dy, dw, dh);
+  }
+  function scrim(ctx, W, H, stops) { const g=ctx.createLinearGradient(0,0,0,H); stops.forEach(s=>g.addColorStop(s[0],s[1])); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+  function rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function wrap(ctx, text, maxW) {
+    const words=(text||'').split(/\s+/), lines=[]; let line='';
+    for (const w of words){ const t=line?line+' '+w:w; if (ctx.measureText(t).width>maxW && line){ lines.push(line); line=w; } else line=t; }
+    if (line) lines.push(line); return lines;
+  }
+  const hex2rgba=(h,a)=>{ const n=parseInt(h.slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; };
+
+  async function render(kind, idx) {
+    const W=1080, H=1350, P=78, color=D.color||'#FF385C';
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    const ctx=cv.getContext('2d');
+    // fondo: foto de la tarjeta o degradado de categoría
+    const id = kind==='item' ? 'p'+(idx+1) : (kind==='list'?'lista':'cover');
+    const domImg = document.querySelector(`.slide[data-slide="${id}"] img.ph`);
+    const im = await loadImg(domImg?.getAttribute('src') || (D.rows[idx>=0?idx:0]||{}).foto || '');
+    if (im) coverDraw(ctx, im, W, H);
+    else { const g=ctx.createLinearGradient(0,0,W*0.4,H); g.addColorStop(0,color); g.addColorStop(0.85,'#17120e'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+    scrim(ctx, W, H, kind==='cover'
+      ? [[0,'rgba(0,0,0,.32)'],[0.34,'rgba(0,0,0,.05)'],[1,'rgba(0,0,0,.74)']]
+      : [[0,'rgba(0,0,0,.55)'],[0.4,'rgba(0,0,0,.10)'],[1,'rgba(0,0,0,.85)']]);
+    ctx.fillStyle='#fff'; ctx.textBaseline='alphabetic';
+    ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=10; ctx.shadowOffsetY=2;
+    // marca arriba
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(P+22, P+20, 22, 0, 7); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font=`bold 42px ${FF}`; ctx.fillText('rankingspain.com', P+58, P+34);
+
+    if (kind==='cover' || kind==='list') {
+      const rowsN = D.n;
+      ctx.font=`bold 34px ${FF}`; ctx.fillStyle='#fff';
+      const kick = kind==='cover' ? `TOP ${rowsN} · ${D.ambito.toUpperCase()}` : `TOP ${rowsN} · ${D.catLabel.toUpperCase()} · ${D.ambito.toUpperCase()}`;
+      let y = kind==='cover' ? H-520 : 340;
+      ctx.fillText(kick, P, y); y += 20;
+      ctx.font=`800 ${kind==='cover'?104:82}px ${FF}`;
+      const title = D.tituloPost;
+      const tl = wrap(ctx, title, W-2*P); tl.forEach(l => { y += (kind==='cover'?100:80); ctx.fillText(l, P, y); });
+      if (kind==='cover') {
+        ctx.font=`400 38px ${FF}`; ctx.fillStyle='rgba(255,255,255,.9)'; y+=64; ctx.fillText(`El ranking real, del ${rowsN} al 1.`, P, y);
+        ctx.font=`bold 30px ${FF}`; ctx.fillText('DESLIZA  →', P, y+70);
+      } else {
+        y += 48; const rowH=(H-P-y)/D.rows.length;
+        D.rows.forEach((r,i) => {
+          const ry = y + i*rowH;
+          ctx.strokeStyle='rgba(255,255,255,.20)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(P,ry); ctx.lineTo(W-P,ry); ctx.stroke();
+          const cy = ry + rowH/2 + 16;
+          ctx.font=`800 46px ${FF}`; ctx.fillStyle = r.nota ? color : '#fff'; ctx.fillText(String(r.pos), P, cy);
+          ctx.font=`bold 44px ${FF}`; ctx.fillStyle='#fff';
+          let nm=r.nombre; while(ctx.measureText(nm).width>W-2*P-330 && nm.length>4) nm=nm.slice(0,-2); if(nm!==r.nombre) nm=nm.trim()+'…';
+          ctx.fillText(nm, P+80, cy);
+          ctx.font=`400 32px ${FF}`; ctx.fillStyle='rgba(255,255,255,.72)'; ctx.textAlign='right'; ctx.fillText(r.municipio, W-P, cy); ctx.textAlign='left';
+        });
+      }
+    } else {
+      const r = D.rows[idx];
+      // pie: nota + contador
+      ctx.font=`bold 40px ${FF}`;
+      if (r.nota) { ctx.fillStyle=hex2rgba('#ffffff',.18); const tw=ctx.measureText(r.nota+' / 100').width; rr(ctx,P,H-P-58,tw+56,66,33); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.30)'; ctx.lineWidth=2; ctx.stroke(); ctx.fillStyle='#fff'; ctx.fillText(r.nota+' / 100', P+28, H-P-12); }
+      ctx.font=`400 30px ${FF}`; ctx.fillStyle='rgba(255,255,255,.72)'; ctx.textAlign='right'; ctx.fillText(`${r.pos} / ${D.n}`, W-P, H-P-14); ctx.textAlign='left';
+      // grupo inferior (de abajo a arriba)
+      let y = H-P-120;
+      if (r.desc) { ctx.font=`400 36px ${FF}`; ctx.fillStyle='rgba(255,255,255,.86)'; const dl=wrap(ctx,r.desc,W-2*P).slice(0,3); for(let i=dl.length-1;i>=0;i--){ ctx.fillText(dl[i],P,y); y-=46; } y-=6; }
+      ctx.font=`400 40px ${FF}`; ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillText(`${r.municipio}${r.provincia&&r.provincia!==r.municipio?' · '+r.provincia:''}`, P, y); y-=20;
+      ctx.font=`800 84px ${FF}`; ctx.fillStyle='#fff'; const nl=wrap(ctx,r.nombre,W-2*P); for(let i=nl.length-1;i>=0;i--){ ctx.fillText(nl[i],P,y); y-=84; } y-=6;
+      ctx.font=`800 300px ${FF}`; ctx.fillText(String(r.pos).padStart(2,'0'), P-6, y); y-=300;
+      if (r.badge) { ctx.font=`bold 30px ${FF}`; const bw=ctx.measureText(r.badge.toUpperCase()).width; ctx.fillStyle=color; rr(ctx,P,y-46,bw+44,58,29); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(r.badge.toUpperCase(),P+22,y-6); }
+    }
+    ctx.shadowColor='transparent';
+    return cv;
+  }
+
+  async function exportOne(kind, idx, name) {
+    const cv = await render(kind, idx);
+    const a=document.createElement('a'); a.download=`${base}-${name}.png`; a.href=cv.toDataURL('image/png'); a.click();
+  }
+  const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+  function meta(el){ const s=el.closest('.cell').querySelector('.slide'); return { kind:s.getAttribute('data-kind'), idx:parseInt(s.getAttribute('data-idx')||'-1'), name:s.getAttribute('data-slide') }; }
+
+  document.querySelectorAll('button[data-dl]').forEach(btn => btn.addEventListener('click', async () => {
+    const m = meta(btn); btn.textContent='…';
+    try { await exportOne(m.kind, m.idx, m.name); } catch(e){ alert('Error al exportar: '+e.message); } finally { btn.textContent='⬇'; }
+  }));
+  document.getElementById('dlall')?.addEventListener('click', async (e) => {
+    const btn=e.currentTarget; btn.textContent='Descargando…';
+    for (const s of document.querySelectorAll('.slide')) {
+      await exportOne(s.getAttribute('data-kind'), parseInt(s.getAttribute('data-idx')||'-1'), s.getAttribute('data-slide'));
+      await sleep(500);
+    }
+    btn.textContent='⬇ Descargar todo';
+  });
+</script>
+</body></html>
