@@ -43,9 +43,14 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
   <div class="wrap">
     <input type="hidden" id="key" value={key} />
 
+    <div class="hint" style="margin-bottom:-4px">Sube <b>dos capturas</b>: la <b>foto</b> del sitio y la <b>captura del texto</b> (la leo yo y saco la descripción).</div>
     <div>
-      <label class="up" id="fotoUp" for="fotoInp"><span id="fotoTxt">📷 Toca para elegir la FOTO del post</span></label>
+      <label class="up" id="fotoUp" for="fotoInp"><span id="fotoTxt">① 📷 Captura / foto del sitio<br><small style="opacity:.65;text-transform:none;letter-spacing:0">será la imagen del post</small></span></label>
       <input type="file" id="fotoInp" accept="image/*" />
+    </div>
+    <div>
+      <label class="up" id="capUp" for="capInp"><span id="capTxt">② 📝 Captura del texto<br><small style="opacity:.65;text-transform:none;letter-spacing:0">la leo y relleno la descripción</small></span></label>
+      <input type="file" id="capInp" accept="image/*" />
     </div>
 
     <div>
@@ -70,13 +75,11 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 
     <div>
       <label class="fld">Descripción</label>
-      <textarea id="desc" placeholder="Pega aquí el texto del sitio (o usa el botón para leerlo de una captura)"></textarea>
+      <textarea id="desc" placeholder="Aquí saldrá el texto de tu captura (o pégalo tú mismo)"></textarea>
       <div class="row" style="margin-top:8px">
-        <label class="btn" for="capInp" style="flex:1">📖 Leer texto de una captura</label>
-        <input type="file" id="capInp" accept="image/*" />
-        <button class="btn" type="button" id="limpiar" style="flex:0 0 auto">✨ Limpiar texto</button>
+        <button class="btn" type="button" id="limpiar">✨ Limpiar texto</button>
       </div>
-      <div class="hint" style="margin-top:6px">Truco: en el móvil puedes mantener pulsado el texto de tu captura y “Copiar”, y pegarlo aquí (más fiable que el lector automático).</div>
+      <div class="hint" style="margin-top:6px">Si el lector automático falla: mantén pulsado el texto de tu captura en el móvil, “Copiar”, y pégalo aquí.</div>
     </div>
 
     <div class="msg" id="msg"></div>
@@ -134,17 +137,18 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     $('desc').value=t; render();
   });
 
-  // OCR opcional (best-effort) con Tesseract cargado bajo demanda
+  // OCR de la captura del texto (best-effort) con Tesseract cargado bajo demanda
   $('capInp')?.addEventListener('change', async e => {
-    const f=e.target.files[0]; if(!f) return; const btn=document.querySelector('label[for=capInp]'); const old=btn.textContent; btn.textContent='Leyendo… (puede tardar)';
+    const f=e.target.files[0]; if(!f) return;
+    $('capUp').classList.add('set'); $('capTxt').innerHTML='② 📝 Leyendo el texto… <small style="opacity:.65">(la 1ª vez tarda un poco)</small>';
     try{
       if(!window.Tesseract){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
       const { data } = await window.Tesseract.recognize(f, 'spa');
-      const txt=(data.text||'').trim();
-      if(txt){ $('desc').value = ($('desc').value ? $('desc').value+'\n' : '') + txt; render(); }
-      else showMsg('No pude leer texto. Prueba a copiar el texto en tu móvil y pegarlo.', false);
-    }catch(err){ showMsg('El lector no está disponible. Copia el texto de la captura en tu móvil y pégalo aquí.', false); }
-    finally{ btn.textContent=old; e.target.value=''; }
+      let txt=(data.text||'').replace(/\n{2,}/g,'\n').trim();
+      if(txt){ $('desc').value = txt; $('capTxt').innerHTML='② ✅ Texto leído — revísalo abajo'; render(); }
+      else { $('capTxt').innerHTML='② ⚠️ No pude leer texto — pégalo abajo'; showMsg('No pude leer el texto de la captura. Copia el texto en tu móvil y pégalo en la descripción.', false); }
+    }catch(err){ $('capTxt').innerHTML='② ⚠️ Lector no disponible — pega el texto abajo'; showMsg('El lector automático no cargó. Copia el texto de la captura en tu móvil y pégalo en la descripción.', false); }
+    finally{ e.target.value=''; }
   });
 
   function showMsg(t, isOk){ const m=$('msg'); m.textContent=t; m.className='msg '+(isOk?'ok':'err'); }
@@ -164,7 +168,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     try{
       const r=await fetch('/api/admin/captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ municipio, nombre, descripcion }) });
       const d=await r.json();
-      if(d.ok) showMsg(`✅ Guardado en la ficha de ${d.municipio}${d.provincia?' ('+d.provincia+')':''}.`, true);
+      if(d.ok) showMsg(`✅ ${d.creado?'Sitio creado':'Actualizado'}: “${d.nombre}” aparecerá en la ficha de ${d.municipio}${d.provincia?' ('+d.provincia+')':''}.`, true);
       else showMsg('⚠️ '+(d.error||'No se pudo guardar.'), false);
     }catch(err){ showMsg('Error de red al guardar.', false); }
     finally{ btn.textContent='💾 Guardar en la web'; btn.disabled=false; }

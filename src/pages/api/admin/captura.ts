@@ -40,10 +40,11 @@ export const POST: APIRoute = async ({ request, url }) => {
         || cand[0];
   if (!sel) return j({ ok: false, error: `No encuentro el municipio “${municipio}”. Revisa el nombre.` }, 404);
 
-  await DB.prepare(
+  const res = await DB.prepare(
     `INSERT OR IGNORE INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente)
      VALUES (?, 'espacio', ?, ?, 'captura_instagram')`
   ).bind(sel.codigo_ine, nombre.slice(0, 120), descripcion.slice(0, 1500)).run();
+  const creado = (res as any)?.meta?.changes > 0;
 
-  return j({ ok: true, codigo: sel.codigo_ine, municipio: sel.nombre, provincia: sel.provincia, nombre });
+  return j({ ok: true, creado, codigo: sel.codigo_ine, municipio: sel.nombre, provincia: sel.provincia, nombre });
 };
