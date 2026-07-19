@@ -162,17 +162,17 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     $('desc').value=t; render();
   });
 
-  // fichero -> dataURL base64 (para enviar a Claude Vision)
-  function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+  // fichero -> dataURL JPEG REDUCIDO (móvil sube capturas enormes: escalamos para que vaya rápido y barato)
+  function fileToScaledDataURL(file, maxDim){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>{ try{ let w=im.width,h=im.height; const s=Math.min(1, maxDim/Math.max(w,h)); w=Math.round(w*s); h=Math.round(h*s); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(im,0,0,w,h); res(c.toDataURL('image/jpeg',0.82)); }catch(err){ rej(err); } }; im.onerror=()=>rej(new Error('img')); im.src=URL.createObjectURL(file); }); }
 
   // Lee la captura del texto con Claude Vision: saca nombre/municipio y REESCRIBE la descripción en nuestro estilo
   $('capInp')?.addEventListener('change', async e => {
     const f=e.target.files[0]; if(!f) return;
     $('capUp').classList.add('set'); $('capTxt').innerHTML='② 📝 Leyendo la captura con Claude…';
+    const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 45000);
     try{
-      const dataURL = await fileToDataURL(f);
-      const mediaType = (f.type && f.type.startsWith('image/')) ? f.type : 'image/jpeg';
-      const r = await fetch('/api/admin/leer-captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ imageBase64:dataURL, mediaType }) });
+      const dataURL = await fileToScaledDataURL(f, 1400);
+      const r = await fetch('/api/admin/leer-captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ imageBase64:dataURL, mediaType:'image/jpeg' }), signal:ctrl.signal });
       const d = await r.json();
       if(d.ok){
         if(d.nombre && !$('nombre').value.trim()) $('nombre').value=d.nombre;
@@ -184,8 +184,8 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
         $('capTxt').innerHTML='② ⚠️ No pude leerla — pega el texto abajo';
         showMsg('⚠️ '+(d.error||'No se pudo leer la captura.'), false);
       }
-    }catch(err){ $('capTxt').innerHTML='② ⚠️ Error — pega el texto abajo'; showMsg('Error de red al leer la captura. Copia el texto en tu móvil y pégalo en la descripción.', false); }
-    finally{ e.target.value=''; }
+    }catch(err){ $('capTxt').innerHTML='② ⚠️ Error — pega el texto abajo'; showMsg(err&&err.name==='AbortError' ? 'La lectura tardó demasiado. Prueba otra vez o pega el texto a mano.' : 'Error de red al leer la captura. Copia el texto en tu móvil y pégalo en la descripción.', false); }
+    finally{ clearTimeout(to); e.target.value=''; }
   });
 
   function showMsg(t, isOk){ const m=$('msg'); m.textContent=t; m.className='msg '+(isOk?'ok':'err'); }
