@@ -1,0 +1,175 @@
+---
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+---
+<html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Captura → post · Redes</title>
+<style>
+  :root{ --rausch:#FF385C; --line:#e7dfd3; --muted:#8a7f70; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Plus Jakarta Sans","Helvetica Neue",Arial,system-ui,sans-serif; background:#faf8f5; color:#171412; }
+  .bar{ padding:13px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px; }
+  .bar h1{ font-size:16px; margin:0; font-weight:800; letter-spacing:-.02em; }
+  .bar a{ font-size:13px; color:var(--muted); text-decoration:none; }
+  .wrap{ max-width:520px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:16px; }
+  label.fld{ display:flex; flex-direction:column; gap:5px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; }
+  input[type=text], textarea, select{ font:inherit; font-size:16px; padding:11px 12px; border-radius:11px; border:1px solid #d9cfc0; background:#fff; width:100%; color:#171412; }
+  textarea{ min-height:120px; resize:vertical; text-transform:none; letter-spacing:0; }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn{ font:inherit; font-size:15px; padding:12px 14px; border-radius:12px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; flex:1; text-align:center; }
+  .btn.primary{ background:var(--rausch); color:#fff; border:0; font-weight:700; }
+  .btn.ok{ background:#0a7d3c; color:#fff; border:0; font-weight:700; }
+  .up{ display:block; text-align:center; padding:26px 12px; border:2px dashed #d9cfc0; border-radius:14px; color:var(--muted); font-size:14px; cursor:pointer; background:#fff; }
+  .up.set{ border-style:solid; color:#171412; }
+  .presets{ display:flex; gap:7px; flex-wrap:wrap; }
+  .pchip{ font-size:14px; padding:8px 13px; border-radius:999px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; }
+  .pchip.on{ background:#171412; color:#fff; border-color:#171412; }
+  canvas#post{ width:100%; max-width:340px; margin:0 auto; display:block; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.16); }
+  .hint{ font-size:13px; color:var(--muted); line-height:1.5; }
+  .msg{ font-size:14px; padding:10px 12px; border-radius:10px; display:none; }
+  .msg.ok{ background:#e4f4ea; color:#0a5c2c; display:block; }
+  .msg.err{ background:#fbe6e6; color:#a12; display:block; }
+  .noauth{ padding:60px 20px; text-align:center; color:var(--muted); }
+  input[type=file]{ display:none; }
+</style></head>
+<body>
+{ !ok ? (
+  <div class="noauth">Acceso restringido. Añade <code>?key=TU_ADMIN_KEY</code> a la URL.</div>
+) : (
+<div>
+  <div class="bar"><h1>📲 Captura → post</h1><a href={`/admin?key=${key}`}>← Panel</a></div>
+  <div class="wrap">
+    <input type="hidden" id="key" value={key} />
+
+    <div>
+      <label class="up" id="fotoUp" for="fotoInp"><span id="fotoTxt">📷 Toca para elegir la FOTO del post</span></label>
+      <input type="file" id="fotoInp" accept="image/*" />
+    </div>
+
+    <div>
+      <label class="fld">Color de la foto</label>
+      <div class="presets" id="presets">
+        <span class="pchip on" data-p="vivo">Vivo</span>
+        <span class="pchip" data-p="calido">Cálido</span>
+        <span class="pchip" data-p="cine">Cine</span>
+        <span class="pchip" data-p="byn">B/N</span>
+        <span class="pchip" data-p="none">Original</span>
+      </div>
+    </div>
+
+    <canvas id="post" width="1080" height="1350"></canvas>
+
+    <label class="fld">Nombre del sitio (opcional)
+      <input type="text" id="nombre" placeholder="Ej: Playa de Bolonia" />
+    </label>
+    <label class="fld">Municipio
+      <input type="text" id="municipio" placeholder="Ej: Tarifa" />
+    </label>
+
+    <div>
+      <label class="fld">Descripción</label>
+      <textarea id="desc" placeholder="Pega aquí el texto del sitio (o usa el botón para leerlo de una captura)"></textarea>
+      <div class="row" style="margin-top:8px">
+        <label class="btn" for="capInp" style="flex:1">📖 Leer texto de una captura</label>
+        <input type="file" id="capInp" accept="image/*" />
+        <button class="btn" type="button" id="limpiar" style="flex:0 0 auto">✨ Limpiar texto</button>
+      </div>
+      <div class="hint" style="margin-top:6px">Truco: en el móvil puedes mantener pulsado el texto de tu captura y “Copiar”, y pegarlo aquí (más fiable que el lector automático).</div>
+    </div>
+
+    <div class="msg" id="msg"></div>
+    <div class="row">
+      <button class="btn primary" type="button" id="descargar">⬇ Descargar post</button>
+      <button class="btn ok" type="button" id="guardar">💾 Guardar en la web</button>
+    </div>
+  </div>
+</div>
+) }
+
+<script>
+  const FF = '"Helvetica Neue",Arial,sans-serif';
+  const RAUSCH = '#FF385C';
+  const FILTERS = { vivo:'saturate(1.4) contrast(1.08)', calido:'saturate(1.25) contrast(1.05) sepia(.12)', cine:'contrast(1.18) saturate(.92) brightness(.97)', byn:'grayscale(1) contrast(1.12)', none:'none' };
+  let postImg = null, preset = 'vivo';
+  const $ = (id) => document.getElementById(id);
+  const key = $('key')?.value || '';
+
+  function wrap(ctx,text,maxW){ const w=(text||'').split(/\s+/),l=[]; let ln=''; for(const x of w){ const t=ln?ln+' '+x:x; if(ctx.measureText(t).width>maxW&&ln){l.push(ln);ln=x;}else ln=t;} if(ln)l.push(ln); return l; }
+  function cover(ctx,im,W,H){ const ir=im.width/im.height,cr=W/H; let dw,dh,dx,dy; if(ir>cr){dh=H;dw=H*ir;dx=(W-dw)/2;dy=0;}else{dw=W;dh=W/ir;dx=0;dy=(H-dh)/2;} ctx.drawImage(im,dx,dy,dw,dh); }
+  function shortDesc(t){ t=(t||'').replace(/#\S+/g,'').replace(/\s+/g,' ').trim(); if(t.length>170){ t=t.slice(0,168); t=t.replace(/[,;.\s]+\S*$/,'')+'…'; } return t; }
+
+  function render(){
+    const cv=$('post'); if(!cv) return; const ctx=cv.getContext('2d'); const W=1080,H=1350,P=78;
+    ctx.clearRect(0,0,W,H);
+    if(postImg){ ctx.filter=FILTERS[preset]||'none'; cover(ctx,postImg,W,H); ctx.filter='none'; }
+    else { const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,'#3a3a3a'); g.addColorStop(1,'#17120e'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+           ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font=`400 34px ${FF}`; ctx.textAlign='center'; ctx.fillText('Elige una foto arriba', W/2, H/2); ctx.textAlign='left'; }
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(0,0,0,.42)'); g.addColorStop(.42,'rgba(0,0,0,.06)'); g.addColorStop(1,'rgba(0,0,0,.86)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=10; ctx.shadowOffsetY=2; ctx.textBaseline='alphabetic';
+    ctx.fillStyle=RAUSCH; ctx.beginPath(); ctx.arc(P+22,P+20,22,0,7); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font=`bold 42px ${FF}`; ctx.fillText('rankingspain.com',P+58,P+34);
+    ctx.font=`400 30px ${FF}`; ctx.fillStyle='rgba(255,255,255,.72)'; ctx.textAlign='right'; ctx.fillText('rankingspain.com',W-P,H-P-14); ctx.textAlign='left';
+    const nombre = ($('nombre')?.value||'').trim() || ($('municipio')?.value||'').trim() || 'Tu sitio';
+    const muni = ($('municipio')?.value||'').trim();
+    const desc = shortDesc($('desc')?.value||'');
+    let y=H-P-118;
+    if(desc){ ctx.font=`400 38px ${FF}`; ctx.fillStyle='rgba(255,255,255,.9)'; const dl=wrap(ctx,desc,W-2*P).slice(0,4); for(let i=dl.length-1;i>=0;i--){ctx.fillText(dl[i],P,y);y-=48;} y-=8; }
+    if(muni){ ctx.font=`400 40px ${FF}`; ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillText(muni,P,y); y-=56; }
+    ctx.font=`800 90px ${FF}`; ctx.fillStyle='#fff'; const nl=wrap(ctx,nombre,W-2*P); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=90;} y-=12;
+    ctx.font=`800 30px ${FF}`; ctx.fillStyle=RAUSCH; ctx.fillText('SITIO INCREÍBLE',P,y);
+    ctx.shadowColor='transparent';
+  }
+
+  function loadFile(file, cb){ const im=new Image(); im.onload=()=>cb(im); im.src=URL.createObjectURL(file); }
+
+  $('fotoInp')?.addEventListener('change', e => { const f=e.target.files[0]; if(!f)return; loadFile(f, im=>{ postImg=im; $('fotoUp').classList.add('set'); $('fotoTxt').textContent='✅ Foto elegida — toca para cambiarla'; render(); }); });
+  document.querySelectorAll('#presets .pchip').forEach(ch => ch.addEventListener('click', () => { document.querySelectorAll('#presets .pchip').forEach(c=>c.classList.remove('on')); ch.classList.add('on'); preset=ch.getAttribute('data-p'); render(); }));
+  ['nombre','municipio','desc'].forEach(id => $(id)?.addEventListener('input', render));
+
+  $('limpiar')?.addEventListener('click', () => {
+    let t=$('desc').value||''; t=t.replace(/#\S+/g,'').replace(/@\S+/g,'').replace(/https?:\/\/\S+/g,'');
+    t=t.replace(/[📍✨🌊🏖️⛰️🌅😍🔥👇➡️•·|]+/gu,' ').replace(/\n{2,}/g,'\n').replace(/[ \t]{2,}/g,' ').trim();
+    $('desc').value=t; render();
+  });
+
+  // OCR opcional (best-effort) con Tesseract cargado bajo demanda
+  $('capInp')?.addEventListener('change', async e => {
+    const f=e.target.files[0]; if(!f) return; const btn=document.querySelector('label[for=capInp]'); const old=btn.textContent; btn.textContent='Leyendo… (puede tardar)';
+    try{
+      if(!window.Tesseract){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+      const { data } = await window.Tesseract.recognize(f, 'spa');
+      const txt=(data.text||'').trim();
+      if(txt){ $('desc').value = ($('desc').value ? $('desc').value+'\n' : '') + txt; render(); }
+      else showMsg('No pude leer texto. Prueba a copiar el texto en tu móvil y pegarlo.', false);
+    }catch(err){ showMsg('El lector no está disponible. Copia el texto de la captura en tu móvil y pégalo aquí.', false); }
+    finally{ btn.textContent=old; e.target.value=''; }
+  });
+
+  function showMsg(t, isOk){ const m=$('msg'); m.textContent=t; m.className='msg '+(isOk?'ok':'err'); }
+
+  $('descargar')?.addEventListener('click', () => {
+    render();
+    const a=document.createElement('a');
+    a.download=(( $('municipio')?.value||'post').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-')||'post')+'-rankingspain.png';
+    a.href=$('post').toDataURL('image/png'); a.click();
+  });
+
+  $('guardar')?.addEventListener('click', async e => {
+    const btn=e.target; const municipio=($('municipio')?.value||'').trim(); const descripcion=($('desc')?.value||'').trim(); const nombre=($('nombre')?.value||'').trim();
+    if(!municipio){ showMsg('Escribe el municipio antes de guardar.', false); return; }
+    if(descripcion.length<20){ showMsg('La descripción es muy corta.', false); return; }
+    btn.textContent='Guardando…'; btn.disabled=true;
+    try{
+      const r=await fetch('/api/admin/captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ municipio, nombre, descripcion }) });
+      const d=await r.json();
+      if(d.ok) showMsg(`✅ Guardado en la ficha de ${d.municipio}${d.provincia?' ('+d.provincia+')':''}.`, true);
+      else showMsg('⚠️ '+(d.error||'No se pudo guardar.'), false);
+    }catch(err){ showMsg('Error de red al guardar.', false); }
+    finally{ btn.textContent='💾 Guardar en la web'; btn.disabled=false; }
+  });
+
+  render();
+</script>
+</body></html>
