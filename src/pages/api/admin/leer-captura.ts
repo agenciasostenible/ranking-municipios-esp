@@ -8,9 +8,9 @@
  * Necesita el secreto ANTHROPIC_API_KEY (lo pone el dueño en Cloudflare).
  */
 import type { APIRoute } from 'astro';
+import { rtEnv } from '../../../lib/runtime';
 
-const env = (k: string) =>
-  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const env = (k: string) => rtEnv(k);
 const j = (o: any, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json' } });
 
