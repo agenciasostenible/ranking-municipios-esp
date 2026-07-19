@@ -73,6 +73,31 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
       <input type="text" id="municipio" placeholder="Ej: Tarifa" />
     </label>
 
+    <div class="row">
+      <label class="fld" style="flex:2">Categoría (dónde rankea)
+        <select id="categoria">
+          <option value="naturaleza">Naturaleza</option>
+          <option value="Playas">Playas</option>
+          <option value="senderismo">Senderismo</option>
+          <option value="miradores">Miradores</option>
+          <option value="cuevas">Cuevas</option>
+          <option value="pozas">Pozas y cascadas</option>
+          <option value="monumentos">Monumentos</option>
+          <option value="castillos">Castillos</option>
+          <option value="museos">Museos</option>
+          <option value="gastronomia">Gastronomía</option>
+          <option value="turismo_activo">Turismo activo</option>
+          <option value="estrellas">Astroturismo</option>
+          <option value="turismo_religioso">Religioso</option>
+          <option value="pueblo_bonito">Pueblo bonito</option>
+        </select>
+      </label>
+      <label class="fld" style="flex:1">Puntos
+        <input type="number" id="puntuacion" min="0" max="100" step="1" value="82" />
+      </label>
+    </div>
+    <div class="hint" style="margin-top:-6px">El municipio sube en esa categoría con estos puntos (nunca baja los que ya tenga). Todo va también a Naturaleza.</div>
+
     <div>
       <label class="fld">Descripción</label>
       <textarea id="desc" placeholder="Aquí saldrá el texto de tu captura (o pégalo tú mismo)"></textarea>
@@ -137,17 +162,29 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     $('desc').value=t; render();
   });
 
-  // OCR de la captura del texto (best-effort) con Tesseract cargado bajo demanda
+  // fichero -> dataURL base64 (para enviar a Claude Vision)
+  function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+
+  // Lee la captura del texto con Claude Vision: saca nombre/municipio y REESCRIBE la descripción en nuestro estilo
   $('capInp')?.addEventListener('change', async e => {
     const f=e.target.files[0]; if(!f) return;
-    $('capUp').classList.add('set'); $('capTxt').innerHTML='② 📝 Leyendo el texto… <small style="opacity:.65">(la 1ª vez tarda un poco)</small>';
+    $('capUp').classList.add('set'); $('capTxt').innerHTML='② 📝 Leyendo la captura con Claude…';
     try{
-      if(!window.Tesseract){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
-      const { data } = await window.Tesseract.recognize(f, 'spa');
-      let txt=(data.text||'').replace(/\n{2,}/g,'\n').trim();
-      if(txt){ $('desc').value = txt; $('capTxt').innerHTML='② ✅ Texto leído — revísalo abajo'; render(); }
-      else { $('capTxt').innerHTML='② ⚠️ No pude leer texto — pégalo abajo'; showMsg('No pude leer el texto de la captura. Copia el texto en tu móvil y pégalo en la descripción.', false); }
-    }catch(err){ $('capTxt').innerHTML='② ⚠️ Lector no disponible — pega el texto abajo'; showMsg('El lector automático no cargó. Copia el texto de la captura en tu móvil y pégalo en la descripción.', false); }
+      const dataURL = await fileToDataURL(f);
+      const mediaType = (f.type && f.type.startsWith('image/')) ? f.type : 'image/jpeg';
+      const r = await fetch('/api/admin/leer-captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ imageBase64:dataURL, mediaType }) });
+      const d = await r.json();
+      if(d.ok){
+        if(d.nombre && !$('nombre').value.trim()) $('nombre').value=d.nombre;
+        if(d.municipio && !$('municipio').value.trim()) $('municipio').value=d.municipio;
+        if(d.descripcion) $('desc').value=d.descripcion;
+        $('capTxt').innerHTML='② ✅ Leído y reescrito — revísalo abajo'; render();
+        showMsg('Descripción reescrita en nuestro estilo. Revísala y ajusta lo que quieras antes de guardar.', true);
+      } else {
+        $('capTxt').innerHTML='② ⚠️ No pude leerla — pega el texto abajo';
+        showMsg('⚠️ '+(d.error||'No se pudo leer la captura.'), false);
+      }
+    }catch(err){ $('capTxt').innerHTML='② ⚠️ Error — pega el texto abajo'; showMsg('Error de red al leer la captura. Copia el texto en tu móvil y pégalo en la descripción.', false); }
     finally{ e.target.value=''; }
   });
 
@@ -164,11 +201,15 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     const btn=e.target; const municipio=($('municipio')?.value||'').trim(); const descripcion=($('desc')?.value||'').trim(); const nombre=($('nombre')?.value||'').trim();
     if(!municipio){ showMsg('Escribe el municipio antes de guardar.', false); return; }
     if(descripcion.length<20){ showMsg('La descripción es muy corta.', false); return; }
+    const categoria=($('categoria')?.value||'naturaleza'); const puntuacion=Number($('puntuacion')?.value||0);
     btn.textContent='Guardando…'; btn.disabled=true;
     try{
-      const r=await fetch('/api/admin/captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ municipio, nombre, descripcion }) });
+      const r=await fetch('/api/admin/captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ municipio, nombre, descripcion, categoria, puntuacion }) });
       const d=await r.json();
-      if(d.ok) showMsg(`✅ ${d.creado?'Sitio creado':'Actualizado'}: “${d.nombre}” aparecerá en la ficha de ${d.municipio}${d.provincia?' ('+d.provincia+')':''}.`, true);
+      if(d.ok){
+        const rk = d.rankea ? ` y rankea en ${d.categoria} con ${d.puntuacion} pts` : '';
+        showMsg(`✅ ${d.creado?'Sitio creado':'Actualizado'}: “${d.nombre}” en la ficha de ${d.municipio}${d.provincia?' ('+d.provincia+')':''}${rk}.`, true);
+      }
       else showMsg('⚠️ '+(d.error||'No se pudo guardar.'), false);
     }catch(err){ showMsg('Error de red al guardar.', false); }
     finally{ btn.textContent='💾 Guardar en la web'; btn.disabled=false; }
