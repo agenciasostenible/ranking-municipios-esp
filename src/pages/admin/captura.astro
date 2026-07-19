@@ -112,7 +112,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 
     <div class="msg" id="msg"></div>
     <div class="row">
-      <button class="btn primary" type="button" id="descargar">⬇ Descargar post</button>
+      <button class="btn primary" type="button" id="descargar">📲 Descargar / Compartir</button>
       <button class="btn ok" type="button" id="guardar">💾 Guardar en la web</button>
     </div>
   </div>
@@ -211,11 +211,25 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 
   function showMsg(t, isOk){ const m=$('msg'); m.textContent=t; m.className='msg '+(isOk?'ok':'err'); }
 
-  $('descargar')?.addEventListener('click', () => {
+  function dataURLtoBlob(durl){ const p=durl.split(','); const mime=(p[0].match(/:(.*?);/)||[])[1]||'image/png'; const bin=atob(p[1]); const n=bin.length; const u8=new Uint8Array(n); for(let i=0;i<n;i++) u8[i]=bin.charCodeAt(i); return new Blob([u8],{type:mime}); }
+
+  $('descargar')?.addEventListener('click', async () => {
     render();
-    const a=document.createElement('a');
-    a.download=(( $('municipio')?.value||'post').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-')||'post')+'-rankingspain.png';
-    a.href=$('post').toDataURL('image/png'); a.click();
+    const fname=(( $('municipio')?.value||'post').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'post')+'-rankingspain.png';
+    // toBlob SINCRONO desde dataURL para no perder el "gesto" del usuario (iOS es exigente)
+    const durl=$('post').toDataURL('image/png');
+    const blob=dataURLtoBlob(durl);
+    const file=new File([blob],fname,{type:'image/png'});
+    // 1) Compartir nativo del móvil: permite "Guardar imagen" en Fotos o enviar a Instagram
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:'Ranking Spain'}); return; }
+      catch(err){ if(err && err.name==='AbortError') return; /* si falla, sigue al plan B */ }
+    }
+    // 2) Descarga clásica (ordenador y navegadores que la soporten)
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.download=fname; a.href=url; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    showMsg('Si no se ha descargado, mantén pulsada la imagen del post de arriba y elige “Guardar imagen”.', true);
   });
 
   $('guardar')?.addEventListener('click', async e => {
