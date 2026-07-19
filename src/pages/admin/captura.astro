@@ -72,6 +72,9 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     <label class="fld">Municipio
       <input type="text" id="municipio" placeholder="Ej: Tarifa" />
     </label>
+    <label class="fld">Gancho <span style="text-transform:none;font-weight:400;color:#b3a690">— frase corta que sale en la imagen</span>
+      <input type="text" id="gancho" placeholder="Ej: El paraíso escondido de Galicia" maxlength="46" />
+    </label>
 
     <div class="row">
       <label class="fld" style="flex:2">Categoría (dónde rankea)
@@ -141,12 +144,14 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     ctx.font=`400 30px ${FF}`; ctx.fillStyle='rgba(255,255,255,.72)'; ctx.textAlign='right'; ctx.fillText('rankingspain.com',W-P,H-P-14); ctx.textAlign='left';
     const nombre = ($('nombre')?.value||'').trim() || ($('municipio')?.value||'').trim() || 'Tu sitio';
     const muni = ($('municipio')?.value||'').trim();
-    const desc = shortDesc($('desc')?.value||'');
+    // gancho corto y comercial para la imagen (si no hay, recorto la descripción a algo breve)
+    let gancho = ($('gancho')?.value||'').trim();
+    if(!gancho){ gancho = shortDesc($('desc')?.value||''); if(gancho.length>60){ gancho=gancho.slice(0,58).replace(/[,;.\s]+\S*$/,'')+'…'; } }
     let y=H-P-118;
-    if(desc){ ctx.font=`400 38px ${FF}`; ctx.fillStyle='rgba(255,255,255,.9)'; const dl=wrap(ctx,desc,W-2*P).slice(0,4); for(let i=dl.length-1;i>=0;i--){ctx.fillText(dl[i],P,y);y-=48;} y-=8; }
+    if(gancho){ ctx.font=`600 46px ${FF}`; ctx.fillStyle='rgba(255,255,255,.95)'; const dl=wrap(ctx,gancho,W-2*P).slice(0,2); for(let i=dl.length-1;i>=0;i--){ctx.fillText(dl[i],P,y);y-=56;} y-=10; }
     if(muni){ ctx.font=`400 40px ${FF}`; ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillText(muni,P,y); y-=56; }
-    ctx.font=`800 90px ${FF}`; ctx.fillStyle='#fff'; const nl=wrap(ctx,nombre,W-2*P); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=90;} y-=12;
-    ctx.font=`800 30px ${FF}`; ctx.fillStyle=RAUSCH; ctx.fillText('SITIO INCREÍBLE',P,y);
+    ctx.font=`800 90px ${FF}`; ctx.fillStyle='#fff'; const nl=wrap(ctx,nombre,W-2*P); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=90;} y-=16;
+    ctx.font=`800 44px ${FF}`; ctx.fillStyle=RAUSCH; ctx.fillText('SITIO INCREÍBLE',P,y);
     ctx.shadowColor='transparent';
   }
 
@@ -154,7 +159,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 
   $('fotoInp')?.addEventListener('change', e => { const f=e.target.files[0]; if(!f)return; loadFile(f, im=>{ postImg=im; $('fotoUp').classList.add('set'); $('fotoTxt').textContent='✅ Foto elegida — toca para cambiarla'; render(); }); });
   document.querySelectorAll('#presets .pchip').forEach(ch => ch.addEventListener('click', () => { document.querySelectorAll('#presets .pchip').forEach(c=>c.classList.remove('on')); ch.classList.add('on'); preset=ch.getAttribute('data-p'); render(); }));
-  ['nombre','municipio','desc'].forEach(id => $(id)?.addEventListener('input', render));
+  ['nombre','municipio','gancho','desc'].forEach(id => $(id)?.addEventListener('input', render));
 
   $('limpiar')?.addEventListener('click', () => {
     let t=$('desc').value||''; t=t.replace(/#\S+/g,'').replace(/@\S+/g,'').replace(/https?:\/\/\S+/g,'');
@@ -177,6 +182,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
       if(d.ok){
         if(d.nombre && !$('nombre').value.trim()) $('nombre').value=d.nombre;
         if(d.municipio && !$('municipio').value.trim()) $('municipio').value=d.municipio;
+        if(d.gancho && !$('gancho').value.trim()) $('gancho').value=d.gancho;
         if(d.descripcion) $('desc').value=d.descripcion;
         $('capTxt').innerHTML='② ✅ Leído y reescrito — revísalo abajo'; render();
         showMsg('Descripción reescrita en nuestro estilo. Revísala y ajusta lo que quieras antes de guardar.', true);

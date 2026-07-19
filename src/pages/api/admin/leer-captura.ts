@@ -19,6 +19,7 @@ const PROMPT = `Esta imagen es una captura de pantalla de una publicación de In
 Devuelve EXCLUSIVAMENTE un objeto JSON válido, sin texto alrededor, con estas claves:
 - "nombre": el nombre propio del sitio (playa, cala, ruta, mirador, cascada, monumento, restaurante…). Si no hay uno claro, usa el nombre del municipio.
 - "municipio": el municipio español donde está. Solo el municipio, sin provincia.
+- "gancho": una frase MUY CORTA de gancho comercial (máximo 6 palabras), tipo eslogan de publicidad de viajes, que enganche y dé ganas de ir. Sin punto final, sin hashtags, sin emojis. Ejemplos: "El paraíso escondido de Galicia", "Un rincón que no olvidarás", "Postal viva del Cantábrico".
 - "descripcion": 2 o 3 frases REESCRITAS CON TUS PROPIAS PALABRAS, en español, en estilo de guía de viajes evocadora e inspiradora (que den ganas de ir). NO copies literalmente el texto de la imagen: reformúlalo. Sin hashtags, sin emojis, sin arrobas, sin llamadas a la acción tipo "sígueme" o "guarda este post".
 
 Si algún dato no aparece en la imagen, pon cadena vacía "" en esa clave. Responde solo el JSON.`;
@@ -80,6 +81,7 @@ export const POST: APIRoute = async ({ request, url }) => {
     ok: true,
     nombre: String(parsed.nombre || '').trim(),
     municipio: String(parsed.municipio || '').trim(),
+    gancho: String(parsed.gancho || '').trim(),
     descripcion: String(parsed.descripcion || '').trim(),
   });
 };
