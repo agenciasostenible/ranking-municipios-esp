@@ -39,7 +39,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
   <div class="noauth">Acceso restringido. Añade <code>?key=TU_ADMIN_KEY</code> a la URL.</div>
 ) : (
 <div>
-  <div class="bar"><h1>📲 Captura → post</h1><a href={`/admin?key=${key}`}>← Panel</a></div>
+  <div class="bar"><a href={`/admin?key=${key}`} style="font-size:20px;text-decoration:none">←</a><h1>📲 Captura → post</h1><button id="reset" type="button" style="margin-left:auto;font:inherit;font-size:13px;font-weight:700;padding:8px 12px;border-radius:10px;border:1px solid #d9cfc0;background:#fff;cursor:pointer">🔄 Nueva captura</button></div>
   <div class="wrap">
     <input type="hidden" id="key" value={key} />
 
@@ -161,6 +161,21 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
   document.querySelectorAll('#presets .pchip').forEach(ch => ch.addEventListener('click', () => { document.querySelectorAll('#presets .pchip').forEach(c=>c.classList.remove('on')); ch.classList.add('on'); preset=ch.getAttribute('data-p'); render(); }));
   ['nombre','municipio','gancho','desc'].forEach(id => $(id)?.addEventListener('input', render));
 
+  // 🔄 Nueva captura: limpia TODO para empezar un sitio nuevo
+  function resetAll(){
+    postImg=null; preset='vivo';
+    ['nombre','municipio','gancho','desc'].forEach(id=>{ if($(id)) $(id).value=''; });
+    if($('categoria')) $('categoria').value='naturaleza';
+    if($('puntuacion')) $('puntuacion').value='82';
+    document.querySelectorAll('#presets .pchip').forEach(c=>c.classList.toggle('on', c.getAttribute('data-p')==='vivo'));
+    $('fotoUp')?.classList.remove('set'); if($('fotoTxt')) $('fotoTxt').innerHTML='① 📷 Captura / foto del sitio<br><small style="opacity:.65;text-transform:none;letter-spacing:0">será la imagen del post</small>';
+    $('capUp')?.classList.remove('set'); if($('capTxt')) $('capTxt').innerHTML='② 📝 Captura del texto<br><small style="opacity:.65;text-transform:none;letter-spacing:0">la leo y relleno la descripción</small>';
+    if($('fotoInp')) $('fotoInp').value=''; if($('capInp')) $('capInp').value='';
+    const m=$('msg'); if(m){ m.className='msg'; m.textContent=''; }
+    render(); window.scrollTo(0,0);
+  }
+  $('reset')?.addEventListener('click', resetAll);
+
   $('limpiar')?.addEventListener('click', () => {
     let t=$('desc').value||''; t=t.replace(/#\S+/g,'').replace(/@\S+/g,'').replace(/https?:\/\/\S+/g,'');
     t=t.replace(/[📍✨🌊🏖️⛰️🌅😍🔥👇➡️•·|]+/gu,' ').replace(/\n{2,}/g,'\n').replace(/[ \t]{2,}/g,' ').trim();
@@ -180,9 +195,9 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
       const r = await fetch('/api/admin/leer-captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ imageBase64:dataURL, mediaType:'image/jpeg' }), signal:ctrl.signal });
       const d = await r.json();
       if(d.ok){
-        if(d.nombre && !$('nombre').value.trim()) $('nombre').value=d.nombre;
-        if(d.municipio && !$('municipio').value.trim()) $('municipio').value=d.municipio;
-        if(d.gancho && !$('gancho').value.trim()) $('gancho').value=d.gancho;
+        if(d.nombre) $('nombre').value=d.nombre;
+        if(d.municipio) $('municipio').value=d.municipio;
+        if(d.gancho) $('gancho').value=d.gancho;
         if(d.descripcion) $('desc').value=d.descripcion;
         $('capTxt').innerHTML='② ✅ Leído y reescrito — revísalo abajo'; render();
         showMsg('Descripción reescrita en nuestro estilo. Revísala y ajusta lo que quieras antes de guardar.', true);
