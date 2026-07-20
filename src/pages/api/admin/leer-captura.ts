@@ -1,10 +1,10 @@
 /**
  * POST /api/admin/leer-captura?key=ADMIN_KEY
- * Recibe una captura de pantalla (imagen base64) de un post de Instagram y,
- * con Claude Vision, EXTRAE el sitio y REESCRIBE la descripción en nuestro estilo
- * (nunca copia el texto original).
- *   body { imageBase64, mediaType }   ej. mediaType "image/jpeg"
- *   -> { ok, nombre, municipio, descripcion }
+ * Con Claude Vision, según el modo:
+ *   modo "texto" (def): la imagen es una CAPTURA de un post; EXTRAE datos y REESCRIBE la descripción.
+ *   modo "foto": la imagen es una FOTO del sitio; ESCRIBE gancho + descripción mirándola (usa 'pista' para nombre/municipio).
+ *   body { imageBase64, mediaType, modo?, pista? }
+ *   -> { ok, nombre, municipio, gancho, descripcion }
  * Necesita el secreto ANTHROPIC_API_KEY (lo pone el dueño en Cloudflare).
  */
 import type { APIRoute } from 'astro';
@@ -14,15 +14,26 @@ const env = (k: string) => rtEnv(k);
 const j = (o: any, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json' } });
 
-const PROMPT = `Esta imagen es una captura de pantalla de una publicación de Instagram (o web) sobre un lugar turístico de España.
-
-Devuelve EXCLUSIVAMENTE un objeto JSON válido, sin texto alrededor, con estas claves:
-- "nombre": el nombre propio del sitio (playa, cala, ruta, mirador, cascada, monumento, restaurante…). Si no hay uno claro, usa el nombre del municipio.
+const CLAVES = `- "nombre": el nombre propio del sitio (playa, cala, ruta, mirador, cascada, monumento, restaurante…). Si no hay uno claro, usa el nombre del municipio.
 - "municipio": el municipio español donde está. Solo el municipio, sin provincia.
 - "gancho": una frase MUY CORTA de gancho comercial (máximo 6 palabras), tipo eslogan de publicidad de viajes, que enganche y dé ganas de ir. Sin punto final, sin hashtags, sin emojis. Ejemplos: "El paraíso escondido de Galicia", "Un rincón que no olvidarás", "Postal viva del Cantábrico".
-- "descripcion": 2 o 3 frases REESCRITAS CON TUS PROPIAS PALABRAS, en español, en estilo de guía de viajes evocadora e inspiradora (que den ganas de ir). NO copies literalmente el texto de la imagen: reformúlalo. Sin hashtags, sin emojis, sin arrobas, sin llamadas a la acción tipo "sígueme" o "guarda este post".
+- "descripcion": 2 o 3 frases en español, en estilo de guía de viajes evocadora e inspiradora (que den ganas de ir). Sin hashtags, sin emojis, sin arrobas, sin llamadas a la acción tipo "sígueme" o "guarda este post".`;
 
+const PROMPT_TEXTO = `Esta imagen es una captura de pantalla de una publicación de Instagram (o web) sobre un lugar turístico de España.
+
+Devuelve EXCLUSIVAMENTE un objeto JSON válido, sin texto alrededor, con estas claves:
+${CLAVES}
+
+Para "descripcion", REESCRIBE con tus propias palabras, NO copies literalmente el texto de la imagen.
 Si algún dato no aparece en la imagen, pon cadena vacía "" en esa clave. Responde solo el JSON.`;
+
+const promptFoto = (pista: string) => `Esta imagen es una FOTOGRAFÍA de un lugar turístico de España. Obsérvala con atención (tipo de paisaje, elementos, ambiente) y redacta un texto atractivo para promocionarlo.
+
+Devuelve EXCLUSIVAMENTE un objeto JSON válido, sin texto alrededor, con estas claves:
+${CLAVES}
+${pista ? `\nPISTA del usuario (fíate de ella para el nombre y el municipio): ${pista}` : ''}
+
+IMPORTANTE: no inventes el nombre propio ni el municipio si no estás razonablemente seguro por la pista o porque el sitio sea inconfundible; en ese caso deja "nombre" y "municipio" como "". El "gancho" y la "descripcion" SÍ los escribes siempre a partir de lo que ves. Responde solo el JSON.`;
 
 export const POST: APIRoute = async ({ request, url }) => {
   const key = url.searchParams.get('key') ?? '';
@@ -35,6 +46,9 @@ export const POST: APIRoute = async ({ request, url }) => {
   try { body = await request.json(); } catch { return j({ ok: false, error: 'bad-json' }, 400); }
   let data = String(body.imageBase64 || '');
   const mediaType = String(body.mediaType || 'image/jpeg');
+  const modo = String(body.modo || 'texto');
+  const pista = String(body.pista || '').slice(0, 200).trim();
+  const PROMPT = modo === 'foto' ? promptFoto(pista) : PROMPT_TEXTO;
   // aceptar tanto "data:...;base64,XXXX" como solo el base64
   const comma = data.indexOf(',');
   if (data.startsWith('data:') && comma > -1) data = data.slice(comma + 1);

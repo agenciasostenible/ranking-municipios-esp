@@ -105,6 +105,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
       <label class="fld">Descripción</label>
       <textarea id="desc" placeholder="Aquí saldrá el texto de tu captura (o pégalo tú mismo)"></textarea>
       <div class="row" style="margin-top:8px">
+        <button class="btn" type="button" id="genfoto">🖼️ Generar texto desde la foto</button>
         <button class="btn" type="button" id="limpiar">✨ Limpiar texto</button>
       </div>
       <div class="hint" style="margin-top:6px">Si el lector automático falla: mantén pulsado el texto de tu captura en el móvil, “Copiar”, y pégalo aquí.</div>
@@ -123,7 +124,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
   const FF = '"Helvetica Neue",Arial,sans-serif';
   const RAUSCH = '#FF385C';
   const FILTERS = { vivo:'saturate(1.4) contrast(1.08)', calido:'saturate(1.25) contrast(1.05) sepia(.12)', cine:'contrast(1.18) saturate(.92) brightness(.97)', byn:'grayscale(1) contrast(1.12)', none:'none' };
-  let postImg = null, preset = 'vivo';
+  let postImg = null, preset = 'vivo', fotoFile = null;
   const $ = (id) => document.getElementById(id);
   const key = $('key')?.value || '';
 
@@ -157,13 +158,13 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 
   function loadFile(file, cb){ const im=new Image(); im.onload=()=>cb(im); im.src=URL.createObjectURL(file); }
 
-  $('fotoInp')?.addEventListener('change', e => { const f=e.target.files[0]; if(!f)return; loadFile(f, im=>{ postImg=im; $('fotoUp').classList.add('set'); $('fotoTxt').textContent='✅ Foto elegida — toca para cambiarla'; render(); }); });
+  $('fotoInp')?.addEventListener('change', e => { const f=e.target.files[0]; if(!f)return; fotoFile=f; loadFile(f, im=>{ postImg=im; $('fotoUp').classList.add('set'); $('fotoTxt').textContent='✅ Foto elegida — toca para cambiarla'; render(); }); });
   document.querySelectorAll('#presets .pchip').forEach(ch => ch.addEventListener('click', () => { document.querySelectorAll('#presets .pchip').forEach(c=>c.classList.remove('on')); ch.classList.add('on'); preset=ch.getAttribute('data-p'); render(); }));
   ['nombre','municipio','gancho','desc'].forEach(id => $(id)?.addEventListener('input', render));
 
   // 🔄 Nueva captura: limpia TODO para empezar un sitio nuevo
   function resetAll(){
-    postImg=null; preset='vivo';
+    postImg=null; fotoFile=null; preset='vivo';
     ['nombre','municipio','gancho','desc'].forEach(id=>{ if($(id)) $(id).value=''; });
     if($('categoria')) $('categoria').value='naturaleza';
     if($('puntuacion')) $('puntuacion').value='82';
@@ -180,6 +181,31 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     let t=$('desc').value||''; t=t.replace(/#\S+/g,'').replace(/@\S+/g,'').replace(/https?:\/\/\S+/g,'');
     t=t.replace(/[📍✨🌊🏖️⛰️🌅😍🔥👇➡️•·|]+/gu,' ').replace(/\n{2,}/g,'\n').replace(/[ \t]{2,}/g,' ').trim();
     $('desc').value=t; render();
+  });
+
+  // 🖼️ Generar texto mirando la FOTO del sitio (cuando no hay captura de texto)
+  $('genfoto')?.addEventListener('click', async e => {
+    const btn=e.target;
+    if(!fotoFile){ showMsg('Primero sube la ① foto del sitio.', false); return; }
+    const nombre=($('nombre')?.value||'').trim(), municipio=($('municipio')?.value||'').trim();
+    const pista=[nombre?('nombre: '+nombre):'', municipio?('municipio: '+municipio):''].filter(Boolean).join(', ');
+    const old=btn.textContent; btn.textContent='Mirando la foto…'; btn.disabled=true;
+    const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),45000);
+    try{
+      const dataURL=await fileToScaledDataURL(fotoFile,1400);
+      const r=await fetch('/api/admin/leer-captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ imageBase64:dataURL, mediaType:'image/jpeg', modo:'foto', pista }), signal:ctrl.signal });
+      const d=await r.json();
+      if(d.ok){
+        if(d.nombre && !nombre) $('nombre').value=d.nombre;
+        if(d.municipio && !municipio) $('municipio').value=d.municipio;
+        if(d.gancho) $('gancho').value=d.gancho;
+        if(d.descripcion) $('desc').value=d.descripcion;
+        render();
+        const falta=(!($('municipio').value||'').trim())?' Escribe tú el municipio (la foto sola no basta para saberlo).':'';
+        showMsg('Texto generado a partir de la foto. Revísalo y ajústalo.'+falta, true);
+      } else showMsg('⚠️ '+(d.error||'No se pudo generar el texto.'), false);
+    }catch(err){ showMsg(err&&err.name==='AbortError' ? 'Tardó demasiado, prueba otra vez.' : 'Error de red al generar el texto.', false); }
+    finally{ clearTimeout(to); btn.textContent=old; btn.disabled=false; }
   });
 
   // fichero -> dataURL JPEG REDUCIDO (móvil sube capturas enormes: escalamos para que vaya rápido y barato)
