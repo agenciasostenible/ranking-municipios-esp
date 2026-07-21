@@ -161,7 +161,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     else { const gg=ctx.createLinearGradient(0,0,W,H); gg.addColorStop(0,'#3a3a3a'); gg.addColorStop(1,'#17120e'); ctx.fillStyle=gg; ctx.fillRect(0,0,W,H);
            ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font=`500 34px ${FF}`; ctx.textAlign='center'; ctx.fillText('Elige una foto arriba', W/2, H/2); ctx.textAlign='left'; }
     // Scrim: oscurece arriba (marca) y sobre todo abajo (texto) para máxima legibilidad
-    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(0,0,0,.5)'); g.addColorStop(.34,'rgba(0,0,0,.04)'); g.addColorStop(.62,'rgba(0,0,0,.28)'); g.addColorStop(1,'rgba(0,0,0,.94)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(0,0,0,.5)'); g.addColorStop(.3,'rgba(0,0,0,.03)'); g.addColorStop(.5,'rgba(0,0,0,.34)'); g.addColorStop(.86,'rgba(0,0,0,.9)'); g.addColorStop(1,'rgba(0,0,0,.82)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
 
     // Marca arriba
     ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=14; ctx.shadowOffsetY=2;
@@ -174,19 +174,20 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     let gancho = ($('gancho')?.value||'').trim();
     if(!gancho){ gancho = shortDesc($('desc')?.value||''); if(gancho.length>62){ gancho=gancho.slice(0,60).replace(/[,;.\s]+\S*$/,'')+'…'; } }
 
-    // Bloque inferior, construido de abajo hacia arriba
-    const tShadow=()=>{ ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=18; ctx.shadowOffsetY=3; };
-    let y=H-P-34;
+    // Bloque inferior, construido de abajo hacia arriba.
+    // Dejamos MARGEN abajo (~230px) para que Instagram no tape el texto con el 👁 de visualizaciones.
+    const tShadow=()=>{ ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=22; ctx.shadowOffsetY=3; };
+    let y=H-232;
     // Gancho (subtítulo)
-    if(gancho){ ctx.font=`600 44px ${FF}`; setLS(ctx,'-.3px'); ctx.fillStyle='rgba(255,255,255,.96)'; tShadow(); const dl=wrap(ctx,gancho,W-2*P).slice(0,2); for(let i=dl.length-1;i>=0;i--){ctx.fillText(dl[i],P,y);y-=54;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=6; }
+    if(gancho){ ctx.font=`600 46px ${FF}`; setLS(ctx,'-.3px'); ctx.fillStyle='rgba(255,255,255,.97)'; tShadow(); const dl=wrap(ctx,gancho,W-2*P).slice(0,2); for(let i=dl.length-1;i>=0;i--){ctx.fillText(dl[i],P,y);y-=56;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=8; }
     // Municipio con pin
-    if(muni){ ctx.font=`700 40px ${FF}`; setLS(ctx,'-.3px'); tShadow(); ctx.fillStyle='#fff'; ctx.fillText('📍 '+muni,P,y); setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=64; }
+    if(muni){ ctx.font=`700 42px ${FF}`; setLS(ctx,'-.3px'); tShadow(); ctx.fillStyle='#fff'; ctx.fillText('📍 '+muni,P,y); setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=66; }
     // Nombre grande
-    ctx.font=`800 94px ${FF}`; setLS(ctx,'-2.5px'); ctx.fillStyle='#fff'; tShadow(); const nl=wrap(ctx,nombre,W-2*P).slice(0,3); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=96;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=26;
+    ctx.font=`800 98px ${FF}`; setLS(ctx,'-2.5px'); ctx.fillStyle='#fff'; tShadow(); const nl=wrap(ctx,nombre,W-2*P).slice(0,3); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=100;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=28;
     // Pastilla: COLOR según la categoría, pero el TEXTO siempre fijo "SITIO TOP" (blanco sobre color, GRANDE)
     const st = CAT_STYLE[($('categoria')?.value||'')] || { color:RAUSCH };
-    const label='SITIO TOP'; ctx.font=`800 44px ${FF}`; setLS(ctx,'2px');
-    const tw=ctx.measureText(label).width, padX=34, padY=22, bh=44+padY*2, bw=tw+padX*2, bx=P, by=y-bh;
+    const label='SITIO TOP'; ctx.font=`800 48px ${FF}`; setLS(ctx,'2px');
+    const tw=ctx.measureText(label).width, padX=36, padY=23, bh=48+padY*2, bw=tw+padX*2, bx=P, by=y-bh;
     ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=20; ctx.shadowOffsetY=5;
     ctx.fillStyle=st.color; roundRect(ctx,bx,by,bw,bh,bh/2); ctx.fill(); ctx.shadowColor='transparent';
     ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(label,bx+padX,by+bh/2+2); ctx.textBaseline='alphabetic'; setLS(ctx,'0px');
