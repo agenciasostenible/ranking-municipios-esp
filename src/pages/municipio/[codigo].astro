@@ -1683,8 +1683,9 @@ window.openSello = openSello;
 /* Foto propia subida por el admin: la tarjeta pasa a columna, foto arriba, sin icono */
 .entidad-foto {
   width: 100%;
-  height: 160px;
-  object-fit: cover;
+  height: auto;              /* respeta la proporción real de la foto (cuadrada = cuadrada) */
+  max-height: 520px;         /* tope para fotos muy verticales */
+  object-fit: contain;
   border-radius: 12px;
   display: block;
 }
