@@ -6,6 +6,9 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 ---
 <html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Captura → post · Redes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   :root{ --rausch:#FF385C; --line:#e7dfd3; --muted:#8a7f70; }
   *{ box-sizing:border-box; }
@@ -121,7 +124,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 ) }
 
 <script>
-  const FF = '"Helvetica Neue",Arial,sans-serif';
+  const FF = '"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif';
   const RAUSCH = '#FF385C';
   const FILTERS = { vivo:'saturate(1.4) contrast(1.08)', calido:'saturate(1.25) contrast(1.05) sepia(.12)', cine:'contrast(1.18) saturate(.92) brightness(.97)', byn:'grayscale(1) contrast(1.12)', none:'none' };
   let postImg = null, preset = 'vivo', fotoFile = null;
@@ -131,29 +134,44 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
   function wrap(ctx,text,maxW){ const w=(text||'').split(/\s+/),l=[]; let ln=''; for(const x of w){ const t=ln?ln+' '+x:x; if(ctx.measureText(t).width>maxW&&ln){l.push(ln);ln=x;}else ln=t;} if(ln)l.push(ln); return l; }
   function cover(ctx,im,W,H){ const ir=im.width/im.height,cr=W/H; let dw,dh,dx,dy; if(ir>cr){dh=H;dw=H*ir;dx=(W-dw)/2;dy=0;}else{dw=W;dh=W/ir;dx=0;dy=(H-dh)/2;} ctx.drawImage(im,dx,dy,dw,dh); }
   function shortDesc(t){ t=(t||'').replace(/#\S+/g,'').replace(/\s+/g,' ').trim(); if(t.length>170){ t=t.slice(0,168); t=t.replace(/[,;.\s]+\S*$/,'')+'…'; } return t; }
+  function roundRect(ctx,x,y,w,h,r){ r=Math.min(r,h/2,w/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function setLS(ctx,v){ try{ ctx.letterSpacing=v; }catch(_){} }
 
   function render(){
     const cv=$('post'); if(!cv) return; const ctx=cv.getContext('2d'); const W=1080,H=1350,P=78;
-    ctx.clearRect(0,0,W,H);
+    ctx.clearRect(0,0,W,H); setLS(ctx,'0px'); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
     if(postImg){ ctx.filter=FILTERS[preset]||'none'; cover(ctx,postImg,W,H); ctx.filter='none'; }
-    else { const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,'#3a3a3a'); g.addColorStop(1,'#17120e'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-           ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font=`400 34px ${FF}`; ctx.textAlign='center'; ctx.fillText('Elige una foto arriba', W/2, H/2); ctx.textAlign='left'; }
-    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(0,0,0,.42)'); g.addColorStop(.42,'rgba(0,0,0,.06)'); g.addColorStop(1,'rgba(0,0,0,.86)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=10; ctx.shadowOffsetY=2; ctx.textBaseline='alphabetic';
-    ctx.fillStyle=RAUSCH; ctx.beginPath(); ctx.arc(P+22,P+20,22,0,7); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font=`bold 42px ${FF}`; ctx.fillText('rankingspain.com',P+58,P+34);
-    ctx.font=`400 30px ${FF}`; ctx.fillStyle='rgba(255,255,255,.72)'; ctx.textAlign='right'; ctx.fillText('rankingspain.com',W-P,H-P-14); ctx.textAlign='left';
+    else { const gg=ctx.createLinearGradient(0,0,W,H); gg.addColorStop(0,'#3a3a3a'); gg.addColorStop(1,'#17120e'); ctx.fillStyle=gg; ctx.fillRect(0,0,W,H);
+           ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font=`500 34px ${FF}`; ctx.textAlign='center'; ctx.fillText('Elige una foto arriba', W/2, H/2); ctx.textAlign='left'; }
+    // Scrim: oscurece arriba (marca) y sobre todo abajo (texto) para máxima legibilidad
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(0,0,0,.5)'); g.addColorStop(.34,'rgba(0,0,0,.04)'); g.addColorStop(.62,'rgba(0,0,0,.28)'); g.addColorStop(1,'rgba(0,0,0,.94)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+    // Marca arriba
+    ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=14; ctx.shadowOffsetY=2;
+    ctx.fillStyle=RAUSCH; ctx.beginPath(); ctx.arc(P+20,P+18,20,0,7); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font=`700 40px ${FF}`; setLS(ctx,'-.5px'); ctx.fillText('rankingspain.com',P+52,P+31); setLS(ctx,'0px');
+    ctx.shadowColor='transparent';
+
     const nombre = ($('nombre')?.value||'').trim() || ($('municipio')?.value||'').trim() || 'Tu sitio';
     const muni = ($('municipio')?.value||'').trim();
-    // gancho corto y comercial para la imagen (si no hay, recorto la descripción a algo breve)
     let gancho = ($('gancho')?.value||'').trim();
-    if(!gancho){ gancho = shortDesc($('desc')?.value||''); if(gancho.length>60){ gancho=gancho.slice(0,58).replace(/[,;.\s]+\S*$/,'')+'…'; } }
-    let y=H-P-118;
-    if(gancho){ ctx.font=`600 46px ${FF}`; ctx.fillStyle='rgba(255,255,255,.95)'; const dl=wrap(ctx,gancho,W-2*P).slice(0,2); for(let i=dl.length-1;i>=0;i--){ctx.fillText(dl[i],P,y);y-=56;} y-=10; }
-    if(muni){ ctx.font=`400 40px ${FF}`; ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillText(muni,P,y); y-=56; }
-    ctx.font=`800 90px ${FF}`; ctx.fillStyle='#fff'; const nl=wrap(ctx,nombre,W-2*P); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=90;} y-=16;
-    ctx.font=`800 44px ${FF}`; ctx.fillStyle=RAUSCH; ctx.fillText('SITIO INCREÍBLE',P,y);
-    ctx.shadowColor='transparent';
+    if(!gancho){ gancho = shortDesc($('desc')?.value||''); if(gancho.length>62){ gancho=gancho.slice(0,60).replace(/[,;.\s]+\S*$/,'')+'…'; } }
+
+    // Bloque inferior, construido de abajo hacia arriba
+    const tShadow=()=>{ ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=18; ctx.shadowOffsetY=3; };
+    let y=H-P-34;
+    // Gancho (subtítulo)
+    if(gancho){ ctx.font=`600 44px ${FF}`; setLS(ctx,'-.3px'); ctx.fillStyle='rgba(255,255,255,.96)'; tShadow(); const dl=wrap(ctx,gancho,W-2*P).slice(0,2); for(let i=dl.length-1;i>=0;i--){ctx.fillText(dl[i],P,y);y-=54;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=6; }
+    // Municipio con pin
+    if(muni){ ctx.font=`700 40px ${FF}`; setLS(ctx,'-.3px'); tShadow(); ctx.fillStyle='#fff'; ctx.fillText('📍 '+muni,P,y); setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=64; }
+    // Nombre grande
+    ctx.font=`800 94px ${FF}`; setLS(ctx,'-2.5px'); ctx.fillStyle='#fff'; tShadow(); const nl=wrap(ctx,nombre,W-2*P).slice(0,3); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=96;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=26;
+    // Pastilla "SITIO INCREÍBLE" (blanco sobre rojo = se lee siempre)
+    const label='SITIO INCREÍBLE'; ctx.font=`800 32px ${FF}`; setLS(ctx,'2.5px');
+    const tw=ctx.measureText(label).width, padX=28, padY=18, bh=32+padY*2, bw=tw+padX*2, bx=P, by=y-bh;
+    ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=16; ctx.shadowOffsetY=4;
+    ctx.fillStyle=RAUSCH; roundRect(ctx,bx,by,bw,bh,bh/2); ctx.fill(); ctx.shadowColor='transparent';
+    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(label,bx+padX,by+bh/2+1); ctx.textBaseline='alphabetic'; setLS(ctx,'0px');
   }
 
   function loadFile(file, cb){ const im=new Image(); im.onload=()=>cb(im); im.src=URL.createObjectURL(file); }
@@ -280,5 +298,14 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
   });
 
   render();
+  // Redibuja cuando Plus Jakarta Sans esté lista (canvas necesita la fuente cargada)
+  if(document.fonts && document.fonts.load){
+    Promise.all([
+      document.fonts.load('800 94px "Plus Jakarta Sans"'),
+      document.fonts.load('700 40px "Plus Jakarta Sans"'),
+      document.fonts.load('600 44px "Plus Jakarta Sans"')
+    ]).then(()=>render()).catch(()=>{});
+    document.fonts.ready.then(()=>render()).catch(()=>{});
+  }
 </script>
 </body></html>
