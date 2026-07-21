@@ -17,7 +17,7 @@ const j = (o: any, status = 200) =>
 const CLAVES = `- "nombre": el nombre propio del sitio (playa, cala, ruta, mirador, cascada, monumento, restaurante…). Si no hay uno claro, usa el nombre del municipio.
 - "municipio": el municipio español donde está. Solo el municipio, sin provincia.
 - "gancho": una frase MUY CORTA de gancho comercial (máximo 6 palabras), tipo eslogan de publicidad de viajes, que enganche y dé ganas de ir. Sin punto final, sin hashtags, sin emojis. Ejemplos: "El paraíso escondido de Galicia", "Un rincón que no olvidarás", "Postal viva del Cantábrico".
-- "descripcion": 2 o 3 frases en español, en estilo de guía de viajes evocadora e inspiradora (que den ganas de ir). Sin hashtags, sin emojis, sin arrobas, sin llamadas a la acción tipo "sígueme" o "guarda este post".`;
+- "descripcion": 2 o 3 frases en español, en estilo de guía de viajes evocadora e inspiradora (que den ganas de ir). NOMBRA el municipio dentro del texto de forma natural (y su provincia si la conoces con seguridad), para dejar claro dónde está y posicionar al municipio. Ej.: "Etnosur, el festival que pone a Alcalá la Real (Jaén) en el mapa cada verano...". Sin hashtags, sin emojis, sin arrobas, sin llamadas a la acción tipo "sígueme" o "guarda este post".`;
 
 const PROMPT_TEXTO = `Esta imagen es una captura de pantalla de una publicación de Instagram (o web) sobre un lugar turístico de España.
 

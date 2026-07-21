@@ -111,7 +111,10 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
         <button class="btn" type="button" id="genfoto">🖼️ Generar texto desde la foto</button>
         <button class="btn" type="button" id="limpiar">✨ Limpiar texto</button>
       </div>
-      <div class="hint" style="margin-top:6px">Si el lector automático falla: mantén pulsado el texto de tu captura en el móvil, “Copiar”, y pégalo aquí.</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn primary" type="button" id="copiar">📋 Copiar texto para Instagram</button>
+      </div>
+      <div class="hint" style="margin-top:6px">El texto para Instagram nombra el municipio y añade el enlace y los hashtags. Si el lector automático falla: mantén pulsado el texto de tu captura en el móvil, “Copiar”, y pégalo aquí.</div>
     </div>
 
     <div class="msg" id="msg"></div>
@@ -219,6 +222,23 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     let t=$('desc').value||''; t=t.replace(/#\S+/g,'').replace(/@\S+/g,'').replace(/https?:\/\/\S+/g,'');
     t=t.replace(/[📍✨🌊🏖️⛰️🌅😍🔥👇➡️•·|]+/gu,' ').replace(/\n{2,}/g,'\n').replace(/[ \t]{2,}/g,' ').trim();
     $('desc').value=t; render();
+  });
+
+  // 📋 Copiar pie para Instagram: encabezado con municipio + descripción + enlace + hashtags
+  function slug(s){ return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]/g,''); }
+  function buildCaption(){
+    const nombre=($('nombre')?.value||'').trim(), muni=($('municipio')?.value||'').trim(), desc=($('desc')?.value||'').trim();
+    const cab = nombre ? `📍 ${nombre}${muni?` — ${muni}`:''}` : (muni?`📍 ${muni}`:'');
+    const tagMuni = muni ? ' #'+slug(muni) : '';
+    return [ cab, cab?'':null, desc, '', '👉 Descúbrelo en rankingspain.com', `#España #turismo #viajar #escapada${tagMuni}` ].filter(x=>x!==null).join('\n');
+  }
+  $('copiar')?.addEventListener('click', async e => {
+    const btn=e.target; const desc=($('desc')?.value||'').trim();
+    if(desc.length<10){ showMsg('Primero genera o escribe la descripción.', false); return; }
+    const cap=buildCaption();
+    try{ await navigator.clipboard.writeText(cap); }
+    catch(_){ const ta=document.createElement('textarea'); ta.value=cap; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(__){} ta.remove(); }
+    const o=btn.textContent; btn.textContent='✓ Copiado — pégalo en Instagram'; setTimeout(()=>btn.textContent=o,1800);
   });
 
   // 🖼️ Generar texto mirando la FOTO del sitio (cuando no hay captura de texto)
