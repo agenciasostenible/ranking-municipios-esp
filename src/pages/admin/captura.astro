@@ -183,9 +183,9 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     if(muni){ ctx.font=`700 40px ${FF}`; setLS(ctx,'-.3px'); tShadow(); ctx.fillStyle='#fff'; ctx.fillText('📍 '+muni,P,y); setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=64; }
     // Nombre grande
     ctx.font=`800 94px ${FF}`; setLS(ctx,'-2.5px'); ctx.fillStyle='#fff'; tShadow(); const nl=wrap(ctx,nombre,W-2*P).slice(0,3); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=96;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=26;
-    // Pastilla con COLOR + etiqueta según la categoría (blanco sobre color, GRANDE = se lee en el feed)
-    const st = CAT_STYLE[($('categoria')?.value||'')] || { color:RAUSCH, label:'SITIO INCREÍBLE' };
-    const label=st.label; ctx.font=`800 44px ${FF}`; setLS(ctx,'2px');
+    // Pastilla: COLOR según la categoría, pero el TEXTO siempre fijo "SITIO TOP" (blanco sobre color, GRANDE)
+    const st = CAT_STYLE[($('categoria')?.value||'')] || { color:RAUSCH };
+    const label='SITIO TOP'; ctx.font=`800 44px ${FF}`; setLS(ctx,'2px');
     const tw=ctx.measureText(label).width, padX=34, padY=22, bh=44+padY*2, bw=tw+padX*2, bx=P, by=y-bh;
     ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=20; ctx.shadowOffsetY=5;
     ctx.fillStyle=st.color; roundRect(ctx,bx,by,bw,bh,bh/2); ctx.fill(); ctx.shadowColor='transparent';
