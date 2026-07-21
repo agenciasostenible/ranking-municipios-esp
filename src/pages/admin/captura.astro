@@ -166,12 +166,12 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     if(muni){ ctx.font=`700 40px ${FF}`; setLS(ctx,'-.3px'); tShadow(); ctx.fillStyle='#fff'; ctx.fillText('📍 '+muni,P,y); setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=64; }
     // Nombre grande
     ctx.font=`800 94px ${FF}`; setLS(ctx,'-2.5px'); ctx.fillStyle='#fff'; tShadow(); const nl=wrap(ctx,nombre,W-2*P).slice(0,3); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=96;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=26;
-    // Pastilla "SITIO INCREÍBLE" (blanco sobre rojo = se lee siempre)
-    const label='SITIO INCREÍBLE'; ctx.font=`800 32px ${FF}`; setLS(ctx,'2.5px');
-    const tw=ctx.measureText(label).width, padX=28, padY=18, bh=32+padY*2, bw=tw+padX*2, bx=P, by=y-bh;
-    ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=16; ctx.shadowOffsetY=4;
+    // Pastilla "SITIO INCREÍBLE" (blanco sobre rojo, GRANDE = se lee incluso en el feed reducido)
+    const label='SITIO INCREÍBLE'; ctx.font=`800 44px ${FF}`; setLS(ctx,'2px');
+    const tw=ctx.measureText(label).width, padX=34, padY=22, bh=44+padY*2, bw=tw+padX*2, bx=P, by=y-bh;
+    ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=20; ctx.shadowOffsetY=5;
     ctx.fillStyle=RAUSCH; roundRect(ctx,bx,by,bw,bh,bh/2); ctx.fill(); ctx.shadowColor='transparent';
-    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(label,bx+padX,by+bh/2+1); ctx.textBaseline='alphabetic'; setLS(ctx,'0px');
+    ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(label,bx+padX,by+bh/2+2); ctx.textBaseline='alphabetic'; setLS(ctx,'0px');
   }
 
   function loadFile(file, cb){ const im=new Image(); im.onload=()=>cb(im); im.src=URL.createObjectURL(file); }
