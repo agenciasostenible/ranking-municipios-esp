@@ -265,11 +265,14 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     const categoria=($('categoria')?.value||'naturaleza'); const puntuacion=Number($('puntuacion')?.value||0);
     btn.textContent='Guardando…'; btn.disabled=true;
     try{
-      const r=await fetch('/api/admin/captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ municipio, nombre, descripcion, categoria, puntuacion }) });
+      // la foto del sitio (reducida) para guardarla en la web junto al texto
+      let foto=null; if(fotoFile){ try{ foto=await fileToScaledDataURL(fotoFile,1280); }catch(_){ foto=null; } }
+      const r=await fetch('/api/admin/captura?key='+encodeURIComponent(key), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ municipio, nombre, descripcion, categoria, puntuacion, foto }) });
       const d=await r.json();
       if(d.ok){
         const rk = d.rankea ? ` y rankea en ${d.categoria} con ${d.puntuacion} pts` : '';
-        showMsg(`✅ ${d.creado?'Sitio creado':'Actualizado'}: “${d.nombre}” en la ficha de ${d.municipio}${d.provincia?' ('+d.provincia+')':''}${rk}.`, true);
+        const ft = d.conFoto ? ' 📷 con foto' : '';
+        showMsg(`✅ ${d.creado?'Sitio creado':'Actualizado'}${ft}: “${d.nombre}” en la ficha de ${d.municipio}${d.provincia?' ('+d.provincia+')':''}${rk}.`, true);
       }
       else showMsg('⚠️ '+(d.error||'No se pudo guardar.'), false);
     }catch(err){ showMsg('Error de red al guardar.', false); }

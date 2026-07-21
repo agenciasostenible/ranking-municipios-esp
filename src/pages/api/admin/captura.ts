@@ -8,6 +8,7 @@
  */
 import type { APIRoute } from 'astro';
 import { DB } from '../../../lib/d1client';
+import { toStorableImage } from '../../../lib/imgblob';
 
 const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
@@ -36,6 +37,7 @@ export const POST: APIRoute = async ({ request, url }) => {
   const nombre = String(body.nombre || '').trim() || municipio;
   const categoria = String(body.categoria || 'naturaleza').trim();
   const puntuacion = Math.max(0, Math.min(100, Number(body.puntuacion) || 0));
+  const foto = toStorableImage(body.foto);   // data URL base64 (TEXT) o null
   if (!municipio) return j({ ok: false, error: 'Falta el municipio.' }, 400);
   if (descripcion.length < 20) return j({ ok: false, error: 'La descripción es demasiado corta.' }, 400);
   const tipo = TIPO_BY_CAT[categoria] || 'espacio';
@@ -52,15 +54,17 @@ export const POST: APIRoute = async ({ request, url }) => {
         || cand[0];
   if (!sel) return j({ ok: false, error: `No encuentro el municipio “${municipio}”. Revisa el nombre.` }, 404);
 
-  // 1) la entidad (ficha del sitio) con la puntuación por sitio
+  // 1) la entidad (ficha del sitio) con la puntuación por sitio y la foto (si viene)
   const res = await DB.prepare(
-    `INSERT INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente, puntuacion)
-     VALUES (?, ?, ?, ?, 'captura_instagram', ?)
+    `INSERT INTO entidades (codigo_ine, tipo, nombre, descripcion, fuente, puntuacion, foto_data, foto_mime)
+     VALUES (?, ?, ?, ?, 'captura_instagram', ?, ?, NULL)
      ON CONFLICT(codigo_ine, tipo, nombre) DO UPDATE SET
        descripcion = excluded.descripcion,
        fuente      = 'captura_instagram',
-       puntuacion  = MAX(COALESCE(entidades.puntuacion,0), excluded.puntuacion)`
-  ).bind(sel.codigo_ine, tipo, nombre.slice(0, 120), descripcion.slice(0, 1500), puntuacion || null).run();
+       puntuacion  = MAX(COALESCE(entidades.puntuacion,0), excluded.puntuacion),
+       foto_data   = COALESCE(excluded.foto_data, entidades.foto_data),
+       foto_mime   = CASE WHEN excluded.foto_data IS NOT NULL THEN NULL ELSE entidades.foto_mime END`
+  ).bind(sel.codigo_ine, tipo, nombre.slice(0, 120), descripcion.slice(0, 1500), puntuacion || null, foto).run();
   const creado = (res as any)?.meta?.changes > 0;
 
   // 2) puntos en la categoría (MAX, nunca baja) para que el municipio RANQUEE
@@ -84,5 +88,5 @@ export const POST: APIRoute = async ({ request, url }) => {
     rankea = true;
   }
 
-  return j({ ok: true, creado, rankea, categoria, puntuacion, codigo: sel.codigo_ine, municipio: sel.nombre, provincia: sel.provincia, nombre });
+  return j({ ok: true, creado, rankea, conFoto: !!foto, categoria, puntuacion, codigo: sel.codigo_ine, municipio: sel.nombre, provincia: sel.provincia, nombre });
 };
