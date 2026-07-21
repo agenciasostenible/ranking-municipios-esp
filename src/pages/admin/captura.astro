@@ -126,6 +126,23 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
 <script>
   const FF = '"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif';
   const RAUSCH = '#FF385C';
+  // Color + etiqueta de la pastilla según la categoría que se publicita
+  const CAT_STYLE = {
+    naturaleza:       { color:'#2E7D32', label:'NATURALEZA' },
+    Playas:           { color:'#0277BD', label:'PLAYA' },
+    senderismo:       { color:'#558B2F', label:'SENDERISMO' },
+    miradores:        { color:'#00838F', label:'MIRADOR' },
+    cuevas:           { color:'#5D4037', label:'CUEVA' },
+    pozas:            { color:'#0097A7', label:'POZAS Y CASCADAS' },
+    monumentos:       { color:'#8D6E63', label:'MONUMENTO' },
+    castillos:        { color:'#6D4C41', label:'CASTILLO' },
+    museos:           { color:'#5E35B1', label:'MUSEO' },
+    gastronomia:      { color:'#E65100', label:'GASTRONOMÍA' },
+    turismo_activo:   { color:'#F4511E', label:'TURISMO ACTIVO' },
+    estrellas:        { color:'#283593', label:'CIELO ESTRELLADO' },
+    turismo_religioso:{ color:'#7B1FA2', label:'PATRIMONIO' },
+    pueblo_bonito:    { color:'#FF385C', label:'PUEBLO BONITO' },
+  };
   const FILTERS = { vivo:'saturate(1.4) contrast(1.08)', calido:'saturate(1.25) contrast(1.05) sepia(.12)', cine:'contrast(1.18) saturate(.92) brightness(.97)', byn:'grayscale(1) contrast(1.12)', none:'none' };
   let postImg = null, preset = 'vivo', fotoFile = null;
   const $ = (id) => document.getElementById(id);
@@ -166,11 +183,12 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
     if(muni){ ctx.font=`700 40px ${FF}`; setLS(ctx,'-.3px'); tShadow(); ctx.fillStyle='#fff'; ctx.fillText('📍 '+muni,P,y); setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=64; }
     // Nombre grande
     ctx.font=`800 94px ${FF}`; setLS(ctx,'-2.5px'); ctx.fillStyle='#fff'; tShadow(); const nl=wrap(ctx,nombre,W-2*P).slice(0,3); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=96;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=26;
-    // Pastilla "SITIO INCREÍBLE" (blanco sobre rojo, GRANDE = se lee incluso en el feed reducido)
-    const label='SITIO INCREÍBLE'; ctx.font=`800 44px ${FF}`; setLS(ctx,'2px');
+    // Pastilla con COLOR + etiqueta según la categoría (blanco sobre color, GRANDE = se lee en el feed)
+    const st = CAT_STYLE[($('categoria')?.value||'')] || { color:RAUSCH, label:'SITIO INCREÍBLE' };
+    const label=st.label; ctx.font=`800 44px ${FF}`; setLS(ctx,'2px');
     const tw=ctx.measureText(label).width, padX=34, padY=22, bh=44+padY*2, bw=tw+padX*2, bx=P, by=y-bh;
     ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=20; ctx.shadowOffsetY=5;
-    ctx.fillStyle=RAUSCH; roundRect(ctx,bx,by,bw,bh,bh/2); ctx.fill(); ctx.shadowColor='transparent';
+    ctx.fillStyle=st.color; roundRect(ctx,bx,by,bw,bh,bh/2); ctx.fill(); ctx.shadowColor='transparent';
     ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(label,bx+padX,by+bh/2+2); ctx.textBaseline='alphabetic'; setLS(ctx,'0px');
   }
 
@@ -179,6 +197,7 @@ const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
   $('fotoInp')?.addEventListener('change', e => { const f=e.target.files[0]; if(!f)return; fotoFile=f; loadFile(f, im=>{ postImg=im; $('fotoUp').classList.add('set'); $('fotoTxt').textContent='✅ Foto elegida — toca para cambiarla'; render(); }); });
   document.querySelectorAll('#presets .pchip').forEach(ch => ch.addEventListener('click', () => { document.querySelectorAll('#presets .pchip').forEach(c=>c.classList.remove('on')); ch.classList.add('on'); preset=ch.getAttribute('data-p'); render(); }));
   ['nombre','municipio','gancho','desc'].forEach(id => $(id)?.addEventListener('input', render));
+  $('categoria')?.addEventListener('change', render);
 
   // 🔄 Nueva captura: limpia TODO para empezar un sitio nuevo
   function resetAll(){
