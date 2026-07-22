@@ -1,0 +1,539 @@
+---
+/**
+ * /admin/hoy — Plan diario: LA publicación de hoy (formato rotatorio pensado para
+ * interacción) con copy+hashtags listos y generador de imagen, más las tareas del
+ * día (DMs a ayuntamientos, emails por conseguir, prospectos de negocio, checklist).
+ * Todo se elige DETERMINISTA por fecha: cada día el plan es distinto sin tocar nada.
+ */
+import { DB } from '../../lib/d1client';
+
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+const k = encodeURIComponent(key);
+
+// ---- fecha en España ----
+const fecha = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date()); // YYYY-MM-DD
+const [Y, M, D] = fecha.split('-').map(Number);
+const dow = new Date(Date.UTC(Y, M - 1, D)).getUTCDay(); // 0=domingo
+const fechaBonita = new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+const seed = Y * 372 + M * 31 + D; // cambia cada día, estable durante el día
+
+const slugTag = (s: string) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
+const frase1 = (t: string) => ((t || '').split(/(?<=[.!?])\s/)[0] || '').trim();
+const frase2 = (t: string) => ((t || '').split(/(?<=[.!?])\s/)[1] || '').trim();
+const HORA = dow === 0 || dow === 6 ? '11:00–13:00' : '19:00–21:00';
+
+const TIPO_PISTA: Record<string, string> = {
+  playa: 'es una playa', cueva: 'es una cueva', mirador: 'es un mirador', poza: 'tiene agua dulce',
+  cascada: 'es una cascada', sendero: 'es una ruta', espacio: 'es un paraje natural', monumento: 'es un monumento',
+  castillo: 'es un castillo', lago: 'es un lago', faro: 'es un faro',
+};
+
+// pool de sitios curados (con buena descripción)
+async function sitioCurado(offsetSeed: number, extra = '') {
+  const base = `FROM entidades e JOIN municipios m ON m.codigo_ine=e.codigo_ine
+    WHERE e.fuente IN ('mil_lugares','unesco','pueblos_mas_bonitos') AND COALESCE(m.es_duplicado,0)=0
+      AND e.descripcion IS NOT NULL AND LENGTH(e.descripcion)>90 ${extra}`;
+  const n = ((await DB.prepare(`SELECT COUNT(*) n ${base}`).first()) as any)?.n || 1;
+  return (await DB.prepare(
+    `SELECT e.nombre, e.descripcion, e.tipo, m.nombre muni, m.provincia, m.codigo_ine codigo, m.poblacion ${base}
+     ORDER BY e.id LIMIT 1 OFFSET ${offsetSeed % n}`
+  ).first()) as any;
+}
+
+const CATS = [
+  { c: 'Playas', l: 'playas', art: 'Las 5 mejores playas' },
+  { c: 'pueblo_bonito', l: 'pueblos bonitos', art: 'Los 5 pueblos más bonitos' },
+  { c: 'castillos', l: 'castillos', art: 'Los 5 castillos más impresionantes' },
+  { c: 'gastronomia', l: 'destinos para comer', art: 'Los 5 mejores sitios para comer' },
+  { c: 'miradores', l: 'miradores', art: 'Los 5 miradores más espectaculares' },
+  { c: 'cuevas', l: 'cuevas', art: 'Las 5 cuevas más alucinantes' },
+  { c: 'senderismo', l: 'rutas de senderismo', art: 'Las 5 mejores zonas de senderismo' },
+];
+
+let plan: any = null;
+let tareas: any = { dms: [], emails: [], prospectos: [] };
+
+if (ok) {
+  const HASH_BASE = '#España #turismoespaña #viajarporespaña #escapadas #lugaresconencanto';
+  const semana = Math.floor(seed / 7);
+
+  if (dow === 1) {
+    // LUNES · TOP 5 carrusel (contenido para GUARDAR)
+    const cat = CATS[semana % CATS.length];
+    const { results } = await DB.prepare(
+      `SELECT m.nombre, m.provincia FROM puntuaciones p JOIN municipios m ON m.codigo_ine=p.codigo_ine
+       WHERE p.categoria=? AND COALESCE(m.es_duplicado,0)=0 ORDER BY p.puntuacion DESC LIMIT 5`
+    ).bind(cat.c).all();
+    const top = (results as any[]) || [];
+    plan = {
+      modo: 'top5', pill: 'TOP 5', pillColor: '#FF385C',
+      titulo: `🏆 Top 5 en carrusel: ${cat.art} de España`,
+      porque: 'Los rankings en carrusel son el formato que más se GUARDA (y los guardados disparan el alcance).',
+      fotoPedido: 'Hoy NO necesitas foto: el carrusel se genera solo con el botón de abajo.',
+      extraLink: { href: `/admin/redes?key=${k}&cat=${encodeURIComponent(cat.c)}&fmt=carrusel&n=5`, txt: '🎠 Generar el carrusel automático (herramienta de posts)' },
+      caption: [
+        `TOP 5: ${cat.art.toLowerCase().replace(/^l(o|a)s 5 /, '')} de España, según datos reales 🏆`, '',
+        ...top.slice(1).map((r, i) => `${5 - i}º ${r.nombre} (${r.provincia})`).reverse(),
+        `1º … ¿lo adivinas? 👀 Está en el carrusel`, '',
+        `¿Falta alguna? Dímelo en comentarios 👇`, `📌 Guárdalo para tu próximo viaje`,
+        `🔗 El ranking completo, en rankingspain.com`, '',
+        `${HASH_BASE} #top5 #${slugTag(cat.l)}`,
+      ].join('\n'),
+    };
+  } else if (dow === 2) {
+    // MARTES · ¿SABÍAS QUE…? (contenido para COMPARTIR)
+    const s = await sitioCurado(seed * 3 + 1);
+    plan = {
+      modo: 'sabias', pill: '¿SABÍAS QUE…?', pillColor: '#5E35B1',
+      nombre: s.nombre, muni: s.muni, prov: s.provincia,
+      sabiasTexto: `En ${s.muni} (${s.provincia}) está ${s.nombre}`,
+      titulo: `🤯 ¿Sabías que…? — ${s.nombre} (${s.muni}, ${s.provincia})`,
+      porque: 'El dato sorprendente es el formato que más se COMPARTE por DM ("mira esto").',
+      fotoPedido: `Sube una foto espectacular de: ${s.nombre} (${s.muni}, ${s.provincia}).`,
+      caption: [
+        `¿Sabías esto de ${s.provincia}? 🤯`, '',
+        `En ${s.muni} está ${s.nombre}. ${frase1(s.descripcion)}`, '',
+        frase2(s.descripcion), '',
+        `Compárteselo a quien tenga que verlo 📩`,
+        `👉 Un sitio increíble de España cada día · rankingspain.com`, '',
+        `${HASH_BASE} #${slugTag(s.provincia)} #${slugTag(s.muni)}`,
+      ].filter(x => x !== null).join('\n'),
+    };
+  } else if (dow === 3) {
+    // MIÉRCOLES · ADIVINA EL SITIO (contenido para COMENTAR)
+    const s = await sitioCurado(seed * 7 + 2);
+    plan = {
+      modo: 'adivina', pill: '¿QUÉ SITIO ES?', pillColor: '#F4511E',
+      nombre: s.nombre, muni: s.muni, prov: s.provincia, pista: TIPO_PISTA[s.tipo] || 'es un sitio natural',
+      titulo: `🕵️ Adivina el sitio — (respuesta: ${s.nombre}, ${s.muni})`,
+      porque: 'Los juegos de adivinar generan COMENTARIOS, y los comentarios son la señal más fuerte para el algoritmo.',
+      fotoPedido: `Sube una foto reconocible de: ${s.nombre} (${s.muni}, ${s.provincia}). La imagen se PIXELA sola para el juego.`,
+      nota: `⚠️ Esta tarde publica la respuesta en Stories (es ${s.nombre}, en ${s.muni}) y etiqueta a quien acertó.`,
+      caption: [
+        `Solo el 1% reconoce este sitio 👀`, '',
+        `Pista 1: está en la provincia de ${s.provincia}`,
+        `Pista 2: ${TIPO_PISTA[s.tipo] || 'es un sitio natural'}`, '',
+        `¿Sabes cuál es? Dilo en comentarios 👇`,
+        `(La respuesta, esta tarde en Stories)`, '',
+        `${HASH_BASE} #adivina #${slugTag(s.provincia)}`,
+      ].join('\n'),
+    };
+  } else if (dow === 4) {
+    // JUEVES · JOYA ESCONDIDA (contenido para GUARDAR)
+    const s = await sitioCurado(seed * 5 + 3, 'AND m.poblacion < 15000');
+    plan = {
+      modo: 'normal', pill: 'JOYA ESCONDIDA', pillColor: '#00838F',
+      nombre: s.nombre, muni: s.muni, prov: s.provincia, gancho: 'El secreto mejor guardado de ' + s.provincia,
+      titulo: `💎 Joya escondida — ${s.nombre} (${s.muni}, ${s.provincia})`,
+      porque: 'Los sitios poco masificados son lo que más GUARDA la gente que planea escapadas.',
+      fotoPedido: `Sube una foto de: ${s.nombre} (${s.muni}, ${s.provincia}).`,
+      caption: [
+        `Este rincón de ${s.provincia} no sale en casi ninguna guía 🤫`, '',
+        `${s.nombre}, en ${s.muni}${s.poblacion ? ` (${s.poblacion.toLocaleString('es-ES')} habitantes)` : ''}. ${frase1(s.descripcion)}`, '',
+        `Mejor ir antes de que se llene 😉`, '',
+        `📌 Guárdalo y etiqueta a tu compañero/a de viaje 👇`, '',
+        `${HASH_BASE} #joyasescondidas #${slugTag(s.provincia)} #${slugTag(s.muni)}`,
+      ].join('\n'),
+    };
+  } else if (dow === 5) {
+    // VIERNES · PLAN DE FINDE (contenido para GUARDAR, justo cuando se planea)
+    const s = await sitioCurado(seed * 11 + 4, "AND e.fuente='pueblos_mas_bonitos'");
+    const { results } = await DB.prepare(
+      `SELECT nombre, tipo FROM entidades WHERE codigo_ine=? AND descripcion IS NOT NULL ORDER BY COALESCE(puntuacion,0) DESC, id LIMIT 3`
+    ).bind(s.codigo).all();
+    const ents = (results as any[]) || [];
+    plan = {
+      modo: 'normal', pill: 'PLAN DE FINDE', pillColor: '#2E7D32',
+      nombre: s.muni, muni: '', prov: s.provincia, gancho: '2 días perfectos en ' + s.provincia,
+      titulo: `🎒 Plan de finde — 2 días en ${s.muni} (${s.provincia})`,
+      porque: 'El viernes la gente PLANEA el finde: los itinerarios listos se guardan muchísimo.',
+      fotoPedido: `Sube una foto bonita del pueblo: ${s.muni} (${s.provincia}).`,
+      extraLink: { href: `https://rankingspain.com/ruta?pueblo=${s.codigo}`, txt: '🗺️ Ver el itinerario completo generado en la web' },
+      caption: [
+        `Plan de finde: 2 días en ${s.muni} (${s.provincia}) 🎒`, '',
+        `✅ Uno de los Pueblos más Bonitos de España`,
+        ents[0] ? `✅ Visita ${ents[0].nombre}` : null,
+        ents[1] ? `✅ No te pierdas ${ents[1].nombre}` : null,
+        `✅ Y de tapeo por su casco histórico`, '',
+        `El itinerario completo (gratis) 👉 rankingspain.com/ruta`, '',
+        `📌 Guárdate este plan · ¿Con quién irías? 👇`, '',
+        `${HASH_BASE} #findesemana #${slugTag(s.provincia)} #${slugTag(s.muni)}`,
+      ].filter(Boolean).join('\n'),
+    };
+  } else if (dow === 6) {
+    // SÁBADO · VERSUS (contenido para COMENTAR)
+    const cat = CATS[(semana + 3) % CATS.length];
+    const { results } = await DB.prepare(
+      `SELECT m.nombre, m.provincia FROM puntuaciones p JOIN municipios m ON m.codigo_ine=p.codigo_ine
+       WHERE p.categoria=? AND COALESCE(m.es_duplicado,0)=0 ORDER BY p.puntuacion DESC LIMIT 12`
+    ).bind(cat.c).all();
+    const top = (results as any[]) || [];
+    const a = top[seed % Math.max(1, top.length)], b = top[(seed + 5) % Math.max(1, top.length)];
+    const B = (b && b.nombre !== a?.nombre) ? b : top[(seed + 7) % Math.max(1, top.length)] || a;
+    plan = {
+      modo: 'versus', pill: '¿CUÁL ELIGES?', pillColor: '#C62828',
+      versusA: `${a?.nombre}`, versusAsub: a?.provincia, versusB: `${B?.nombre}`, versusBsub: B?.provincia,
+      titulo: `⚔️ Versus de ${cat.l}: ${a?.nombre} vs ${B?.nombre}`,
+      porque: 'Los duelos A vs B multiplican los COMENTARIOS (la gente defiende su tierra).',
+      fotoPedido: `Sube DOS fotos: ① una de ${a?.nombre} (${a?.provincia}) y ② otra de ${B?.nombre} (${B?.provincia}).`,
+      nota: '⚠️ Mañana publica el resultado del duelo en Stories con el sticker de encuesta.',
+      caption: [
+        `DUELO de ${cat.l} ⚔️ Solo puedes elegir UNA:`, '',
+        `🅰️ ${a?.nombre} (${a?.provincia})`,
+        `🅱️ ${B?.nombre} (${B?.provincia})`, '',
+        `Vota A o B en comentarios 👇 y defiende tu elección`,
+        `El resultado, mañana en Stories`, '',
+        `${HASH_BASE} #${slugTag(cat.l)} #${slugTag(a?.provincia || '')} #${slugTag(B?.provincia || '')}`,
+      ].join('\n'),
+    };
+  } else {
+    // DOMINGO · POSTAL + DATO (alcance)
+    const s = await sitioCurado(seed * 13 + 5);
+    plan = {
+      modo: 'normal', pill: 'SITIO TOP', pillColor: '#0277BD',
+      nombre: s.nombre, muni: s.muni, prov: s.provincia, gancho: frase1(s.descripcion).slice(0, 60),
+      titulo: `🌅 Postal del domingo — ${s.nombre} (${s.muni}, ${s.provincia})`,
+      porque: 'El domingo por la mañana es pico de scroll relajado: foto espectacular = alcance.',
+      fotoPedido: `Sube la foto más espectacular que encuentres de: ${s.nombre} (${s.muni}, ${s.provincia}).`,
+      caption: [
+        `${s.nombre} (${s.muni}, ${s.provincia}) 😍`, '',
+        `${frase1(s.descripcion)}`, '',
+        `¿Lo conocías? Cuéntamelo abajo 👇`, '',
+        `📌 Guárdalo para tu próxima escapada`,
+        `🔗 Más sitios así, cada día · rankingspain.com`, '',
+        `${HASH_BASE} #${slugTag(s.provincia)} #${slugTag(s.muni)}`,
+      ].join('\n'),
+    };
+  }
+
+  // ---- TAREAS DEL DÍA ----
+  const dms = await DB.prepare(
+    `SELECT a.codigo_ine, a.instagram, m.nombre, m.provincia
+     FROM ayuntamientos_contacto a JOIN municipios m ON m.codigo_ine=a.codigo_ine
+     WHERE a.instagram IS NOT NULL AND a.instagram!='' AND a.ig_dm_enviado_at IS NULL AND COALESCE(m.es_duplicado,0)=0
+     ORDER BY m.poblacion DESC LIMIT 5`
+  ).all();
+  tareas.dms = (dms.results as any[]) || [];
+
+  const sinEmail = await DB.prepare(
+    `SELECT a.codigo_ine, m.nombre, m.provincia
+     FROM ayuntamientos_contacto a JOIN municipios m ON m.codigo_ine=a.codigo_ine
+     WHERE (a.email IS NULL OR a.email='') AND COALESCE(m.es_duplicado,0)=0
+     ORDER BY m.poblacion DESC LIMIT 3`
+  ).all();
+  tareas.emails = (sinEmail.results as any[]) || [];
+
+  const PROS = [
+    { q: 'casa rural', cat: 'TurismoRural', tipo: 'alojamiento rural' },
+    { q: 'restaurante', cat: 'gastronomia', tipo: 'restaurante' },
+    { q: 'empresa turismo activo', cat: 'turismo_activo', tipo: 'empresa de actividades' },
+    { q: 'hotel con encanto', cat: 'pueblo_bonito', tipo: 'hotel' },
+  ];
+  const pr = PROS[seed % PROS.length];
+  const prMunis = await DB.prepare(
+    `SELECT m.nombre, m.provincia FROM puntuaciones p JOIN municipios m ON m.codigo_ine=p.codigo_ine
+     WHERE p.categoria=? AND COALESCE(m.es_duplicado,0)=0 ORDER BY p.puntuacion DESC LIMIT 30`
+  ).bind(pr.cat).all();
+  const pm = (prMunis.results as any[]) || [];
+  tareas.prospectos = [pm[seed % Math.max(1, pm.length)], pm[(seed + 13) % Math.max(1, pm.length)]]
+    .filter(Boolean).map((m: any) => ({ ...m, q: pr.q, tipo: pr.tipo }));
+  tareas.prospectoTipo = pr.tipo;
+}
+
+const planJson = JSON.stringify({ plan, key });
+const DM_TXT = (muni: string) =>
+  `Hola 👋 Somos Ranking Spain. Hemos creado la ficha turística de ${muni} en nuestra web —con sus rankings por categorías y su posición en la provincia— y nos encantaría enviárosla por si hay algo que retocar o completar. ¿A qué email os la podemos mandar? ¡Gracias!`;
+const PROSPECTO_TXT = (tipo: string, muni: string) =>
+  `Hola 👋 Soy de rankingspain.com, el ranking turístico de los municipios de España. ${muni} está muy bien posicionado en nuestra web y estamos seleccionando negocios recomendados de la zona para aparecer en su ficha (miles de visitas de gente planeando viaje). Si os interesa aparecer como ${tipo} recomendado: rankingspain.com/anunciate — ¡Gracias!`;
+---
+<html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Plan de HOY · Ranking Spain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{ --rausch:#FF385C; --line:#e7dfd3; --muted:#8a7f70; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Plus Jakarta Sans","Helvetica Neue",Arial,system-ui,sans-serif; background:#faf8f5; color:#171412; }
+  .bar{ padding:13px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
+  .bar h1{ font-size:16px; margin:0; font-weight:800; letter-spacing:-.02em; }
+  .bar a{ font-size:20px; color:#171412; text-decoration:none; }
+  .fecha{ margin-left:auto; font-size:12.5px; color:var(--muted); font-weight:700; text-transform:capitalize; }
+  .wrap{ max-width:560px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; }
+  .card h2{ margin:0 0 4px; font-size:15.5px; letter-spacing:-.02em; }
+  .porque{ font-size:12.5px; color:var(--muted); line-height:1.45; margin-bottom:10px; }
+  .foto-pedido{ background:#fff7ed; border:1.5px dashed #f0c48a; border-radius:12px; padding:12px; font-size:14px; line-height:1.5; margin:10px 0; }
+  .foto-pedido b{ color:#b45309; }
+  .up{ display:block; text-align:center; padding:20px 12px; border:2px dashed #d9cfc0; border-radius:14px; color:var(--muted); font-size:14px; cursor:pointer; background:#fff; margin-top:8px; }
+  .up.set{ border-style:solid; color:#171412; }
+  input[type=file]{ display:none; }
+  canvas#post{ width:100%; max-width:320px; margin:12px auto 0; display:block; border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.15); }
+  textarea.copy{ width:100%; font:inherit; font-size:13.5px; line-height:1.5; padding:12px; border-radius:12px; border:1px solid #d9cfc0; background:#fafaf7; min-height:210px; resize:vertical; }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .btn{ font:inherit; font-size:14px; padding:11px 13px; border-radius:11px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; flex:1; text-align:center; text-decoration:none; color:#171412; font-weight:600; }
+  .btn.primary{ background:var(--rausch); color:#fff; border:0; font-weight:700; }
+  .btn.dark{ background:#171412; color:#fff; border:0; font-weight:700; }
+  .nota{ background:#eef6ff; border-radius:10px; padding:10px 12px; font-size:13px; line-height:1.45; margin-top:10px; }
+  .tarea{ border-top:1px solid #f0ebe2; padding:12px 0; }
+  .tarea:first-of-type{ border-top:0; }
+  .tarea .t-tit{ font-weight:700; font-size:14px; margin-bottom:3px; }
+  .tarea .t-sub{ font-size:12.5px; color:var(--muted); margin-bottom:8px; }
+  .tarea.done{ opacity:.45; }
+  .tarea.done .t-tit{ text-decoration:line-through; }
+  .mini{ font-size:12.5px; padding:8px 11px; border-radius:9px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; text-decoration:none; color:#171412; font-weight:600; display:inline-block; }
+  .mini.ok{ background:#0a7d3c; color:#fff; border:0; }
+  .check{ display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-top:1px solid #f0ebe2; font-size:14px; line-height:1.45; cursor:pointer; }
+  .check input{ width:19px; height:19px; margin-top:1px; accent-color:#0a7d3c; }
+  .check.done span{ text-decoration:line-through; opacity:.5; }
+  .badge-hora{ display:inline-block; background:#171412; color:#fff; border-radius:999px; padding:4px 12px; font-size:12.5px; font-weight:700; }
+  input.email-in{ font:inherit; font-size:14px; padding:9px 11px; border-radius:9px; border:1px solid #d9cfc0; width:100%; margin:6px 0; }
+  .noauth{ padding:60px 20px; text-align:center; color:var(--muted); }
+  .msg{ font-size:13.5px; padding:9px 11px; border-radius:9px; display:none; margin-top:8px; }
+  .msg.on{ display:block; background:#e4f4ea; color:#0a5c2c; }
+</style></head>
+<body>
+{ !ok ? (
+  <div class="noauth">Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</div>
+) : (
+<div>
+  <div class="bar"><a href={`/admin?key=${key}`}>←</a><h1>📅 Plan de HOY</h1><span class="fecha">{fechaBonita}</span></div>
+  <div class="wrap">
+
+    <!-- ═════════ 1 · LA PUBLICACIÓN DE HOY ═════════ -->
+    <div class="card">
+      <h2>1️⃣ {plan.titulo}</h2>
+      <div class="porque">💡 {plan.porque} Publica a las <span class="badge-hora">🕖 {HORA}</span></div>
+
+      <div class="foto-pedido">📸 <b>Lo que necesito de ti:</b> {plan.fotoPedido}</div>
+
+      { plan.modo !== 'top5' && (
+        <div>
+          <label class="up" id="fotoUp" for="fotoInp"><span id="fotoTxt">📷 Toca aquí y súbeme la foto{plan.modo === 'versus' ? ' ① (A)' : ''}</span></label>
+          <input type="file" id="fotoInp" accept="image/*" />
+          { plan.modo === 'versus' && (
+            <div style="margin-top:8px">
+              <label class="up" id="fotoUp2" for="fotoInp2"><span id="fotoTxt2">📷 Y aquí la foto ② (B)</span></label>
+              <input type="file" id="fotoInp2" accept="image/*" />
+            </div>
+          )}
+          <canvas id="post" width="1080" height="1350"></canvas>
+          <div class="row">
+            <button class="btn dark" type="button" id="descargar">📲 Descargar / Compartir</button>
+          </div>
+        </div>
+      )}
+      { plan.extraLink && <div class="row"><a class="btn primary" href={plan.extraLink.href}>{plan.extraLink.txt}</a></div> }
+
+      <div style="margin-top:14px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px">📝 Tu copy (listo para pegar en Instagram):</div>
+        <textarea class="copy" id="caption" readonly>{plan.caption}</textarea>
+        <div class="row"><button class="btn primary" type="button" id="copiarCap">📋 Copiar el copy</button></div>
+      </div>
+      { plan.nota && <div class="nota">{plan.nota}</div> }
+    </div>
+
+    <!-- ═════════ 2 · DMs A AYUNTAMIENTOS ═════════ -->
+    <div class="card">
+      <h2>2️⃣ Escribe a estos 5 ayuntamientos por Instagram</h2>
+      <div class="porque">Objetivo: conseguir su email para enviarles su ficha y proponer reunión. Copia el DM, ábrelo y pégalo.</div>
+      { tareas.dms.length === 0 && <div class="porque">🎉 No quedan ayuntamientos con Instagram pendientes.</div> }
+      { tareas.dms.map((a: any) => {
+        const handle = String(a.instagram || '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/.*$/, '');
+        return (
+        <div class="tarea" data-dm={a.codigo_ine}>
+          <div class="t-tit">{a.nombre} <span style="font-weight:400;color:#8a7f70">({a.provincia})</span></div>
+          <div class="t-sub">@{handle}</div>
+          <div class="row" style="margin-top:0">
+            <button class="mini" data-copy-dm={a.nombre}>📋 Copiar DM</button>
+            <a class="mini" href={`https://instagram.com/${handle}`} target="_blank" rel="noopener">📲 Abrir su Instagram</a>
+            <button class="mini ok" data-dm-hecho={a.codigo_ine}>✓ Enviado</button>
+          </div>
+        </div>
+      );})}
+    </div>
+
+    <!-- ═════════ 3 · EMAILS POR CONSEGUIR ═════════ -->
+    <div class="card">
+      <h2>3️⃣ Consigue el email de estos 3 ayuntamientos</h2>
+      <div class="porque">Busca en Google (botón), copia el email de su web oficial y pégalo aquí: entra directo en la campaña de emails.</div>
+      { tareas.emails.map((a: any) => (
+        <div class="tarea" data-em={a.codigo_ine}>
+          <div class="t-tit">{a.nombre} <span style="font-weight:400;color:#8a7f70">({a.provincia})</span></div>
+          <div class="row" style="margin-top:0">
+            <a class="mini" href={`https://www.google.com/search?q=${encodeURIComponent('ayuntamiento ' + a.nombre + ' ' + a.provincia + ' email contacto')}`} target="_blank" rel="noopener">🔎 Buscar en Google</a>
+          </div>
+          <input class="email-in" type="email" placeholder="pega aquí el email que encuentres" data-email-in={a.codigo_ine} />
+          <button class="mini ok" data-email-save={a.codigo_ine}>💾 Guardar email</button>
+        </div>
+      ))}
+    </div>
+
+    <!-- ═════════ 4 · PROSPECTOS DE NEGOCIO ═════════ -->
+    <div class="card">
+      <h2>4️⃣ Busca 2 posibles clientes ({tareas.prospectoTipo})</h2>
+      <div class="porque">Municipios top donde un negocio tiene interés en salir recomendado. Búscalo, y mándale el mensaje por su web o Instagram.</div>
+      { tareas.prospectos.map((p: any) => (
+        <div class="tarea">
+          <div class="t-tit">{p.q} en {p.nombre} <span style="font-weight:400;color:#8a7f70">({p.provincia})</span></div>
+          <div class="row" style="margin-top:0">
+            <a class="mini" href={`https://www.google.com/search?q=${encodeURIComponent(p.q + ' ' + p.nombre + ' ' + p.provincia)}`} target="_blank" rel="noopener">🔎 Buscar en Google</a>
+            <button class="mini" data-copy-pros={p.nombre}>📋 Copiar mensaje</button>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- ═════════ 5 · CHECKLIST DE CRECIMIENTO ═════════ -->
+    <div class="card">
+      <h2>5️⃣ Checklist del día <span id="chkContador" style="font-weight:400;color:#8a7f70;font-size:13px"></span></h2>
+      <div class="porque">15 minutos que hacen crecer la cuenta más que el propio post.</div>
+      <label class="check"><input type="checkbox" data-chk="c1" /><span>Publicar el post a las <b>{HORA}</b> (hora de máximo alcance hoy)</span></label>
+      <label class="check"><input type="checkbox" data-chk="c2" /><span>Responder <b>TODOS</b> los comentarios y DMs (los primeros 30 min deciden el alcance)</span></label>
+      <label class="check"><input type="checkbox" data-chk="c3" /><span>Compartir el post en <b>Stories</b> con sticker de encuesta o pregunta</span></label>
+      <label class="check"><input type="checkbox" data-chk="c4" /><span>Dejar <b>10 comentarios con sustancia</b> en cuentas de viajes/turismo de España (no "¡bonito!"; aporta un dato)</span></label>
+      <label class="check"><input type="checkbox" data-chk="c5" /><span>Seguir a 10 cuentas activas del nicho (fotógrafos y turismo de la provincia del post)</span></label>
+      <label class="check"><input type="checkbox" data-chk="c6" /><span>Los 5 DMs a ayuntamientos de arriba enviados</span></label>
+    </div>
+
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+) }
+
+<script type="application/json" id="plandata" set:html={planJson}></script>
+<script is:inline define:vars={{ k, DM_TXTS: ok ? Object.fromEntries(tareas.dms.map((a:any)=>[a.nombre, DM_TXT(a.nombre)])) : {}, PROS_TXTS: ok ? Object.fromEntries((tareas.prospectos||[]).map((p:any)=>[p.nombre, PROSPECTO_TXT(p.tipo, p.nombre)])) : {}, FECHA: fecha }}>
+  const D = JSON.parse(document.getElementById('plandata')?.textContent || '{}');
+  const plan = D.plan || {};
+  const $ = (id) => document.getElementById(id);
+  const FF = '"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif';
+  let img1 = null, img2 = null;
+
+  function showMsg(t){ const m=$('msg'); if(!m) return; m.textContent=t; m.className='msg on'; setTimeout(()=>m.className='msg',2500); }
+  async function copiar(t, btn){ try{ await navigator.clipboard.writeText(t); }catch(_){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(__){} ta.remove(); } if(btn){ const o=btn.textContent; btn.textContent='✓ Copiado'; setTimeout(()=>btn.textContent=o,1500);} }
+
+  // ---------- canvas ----------
+  function wrap(ctx,text,maxW){ const w=(text||'').split(/\s+/),l=[]; let ln=''; for(const x of w){ const t=ln?ln+' '+x:x; if(ctx.measureText(t).width>maxW&&ln){l.push(ln);ln=x;}else ln=t;} if(ln)l.push(ln); return l; }
+  function cover(ctx,im,x0,y0,W,H){ const ir=im.width/im.height,cr=W/H; let dw,dh,dx,dy; if(ir>cr){dh=H;dw=H*ir;dx=x0+(W-dw)/2;dy=y0;}else{dw=W;dh=W/ir;dx=x0;dy=y0+(H-dh)/2;} ctx.drawImage(im,dx,dy,dw,dh); }
+  function roundRect(ctx,x,y,w,h,r){ r=Math.min(r,h/2,w/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function setLS(ctx,v){ try{ ctx.letterSpacing=v; }catch(_){} }
+  function pill(ctx,label,color,x,y,size){ ctx.font=`800 ${size}px ${FF}`; setLS(ctx,'2px'); const tw=ctx.measureText(label).width,padX=34,padY=22,bh=size+padY*2,bw=tw+padX*2; ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=20; ctx.shadowOffsetY=5; ctx.fillStyle=color; roundRect(ctx,x,y-bh,bw,bh,bh/2); ctx.fill(); ctx.shadowColor='transparent'; ctx.fillStyle='#fff'; ctx.textBaseline='middle'; ctx.fillText(label,x+padX,y-bh/2+2); ctx.textBaseline='alphabetic'; setLS(ctx,'0px'); return bh; }
+  function marca(ctx,P){ ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=14; ctx.shadowOffsetY=2; ctx.fillStyle='#FF385C'; ctx.beginPath(); ctx.arc(P+20,P+18,20,0,7); ctx.fill(); ctx.fillStyle='#fff'; ctx.font=`700 40px ${FF}`; setLS(ctx,'-.5px'); ctx.fillText('rankingspain.com',P+52,P+31); setLS(ctx,'0px'); ctx.shadowColor='transparent'; }
+
+  function render(){
+    const cv=$('post'); if(!cv) return; const ctx=cv.getContext('2d'); const W=1080,H=1350,P=78;
+    ctx.clearRect(0,0,W,H); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    const tSh=()=>{ ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=22; ctx.shadowOffsetY=3; };
+
+    if(plan.modo==='versus'){
+      // dos mitades
+      if(img1) cover(ctx,img1,0,0,W,H/2); else { ctx.fillStyle='#26323a'; ctx.fillRect(0,0,W,H/2); }
+      if(img2) cover(ctx,img2,0,H/2,W,H/2); else { ctx.fillStyle='#3a2d26'; ctx.fillRect(0,H/2,W,H/2); }
+      ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fillRect(0,0,W,H);
+      marca(ctx,P);
+      // etiquetas A y B
+      tSh(); ctx.fillStyle='#fff'; ctx.font=`800 72px ${FF}`; setLS(ctx,'-1.5px');
+      ctx.fillText('🅰️ '+(plan.versusA||''),P,H/2-90);
+      ctx.font=`600 40px ${FF}`; ctx.fillText(plan.versusAsub||'',P,H/2-38);
+      ctx.font=`800 72px ${FF}`; ctx.fillText('🅱️ '+(plan.versusB||''),P,H-150);
+      ctx.font=`600 40px ${FF}`; ctx.fillText(plan.versusBsub||'',P,H-98);
+      setLS(ctx,'0px'); ctx.shadowColor='transparent';
+      // pastilla central
+      ctx.font=`800 48px ${FF}`; setLS(ctx,'2px'); const tw=ctx.measureText(plan.pill).width+72;
+      pill(ctx,plan.pill,plan.pillColor,(W-tw)/2,H/2+47,48);
+      return;
+    }
+
+    // base foto
+    if(plan.modo==='adivina' && img1){
+      // pixelar: dibujar pequeño y reescalar sin suavizado
+      const t=document.createElement('canvas'); t.width=27; t.height=34; const tc=t.getContext('2d');
+      tc.drawImage(img1,0,0,27,34); ctx.imageSmoothingEnabled=false; ctx.drawImage(t,0,0,W,H); ctx.imageSmoothingEnabled=true;
+    } else if(img1){ cover(ctx,img1,0,0,W,H); }
+    else { const gg=ctx.createLinearGradient(0,0,W,H); gg.addColorStop(0,'#3a3a3a'); gg.addColorStop(1,'#17120e'); ctx.fillStyle=gg; ctx.fillRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font=`500 34px ${FF}`; ctx.textAlign='center'; ctx.fillText('Sube la foto arriba', W/2, H/2); ctx.textAlign='left'; }
+
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(0,0,0,.3)'); g.addColorStop(.28,'rgba(0,0,0,0)'); g.addColorStop(.62,'rgba(0,0,0,.05)'); g.addColorStop(.85,'rgba(0,0,0,.46)'); g.addColorStop(1,'rgba(0,0,0,.58)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    marca(ctx,P);
+
+    if(plan.modo==='adivina'){
+      ctx.textAlign='center'; tSh(); ctx.fillStyle='#fff'; ctx.font=`800 92px ${FF}`; setLS(ctx,'-2px');
+      ctx.fillText('¿QUÉ SITIO ES?',W/2,H/2-10); setLS(ctx,'0px');
+      ctx.font=`600 46px ${FF}`; ctx.fillText('Pista: está en '+(plan.prov||'España'),W/2,H/2+70);
+      ctx.font=`700 44px ${FF}`; ctx.fillText('Responde en comentarios 👇',W/2,H-232);
+      ctx.shadowColor='transparent'; ctx.textAlign='left';
+      pill(ctx,plan.pill,plan.pillColor,P,P+64+92,48);
+      return;
+    }
+
+    if(plan.modo==='sabias'){
+      ctx.textAlign='center'; tSh(); ctx.fillStyle='#fff';
+      ctx.font=`800 100px ${FF}`; setLS(ctx,'-2px'); ctx.fillText('¿SABÍAS QUE…?',W/2,300); setLS(ctx,'0px');
+      ctx.font=`600 54px ${FF}`; const ls=wrap(ctx,plan.sabiasTexto||'',W-2*P); let yy=H-360;
+      ls.forEach((l)=>{ ctx.fillText(l,W/2,yy); yy+=66; });
+      ctx.font=`700 42px ${FF}`; ctx.fillText('Desliza tu dedo y compártelo 📩',W/2,H-232);
+      ctx.shadowColor='transparent'; ctx.textAlign='left';
+      return;
+    }
+
+    // normal
+    let y=H-232;
+    if(plan.gancho){ ctx.font=`600 46px ${FF}`; setLS(ctx,'-.3px'); ctx.fillStyle='rgba(255,255,255,.97)'; tSh(); const dl=wrap(ctx,plan.gancho,W-2*P).slice(0,2); for(let i=dl.length-1;i>=0;i--){ctx.fillText(dl[i],P,y);y-=56;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=8; }
+    if(plan.muni){ ctx.font=`700 42px ${FF}`; tSh(); ctx.fillStyle='#fff'; ctx.fillText('📍 '+plan.muni+(plan.prov?' · '+plan.prov:''),P,y); ctx.shadowColor='transparent'; y-=66; }
+    else if(plan.prov){ ctx.font=`700 42px ${FF}`; tSh(); ctx.fillStyle='#fff'; ctx.fillText('📍 '+plan.prov,P,y); ctx.shadowColor='transparent'; y-=66; }
+    ctx.font=`800 98px ${FF}`; setLS(ctx,'-2.5px'); ctx.fillStyle='#fff'; tSh(); const nl=wrap(ctx,plan.nombre||'',W-2*P).slice(0,3); for(let i=nl.length-1;i>=0;i--){ctx.fillText(nl[i],P,y);y-=100;} setLS(ctx,'0px'); ctx.shadowColor='transparent'; y-=28;
+    pill(ctx,plan.pill,plan.pillColor,P,y,48);
+  }
+
+  function loadInto(which){ return (e)=>{ const f=e.target.files[0]; if(!f)return; const im=new Image(); im.onload=()=>{ if(which===1){ img1=im; $('fotoUp').classList.add('set'); $('fotoTxt').textContent='✅ Foto lista — toca para cambiarla'; } else { img2=im; $('fotoUp2').classList.add('set'); $('fotoTxt2').textContent='✅ Foto ② lista'; } render(); }; im.src=URL.createObjectURL(f); }; }
+  $('fotoInp')?.addEventListener('change', loadInto(1));
+  $('fotoInp2')?.addEventListener('change', loadInto(2));
+
+  // descargar / compartir (móvil → hoja de compartir)
+  function dataURLtoBlob(durl){ const p=durl.split(','); const mime=(p[0].match(/:(.*?);/)||[])[1]||'image/png'; const bin=atob(p[1]); const u8=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return new Blob([u8],{type:mime}); }
+  $('descargar')?.addEventListener('click', async () => {
+    render();
+    const blob=dataURLtoBlob($('post').toDataURL('image/png'));
+    const file=new File([blob],'post-hoy-rankingspain.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file],title:'Ranking Spain'}); return; }catch(err){ if(err&&err.name==='AbortError') return; } }
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.download='post-hoy-rankingspain.png'; a.href=url; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000);
+  });
+
+  $('copiarCap')?.addEventListener('click', (e)=> copiar($('caption').value, e.target));
+
+  // DMs
+  document.querySelectorAll('[data-copy-dm]').forEach(b=> b.addEventListener('click', ()=> copiar(DM_TXTS[b.dataset.copyDm]||'', b)));
+  document.querySelectorAll('[data-dm-hecho]').forEach(b=> b.addEventListener('click', async ()=>{
+    b.disabled=true; b.textContent='…';
+    try{ const r=await fetch('/api/admin/instagram-dm?key='+k,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo_ine:b.dataset.dmHecho,enviado:true})}); const j=await r.json();
+      if(j.ok){ document.querySelector(`[data-dm="${b.dataset.dmHecho}"]`)?.classList.add('done'); b.textContent='✓'; showMsg('Marcado como enviado. Mañana saldrán 5 nuevos.'); } else { b.disabled=false; b.textContent='✓ Enviado'; }
+    }catch(_){ b.disabled=false; b.textContent='✓ Enviado'; }
+  }));
+
+  // guardar email encontrado
+  document.querySelectorAll('[data-email-save]').forEach(b=> b.addEventListener('click', async ()=>{
+    const cod=b.dataset.emailSave; const inp=document.querySelector(`[data-email-in="${cod}"]`);
+    const em=(inp?.value||'').trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ showMsg('Ese email no parece válido.'); return; }
+    b.disabled=true; b.textContent='…';
+    try{ const r=await fetch('/api/admin/hoy?key='+k,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'email',codigo_ine:cod,email:em})}); const j=await r.json();
+      if(j.ok){ document.querySelector(`[data-em="${cod}"]`)?.classList.add('done'); b.textContent='✓ Guardado'; showMsg('Email guardado: entrará en la campaña.'); } else { b.disabled=false; b.textContent='💾 Guardar email'; showMsg('No se pudo guardar.'); }
+    }catch(_){ b.disabled=false; b.textContent='💾 Guardar email'; }
+  }));
+
+  // prospectos
+  document.querySelectorAll('[data-copy-pros]').forEach(b=> b.addEventListener('click', ()=> copiar(PROS_TXTS[b.dataset.copyPros]||'', b)));
+
+  // checklist con memoria del día
+  const LSK='hoy-'+FECHA;
+  const st=new Set(JSON.parse(localStorage.getItem(LSK)||'[]'));
+  const chks=[...document.querySelectorAll('[data-chk]')];
+  function pinta(){ let n=0; chks.forEach(c=>{ const on=st.has(c.dataset.chk); c.checked=on; c.closest('.check').classList.toggle('done',on); if(on)n++; }); const el=$('chkContador'); if(el) el.textContent=`· ${n}/${chks.length}`; }
+  chks.forEach(c=> c.addEventListener('change', ()=>{ c.checked?st.add(c.dataset.chk):st.delete(c.dataset.chk); localStorage.setItem(LSK,JSON.stringify([...st])); pinta(); }));
+  pinta();
+  render();
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>render()).catch(()=>{});
+</script>
+</body></html>
