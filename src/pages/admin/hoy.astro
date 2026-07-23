@@ -23,6 +23,8 @@ const seed = Y * 372 + M * 31 + D; // cambia cada día, estable durante el día
 const slugTag = (s: string) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
 const frase1 = (t: string) => ((t || '').split(/(?<=[.!?])\s/)[0] || '').trim();
 const frase2 = (t: string) => ((t || '').split(/(?<=[.!?])\s/)[1] || '').trim();
+// "Playa de X (Muni, Prov)" — y si el sitio ES el propio pueblo, sin repetirlo: "Muni (Prov)"
+const lugar = (s: any) => s.nombre === s.muni ? `${s.nombre} (${s.provincia})` : `${s.nombre} (${s.muni}, ${s.provincia})`;
 const HORA = dow === 0 || dow === 6 ? '11:00–13:00' : '19:00–21:00';
 
 const TIPO_PISTA: Record<string, string> = {
@@ -31,16 +33,25 @@ const TIPO_PISTA: Record<string, string> = {
   castillo: 'es un castillo', lago: 'es un lago', faro: 'es un faro',
 };
 
+// Filtros por notoriedad en Instagram (datos propios: posts por hashtag, escala 0-90).
+// FAMOSO (>=55): para el "Adivina" — si nadie reconoce el sitio, nadie comenta.
+// DESCONOCIDO (<45): para la "Joya" — cuanto menos fotografiado, más joya.
+const NOTA_FAMOSO = `AND EXISTS (SELECT 1 FROM puntuaciones p WHERE p.codigo_ine=m.codigo_ine AND p.categoria='notoriedad_instagram' AND p.puntuacion>=55)`;
+const NOTA_DESCONOCIDO = `AND COALESCE((SELECT p.puntuacion FROM puntuaciones p WHERE p.codigo_ine=m.codigo_ine AND p.categoria='notoriedad_instagram'),0)<45`;
+
 // pool de sitios curados (con buena descripción)
 async function sitioCurado(offsetSeed: number, extra = '') {
   const base = `FROM entidades e JOIN municipios m ON m.codigo_ine=e.codigo_ine
     WHERE e.fuente IN ('mil_lugares','unesco','pueblos_mas_bonitos') AND COALESCE(m.es_duplicado,0)=0
       AND e.descripcion IS NOT NULL AND LENGTH(e.descripcion)>90 ${extra}`;
   const n = ((await DB.prepare(`SELECT COUNT(*) n ${base}`).first()) as any)?.n || 1;
-  return (await DB.prepare(
+  const r = (await DB.prepare(
     `SELECT e.nombre, e.descripcion, e.tipo, m.nombre muni, m.provincia, m.codigo_ine codigo, m.poblacion ${base}
      ORDER BY e.id LIMIT 1 OFFSET ${offsetSeed % n}`
   ).first()) as any;
+  // nombres genéricos de sello ("Uno de Los Pueblos más Bonitos…") → usar el nombre del pueblo
+  if (r && /pueblos más bonitos|patrimonio mundial|world heritage/i.test(r.nombre || '')) r.nombre = r.muni;
+  return r;
 }
 
 const CATS = [
@@ -88,14 +99,14 @@ if (ok) {
     const s = await sitioCurado(seed * 3 + 1);
     plan = {
       modo: 'sabias', pill: '¿SABÍAS QUE…?', pillColor: '#5E35B1',
-      nombre: s.nombre, muni: s.muni, prov: s.provincia,
-      sabiasTexto: `En ${s.muni} (${s.provincia}) está ${s.nombre}`,
-      titulo: `🤯 ¿Sabías que…? — ${s.nombre} (${s.muni}, ${s.provincia})`,
+      nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia,
+      sabiasTexto: s.nombre === s.muni ? `En ${s.provincia} está ${s.nombre}` : `En ${s.muni} (${s.provincia}) está ${s.nombre}`,
+      titulo: `🤯 ¿Sabías que…? — ${lugar(s)}`,
       porque: 'El dato sorprendente es el formato que más se COMPARTE por DM ("mira esto").',
-      fotoPedido: `Sube una foto espectacular de: ${s.nombre} (${s.muni}, ${s.provincia}).`,
+      fotoPedido: `Sube una foto espectacular de: ${lugar(s)}.`,
       caption: [
         `¿Sabías esto de ${s.provincia}? 🤯`, '',
-        `En ${s.muni} está ${s.nombre}. ${frase1(s.descripcion)}`, '',
+        `${s.nombre === s.muni ? s.nombre + ' (' + s.provincia + ')' : 'En ' + s.muni + ' está ' + s.nombre}. ${frase1(s.descripcion)}`, '',
         frase2(s.descripcion), '',
         `Compárteselo a quien tenga que verlo 📩`,
         `👉 Un sitio increíble de España cada día · rankingspain.com`, '',
@@ -103,14 +114,14 @@ if (ok) {
       ].filter(x => x !== null).join('\n'),
     };
   } else if (dow === 3) {
-    // MIÉRCOLES · ADIVINA EL SITIO (contenido para COMENTAR)
-    const s = await sitioCurado(seed * 7 + 2);
+    // MIÉRCOLES · ADIVINA EL SITIO (contenido para COMENTAR) — solo sitios FAMOSOS en IG
+    const s = await sitioCurado(seed * 7 + 2, NOTA_FAMOSO);
     plan = {
       modo: 'adivina', pill: '¿QUÉ SITIO ES?', pillColor: '#F4511E',
-      nombre: s.nombre, muni: s.muni, prov: s.provincia, pista: TIPO_PISTA[s.tipo] || 'es un sitio natural',
-      titulo: `🕵️ Adivina el sitio — (respuesta: ${s.nombre}, ${s.muni})`,
+      nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, pista: TIPO_PISTA[s.tipo] || 'es un sitio natural',
+      titulo: `🕵️ Adivina el sitio — (respuesta: ${lugar(s)})`,
       porque: 'Los juegos de adivinar generan COMENTARIOS, y los comentarios son la señal más fuerte para el algoritmo.',
-      fotoPedido: `Sube una foto reconocible de: ${s.nombre} (${s.muni}, ${s.provincia}). La imagen se PIXELA sola para el juego.`,
+      fotoPedido: `Sube una foto reconocible de: ${lugar(s)}. La imagen se PIXELA sola para el juego.`,
       nota: `⚠️ Esta tarde publica la respuesta en Stories (es ${s.nombre}, en ${s.muni}) y etiqueta a quien acertó.`,
       caption: [
         `Solo el 1% reconoce este sitio 👀`, '',
@@ -122,17 +133,17 @@ if (ok) {
       ].join('\n'),
     };
   } else if (dow === 4) {
-    // JUEVES · JOYA ESCONDIDA (contenido para GUARDAR)
-    const s = await sitioCurado(seed * 5 + 3, 'AND m.poblacion < 15000');
+    // JUEVES · JOYA ESCONDIDA (contenido para GUARDAR) — pueblo pequeño Y poco fotografiado en IG
+    const s = await sitioCurado(seed * 5 + 3, 'AND m.poblacion < 15000 ' + NOTA_DESCONOCIDO);
     plan = {
       modo: 'normal', pill: 'JOYA ESCONDIDA', pillColor: '#00838F',
-      nombre: s.nombre, muni: s.muni, prov: s.provincia, gancho: 'El secreto mejor guardado de ' + s.provincia,
-      titulo: `💎 Joya escondida — ${s.nombre} (${s.muni}, ${s.provincia})`,
+      nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, gancho: 'El secreto mejor guardado de ' + s.provincia,
+      titulo: `💎 Joya escondida — ${lugar(s)}`,
       porque: 'Los sitios poco masificados son lo que más GUARDA la gente que planea escapadas.',
-      fotoPedido: `Sube una foto de: ${s.nombre} (${s.muni}, ${s.provincia}).`,
+      fotoPedido: `Sube una foto de: ${lugar(s)}.`,
       caption: [
         `Este rincón de ${s.provincia} no sale en casi ninguna guía 🤫`, '',
-        `${s.nombre}, en ${s.muni}${s.poblacion ? ` (${s.poblacion.toLocaleString('es-ES')} habitantes)` : ''}. ${frase1(s.descripcion)}`, '',
+        `${s.nombre}${s.nombre === s.muni ? '' : ', en ' + s.muni}${s.poblacion ? ` (${s.poblacion.toLocaleString('es-ES')} habitantes)` : ''}. ${frase1(s.descripcion)}`, '',
         `Mejor ir antes de que se llene 😉`, '',
         `📌 Guárdalo y etiqueta a tu compañero/a de viaje 👇`, '',
         `${HASH_BASE} #joyasescondidas #${slugTag(s.provincia)} #${slugTag(s.muni)}`,
@@ -194,12 +205,12 @@ if (ok) {
     const s = await sitioCurado(seed * 13 + 5);
     plan = {
       modo: 'normal', pill: 'SITIO TOP', pillColor: '#0277BD',
-      nombre: s.nombre, muni: s.muni, prov: s.provincia, gancho: frase1(s.descripcion).slice(0, 60),
-      titulo: `🌅 Postal del domingo — ${s.nombre} (${s.muni}, ${s.provincia})`,
+      nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, gancho: frase1(s.descripcion).slice(0, 60),
+      titulo: `🌅 Postal del domingo — ${lugar(s)}`,
       porque: 'El domingo por la mañana es pico de scroll relajado: foto espectacular = alcance.',
-      fotoPedido: `Sube la foto más espectacular que encuentres de: ${s.nombre} (${s.muni}, ${s.provincia}).`,
+      fotoPedido: `Sube la foto más espectacular que encuentres de: ${lugar(s)}.`,
       caption: [
-        `${s.nombre} (${s.muni}, ${s.provincia}) 😍`, '',
+        `${lugar(s)} 😍`, '',
         `${frase1(s.descripcion)}`, '',
         `¿Lo conocías? Cuéntamelo abajo 👇`, '',
         `📌 Guárdalo para tu próxima escapada`,
