@@ -66,12 +66,25 @@ const CATS = [
 
 let plan: any = null;
 let tareas: any = { dms: [], emails: [], prospectos: [] };
+let hechoHoy = false;      // ya publicado hoy
+let arrastrado = '';       // fecha original si el post viene de un día anterior sin publicar
 
 if (ok) {
-  const HASH_BASE = '#España #turismoespaña #viajarporespaña #escapadas #lugaresconencanto';
-  const semana = Math.floor(seed / 7);
+  // ── Post persistente: se asigna UNA vez y no cambia hasta marcarlo publicado.
+  //    Si no se publicó, se arrastra tal cual al día siguiente.
+  let fila = (await DB.prepare(`SELECT * FROM plan_posts ORDER BY id DESC LIMIT 1`).first()) as any;
+  if (!fila || (fila.publicado_at && fila.fecha_asignado < fecha)) {
+    await DB.prepare(`INSERT INTO plan_posts (fecha_asignado, dow, seed) VALUES (?,?,?)`).bind(fecha, dow, seed).run();
+    fila = { fecha_asignado: fecha, dow, seed, publicado_at: null };
+  }
+  hechoHoy = !!fila.publicado_at && fila.fecha_asignado === fecha;
+  if (!fila.publicado_at && fila.fecha_asignado < fecha) arrastrado = fila.fecha_asignado;
+  const planDow = Number(fila.dow), planSeed = Number(fila.seed);
 
-  if (dow === 1) {
+  const HASH_BASE = '#España #turismoespaña #viajarporespaña #escapadas #lugaresconencanto';
+  const semana = Math.floor(planSeed / 7);
+
+  if (planDow === 1) {
     // LUNES · TOP 5 carrusel (contenido para GUARDAR)
     const cat = CATS[semana % CATS.length];
     const { results } = await DB.prepare(
@@ -94,9 +107,9 @@ if (ok) {
         `${HASH_BASE} #top5 #${slugTag(cat.l)}`,
       ].join('\n'),
     };
-  } else if (dow === 2) {
+  } else if (planDow === 2) {
     // MARTES · ¿SABÍAS QUE…? (contenido para COMPARTIR)
-    const s = await sitioCurado(seed * 3 + 1);
+    const s = await sitioCurado(planSeed * 3 + 1);
     plan = {
       modo: 'sabias', pill: '¿SABÍAS QUE…?', pillColor: '#5E35B1',
       nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia,
@@ -113,9 +126,9 @@ if (ok) {
         `${HASH_BASE} #${slugTag(s.provincia)} #${slugTag(s.muni)}`,
       ].filter(x => x !== null).join('\n'),
     };
-  } else if (dow === 3) {
+  } else if (planDow === 3) {
     // MIÉRCOLES · ADIVINA EL SITIO (contenido para COMENTAR) — solo sitios FAMOSOS en IG
-    const s = await sitioCurado(seed * 7 + 2, NOTA_FAMOSO);
+    const s = await sitioCurado(planSeed * 7 + 2, NOTA_FAMOSO);
     plan = {
       modo: 'adivina', pill: '¿QUÉ SITIO ES?', pillColor: '#F4511E',
       nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, pista: TIPO_PISTA[s.tipo] || 'es un sitio natural',
@@ -132,9 +145,9 @@ if (ok) {
         `${HASH_BASE} #adivina #${slugTag(s.provincia)}`,
       ].join('\n'),
     };
-  } else if (dow === 4) {
+  } else if (planDow === 4) {
     // JUEVES · JOYA ESCONDIDA (contenido para GUARDAR) — pueblo pequeño Y poco fotografiado en IG
-    const s = await sitioCurado(seed * 5 + 3, 'AND m.poblacion < 15000 ' + NOTA_DESCONOCIDO);
+    const s = await sitioCurado(planSeed * 5 + 3, 'AND m.poblacion < 15000 ' + NOTA_DESCONOCIDO);
     plan = {
       modo: 'normal', pill: 'JOYA ESCONDIDA', pillColor: '#00838F',
       nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, gancho: 'El secreto mejor guardado de ' + s.provincia,
@@ -149,9 +162,9 @@ if (ok) {
         `${HASH_BASE} #joyasescondidas #${slugTag(s.provincia)} #${slugTag(s.muni)}`,
       ].join('\n'),
     };
-  } else if (dow === 5) {
+  } else if (planDow === 5) {
     // VIERNES · PLAN DE FINDE (contenido para GUARDAR, justo cuando se planea)
-    const s = await sitioCurado(seed * 11 + 4, "AND e.fuente='pueblos_mas_bonitos'");
+    const s = await sitioCurado(planSeed * 11 + 4, "AND e.fuente='pueblos_mas_bonitos'");
     const { results } = await DB.prepare(
       `SELECT nombre, tipo FROM entidades WHERE codigo_ine=? AND descripcion IS NOT NULL ORDER BY COALESCE(puntuacion,0) DESC, id LIMIT 3`
     ).bind(s.codigo).all();
@@ -174,7 +187,7 @@ if (ok) {
         `${HASH_BASE} #findesemana #${slugTag(s.provincia)} #${slugTag(s.muni)}`,
       ].filter(Boolean).join('\n'),
     };
-  } else if (dow === 6) {
+  } else if (planDow === 6) {
     // SÁBADO · VERSUS (contenido para COMENTAR)
     const cat = CATS[(semana + 3) % CATS.length];
     const { results } = await DB.prepare(
@@ -182,8 +195,8 @@ if (ok) {
        WHERE p.categoria=? AND COALESCE(m.es_duplicado,0)=0 ORDER BY p.puntuacion DESC LIMIT 12`
     ).bind(cat.c).all();
     const top = (results as any[]) || [];
-    const a = top[seed % Math.max(1, top.length)], b = top[(seed + 5) % Math.max(1, top.length)];
-    const B = (b && b.nombre !== a?.nombre) ? b : top[(seed + 7) % Math.max(1, top.length)] || a;
+    const a = top[planSeed % Math.max(1, top.length)], b = top[(planSeed + 5) % Math.max(1, top.length)];
+    const B = (b && b.nombre !== a?.nombre) ? b : top[(planSeed + 7) % Math.max(1, top.length)] || a;
     plan = {
       modo: 'versus', pill: '¿CUÁL ELIGES?', pillColor: '#C62828',
       versusA: `${a?.nombre}`, versusAsub: a?.provincia, versusB: `${B?.nombre}`, versusBsub: B?.provincia,
@@ -202,7 +215,7 @@ if (ok) {
     };
   } else {
     // DOMINGO · POSTAL + DATO (alcance)
-    const s = await sitioCurado(seed * 13 + 5);
+    const s = await sitioCurado(planSeed * 13 + 5);
     plan = {
       modo: 'normal', pill: 'SITIO TOP', pillColor: '#0277BD',
       nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, gancho: frase1(s.descripcion).slice(0, 60),
@@ -315,7 +328,14 @@ const PROSPECTO_TXT = (tipo: string, muni: string) =>
   <div class="wrap">
 
     <!-- ═════════ 1 · LA PUBLICACIÓN DE HOY ═════════ -->
+    { hechoHoy ? (
+    <div class="card" style="background:#f0faf3;border-color:#bfe3cb">
+      <h2>✅ ¡Publicación de hoy hecha!</h2>
+      <div class="porque">Ya publicaste: <b>{plan.titulo}</b>. Mañana al entrar tendrás la siguiente preparada. Sigue con las tareas de abajo 👇</div>
+    </div>
+    ) : (
     <div class="card">
+      { arrastrado && <div class="nota" style="background:#fff3e6;margin:0 0 10px">📌 Este post quedó <b>pendiente</b> (asignado el {arrastrado}). Sigue siendo tu publicación hasta que pulses “Publicado”.</div> }
       <h2>1️⃣ {plan.titulo}</h2>
       <div class="porque">💡 {plan.porque} Publica a las <span class="badge-hora">🕖 {HORA}</span></div>
 
@@ -345,7 +365,12 @@ const PROSPECTO_TXT = (tipo: string, muni: string) =>
         <div class="row"><button class="btn primary" type="button" id="copiarCap">📋 Copiar el copy</button></div>
       </div>
       { plan.nota && <div class="nota">{plan.nota}</div> }
+      <div class="row" style="margin-top:14px">
+        <button class="btn" type="button" id="marcarPublicado" style="background:#0a7d3c;color:#fff;border:0;font-weight:700">✅ ¡Listo, ya lo he publicado!</button>
+      </div>
+      <div class="porque" style="margin:8px 0 0">Al marcarlo, mañana te preparo la siguiente. Si no lo marcas, este mismo post te espera aquí.</div>
     </div>
+    )}
 
     <!-- ═════════ 2 · DMs A AYUNTAMIENTOS ═════════ -->
     <div class="card">
@@ -513,6 +538,18 @@ const PROSPECTO_TXT = (tipo: string, muni: string) =>
   });
 
   $('copiarCap')?.addEventListener('click', (e)=> copiar($('caption').value, e.target));
+
+  // ✅ marcar el post como publicado (persistente: mañana toca uno nuevo)
+  $('marcarPublicado')?.addEventListener('click', async (e)=>{
+    const btn=e.target; if(!confirm('¿Confirmas que ya lo has publicado en Instagram?')) return;
+    btn.disabled=true; btn.textContent='Guardando…';
+    try{
+      const r=await fetch('/api/admin/hoy?key='+k,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'publicado'})});
+      const j=await r.json();
+      if(j.ok){ btn.textContent='✅ ¡Hecho!'; showMsg('Publicación registrada. Mañana tendrás la siguiente.'); setTimeout(()=>location.reload(),900); }
+      else { btn.disabled=false; btn.textContent='✅ ¡Listo, ya lo he publicado!'; showMsg('No se pudo guardar, prueba otra vez.'); }
+    }catch(_){ btn.disabled=false; btn.textContent='✅ ¡Listo, ya lo he publicado!'; showMsg('Error de red.'); }
+  });
 
   // DMs
   document.querySelectorAll('[data-copy-dm]').forEach(b=> b.addEventListener('click', ()=> copiar(DM_TXTS[b.dataset.copyDm]||'', b)));

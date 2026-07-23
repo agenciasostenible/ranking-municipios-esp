@@ -30,5 +30,14 @@ export const POST: APIRoute = async ({ request, url }) => {
     return j({ ok: true, actualizado: ((r as any)?.meta?.changes || 0) > 0 });
   }
 
+  if (b.accion === 'publicado') {
+    // marca el post pendiente más reciente como publicado
+    const r = await DB.prepare(
+      `UPDATE plan_posts SET publicado_at=datetime('now')
+       WHERE id=(SELECT MAX(id) FROM plan_posts WHERE publicado_at IS NULL)`
+    ).run();
+    return j({ ok: true, marcado: ((r as any)?.meta?.changes || 0) > 0 });
+  }
+
   return j({ ok: false, error: 'accion' }, 400);
 };
