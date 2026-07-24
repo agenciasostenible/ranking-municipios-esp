@@ -50,6 +50,7 @@ async function sitioCurado(offsetSeed: number, extra = '') {
      ORDER BY e.id LIMIT 1 OFFSET ${offsetSeed % n}`
   ).first()) as any;
   // nombres genéricos de sello ("Uno de Los Pueblos más Bonitos…") → usar el nombre del pueblo
+  if (r) r.nombreDb = r.nombre; // nombre EXACTO en la BD (para adjuntar la foto a esa entidad)
   if (r && /pueblos más bonitos|patrimonio mundial|world heritage/i.test(r.nombre || '')) r.nombre = r.muni;
   return r;
 }
@@ -112,6 +113,7 @@ if (ok) {
     const s = await sitioCurado(planSeed * 3 + 1);
     plan = {
       modo: 'sabias', pill: '¿SABÍAS QUE…?', pillColor: '#5E35B1',
+      fotoTarget: { codigo: s.codigo, nombre: s.nombreDb, lugar: lugar(s) },
       nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia,
       sabiasTexto: s.nombre === s.muni ? `En ${s.provincia} está ${s.nombre}` : `En ${s.muni} (${s.provincia}) está ${s.nombre}`,
       titulo: `🤯 ¿Sabías que…? — ${lugar(s)}`,
@@ -131,6 +133,7 @@ if (ok) {
     const s = await sitioCurado(planSeed * 7 + 2, NOTA_FAMOSO);
     plan = {
       modo: 'adivina', pill: '¿QUÉ SITIO ES?', pillColor: '#F4511E',
+      fotoTarget: { codigo: s.codigo, nombre: s.nombreDb, lugar: lugar(s) },
       nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, pista: TIPO_PISTA[s.tipo] || 'es un sitio natural',
       titulo: `🕵️ Adivina el sitio — (respuesta: ${lugar(s)})`,
       porque: 'Los juegos de adivinar generan COMENTARIOS, y los comentarios son la señal más fuerte para el algoritmo.',
@@ -150,6 +153,7 @@ if (ok) {
     const s = await sitioCurado(planSeed * 5 + 3, 'AND m.poblacion < 15000 ' + NOTA_DESCONOCIDO);
     plan = {
       modo: 'normal', pill: 'JOYA ESCONDIDA', pillColor: '#00838F',
+      fotoTarget: { codigo: s.codigo, nombre: s.nombreDb, lugar: lugar(s) },
       nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, gancho: 'El secreto mejor guardado de ' + s.provincia,
       titulo: `💎 Joya escondida — ${lugar(s)}`,
       porque: 'Los sitios poco masificados son lo que más GUARDA la gente que planea escapadas.',
@@ -171,6 +175,7 @@ if (ok) {
     const ents = (results as any[]) || [];
     plan = {
       modo: 'normal', pill: 'PLAN DE FINDE', pillColor: '#2E7D32',
+      fotoTarget: { codigo: s.codigo, nombre: s.nombreDb, lugar: `${s.muni} (${s.provincia})` },
       nombre: s.muni, muni: '', prov: s.provincia, gancho: '2 días perfectos en ' + s.provincia,
       titulo: `🎒 Plan de finde — 2 días en ${s.muni} (${s.provincia})`,
       porque: 'El viernes la gente PLANEA el finde: los itinerarios listos se guardan muchísimo.',
@@ -218,6 +223,7 @@ if (ok) {
     const s = await sitioCurado(planSeed * 13 + 5);
     plan = {
       modo: 'normal', pill: 'SITIO TOP', pillColor: '#0277BD',
+      fotoTarget: { codigo: s.codigo, nombre: s.nombreDb, lugar: lugar(s) },
       nombre: s.nombre, muni: s.nombre === s.muni ? '' : s.muni, prov: s.provincia, gancho: frase1(s.descripcion).slice(0, 60),
       titulo: `🌅 Postal del domingo — ${lugar(s)}`,
       porque: 'El domingo por la mañana es pico de scroll relajado: foto espectacular = alcance.',
@@ -354,7 +360,9 @@ const PROSPECTO_TXT = (tipo: string, muni: string) =>
           <canvas id="post" width="1080" height="1350"></canvas>
           <div class="row">
             <button class="btn dark" type="button" id="descargar">📲 Descargar / Compartir</button>
+            { plan.fotoTarget && <button class="btn" type="button" id="subirFotoWeb" style="background:#0a7d3c;color:#fff;border:0;font-weight:700">🌐 Subir foto a la web (sin letras)</button> }
           </div>
+          { plan.fotoTarget && <div class="porque" style="margin:6px 0 0">La foto ORIGINAL (tal cual me la das, sin el cartel) irá a la ficha de <b>{plan.fotoTarget.lugar}</b>.</div> }
         </div>
       )}
       { plan.extraLink && <div class="row"><a class="btn primary" href={plan.extraLink.href}>{plan.extraLink.txt}</a></div> }
@@ -446,7 +454,7 @@ const PROSPECTO_TXT = (tipo: string, muni: string) =>
   const plan = D.plan || {};
   const $ = (id) => document.getElementById(id);
   const FF = '"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif';
-  let img1 = null, img2 = null;
+  let img1 = null, img2 = null, file1 = null;
 
   function showMsg(t){ const m=$('msg'); if(!m) return; m.textContent=t; m.className='msg on'; setTimeout(()=>m.className='msg',2500); }
   async function copiar(t, btn){ try{ await navigator.clipboard.writeText(t); }catch(_){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(__){} ta.remove(); } if(btn){ const o=btn.textContent; btn.textContent='✓ Copiado'; setTimeout(()=>btn.textContent=o,1500);} }
@@ -523,7 +531,24 @@ const PROSPECTO_TXT = (tipo: string, muni: string) =>
     pill(ctx,plan.pill,plan.pillColor,P,y,48);
   }
 
-  function loadInto(which){ return (e)=>{ const f=e.target.files[0]; if(!f)return; const im=new Image(); im.onload=()=>{ if(which===1){ img1=im; $('fotoUp').classList.add('set'); $('fotoTxt').textContent='✅ Foto lista — toca para cambiarla'; } else { img2=im; $('fotoUp2').classList.add('set'); $('fotoTxt2').textContent='✅ Foto ② lista'; } render(); }; im.src=URL.createObjectURL(f); }; }
+  function loadInto(which){ return (e)=>{ const f=e.target.files[0]; if(!f)return; const im=new Image(); im.onload=()=>{ if(which===1){ img1=im; file1=f; $('fotoUp').classList.add('set'); $('fotoTxt').textContent='✅ Foto lista — toca para cambiarla'; } else { img2=im; $('fotoUp2').classList.add('set'); $('fotoTxt2').textContent='✅ Foto ② lista'; } render(); }; im.src=URL.createObjectURL(f); }; }
+  // foto ORIGINAL reducida (1280px JPEG) — sin cartel ni letras — para guardarla en la web
+  function fileToScaledDataURL(file, maxDim){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>{ try{ let w=im.width,h=im.height; const s=Math.min(1, maxDim/Math.max(w,h)); w=Math.round(w*s); h=Math.round(h*s); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(im,0,0,w,h); res(c.toDataURL('image/jpeg',0.82)); }catch(err){ rej(err); } }; im.onerror=()=>rej(new Error('img')); im.src=URL.createObjectURL(file); }); }
+
+  // 🌐 subir la foto original a la ficha del sitio del día
+  $('subirFotoWeb')?.addEventListener('click', async (e)=>{
+    const btn=e.target;
+    if(!file1){ showMsg('Primero sube la foto arriba.'); return; }
+    if(!plan.fotoTarget){ showMsg('Este formato no tiene sitio asociado.'); return; }
+    btn.disabled=true; const o=btn.textContent; btn.textContent='Subiendo…';
+    try{
+      const foto=await fileToScaledDataURL(file1,1280);
+      const r=await fetch('/api/admin/hoy?key='+k,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'foto',codigo_ine:plan.fotoTarget.codigo,nombre:plan.fotoTarget.nombre,foto})});
+      const j=await r.json();
+      if(j.ok && j.guardada){ btn.textContent='✅ Foto en la web'; showMsg('Foto subida a la ficha de '+plan.fotoTarget.lugar+'.'); }
+      else { btn.disabled=false; btn.textContent=o; showMsg('No se pudo guardar la foto.'); }
+    }catch(_){ btn.disabled=false; btn.textContent=o; showMsg('Error al subir la foto.'); }
+  });
   $('fotoInp')?.addEventListener('change', loadInto(1));
   $('fotoInp2')?.addEventListener('change', loadInto(2));
 

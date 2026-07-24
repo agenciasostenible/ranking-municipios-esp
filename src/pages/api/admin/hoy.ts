@@ -8,6 +8,7 @@
 import type { APIRoute } from 'astro';
 import { DB } from '../../../lib/d1client';
 import { rtEnv } from '../../../lib/runtime';
+import { toStorableImage } from '../../../lib/imgblob';
 
 const j = (o: any, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json' } });
@@ -28,6 +29,18 @@ export const POST: APIRoute = async ({ request, url }) => {
        WHERE codigo_ine=? AND (email IS NULL OR email='')`
     ).bind(email, codigo).run();
     return j({ ok: true, actualizado: ((r as any)?.meta?.changes || 0) > 0 });
+  }
+
+  if (b.accion === 'foto') {
+    // guarda la foto ORIGINAL (sin cartel) en la entidad del sitio del día
+    const codigo = String(b.codigo_ine || '').trim().slice(0, 12);
+    const nombre = String(b.nombre || '').trim().slice(0, 200);
+    const foto = toStorableImage(b.foto);
+    if (!codigo || !nombre || !foto) return j({ ok: false, error: 'datos' }, 400);
+    const r = await DB.prepare(
+      `UPDATE entidades SET foto_data=?, foto_mime=NULL WHERE codigo_ine=? AND nombre=?`
+    ).bind(foto, codigo, nombre).run();
+    return j({ ok: true, guardada: ((r as any)?.meta?.changes || 0) > 0 });
   }
 
   if (b.accion === 'publicado') {
