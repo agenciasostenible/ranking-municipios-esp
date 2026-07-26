@@ -360,6 +360,41 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   </div>
 </section>
 
+<!-- ── LOS MEJORES SITIOS DE ESPAÑA (ranking por sitio, no por municipio) ── -->
+{sitiosHome.length > 0 && (
+<section class="sitios-sec">
+  <div class="st-head">
+    <h2 class="st-title">🏆 Los mejores sitios de España, con nombre y apellidos</h2>
+    <p class="st-sub">No solo qué municipio: qué cueva, qué playa, qué ruta. Ordenados del mejor al último.</p>
+  </div>
+  <div class="st-scroll">
+    {sitiosHome.map((s) => (
+      <div class="st-card">
+        <a href={s.href} class="st-imglink">
+          {s.foto
+            ? <img class="st-img" src={s.foto} alt={s.top[0].nombre} loading="lazy" />
+            : <div class="st-img st-img-ph">{s.emoji}</div>}
+        </a>
+        <div class="st-body">
+          <a href={s.href} class="st-cat">{s.emoji} {s.label}</a>
+          <ol class="st-top3">
+            {s.top.map((t: any) => (
+              <li>
+                {/* al sitio: su ficha, abierta por la sección de esta categoría */}
+                <a class="st-sitio" href={`/municipio/${t.codigo_ine}?desde=${s.cat}#desde-block`}>
+                  <b>{t.nombre}</b> <span class="st-muni">· {t.municipio}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+          <a href={s.href} class="st-ver">Ver el ranking completo →</a>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+)}
+
 <!-- ── ¿EN QUÉ ES CAMPEÓN TU MUNICIPIO? ── -->
 <section class="campeon-sec">
   <div class="campeon-card">
@@ -828,41 +863,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 .sp-ba .sp-cta { color: #155f93; }
 .sp-un .sp-cta { color: #8a6608; }
 </style>
-
-<!-- ── LOS MEJORES SITIOS DE ESPAÑA (ranking por sitio, no por municipio) ── -->
-{sitiosHome.length > 0 && (
-<section class="sitios-sec">
-  <div class="st-head">
-    <h2 class="st-title">🏆 Los mejores sitios de España, con nombre y apellidos</h2>
-    <p class="st-sub">No solo qué municipio: qué cueva, qué playa, qué ruta. Ordenados del mejor al último.</p>
-  </div>
-  <div class="st-scroll">
-    {sitiosHome.map((s) => (
-      <div class="st-card">
-        <a href={s.href} class="st-imglink">
-          {s.foto
-            ? <img class="st-img" src={s.foto} alt={s.top[0].nombre} loading="lazy" />
-            : <div class="st-img st-img-ph">{s.emoji}</div>}
-        </a>
-        <div class="st-body">
-          <a href={s.href} class="st-cat">{s.emoji} {s.label}</a>
-          <ol class="st-top3">
-            {s.top.map((t: any) => (
-              <li>
-                {/* al sitio: su ficha, abierta por la sección de esta categoría */}
-                <a class="st-sitio" href={`/municipio/${t.codigo_ine}?desde=${s.cat}#desde-block`}>
-                  <b>{t.nombre}</b> <span class="st-muni">· {t.municipio}</span>
-                </a>
-              </li>
-            ))}
-          </ol>
-          <a href={s.href} class="st-ver">Ver el ranking completo →</a>
-        </div>
-      </div>
-    ))}
-  </div>
-</section>
-)}
 
 <!-- ── EXPLORAR POR CATEGORÍA (agrupado) ── -->
 <section class="cat-explore" id="explora">
