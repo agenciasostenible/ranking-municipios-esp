@@ -27,6 +27,20 @@ ${CLAVES}
 Para "descripcion", REESCRIBE con tus propias palabras, NO copies literalmente el texto de la imagen.
 Si algún dato no aparece en la imagen, pon cadena vacía "" en esa clave. Responde solo el JSON.`;
 
+// Modo FICHA: alimentar la web. Reescribe y AMPLÍA, y clasifica el sitio.
+const CATS_FICHA = 'naturaleza, senderismo, Playas, cuevas, pozas, miradores, monumentos, castillos, museos, gastronomia, hoteles_encanto, TurismoRural, festivales, fiestas, turismo_activo, vinos, oleoturismo, balnearios, turismo_religioso, estrellas, Campings, ciclismo';
+const promptFicha = (pista: string) => `Esta imagen es una captura de una publicación (Instagram o web) sobre un sitio turístico de España que vamos a añadir a nuestra guía.
+
+Devuelve EXCLUSIVAMENTE un objeto JSON válido, sin texto alrededor, con estas claves:
+- "nombre": el nombre propio del sitio (ruta, paraje, playa, restaurante, hotel, festival, monumento…). Concreto y sin adornos.
+- "municipio": el municipio español donde está. Solo el municipio, sin provincia.
+- "categoria": UNA de esta lista, la que mejor encaje: ${CATS_FICHA}
+- "descripcion": 3 o 4 frases en español, REESCRITAS CON TUS PROPIAS PALABRAS (nunca copiar el texto de la imagen), en tono de guía de viajes útil y evocadora. Explica QUÉ es, QUÉ lo hace especial y algo práctico (cuándo ir, qué ver, cómo es el acceso). Si conoces el sitio, AÑADE datos verdaderos que no aparezcan en la imagen. No inventes datos concretos (metros, fechas, precios) de los que no estés seguro. Sin hashtags, sin emojis, sin arrobas, sin llamadas a la acción.
+- "puntuacion": número entero de 80 a 97 según lo excepcional que sea a nivel nacional (97 solo para lo verdaderamente icónico de España; 85-90 para algo muy bueno de su provincia).
+${pista ? `\nPISTA del usuario (fíate de ella): ${pista}` : ''}
+
+Si un dato no lo sabes, pon "" (o 88 en puntuacion). Responde solo el JSON.`;
+
 const promptFoto = (pista: string) => `Esta imagen es una FOTOGRAFÍA de un lugar turístico de España. Obsérvala con atención (tipo de paisaje, elementos, ambiente) y redacta un texto atractivo para promocionarlo.
 
 Devuelve EXCLUSIVAMENTE un objeto JSON válido, sin texto alrededor, con estas claves:
@@ -48,7 +62,9 @@ export const POST: APIRoute = async ({ request, url }) => {
   const mediaType = String(body.mediaType || 'image/jpeg');
   const modo = String(body.modo || 'texto');
   const pista = String(body.pista || '').slice(0, 200).trim();
-  const PROMPT = modo === 'foto' ? promptFoto(pista) : PROMPT_TEXTO;
+  const PROMPT = modo === 'foto' ? promptFoto(pista)
+               : modo === 'ficha' ? promptFicha(pista)
+               : PROMPT_TEXTO;
   // aceptar tanto "data:...;base64,XXXX" como solo el base64
   const comma = data.indexOf(',');
   if (data.startsWith('data:') && comma > -1) data = data.slice(comma + 1);
@@ -97,5 +113,7 @@ export const POST: APIRoute = async ({ request, url }) => {
     municipio: String(parsed.municipio || '').trim(),
     gancho: String(parsed.gancho || '').trim(),
     descripcion: String(parsed.descripcion || '').trim(),
+    categoria: String(parsed.categoria || '').trim(),
+    puntuacion: Math.max(0, Math.min(100, Number(parsed.puntuacion) || 0)),
   });
 };
