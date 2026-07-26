@@ -144,6 +144,33 @@ for (const c of catsHoy) {
     ...r, gradient: getProvGradient(r.provincia), foto: r.foto_url && r.foto_url !== 'NONE' ? r.foto_url : null,
   })) });
 }
+// ── LOS MEJORES SITIOS (ranking por NOMBRE de sitio, no por municipio) ──
+const SITIOS_CATS = [
+  { cat: 'naturaleza', tipos: ['espacio'], label: 'Sitios de naturaleza', emoji: '🌿' },
+  { cat: 'senderismo', tipos: ['sendero'], label: 'Rutas de senderismo', emoji: '🥾' },
+  { cat: 'Playas', tipos: ['playa'], label: 'Playas', emoji: '🏖️' },
+  { cat: 'cuevas', tipos: ['cueva'], label: 'Cuevas', emoji: '🕳️' },
+  { cat: 'miradores', tipos: ['mirador'], label: 'Miradores', emoji: '🌄' },
+  { cat: 'pozas', tipos: ['poza', 'cascada'], label: 'Pozas y cascadas', emoji: '💦' },
+  { cat: 'turismo_activo', tipos: ['activo'], label: 'Aventura', emoji: '🧗' },
+];
+const sitiosHome: any[] = [];
+for (const sc of SITIOS_CATS) {
+  const { results } = await DB.prepare(`
+    SELECT e.nombre, e.foto_url, m.nombre AS municipio, m.provincia, e.puntuacion
+    FROM entidades e JOIN municipios m ON m.codigo_ine = e.codigo_ine
+    WHERE e.puntuacion IS NOT NULL AND e.tipo IN (${sc.tipos.map(() => '?').join(',')})
+      AND COALESCE(m.es_duplicado,0)=0
+    GROUP BY LOWER(e.nombre)
+    ORDER BY e.puntuacion DESC LIMIT 3
+  `).bind(...sc.tipos).all();
+  const top = (results as any[]) || [];
+  if (top.length >= 3) sitiosHome.push({
+    ...sc, href: `/entidades/${sc.cat}`, top,
+    foto: top.find(t => t.foto_url && t.foto_url.startsWith('https://upload.wikimedia.org'))?.foto_url || null,
+  });
+}
+
 // carruseles geográficos (por ranking global dentro de la zona)
 for (const zona of [
   { campo: 'comunidad', valor: ccaaHoy, label: `Top ${ccaaHoy}`, icon: 'emoji_events', sub: 'los mejores municipios de la comunidad', href: `/ranking/ranking_global?ccaa=${encodeURIComponent(ccaaHoy)}` },
@@ -718,6 +745,34 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 .sp-un .sp-cta { color: #8a6608; }
 </style>
 
+<!-- ── LOS MEJORES SITIOS DE ESPAÑA (ranking por sitio, no por municipio) ── -->
+{sitiosHome.length > 0 && (
+<section class="sitios-sec">
+  <div class="st-head">
+    <h2 class="st-title">🏆 Los mejores sitios de España, con nombre y apellidos</h2>
+    <p class="st-sub">No solo qué municipio: qué cueva, qué playa, qué ruta. Ordenados del mejor al último.</p>
+  </div>
+  <div class="st-scroll">
+    {sitiosHome.map((s) => (
+      <a href={s.href} class="st-card">
+        {s.foto
+          ? <img class="st-img" src={s.foto} alt={s.top[0].nombre} loading="lazy" />
+          : <div class="st-img st-img-ph">{s.emoji}</div>}
+        <div class="st-body">
+          <div class="st-cat">{s.emoji} {s.label}</div>
+          <ol class="st-top3">
+            {s.top.map((t: any) => (
+              <li><b>{t.nombre}</b> <span class="st-muni">· {t.municipio}</span></li>
+            ))}
+          </ol>
+          <span class="st-ver">Ver el ranking completo →</span>
+        </div>
+      </a>
+    ))}
+  </div>
+</section>
+)}
+
 <!-- ── EXPLORAR POR CATEGORÍA (agrupado) ── -->
 <section class="cat-explore" id="explora">
   <div class="cx-head">
@@ -1168,6 +1223,26 @@ function doSearch() {
 @media (max-width: 600px) { .ig-hero-card { height: 420px; } .ig-hero-img { object-position: center center; } .ig-hero-title { font-size: 1.25rem; } }
 
 /* Explorar por categoría (agrupado, con microdescripción) */
+/* ── Los mejores sitios (ranking por nombre) ── */
+.sitios-sec { max-width: 1100px; margin: 34px auto 0; padding: 0 16px; }
+.st-title { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; }
+.st-sub { color: #777; font-size: .92rem; margin: 0 0 14px; }
+.st-scroll { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; }
+.st-card {
+  flex: 0 0 262px; scroll-snap-align: start; background: #fff; border: 1px solid #ececec;
+  border-radius: 16px; overflow: hidden; text-decoration: none; color: inherit;
+  transition: transform .15s, box-shadow .15s; display: flex; flex-direction: column;
+}
+.st-card:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(0,0,0,.1); }
+.st-img { width: 100%; height: 140px; object-fit: cover; display: block; background: #f0ece5; }
+.st-img-ph { display: flex; align-items: center; justify-content: center; font-size: 44px; }
+.st-body { padding: 12px 14px 14px; }
+.st-cat { font-weight: 700; font-size: .98rem; margin-bottom: 7px; letter-spacing: -0.02em; }
+.st-top3 { margin: 0 0 9px; padding-left: 20px; font-size: .84rem; line-height: 1.55; color: #444; }
+.st-top3 b { font-weight: 600; color: #171412; }
+.st-muni { color: #999; font-size: .8rem; }
+.st-ver { color: #FF385C; font-weight: 600; font-size: .84rem; }
+
 .cat-explore { max-width: 1100px; margin: 18px auto 0; padding: 0 16px; }
 .cx-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .cx-map-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: #fff1f3; color: var(--primary);

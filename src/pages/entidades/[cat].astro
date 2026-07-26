@@ -127,6 +127,8 @@ const { results: rows } = await DB.prepare(`
   SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion, MIN(e.nivel_sello) AS nivel_sello,
          MIN(e.latitud) AS latitud, MIN(e.longitud) AS longitud, MIN(e.enlace) AS enlace,
          MIN(e.sello_oficial) AS sello_of, MIN(e.fuente) AS fuente_g,
+         MIN(CASE WHEN e.foto_url LIKE 'https://upload.wikimedia.org%' THEN e.foto_url END) AS foto_url,
+         MAX(CASE WHEN e.foto_data IS NOT NULL THEN e.id END) AS foto_ent_id,
          m.codigo_ine, m.nombre AS municipio, m.provincia,
          MAX(e.puntuacion) AS ent_score,
          COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
@@ -257,6 +259,9 @@ const selloColor: Record<string,string> = {
       )}
       <li class="ent-row">
         <span class="ent-num">{(page-1)*perPage + i + 1}</span>
+        {(e.foto_ent_id || e.foto_url) && (
+          <img class="ent-foto" src={e.foto_ent_id ? `/api/entidad-foto?id=${e.foto_ent_id}` : e.foto_url} alt={e.nombre} loading="lazy" />
+        )}
         <div class="ent-body">
           <a href={`/municipio/${e.codigo_ine}?desde=${cat}`} class="ent-name">{e.nombre}</a>
           {badge && (
@@ -342,6 +347,8 @@ const selloColor: Record<string,string> = {
   padding: 16px 0; border-bottom: 1px solid var(--border);
 }
 .ent-num { font-size: .82rem; font-weight: 700; color: #bbb; min-width: 28px; padding-top: 3px; text-align: right; }
+.ent-foto { width: 108px; height: 84px; object-fit: cover; border-radius: 10px; flex-shrink: 0; background: #f0ece5; }
+@media (max-width: 560px) { .ent-foto { width: 86px; height: 70px; } }
 .ent-body { flex: 1; min-width: 0; }
 .ent-name {
   display: block; font-size: .97rem; font-weight: 700; color: var(--text);
