@@ -157,17 +157,21 @@ const SITIOS_CATS = [
 const sitiosHome: any[] = [];
 for (const sc of SITIOS_CATS) {
   const { results } = await DB.prepare(`
-    SELECT e.nombre, e.foto_url, m.nombre AS municipio, m.provincia, e.puntuacion
+    SELECT e.nombre, e.foto_url, m.foto_url AS muni_foto, m.nombre AS municipio, m.provincia, e.puntuacion
     FROM entidades e JOIN municipios m ON m.codigo_ine = e.codigo_ine
     WHERE e.puntuacion IS NOT NULL AND e.tipo IN (${sc.tipos.map(() => '?').join(',')})
       AND COALESCE(m.es_duplicado,0)=0
     GROUP BY LOWER(e.nombre)
-    ORDER BY e.puntuacion DESC LIMIT 3
+    ORDER BY e.puntuacion DESC LIMIT 10
   `).bind(...sc.tipos).all();
-  const top = (results as any[]) || [];
-  if (top.length >= 3) sitiosHome.push({
-    ...sc, href: `/entidades/${sc.cat}`, top,
-    foto: top.find(t => t.foto_url && t.foto_url.startsWith('https://upload.wikimedia.org'))?.foto_url || null,
+  const lista = (results as any[]) || [];
+  // se muestran los 3 primeros, pero la foto puede venir de cualquiera del top-10
+  if (lista.length >= 3) sitiosHome.push({
+    ...sc, href: `/entidades/${sc.cat}`, top: lista.slice(0, 3),
+    foto: lista.find(t => t.foto_url && t.foto_url.startsWith('https://upload.wikimedia.org'))?.foto_url
+       // respaldo: foto del municipio del mejor sitio (p. ej. los senderos rara vez tienen foto propia)
+       || lista.find(t => t.muni_foto && t.muni_foto.startsWith('https://upload.wikimedia.org'))?.muni_foto
+       || null,
   });
 }
 
