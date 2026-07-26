@@ -212,7 +212,7 @@ const FILTRO_CALIDAD = `
 // El top-3 de cada categoría, ordenado igual que el listado /entidades/[cat].
 // Son ~26 consultas agregadas: se cachean 12 h en KV (los rankings cambian poco).
 const kvHome = rtBinding('SESSION');
-const CACHE_KEY = 'home_sitios_v5';
+const CACHE_KEY = 'home_sitios_v7';
 let sitiosHome: any[] | null = kvHome ? await kvHome.get(CACHE_KEY, 'json').catch(() => null) : null;
 if (!sitiosHome) {
 sitiosHome = (await Promise.all(SITIOS_CATS.map(async (sc) => {
@@ -223,7 +223,10 @@ sitiosHome = (await Promise.all(SITIOS_CATS.map(async (sc) => {
     SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion,
            MIN(CASE WHEN e.foto_url LIKE 'https://upload.wikimedia.org%' THEN e.foto_url END) AS foto_url,
            MIN(CASE WHEN m.foto_url LIKE 'https://upload.wikimedia.org%' THEN m.foto_url END) AS muni_foto,
-           m.nombre AS municipio, m.provincia,
+           -- OJO: con GROUP BY + agregados, SQLite puede tomar cada columna suelta de
+           -- una fila DISTINTA del grupo (un sitio de varios municipios acababa
+           -- enlazando al código de otro). Se piden juntos y se parten después.
+           MIN(m.codigo_ine || '|' || m.nombre || '|' || COALESCE(m.provincia,'')) AS muni_pack,
            COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
     FROM entidades e
     JOIN municipios m ON m.codigo_ine = e.codigo_ine
@@ -236,7 +239,10 @@ sitiosHome = (await Promise.all(SITIOS_CATS.map(async (sc) => {
     ORDER BY ${ORDER_SITIOS}
     LIMIT 8
   `).bind(sc.cat, ...fuentes, ...(tiposF ?? [])).all();
-  const lista = (results as any[]) || [];
+  const lista = ((results as any[]) || []).map((r) => {
+    const [codigo_ine, municipio, provincia] = String(r.muni_pack || '||').split('|');
+    return { ...r, codigo_ine, municipio, provincia };
+  });
   if (lista.length < 3) return null;
   return {
     ...sc, href: `/entidades/${sc.cat}`, top: lista.slice(0, 3),
@@ -832,20 +838,27 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   </div>
   <div class="st-scroll">
     {sitiosHome.map((s) => (
-      <a href={s.href} class="st-card">
-        {s.foto
-          ? <img class="st-img" src={s.foto} alt={s.top[0].nombre} loading="lazy" />
-          : <div class="st-img st-img-ph">{s.emoji}</div>}
+      <div class="st-card">
+        <a href={s.href} class="st-imglink">
+          {s.foto
+            ? <img class="st-img" src={s.foto} alt={s.top[0].nombre} loading="lazy" />
+            : <div class="st-img st-img-ph">{s.emoji}</div>}
+        </a>
         <div class="st-body">
-          <div class="st-cat">{s.emoji} {s.label}</div>
+          <a href={s.href} class="st-cat">{s.emoji} {s.label}</a>
           <ol class="st-top3">
             {s.top.map((t: any) => (
-              <li><b>{t.nombre}</b> <span class="st-muni">· {t.municipio}</span></li>
+              <li>
+                {/* al sitio: su ficha, abierta por la sección de esta categoría */}
+                <a class="st-sitio" href={`/municipio/${t.codigo_ine}?desde=${s.cat}#desde-block`}>
+                  <b>{t.nombre}</b> <span class="st-muni">· {t.municipio}</span>
+                </a>
+              </li>
             ))}
           </ol>
-          <span class="st-ver">Ver el ranking completo →</span>
+          <a href={s.href} class="st-ver">Ver el ranking completo →</a>
         </div>
-      </a>
+      </div>
     ))}
   </div>
 </section>
@@ -1308,18 +1321,26 @@ function doSearch() {
 .st-scroll { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; }
 .st-card {
   flex: 0 0 262px; scroll-snap-align: start; background: #fff; border: 1px solid #ececec;
-  border-radius: 16px; overflow: hidden; text-decoration: none; color: inherit;
+  border-radius: 16px; overflow: hidden; color: inherit;
   transition: transform .15s, box-shadow .15s; display: flex; flex-direction: column;
 }
 .st-card:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(0,0,0,.1); }
+.st-imglink { display: block; }
 .st-img { width: 100%; height: 140px; object-fit: cover; display: block; background: #f0ece5; }
 .st-img-ph { display: flex; align-items: center; justify-content: center; font-size: 44px; }
 .st-body { padding: 12px 14px 14px; }
-.st-cat { font-weight: 700; font-size: .98rem; margin-bottom: 7px; letter-spacing: -0.02em; }
+.st-cat {
+  display: block; font-weight: 700; font-size: .98rem; margin-bottom: 7px;
+  letter-spacing: -0.02em; color: inherit; text-decoration: none;
+}
 .st-top3 { margin: 0 0 9px; padding-left: 20px; font-size: .84rem; line-height: 1.55; color: #444; }
-.st-top3 b { font-weight: 600; color: #171412; }
+.st-top3 li { margin-bottom: 2px; }
+.st-sitio { text-decoration: none; color: inherit; display: inline-block; }
+.st-sitio b { font-weight: 600; color: #171412; }
+.st-sitio:hover b { color: #FF385C; text-decoration: underline; }
 .st-muni { color: #999; font-size: .8rem; }
-.st-ver { color: #FF385C; font-weight: 600; font-size: .84rem; }
+.st-ver { color: #FF385C; font-weight: 600; font-size: .84rem; text-decoration: none; }
+.st-ver:hover { text-decoration: underline; }
 
 .cat-explore { max-width: 1100px; margin: 18px auto 0; padding: 0 16px; }
 .cx-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }

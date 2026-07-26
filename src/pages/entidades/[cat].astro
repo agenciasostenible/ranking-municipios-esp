@@ -83,7 +83,9 @@ const { results: rows } = await DB.prepare(`
          MIN(e.sello_oficial) AS sello_of, MIN(e.fuente) AS fuente_g,
          MIN(CASE WHEN e.foto_url LIKE 'https://upload.wikimedia.org%' THEN e.foto_url END) AS foto_url,
          MAX(CASE WHEN e.foto_data IS NOT NULL THEN e.id END) AS foto_ent_id,
-         m.codigo_ine, m.nombre AS municipio, m.provincia,
+         -- juntos para que código, municipio y provincia salgan SIEMPRE de la misma
+         -- fila del grupo (con GROUP BY + agregados SQLite no lo garantiza)
+         MIN(m.codigo_ine || '|' || m.nombre || '|' || COALESCE(m.provincia,'')) AS muni_pack,
          MAX(e.puntuacion) AS ent_score,
          COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
   FROM entidades e
@@ -98,7 +100,10 @@ const { results: rows } = await DB.prepare(`
   LIMIT ? OFFSET ?
 `).bind(cat!, ...bindAll).all();
 
-const entidades = rows as any[];
+const entidades = (rows as any[]).map((r) => {
+  const [codigo_ine, municipio, provincia] = String(r.muni_pack || '||').split('|');
+  return { ...r, codigo_ine, municipio, provincia };
+});
 
 function setParam(key: string, val: string | null) {
   const p = new URLSearchParams(url.search);
