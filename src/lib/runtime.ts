@@ -17,6 +17,16 @@ export function d1Binding(): any {
   }
 }
 
+/** Devuelve un binding NO textual del runtime (p. ej. el KV `SESSION`), o null. */
+export function rtBinding(k: string): any {
+  try {
+    const v = (cfEnv as any)?.[k];
+    return v && typeof v !== 'string' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Lee una variable/secreto: runtime de Cloudflare → import.meta.env → process.env. */
 export function rtEnv(k: string): any {
   try {

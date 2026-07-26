@@ -1,3 +1,96 @@
+// ── Categorías con listado de SITIOS (fuente única de verdad: la usan
+//    /entidades/[cat] y la sección "Los mejores sitios" de la home) ──
+export const CAT_FUENTES: Record<string, string[]> = {
+  castillos:         ['inventario_castillos_pdf', 'inventario_monumentos_pdf', 'monumentos_osm'],
+  monumentos:        ['inventario_monumentos_pdf', 'monumentos_osm'],
+  naturaleza:        ['inventario_naturaleza_pdf', 'mil_lugares'],
+  museos:            ['wikidata_museos'],
+  fiestas:           ['inventario_fiestas_pdf', 'fiestas_wiki'],
+  festivales:        ['inventario_festivales_pdf', 'festivales_wiki'],
+  miradores:         ['inventario_miradores_pdf', 'miradores_osm', 'mil_lugares'],
+  oleoturismo:       ['inventario_oleoturismo_pdf', 'oleo_osm', 'oleotour_jaen'],
+  misterioso:        ['inventario_misterioso_pdf', 'misterio_osm'],
+  estrellas:         ['starlight', 'astro_osm', 'mil_lugares'],
+  senderismo:        ['senderos_osm', 'excel_curado', 'mil_lugares'],
+  birdwatching:      ['mil_lugares'],
+  Playas:            ['bandera_azul', 'inventario_playas_pdf', 'playas_osm', 'mil_lugares'],
+  hoteles_encanto:   ['hoteles_encanto', 'encanto_osm'],
+  TurismoRural:      ['rural_osm'],
+  ciclismo:          ['vias_verdes', 'caminos_naturales', 'eurovelo', 'centros_btt', 'camino_cid', 'pirinexus', 'mil_lugares'],
+  pozas:             ['pozas_bano', 'agua_osm', 'mil_lugares'],
+  cuevas:            ['cuevas', 'mil_lugares'],
+  balnearios:        ['balnearios', 'agua_osm'],
+  solteros:          ['ocio_osm'],
+  turismo_mascotas:  ['inventario_turismo_mascotas_pdf', 'mascotas_osm', 'mil_lugares'],
+  turismo_lgtbi:     ['inventario_turismo_lgtbi_pdf', 'lgtbi_osm', 'lgtbi_wiki', 'lgtbi_curado'],
+  vinos:             ['inventario_vinos_pdf', 'rutas_vino', 'vinos_osm'],
+  pueblo_bonito:     ['pueblos_mas_bonitos'],
+  turismo_religioso: ['inventario_turismo_religioso_pdf', 'religioso_osm'],
+  turismo_activo:    ['inventario_turismo_activo_pdf', 'activo_osm', 'mil_lugares'],
+  lujo:              ['inventario_lujo_pdf', 'lujo_osm'],
+  gastronomia:       ['guia_michelin', 'gastronomia_ampliacion', 'guia_repsol_solete', 'restaurantes_osm'],
+  Campings:          ['campings_osm'],
+};
+
+export const CAT_TIPOS_F: Record<string, string[]> = {
+  balnearios: ['balneario','termas'],
+  senderismo: ['sendero'],
+  castillos: ['castillo','torre','fortaleza','alcazaba','muralla'],
+  Playas: ['playa','playa_urbana'],
+  miradores: ['mirador'],
+  estrellas: ['astro'],
+  pozas: ['poza','cascada','senda_fluvial','playa_fluvial','termas'],
+  cuevas: ['cueva'],
+  ciclismo: ['ciclismo'],
+  turismo_activo: ['activo'],
+  birdwatching: ['fauna'],
+};
+
+/**
+ * Criterio de orden de los SITIOS dentro de una categoría (el mismo en el listado
+ * /entidades/[cat] y en la home): primero los distinguidos —nota curada de sitio,
+ * sello o distinción oficial—, luego por prestigio del sello/fuente y nota.
+ * Requiere que la consulta agrupe por nombre (usa agregados MIN/MAX).
+ */
+export const ORDER_SITIOS = `
+  CASE WHEN MAX(e.puntuacion) IS NOT NULL
+         OR (MIN(e.nivel_sello) IS NOT NULL AND MIN(e.nivel_sello)!='')
+         OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
+         OR MIN(e.fuente) IN ('bandera_azul','pueblos_mas_bonitos')
+       THEN 0 ELSE 1 END,
+  CASE MIN(e.nivel_sello)
+    WHEN 'Museo de Fama Mundial' THEN 0
+    WHEN 'Museo Nacional' THEN 1
+    WHEN 'UNESCO' THEN 2
+    WHEN '3 Estrellas Michelin' THEN 0
+    WHEN '2 Estrellas Michelin' THEN 1
+    WHEN '1 Estrella Michelin' THEN 2
+    ELSE 3
+  END,
+  CASE MIN(COALESCE(e.fuente,''))
+    WHEN 'guia_michelin' THEN 0
+    WHEN 'guia_repsol_solete' THEN 1
+    WHEN 'gastronomia_ampliacion' THEN 2
+    WHEN 'restaurantes_osm' THEN 8
+    ELSE 3
+  END,
+  CASE LOWER(MIN(e.nombre))
+    WHEN 'museo del prado' THEN 0
+    WHEN 'museo nacional del prado' THEN 0
+    WHEN 'museo guggenheim bilbao' THEN 1
+    WHEN 'guggenheim bilbao' THEN 1
+    WHEN 'museo nacional centro de arte reina sofía' THEN 2
+    WHEN 'museo thyssen-bornemisza' THEN 3
+    WHEN 'museu nacional d''art de catalunya' THEN 4
+    WHEN 'museu picasso' THEN 5
+    WHEN 'teatre-museu dalí' THEN 6
+    ELSE 99
+  END,
+  CASE WHEN MAX(e.puntuacion) IS NOT NULL THEN 0 ELSE 1 END,
+  puntuacion DESC,
+  CASE WHEN MIN(e.descripcion) IS NOT NULL AND MIN(e.descripcion) NOT LIKE 'Museo en%' THEN 0 ELSE 1 END,
+  nombre ASC`;
+
 export const TIPO_ICONS: Record<string, string> = {
   castillo:   '🏰',
   monumento:  '🏛️',

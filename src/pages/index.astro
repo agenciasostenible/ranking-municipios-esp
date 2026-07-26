@@ -5,6 +5,8 @@ import Icon from '../components/Icon.astro';
 import { TABS, SIDEBAR_GROUPS, formatPob, getSubtitle } from '../lib/db';
 import { getProvGradient } from '../lib/utils';
 import { getBanner } from '../lib/banners';
+import { CAT_FUENTES, CAT_TIPOS_F, ORDER_SITIOS } from '../lib/entidades';
+import { rtBinding } from '../lib/runtime';
 
 const bannerTop = await getBanner('home_top');
 const bannerCats = await getBanner('home_cats');
@@ -145,34 +147,106 @@ for (const c of catsHoy) {
   })) });
 }
 // ── LOS MEJORES SITIOS (ranking por NOMBRE de sitio, no por municipio) ──
-const SITIOS_CATS = [
-  { cat: 'naturaleza', tipos: ['espacio'], label: 'Sitios de naturaleza', emoji: '🌿' },
-  { cat: 'senderismo', tipos: ['sendero'], label: 'Rutas de senderismo', emoji: '🥾' },
-  { cat: 'Playas', tipos: ['playa'], label: 'Playas', emoji: '🏖️' },
-  { cat: 'cuevas', tipos: ['cueva'], label: 'Cuevas', emoji: '🕳️' },
-  { cat: 'miradores', tipos: ['mirador'], label: 'Miradores', emoji: '🌄' },
-  { cat: 'pozas', tipos: ['poza', 'cascada'], label: 'Pozas y cascadas', emoji: '💦' },
-  { cat: 'turismo_activo', tipos: ['activo'], label: 'Aventura', emoji: '🧗' },
+// Todas las categorías con listado de sitios. Se excluye pueblo_bonito: ahí el
+// "sitio" ES el municipio y ya tiene su propio ranking.
+const SITIOS_CATS: { cat: string; label: string; emoji: string }[] = [
+  { cat: 'naturaleza',        label: 'Sitios de naturaleza',  emoji: '🌿' },
+  { cat: 'Playas',            label: 'Playas',                emoji: '🏖️' },
+  { cat: 'senderismo',        label: 'Rutas de senderismo',   emoji: '🥾' },
+  { cat: 'castillos',         label: 'Castillos',             emoji: '🏰' },
+  { cat: 'monumentos',        label: 'Monumentos',            emoji: '🏛️' },
+  { cat: 'museos',            label: 'Museos',                emoji: '🖼️' },
+  { cat: 'gastronomia',       label: 'Dónde comer',           emoji: '🍽️' },
+  { cat: 'cuevas',            label: 'Cuevas',                emoji: '🕳️' },
+  { cat: 'miradores',         label: 'Miradores',             emoji: '🌄' },
+  { cat: 'pozas',             label: 'Pozas y cascadas',      emoji: '💦' },
+  { cat: 'turismo_activo',    label: 'Aventura',              emoji: '🧗' },
+  { cat: 'festivales',        label: 'Festivales',            emoji: '🎸' },
+  // 'fiestas' fuera del escaparate: la fuente wiki mezcla personas (imagineros,
+  // compositores) que heredaron el sello, y el inventario curado no tiene
+  // distinción, así que no hay criterio para decir "las mejores".
+  { cat: 'estrellas',         label: 'Cielos estrellados',    emoji: '✨' },
+  { cat: 'balnearios',        label: 'Balnearios',            emoji: '♨️' },
+  { cat: 'hoteles_encanto',   label: 'Hoteles con encanto',   emoji: '🏨' },
+  { cat: 'TurismoRural',      label: 'Casas rurales',         emoji: '🏡' },
+  { cat: 'ciclismo',          label: 'Rutas en bici',         emoji: '🚴' },
+  { cat: 'vinos',             label: 'Enoturismo',            emoji: '🍷' },
+  { cat: 'oleoturismo',       label: 'Oleoturismo',           emoji: '🫒' },
+  { cat: 'misterioso',        label: 'Lugares con misterio',  emoji: '🔮' },
+  { cat: 'turismo_religioso', label: 'Turismo religioso',     emoji: '⛪' },
+  { cat: 'birdwatching',      label: 'Ver fauna salvaje',     emoji: '🦅' },
+  { cat: 'lujo',              label: 'Lujo',                  emoji: '💎' },
+  { cat: 'Campings',          label: 'Campings',              emoji: '⛺' },
+  { cat: 'turismo_mascotas',  label: 'Con tu mascota',        emoji: '🐾' },
 ];
-const sitiosHome: any[] = [];
-for (const sc of SITIOS_CATS) {
+
+// Tipos SOLO para la home: varias categorías incluyen la fuente mil_lugares sin
+// filtro de tipo (a propósito: un sendero curado debe salir también en naturaleza),
+// pero en el escaparate cada tarjeta tiene que enseñar lo suyo.
+const TIPOS_HOME: Record<string, string[]> = {
+  ...CAT_TIPOS_F,
+  naturaleza: ['espacio'],
+  turismo_mascotas: ['mascotas'],
+  oleoturismo: ['oleoturismo'],
+  fiestas: ['fiesta'],
+  festivales: ['festival'],
+  vinos: ['bodega', 'vino'],
+  lujo: ['lujo'],
+  museos: ['Museo'],
+  monumentos: ['monumento'],
+  turismo_religioso: ['religioso', 'iglesia'],
+};
+// La home dice "los mejores": solo puede enseñar sitios con FUNDAMENTO (nota
+// curada del sitio o distinción oficial). Sin esto el orden acaba siendo
+// alfabético y salen cosas que no son un sitio (viales, personas, tiendas).
+const FILTRO_CALIDAD = `
+  AND (MAX(e.puntuacion) IS NOT NULL
+       OR (MIN(e.nivel_sello) IS NOT NULL AND MIN(e.nivel_sello)!='')
+       OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
+       OR MIN(e.fuente) IN ('bandera_azul','pueblos_mas_bonitos','guia_michelin','hoteles_encanto','starlight','cuevas','balnearios'))
+  AND MIN(e.nombre) NOT LIKE 'Calle %' AND MIN(e.nombre) NOT LIKE 'Avenida %'
+  AND MIN(e.nombre) NOT LIKE 'Plaza %' AND MIN(e.nombre) NOT LIKE 'Carretera %'
+  AND MIN(e.nombre) NOT LIKE 'Camino %' AND MIN(e.nombre) NOT LIKE 'Bandera Azul %'
+  AND LENGTH(MIN(e.nombre)) < 60`;
+
+// El top-3 de cada categoría, ordenado igual que el listado /entidades/[cat].
+// Son ~26 consultas agregadas: se cachean 12 h en KV (los rankings cambian poco).
+const kvHome = rtBinding('SESSION');
+const CACHE_KEY = 'home_sitios_v5';
+let sitiosHome: any[] | null = kvHome ? await kvHome.get(CACHE_KEY, 'json').catch(() => null) : null;
+if (!sitiosHome) {
+sitiosHome = (await Promise.all(SITIOS_CATS.map(async (sc) => {
+  const fuentes = CAT_FUENTES[sc.cat];
+  if (!fuentes) return null;
+  const tiposF = TIPOS_HOME[sc.cat];
   const { results } = await DB.prepare(`
-    SELECT e.nombre, e.foto_url, m.foto_url AS muni_foto, m.nombre AS municipio, m.provincia, e.puntuacion
-    FROM entidades e JOIN municipios m ON m.codigo_ine = e.codigo_ine
-    WHERE e.puntuacion IS NOT NULL AND e.tipo IN (${sc.tipos.map(() => '?').join(',')})
+    SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion,
+           MIN(CASE WHEN e.foto_url LIKE 'https://upload.wikimedia.org%' THEN e.foto_url END) AS foto_url,
+           MIN(CASE WHEN m.foto_url LIKE 'https://upload.wikimedia.org%' THEN m.foto_url END) AS muni_foto,
+           m.nombre AS municipio, m.provincia,
+           COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
+    FROM entidades e
+    JOIN municipios m ON m.codigo_ine = e.codigo_ine
+    LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = ?
+    WHERE e.fuente IN (${fuentes.map(() => '?').join(',')})
+      ${tiposF ? `AND e.tipo IN (${tiposF.map(() => '?').join(',')})` : ''}
       AND COALESCE(m.es_duplicado,0)=0
-    GROUP BY LOWER(e.nombre)
-    ORDER BY e.puntuacion DESC LIMIT 10
-  `).bind(...sc.tipos).all();
+    GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
+    HAVING 1=1 ${FILTRO_CALIDAD}
+    ORDER BY ${ORDER_SITIOS}
+    LIMIT 8
+  `).bind(sc.cat, ...fuentes, ...(tiposF ?? [])).all();
   const lista = (results as any[]) || [];
-  // se muestran los 3 primeros, pero la foto puede venir de cualquiera del top-10
-  if (lista.length >= 3) sitiosHome.push({
+  if (lista.length < 3) return null;
+  return {
     ...sc, href: `/entidades/${sc.cat}`, top: lista.slice(0, 3),
-    foto: lista.find(t => t.foto_url && t.foto_url.startsWith('https://upload.wikimedia.org'))?.foto_url
-       // respaldo: foto del municipio del mejor sitio (p. ej. los senderos rara vez tienen foto propia)
-       || lista.find(t => t.muni_foto && t.muni_foto.startsWith('https://upload.wikimedia.org'))?.muni_foto
-       || null,
-  });
+    // foto propia de cualquiera del top-8 y, si ninguno tiene, la del municipio
+    foto: lista.find(t => t.foto_url)?.foto_url || lista.find(t => t.muni_foto)?.muni_foto || null,
+  };
+}))).filter(Boolean) as any[];
+  if (kvHome && sitiosHome.length) {
+    await kvHome.put(CACHE_KEY, JSON.stringify(sitiosHome), { expirationTtl: 43200 }).catch(() => {});
+  }
 }
 
 // carruseles geográficos (por ranking global dentro de la zona)
