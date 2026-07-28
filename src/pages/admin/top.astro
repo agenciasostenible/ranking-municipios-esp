@@ -1,9 +1,10 @@
 ---
 /**
- * /admin/top — "Los X mejores … de …" para Instagram.
- * Eliges categoría + ámbito (España, comunidad o provincia) + cuántos, y te da
- * la IMAGEN 1080×1350 lista para descargar y el COPY con hashtags para pegar.
- * Usa el mismo criterio de orden que la web (lib/entidades) para no contradecirla.
+ * /admin/top — Crear publicación de ranking para Instagram.
+ * Eliges qué ranking (SITIOS o MUNICIPIOS), el ámbito (España / comunidad /
+ * provincia) y MARCAS a mano qué puestos entran: puedes sacar el 1, el 5 y el 15,
+ * y cada uno sale con su posición REAL. Te da la imagen 1080×1350 y el copy.
+ * El orden es el de la web (lib/entidades), así que nunca la contradice.
  */
 import { DB } from '../../lib/d1client';
 import { CAT_FUENTES, CAT_TIPOS_F, ORDER_SITIOS } from '../../lib/entidades';
@@ -12,42 +13,41 @@ const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
 const key = Astro.url.searchParams.get('key') ?? '';
 const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
-const k = encodeURIComponent(key);
 
-// categoría → cómo se nombra en el titular (artículo + sustantivo) y color
-const CATS: Record<string, { art: string; sust: string; color: string; emoji: string; hash: string }> = {
-  naturaleza:        { art: 'Los', sust: 'sitios de naturaleza', color: '#2E7D32', emoji: '🌿', hash: 'naturaleza' },
-  Playas:            { art: 'Las', sust: 'playas',               color: '#0277BD', emoji: '🏖️', hash: 'playas' },
-  senderismo:        { art: 'Las', sust: 'rutas de senderismo',  color: '#558B2F', emoji: '🥾', hash: 'senderismo' },
-  cuevas:            { art: 'Las', sust: 'cuevas',               color: '#5D4037', emoji: '🕳️', hash: 'cuevas' },
-  pozas:             { art: 'Las', sust: 'pozas y cascadas',     color: '#0097A7', emoji: '💦', hash: 'pozas' },
-  miradores:         { art: 'Los', sust: 'miradores',            color: '#00838F', emoji: '🌄', hash: 'miradores' },
-  castillos:         { art: 'Los', sust: 'castillos',            color: '#6D4C41', emoji: '🏰', hash: 'castillos' },
-  monumentos:        { art: 'Los', sust: 'monumentos',           color: '#8D6E63', emoji: '🏛️', hash: 'monumentos' },
-  museos:            { art: 'Los', sust: 'museos',               color: '#5E35B1', emoji: '🖼️', hash: 'museos' },
-  gastronomia:       { art: 'Los', sust: 'restaurantes',         color: '#E65100', emoji: '🍽️', hash: 'gastronomia' },
-  hoteles_encanto:   { art: 'Los', sust: 'hoteles con encanto',  color: '#AD1457', emoji: '🏨', hash: 'hoteles' },
-  TurismoRural:      { art: 'Las', sust: 'casas rurales',        color: '#33691E', emoji: '🏡', hash: 'turismorural' },
-  turismo_activo:    { art: 'Los', sust: 'planes de aventura',   color: '#F4511E', emoji: '🧗', hash: 'turismoactivo' },
-  ciclismo:          { art: 'Las', sust: 'rutas en bici',        color: '#00695C', emoji: '🚴', hash: 'cicloturismo' },
-  balnearios:        { art: 'Los', sust: 'balnearios',           color: '#00838F', emoji: '♨️', hash: 'balnearios' },
-  estrellas:         { art: 'Los', sust: 'cielos estrellados',   color: '#283593', emoji: '✨', hash: 'astroturismo' },
-  vinos:             { art: 'Las', sust: 'bodegas',              color: '#6A1B9A', emoji: '🍷', hash: 'enoturismo' },
-  festivales:        { art: 'Los', sust: 'festivales',           color: '#C2185B', emoji: '🎸', hash: 'festivales' },
-  Campings:          { art: 'Los', sust: 'campings',             color: '#2E7D32', emoji: '⛺', hash: 'camping' },
-  turismo_religioso: { art: 'Los', sust: 'templos y santuarios', color: '#7B1FA2', emoji: '⛪', hash: 'patrimonio' },
+// categoría → titular, color y hashtag
+const CATS: Record<string, { art: string; sust: string; titulo: string; color: string; emoji: string; hash: string }> = {
+  naturaleza:        { art: 'Los', sust: 'sitios de naturaleza', titulo: 'Naturaleza',      color: '#2E7D32', emoji: '🌿', hash: 'naturaleza' },
+  Playas:            { art: 'Las', sust: 'playas',               titulo: 'Playas',          color: '#0277BD', emoji: '🏖️', hash: 'playas' },
+  senderismo:        { art: 'Las', sust: 'rutas de senderismo',  titulo: 'Senderismo',      color: '#558B2F', emoji: '🥾', hash: 'senderismo' },
+  cuevas:            { art: 'Las', sust: 'cuevas',               titulo: 'Cuevas',          color: '#5D4037', emoji: '🕳️', hash: 'cuevas' },
+  pozas:             { art: 'Las', sust: 'pozas y cascadas',     titulo: 'Pozas y cascadas',color: '#0097A7', emoji: '💦', hash: 'pozas' },
+  miradores:         { art: 'Los', sust: 'miradores',            titulo: 'Miradores',       color: '#00838F', emoji: '🌄', hash: 'miradores' },
+  estrellas:         { art: 'Los', sust: 'sitios para ver las estrellas', titulo: 'Astroturismo', color: '#283593', emoji: '✨', hash: 'astroturismo' },
+  castillos:         { art: 'Los', sust: 'castillos',            titulo: 'Castillos',       color: '#6D4C41', emoji: '🏰', hash: 'castillos' },
+  monumentos:        { art: 'Los', sust: 'monumentos',           titulo: 'Monumentos',      color: '#8D6E63', emoji: '🏛️', hash: 'monumentos' },
+  museos:            { art: 'Los', sust: 'museos',               titulo: 'Museos',          color: '#5E35B1', emoji: '🖼️', hash: 'museos' },
+  gastronomia:       { art: 'Los', sust: 'sitios para comer',    titulo: 'Gastronomía',     color: '#E65100', emoji: '🍽️', hash: 'gastronomia' },
+  hoteles_encanto:   { art: 'Los', sust: 'hoteles con encanto',  titulo: 'Hoteles con encanto', color: '#AD1457', emoji: '🏨', hash: 'hoteles' },
+  TurismoRural:      { art: 'Las', sust: 'casas rurales',        titulo: 'Turismo rural',   color: '#33691E', emoji: '🏡', hash: 'turismorural' },
+  turismo_activo:    { art: 'Los', sust: 'planes de aventura',   titulo: 'Aventura',        color: '#F4511E', emoji: '🧗', hash: 'turismoactivo' },
+  ciclismo:          { art: 'Las', sust: 'rutas en bici',        titulo: 'Cicloturismo',    color: '#00695C', emoji: '🚴', hash: 'cicloturismo' },
+  balnearios:        { art: 'Los', sust: 'balnearios',           titulo: 'Balnearios',      color: '#00838F', emoji: '♨️', hash: 'balnearios' },
+  vinos:             { art: 'Las', sust: 'bodegas',              titulo: 'Enoturismo',      color: '#6A1B9A', emoji: '🍷', hash: 'enoturismo' },
+  festivales:        { art: 'Los', sust: 'festivales',           titulo: 'Festivales',      color: '#C2185B', emoji: '🎸', hash: 'festivales' },
+  Campings:          { art: 'Los', sust: 'campings',             titulo: 'Campings',        color: '#2E7D32', emoji: '⛺', hash: 'camping' },
+  turismo_religioso: { art: 'Los', sust: 'templos y santuarios', titulo: 'Turismo religioso', color: '#7B1FA2', emoji: '⛪', hash: 'patrimonio' },
+  pueblo_bonito:     { art: 'Los', sust: 'pueblos más bonitos',  titulo: 'Pueblos bonitos', color: '#FF385C', emoji: '✨', hash: 'pueblosbonitos' },
+  ranking_global:    { art: 'Los', sust: 'municipios turísticos',titulo: 'Ranking general', color: '#FF385C', emoji: '🏆', hash: 'turismo' },
 };
 
-const cat   = Astro.url.searchParams.get('cat') || 'cuevas';
-const ambTipo = Astro.url.searchParams.get('ambTipo') || 'pais';   // pais | ccaa | prov
+const modo    = Astro.url.searchParams.get('modo') || 'sitios';   // sitios | municipios
+const cat     = Astro.url.searchParams.get('cat') || 'cuevas';
+const ambTipo = Astro.url.searchParams.get('ambTipo') || 'pais';
 const ambVal  = Astro.url.searchParams.get('ambVal') || '';
-const n = Math.min(10, Math.max(3, parseInt(Astro.url.searchParams.get('n') || '5')));
 
 let ccaas: string[] = [], provincias: string[] = [], filas: any[] = [];
-let titulo = '', ambitoTxt = '', copy = '';
+let ambitoTxt = '';
 const info = CATS[cat] ?? CATS.cuevas;
-
-const slugTag = (s: string) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
 
 if (ok) {
   const c1 = await DB.prepare(`SELECT DISTINCT comunidad FROM municipios WHERE comunidad IS NOT NULL ORDER BY comunidad`).all();
@@ -55,75 +55,74 @@ if (ok) {
   const p1 = await DB.prepare(`SELECT DISTINCT provincia FROM municipios WHERE provincia IS NOT NULL ORDER BY provincia`).all();
   provincias = (p1.results as any[]).map(r => r.provincia);
 
-  ambitoTxt = ambTipo === 'ccaa' && ambVal ? ambVal
-            : ambTipo === 'prov' && ambVal ? ambVal
-            : 'España';
-  titulo = `${info.art} ${n} mejores ${info.sust} de ${ambitoTxt}`;
+  ambitoTxt = (ambTipo !== 'pais' && ambVal) ? ambVal : 'España';
+  const cond = ambTipo === 'ccaa' && ambVal ? 'AND m.comunidad = ?'
+             : ambTipo === 'prov' && ambVal ? 'AND m.provincia = ?' : '';
 
-  const fuentes = CAT_FUENTES[cat] ?? [];
-  const tipos = CAT_TIPOS_F[cat];
-  if (fuentes.length) {
-    const cond = ambTipo === 'ccaa' && ambVal ? 'AND m.comunidad = ?'
-               : ambTipo === 'prov' && ambVal ? 'AND m.provincia = ?' : '';
-    const params: any[] = [cat, ...fuentes, ...(tipos ?? [])];
+  if (modo === 'municipios') {
+    const params: any[] = [cat];
     if (cond) params.push(ambVal);
-    params.push(n);
     const { results } = await DB.prepare(`
-      SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion,
-             MIN(e.nivel_sello) AS nivel_sello, MIN(e.sello_oficial) AS sello_oficial, MIN(e.fuente) AS fuente_g,
-             MIN(CASE WHEN e.foto_url LIKE 'https://upload.wikimedia.org%' THEN e.foto_url END) AS foto_sitio,
-             MIN(CASE WHEN m.foto_url LIKE 'https://upload.wikimedia.org%' THEN m.foto_url END) AS foto_muni,
-             MIN(m.codigo_ine || '|' || m.nombre || '|' || COALESCE(m.provincia,'')) AS muni_pack,
-             COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
-      FROM entidades e
-      JOIN municipios m ON m.codigo_ine = e.codigo_ine
-      LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = ?
-      WHERE e.fuente IN (${fuentes.map(() => '?').join(',')})
-        ${tipos ? `AND e.tipo IN (${tipos.map(() => '?').join(',')})` : ''}
-        AND COALESCE(m.es_duplicado,0)=0
-        ${cond}
-      GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
-      HAVING (MAX(e.puntuacion) IS NOT NULL
-              OR (MIN(e.nivel_sello) IS NOT NULL AND MIN(e.nivel_sello)!='')
-              OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
-              OR MIN(e.fuente) IN ('bandera_azul','guia_michelin','hoteles_encanto','starlight','cuevas','balnearios'))
-         AND MIN(e.nombre) NOT LIKE 'Calle %' AND MIN(e.nombre) NOT LIKE 'Bandera Azul %'
-         AND LENGTH(MIN(e.nombre)) < 60
-      ORDER BY ${ORDER_SITIOS}
-      LIMIT ?
+      SELECT m.nombre, m.provincia, m.codigo_ine, m.foto_url, p.puntuacion
+      FROM puntuaciones p JOIN municipios m ON m.codigo_ine = p.codigo_ine
+      WHERE p.categoria = ? AND p.puntuacion > 0 AND COALESCE(m.es_duplicado,0)=0 ${cond}
+      ORDER BY p.puntuacion DESC LIMIT 30
     `).bind(...params).all();
-
-    filas = ((results as any[]) || []).map((r, i) => {
-      const [codigo, municipio, provincia] = String(r.muni_pack || '||').split('|');
-      const d = (r.descripcion || '').replace(/\s+/g, ' ').trim();
-      return {
-        pos: i + 1, nombre: r.nombre, municipio, provincia, codigo,
-        foto: r.foto_sitio || r.foto_muni || '',
-        esFotoMuni: !r.foto_sitio && !!r.foto_muni,
-        frase: d.split(/(?<=[.!?])\s/)[0] || '',
-      };
-    });
-
-    if (filas.length) {
-      const hashAmb = ambitoTxt !== 'España' ? ' #' + slugTag(ambitoTxt) : '';
-      copy = [
-        `${titulo.toUpperCase()} ${info.emoji}`, '',
-        ...filas.map(f => `${f.pos}️⃣ ${f.nombre} · ${f.municipio}${f.provincia && ambitoTxt === 'España' ? ` (${f.provincia})` : ''}`),
-        '',
-        ...(filas[0].frase ? [`El nº1: ${filas[0].frase}`, ''] : []),
-        `¿Añadirías alguno más? Dímelo en comentarios 👇`,
-        `📌 Guárdalo para tu próxima escapada`,
-        `🔗 El ranking completo, en rankingspain.com`, '',
-        `#España #turismoespaña #viajarporespaña #escapadas #${info.hash}${hashAmb}`,
-      ].join('\n');
+    filas = ((results as any[]) || []).map((r, i) => ({
+      pos: i + 1, nombre: r.nombre, sub: r.provincia, codigo: r.codigo_ine,
+      foto: /^https:\/\/upload\.wikimedia\.org\//.test(r.foto_url || '') ? r.foto_url : '',
+      nota: Number(r.puntuacion).toFixed(1), frase: '',
+    }));
+  } else {
+    const fuentes = CAT_FUENTES[cat] ?? [];
+    const tipos = CAT_TIPOS_F[cat];
+    if (fuentes.length) {
+      const params: any[] = [cat, ...fuentes, ...(tipos ?? [])];
+      if (cond) params.push(ambVal);
+      const { results } = await DB.prepare(`
+        SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion,
+               MIN(e.nivel_sello) AS nivel_sello, MIN(e.sello_oficial) AS sello_oficial, MIN(e.fuente) AS fuente_g,
+               MIN(CASE WHEN e.foto_url LIKE 'https://upload.wikimedia.org%' THEN e.foto_url END) AS foto_sitio,
+               MIN(CASE WHEN m.foto_url LIKE 'https://upload.wikimedia.org%' THEN m.foto_url END) AS foto_muni,
+               MIN(m.codigo_ine || '|' || m.nombre || '|' || COALESCE(m.provincia,'')) AS muni_pack,
+               MAX(e.puntuacion) AS ent_score,
+               COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
+        FROM entidades e
+        JOIN municipios m ON m.codigo_ine = e.codigo_ine
+        LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = ?
+        WHERE e.fuente IN (${fuentes.map(() => '?').join(',')})
+          ${tipos ? `AND e.tipo IN (${tipos.map(() => '?').join(',')})` : ''}
+          AND COALESCE(m.es_duplicado,0)=0
+          ${cond}
+        GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
+        HAVING (MAX(e.puntuacion) IS NOT NULL
+                OR (MIN(e.nivel_sello) IS NOT NULL AND MIN(e.nivel_sello)!='')
+                OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
+                OR MIN(e.fuente) IN ('bandera_azul','guia_michelin','hoteles_encanto','starlight','cuevas','balnearios','pueblos_mas_bonitos'))
+           AND MIN(e.nombre) NOT LIKE 'Calle %' AND MIN(e.nombre) NOT LIKE 'Bandera Azul %'
+           AND LENGTH(MIN(e.nombre)) < 60
+        ORDER BY ${ORDER_SITIOS}
+        LIMIT 30
+      `).bind(...params).all();
+      filas = ((results as any[]) || []).map((r, i) => {
+        const [codigo, municipio, provincia] = String(r.muni_pack || '||').split('|');
+        const d = (r.descripcion || '').replace(/\s+/g, ' ').trim();
+        return {
+          pos: i + 1, nombre: r.nombre,
+          sub: municipio + (ambitoTxt === 'España' && provincia ? ` · ${provincia}` : ''),
+          codigo, foto: r.foto_sitio || r.foto_muni || '',
+          nota: r.ent_score != null ? Number(r.ent_score).toFixed(1) : '',
+          frase: d.split(/(?<=[.!?])\s/)[0] || '',
+        };
+      });
     }
   }
 }
 
-const datos = JSON.stringify({ titulo, ambitoTxt, filas, color: info.color, emoji: info.emoji, sust: info.sust });
+const datos = JSON.stringify({ filas, info, ambitoTxt, cat, modo });
 ---
 <html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Top para Instagram · Ranking Spain</title>
+<title>Crear publicación de ranking</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -135,17 +134,30 @@ const datos = JSON.stringify({ titulo, ambitoTxt, filas, color: info.color, emoj
   .bar h1{ font-size:16px; margin:0; font-weight:800; letter-spacing:-.02em; }
   .bar a{ font-size:20px; color:#171412; text-decoration:none; }
   .wrap{ max-width:560px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
-  form{ display:flex; flex-direction:column; gap:10px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; }
+  form,.card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; }
   label.fld{ display:flex; flex-direction:column; gap:5px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; }
-  select, input[type=number]{ font:inherit; font-size:16px; padding:10px 12px; border-radius:10px; border:1px solid #d9cfc0; background:#fff; width:100%; }
+  select,input[type=text]{ font:inherit; font-size:16px; padding:10px 12px; border-radius:10px; border:1px solid #d9cfc0; background:#fff; width:100%; }
   .row{ display:flex; gap:8px; }
   .btn{ font:inherit; font-size:15px; padding:12px 14px; border-radius:12px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; flex:1; font-weight:600; text-align:center; }
   .btn.primary{ background:var(--rausch); color:#fff; border:0; font-weight:700; }
   .btn.dark{ background:#171412; color:#fff; border:0; font-weight:700; }
-  canvas#post{ width:100%; max-width:340px; margin:0 auto; display:block; border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.16); }
+  .btn.mini{ flex:0 0 auto; font-size:12.5px; padding:7px 11px; border-radius:9px; }
+  .lista{ display:flex; flex-direction:column; gap:2px; max-height:340px; overflow:auto; }
+  .it{ display:flex; align-items:center; gap:9px; padding:7px 6px; border-radius:9px; cursor:pointer; font-size:14px; }
+  .it:hover{ background:#faf7f2; }
+  .it.on{ background:#fff1f3; }
+  .it input{ width:19px; height:19px; accent-color:var(--rausch); flex:0 0 auto; }
+  .it .p{ font-weight:800; color:var(--muted); min-width:26px; font-size:13px; }
+  .it .n{ font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .it .s{ color:var(--muted); font-size:12px; }
+  canvas#post{ width:100%; max-width:340px; margin:0 auto; display:block; border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.18); }
   textarea{ width:100%; font:inherit; font-size:13.5px; line-height:1.5; padding:12px; border-radius:12px; border:1px solid #d9cfc0; background:#fafaf7; min-height:230px; resize:vertical; }
   .vacio{ background:#fff3e6; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.5; }
   .hint{ font-size:12.5px; color:var(--muted); line-height:1.45; }
+  .fondos{ display:flex; gap:7px; flex-wrap:wrap; }
+  .fchip{ font-size:13px; padding:7px 12px; border-radius:999px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; }
+  .fchip.on{ background:#171412; color:#fff; border-color:#171412; }
+  input[type=file]{ display:none; }
   .noauth{ padding:60px 20px; text-align:center; color:var(--muted); }
 </style></head>
 <body>
@@ -153,31 +165,32 @@ const datos = JSON.stringify({ titulo, ambitoTxt, filas, color: info.color, emoj
   <div class="noauth">Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</div>
 ) : (
 <div>
-  <div class="bar"><a href={`/admin?key=${key}`}>←</a><h1>🏆 Top para Instagram</h1></div>
+  <div class="bar"><a href={`/admin?key=${key}`}>←</a><h1>🏆 Crear publicación de ranking</h1></div>
   <div class="wrap">
     <form method="get" action="/admin/top">
       <input type="hidden" name="key" value={key} />
-      <label class="fld">Qué ranking
-        <select name="cat">
-          {Object.entries(CATS).map(([v, c]) => (
-            <option value={v} selected={v === cat}>{c.emoji} {c.art} mejores {c.sust}</option>
-          ))}
-        </select>
-      </label>
       <div class="row">
+        <label class="fld" style="flex:1">Ranking de
+          <select name="modo">
+            <option value="sitios" selected={modo === 'sitios'}>Sitios concretos</option>
+            <option value="municipios" selected={modo === 'municipios'}>Municipios</option>
+          </select>
+        </label>
         <label class="fld" style="flex:1">Ámbito
           <select name="ambTipo" id="ambTipo">
-            <option value="pais" selected={ambTipo === 'pais'}>España</option>
+            <option value="pais" selected={ambTipo === 'pais'}>Toda España</option>
             <option value="ccaa" selected={ambTipo === 'ccaa'}>Comunidad</option>
             <option value="prov" selected={ambTipo === 'prov'}>Provincia</option>
           </select>
         </label>
-        <label class="fld" style="flex:1">Cuántos
-          <select name="n">
-            {[3, 5, 7, 10].map(v => <option value={v} selected={v === n}>{v}</option>)}
-          </select>
-        </label>
       </div>
+      <label class="fld">Categoría
+        <select name="cat">
+          {Object.entries(CATS).map(([v, c]) => (
+            <option value={v} selected={v === cat}>{c.emoji} {c.titulo}</option>
+          ))}
+        </select>
+      </label>
       <label class="fld" id="wrapCcaa" style={ambTipo === 'ccaa' ? '' : 'display:none'}>Comunidad
         <select name="ambVal" id="selCcaa" disabled={ambTipo !== 'ccaa'}>
           {ccaas.map(c => <option value={c} selected={c === ambVal}>{c}</option>)}
@@ -188,25 +201,49 @@ const datos = JSON.stringify({ titulo, ambitoTxt, filas, color: info.color, emoj
           {provincias.map(p => <option value={p} selected={p === ambVal}>{p}</option>)}
         </select>
       </label>
-      <button class="btn primary" type="submit">🔄 Generar el ranking</button>
+      <button class="btn primary" type="submit">🔎 Buscar el ranking</button>
     </form>
 
     { filas.length === 0 ? (
-      <div class="vacio">No hay suficientes sitios con distinción en ese ámbito. Prueba con toda España, con otra categoría o con menos elementos.</div>
+      <div class="vacio">No hay resultados con distinción en ese ámbito. Prueba con toda España, otra categoría, o el modo “Municipios”.</div>
     ) : (
       <>
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">✅ Elige los que salen en el post</div>
+          <div class="hint" style="margin-top:-4px">Cada uno conserva su <b>puesto real</b>: puedes sacar el 1, el 5 y el 15 juntos.</div>
+          <div class="row" style="gap:6px;flex-wrap:wrap">
+            <button class="btn mini" type="button" data-sel="3">Top 3</button>
+            <button class="btn mini" type="button" data-sel="5">Top 5</button>
+            <button class="btn mini" type="button" data-sel="10">Top 10</button>
+            <button class="btn mini" type="button" data-sel="0">Ninguno</button>
+          </div>
+          <div class="lista" id="lista"></div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">🎨 Fondo</div>
+          <div class="fondos" id="fondos">
+            <span class="fchip on" data-f="auto">Foto del nº1 (oscura)</span>
+            <span class="fchip" data-f="degradado">Degradado de marca</span>
+            <span class="fchip" data-f="noche">Noche</span>
+            <label class="fchip" for="bgInp">📷 Mi foto</label>
+          </div>
+          <input type="file" id="bgInp" accept="image/*" />
+          <label class="fld" style="margin-top:4px">Título de la publicación
+            <input type="text" id="tituloIn" value={info.titulo} />
+          </label>
+        </div>
+
         <canvas id="post" width="1080" height="1350"></canvas>
         <div class="row">
           <button class="btn dark" type="button" id="descargar">📲 Descargar / Compartir</button>
         </div>
-        <div>
-          <div style="font-weight:700;font-size:13px;margin-bottom:6px">📝 Copy para Instagram:</div>
-          <textarea id="copy" readonly>{copy}</textarea>
-          <div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="copiar">📋 Copiar el copy</button></div>
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">📝 Copy para Instagram</div>
+          <textarea id="copy" readonly></textarea>
+          <button class="btn primary" type="button" id="copiar">📋 Copiar el copy</button>
         </div>
-        <div class="hint">El orden es el mismo que manda en la web, así que el post nunca contradice al ranking público.
-        { filas.some((f: any) => f.esFotoMuni) && <span> · ⚠️ Algunas miniaturas son la foto del municipio porque el sitio aún no tiene foto propia.</span> }
-        </div>
+        <div class="hint">El orden es el mismo que manda en la web: el post nunca contradice al ranking público.</div>
       </>
     )}
   </div>
@@ -215,136 +252,234 @@ const datos = JSON.stringify({ titulo, ambitoTxt, filas, color: info.color, emoj
 
 <script type="application/json" id="datos" set:html={datos}></script>
 <script is:inline>
-  (function(){
-    var D = JSON.parse(document.getElementById('datos')?.textContent || '{}');
-    var $ = function(id){ return document.getElementById(id); };
-    var FF = '"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif';
+(function(){
+  var D = JSON.parse(document.getElementById('datos')?.textContent || '{}');
+  var $ = function(id){ return document.getElementById(id); };
+  var FF = '"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif';
 
-    // el ámbito activo cambia qué desplegable se usa (y desactiva el otro)
-    var at = $('ambTipo');
-    if (at) at.addEventListener('change', function(){
-      var v = at.value;
-      $('wrapCcaa').style.display = v === 'ccaa' ? '' : 'none';
-      $('wrapProv').style.display = v === 'prov' ? '' : 'none';
-      $('selCcaa').disabled = v !== 'ccaa';
-      $('selProv').disabled = v !== 'prov';
+  // el ámbito decide qué desplegable se envía
+  var at = $('ambTipo');
+  if (at) at.addEventListener('change', function(){
+    var v = at.value;
+    $('wrapCcaa').style.display = v === 'ccaa' ? '' : 'none';
+    $('wrapProv').style.display = v === 'prov' ? '' : 'none';
+    $('selCcaa').disabled = v !== 'ccaa';
+    $('selProv').disabled = v !== 'prov';
+  });
+
+  var filas = D.filas || [];
+  if (!filas.length) return;
+
+  var sel = {};                       // posiciones marcadas
+  filas.slice(0, 5).forEach(function(f){ sel[f.pos] = true; });
+  var fondo = 'auto', bgProp = null, imgs = {};
+
+  // ── lista con casillas ──
+  var lista = $('lista');
+  filas.forEach(function(f){
+    var d = document.createElement('label');
+    d.className = 'it' + (sel[f.pos] ? ' on' : '');
+    d.innerHTML = '<input type="checkbox"' + (sel[f.pos] ? ' checked' : '') + '>' +
+      '<span class="p">' + f.pos + '</span>' +
+      '<span class="n">' + f.nombre + ' <span class="s">· ' + (f.sub || '') + (f.nota ? ' · ' + f.nota : '') + '</span></span>';
+    d.querySelector('input').addEventListener('change', function(e){
+      if (e.target.checked) sel[f.pos] = true; else delete sel[f.pos];
+      d.classList.toggle('on', !!sel[f.pos]);
+      pintar();
     });
+    lista.appendChild(d);
+  });
+  document.querySelectorAll('[data-sel]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var n = parseInt(b.dataset.sel, 10); sel = {};
+      filas.slice(0, n).forEach(function(f){ sel[f.pos] = true; });
+      [].forEach.call(lista.children, function(el, i){
+        var on = !!sel[filas[i].pos];
+        el.querySelector('input').checked = on; el.classList.toggle('on', on);
+      });
+      pintar();
+    });
+  });
 
-    if (!D.filas || !D.filas.length) return;
+  document.querySelectorAll('#fondos .fchip[data-f]').forEach(function(c){
+    c.addEventListener('click', function(){
+      document.querySelectorAll('#fondos .fchip').forEach(function(x){ x.classList.remove('on'); });
+      c.classList.add('on'); fondo = c.dataset.f; bgProp = null; pintar();
+    });
+  });
+  $('bgInp')?.addEventListener('change', function(e){
+    var f = e.target.files[0]; if (!f) return;
+    var im = new Image();
+    im.onload = function(){ bgProp = im; fondo = 'propia';
+      document.querySelectorAll('#fondos .fchip').forEach(function(x){ x.classList.remove('on'); });
+      pintar(); };
+    im.src = URL.createObjectURL(f);
+  });
+  $('tituloIn')?.addEventListener('input', pintar);
 
-    function wrap(ctx, text, maxW){ var w=(text||'').split(/\s+/), l=[], ln=''; for(var i=0;i<w.length;i++){ var t=ln?ln+' '+w[i]:w[i]; if(ctx.measureText(t).width>maxW&&ln){l.push(ln);ln=w[i];}else ln=t;} if(ln)l.push(ln); return l; }
-    function roundRect(ctx,x,y,w,h,r){ r=Math.min(r,h/2,w/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
-    function setLS(ctx,v){ try{ ctx.letterSpacing=v; }catch(e){} }
-    function cover(ctx,im,x0,y0,W,H){ var ir=im.width/im.height, cr=W/H, dw,dh,dx,dy;
-      if(ir>cr){ dh=H; dw=H*ir; dx=x0+(W-dw)/2; dy=y0; } else { dw=W; dh=W/ir; dx=x0; dy=y0+(H-dh)/2; }
-      ctx.save(); ctx.beginPath(); ctx.rect(x0,y0,W,H); ctx.clip(); ctx.drawImage(im,dx,dy,dw,dh); ctx.restore(); }
+  function elegidas(){ return filas.filter(function(f){ return sel[f.pos]; }); }
 
-    var imgs = {};   // fotos cargadas (portada y miniaturas)
-    function cargar(url){ return new Promise(function(res){
-      if(!url) return res(null);
-      var im = new Image(); im.crossOrigin='anonymous';
-      im.onload=function(){ res(im); }; im.onerror=function(){ res(null); };
-      im.src = url; setTimeout(function(){ res(null); }, 6000);
-    }); }
+  // ── utilidades canvas ──
+  function wrap(ctx, t, maxW){ var w=(t||'').split(/\s+/), l=[], ln=''; for(var i=0;i<w.length;i++){ var x=ln?ln+' '+w[i]:w[i]; if(ctx.measureText(x).width>maxW&&ln){l.push(ln);ln=w[i];}else ln=x;} if(ln)l.push(ln); return l; }
+  function fit(ctx, t, maxW){ var s=t; while(ctx.measureText(s).width>maxW && s.length>6) s=s.slice(0,-2); return s===t?t:s+'…'; }
+  function cover(ctx,im,x0,y0,W,H){ var ir=im.width/im.height, cr=W/H, dw,dh,dx,dy;
+    if(ir>cr){dh=H;dw=H*ir;dx=x0+(W-dw)/2;dy=y0;}else{dw=W;dh=W/ir;dx=x0;dy=y0+(H-dh)/2;}
+    ctx.save(); ctx.beginPath(); ctx.rect(x0,y0,W,H); ctx.clip(); ctx.drawImage(im,dx,dy,dw,dh); ctx.restore(); }
+  function setLS(ctx,v){ try{ ctx.letterSpacing=v; }catch(e){} }
+  function cargar(url){ return new Promise(function(res){
+    if(!url) return res(null);
+    var im=new Image(); im.crossOrigin='anonymous';
+    im.onload=function(){res(im);}; im.onerror=function(){res(null);};
+    im.src=url; setTimeout(function(){res(null);},6000); }); }
 
-    function render(){
-      var cv=$('post'); if(!cv) return; var ctx=cv.getContext('2d');
-      var W=1080, H=1350, P=70;
-      var filas=D.filas, n=filas.length;
-      ctx.clearRect(0,0,W,H); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-
-      // ── cabecera: foto del nº1 al fondo, oscurecida ──
-      var HH = 430;
-      var portada = imgs['0'];
-      if (portada) cover(ctx, portada, 0, 0, W, HH);
-      else { var g0=ctx.createLinearGradient(0,0,W,HH); g0.addColorStop(0,D.color); g0.addColorStop(1,'#17120e'); ctx.fillStyle=g0; ctx.fillRect(0,0,W,HH); }
-      var gh=ctx.createLinearGradient(0,0,0,HH); gh.addColorStop(0,'rgba(0,0,0,.62)'); gh.addColorStop(1,'rgba(0,0,0,.80)');
-      ctx.fillStyle=gh; ctx.fillRect(0,0,W,HH);
-
-      // marca
-      ctx.fillStyle='#FF385C'; ctx.beginPath(); ctx.arc(P+18,P-6,18,0,7); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.font='700 34px '+FF; setLS(ctx,'-.5px'); ctx.fillText('rankingspain.com',P+46,P+5); setLS(ctx,'0px');
-
-      // titular
-      ctx.fillStyle='#fff'; ctx.font='800 82px '+FF; setLS(ctx,'-2.5px');
-      ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=18;
-      var lineas = wrap(ctx, D.titulo, W-2*P).slice(0,3);
-      var y = HH - 56 - (lineas.length-1)*86;
-      for (var i=0;i<lineas.length;i++){ ctx.fillText(lineas[i], P, y); y += 86; }
-      ctx.shadowColor='transparent'; setLS(ctx,'0px');
-
-      // ── filas del ranking ──
-      var top = HH + 34;
-      var disp = H - top - 76;
-      var alto = Math.min(120, Math.floor(disp / n));
-      var fs = n >= 9 ? 36 : n >= 7 ? 40 : 44;      // tamaño del nombre según cuántos hay
-      ctx.textBaseline='middle';
-      for (var j=0;j<n;j++){
-        var f=filas[j], cy = top + alto*j + alto/2;
-        // miniatura
-        var mini = imgs['m'+j], size = Math.min(alto-14, 92), mx = P, my = cy - size/2;
-        if (mini){ ctx.save(); roundRect(ctx,mx,my,size,size,16); ctx.clip(); cover(ctx,mini,mx,my,size,size); ctx.restore(); }
-        else { ctx.fillStyle='#f0ece5'; roundRect(ctx,mx,my,size,size,16); ctx.fill(); }
-        // número
-        var nx = mx + size + 26;
-        ctx.fillStyle=D.color; ctx.font='800 '+(fs+4)+'px '+FF;
-        ctx.fillText(String(f.pos), nx, cy);
-        var numW = ctx.measureText(String(f.pos)).width + 20;
-        // nombre + municipio
-        var tx = nx + numW;
-        ctx.fillStyle='#171412'; ctx.font='800 '+fs+'px '+FF; setLS(ctx,'-1px');
-        var nombre=f.nombre, maxW=W-tx-P;
-        while (ctx.measureText(nombre).width > maxW && nombre.length > 8) nombre = nombre.slice(0,-2);
-        if (nombre !== f.nombre) nombre += '…';
-        ctx.fillText(nombre, tx, cy - (alto>78?16:12));
-        setLS(ctx,'0px');
-        ctx.fillStyle='#8a7f70'; ctx.font='600 '+(fs-10)+'px '+FF;
-        var sub = '📍 ' + f.municipio + (f.provincia && D.ambitoTxt==='España' ? ' · '+f.provincia : '');
-        while (ctx.measureText(sub).width > maxW && sub.length > 8) sub = sub.slice(0,-2);
-        ctx.fillText(sub, tx, cy + (alto>78?26:20));
-      }
-
-      // pie
-      ctx.textBaseline='alphabetic'; ctx.textAlign='center';
-      ctx.fillStyle='#8a7f70'; ctx.font='600 30px '+FF;
-      ctx.fillText('Ranking completo en rankingspain.com', W/2, H-34);
-      ctx.textAlign='left';
+  function pintarFondo(ctx, W, H){
+    var im = fondo === 'propia' ? bgProp : (fondo === 'auto' ? imgs['bg'] : null);
+    if (im) {
+      cover(ctx, im, 0, 0, W, H);
+      // velo oscuro fuerte: el texto va en blanco encima
+      ctx.fillStyle = 'rgba(0,0,0,.62)'; ctx.fillRect(0,0,W,H);
+      var g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'rgba(0,0,0,.45)'); g.addColorStop(.5,'rgba(0,0,0,.15)'); g.addColorStop(1,'rgba(0,0,0,.55)');
+      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+      return;
     }
-
-    // cargar fotos (portada + miniaturas) y pintar
-    (async function(){
-      var filas=D.filas;
-      imgs['0'] = await cargar(filas[0] && filas[0].foto);
-      render();
-      for (var j=0;j<filas.length;j++){
-        imgs['m'+j] = await cargar(filas[j].foto);
-        render();
+    if (fondo === 'noche') {
+      var gn = ctx.createLinearGradient(0,0,W,H);
+      gn.addColorStop(0,'#0b1220'); gn.addColorStop(.55,'#131c2e'); gn.addColorStop(1,'#090d16');
+      ctx.fillStyle=gn; ctx.fillRect(0,0,W,H);
+      for (var i=0;i<150;i++){                       // estrellas
+        var x=Math.random()*W, y=Math.random()*H*0.8, r=Math.random()*1.9;
+        ctx.fillStyle='rgba(255,255,255,'+(0.25+Math.random()*0.6)+')';
+        ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
       }
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(render).catch(function(){});
-    })();
+      return;
+    }
+    // degradado de marca (color de la categoría → casi negro) + viñeta
+    var c = (D.info && D.info.color) || '#FF385C';
+    var gd = ctx.createLinearGradient(0,0,W,H);
+    gd.addColorStop(0, c); gd.addColorStop(.55,'#241c17'); gd.addColorStop(1,'#0d0b09');
+    ctx.fillStyle=gd; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,0,0,.34)'; ctx.fillRect(0,0,W,H);
+  }
 
-    function dataURLtoBlob(durl){ var p=durl.split(','), mime=(p[0].match(/:(.*?);/)||[])[1]||'image/png', bin=atob(p[1]), u8=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return new Blob([u8],{type:mime}); }
-    $('descargar')?.addEventListener('click', async function(){
-      render();
-      var blob, durl;
-      try { durl = $('post').toDataURL('image/png'); blob = dataURLtoBlob(durl); }
-      catch(e){ alert('Una foto bloqueó la descarga. Prueba a regenerar el ranking.'); return; }
-      var nom = (D.titulo||'top').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.png';
-      var file = new File([blob], nom, {type:'image/png'});
-      if (navigator.canShare && navigator.canShare({files:[file]})) {
-        try { await navigator.share({files:[file], title:D.titulo}); return; } catch(err){ if(err && err.name==='AbortError') return; }
+  function pintar(){
+    var cv=$('post'); if(!cv) return; var ctx=cv.getContext('2d');
+    var W=1080,H=1350,P=64;
+    var els=elegidas(), n=els.length;
+    ctx.clearRect(0,0,W,H);
+    pintarFondo(ctx,W,H);
+
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle='#fff';
+    ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=16; ctx.shadowOffsetY=2;
+
+    // marca + TOP N + título + ámbito
+    ctx.font='800 52px '+FF; setLS(ctx,'-1px'); ctx.fillText('Ranking Spain', W/2, 108); setLS(ctx,'0px');
+    // "TOP N" solo si son los N primeros; si has elegido salteados (1, 5, 15…) no lo es
+    var consecutivos = n > 0 && els.every(function(f, i){ return f.pos === i + 1; });
+    ctx.font='700 40px '+FF; setLS(ctx,'3px');
+    ctx.fillText(!n ? 'RANKING' : consecutivos ? ('TOP ' + n) : 'NUESTRA SELECCIÓN', W/2, 214); setLS(ctx,'0px');
+    var tit = ($('tituloIn') && $('tituloIn').value.trim()) || (D.info && D.info.titulo) || '';
+    ctx.font='800 92px '+FF; setLS(ctx,'-2.5px');
+    var tl = wrap(ctx, tit, W-2*P).slice(0,2);
+    var ty = 300;
+    tl.forEach(function(l){ ctx.fillText(l, W/2, ty); ty += 96; });
+    setLS(ctx,'0px');
+    ctx.font='600 42px '+FF;
+    ctx.fillText('de ' + (D.ambitoTxt || 'España'), W/2, ty + 6);
+
+    if (!n) { ctx.shadowColor='transparent'; ctx.textAlign='left'; refrescarCopy(); return; }
+
+    // ── filas ──
+    var zona = ty + 74, dispo = H - zona - 92;
+    var alto = Math.min(118, Math.floor(dispo / n));
+    // con pocos elementos sobraría medio cartel: se centra el bloque en el hueco
+    var top = zona + Math.max(0, (dispo - alto * n) / 2);
+    var fs   = alto >= 100 ? 54 : alto >= 78 ? 46 : alto >= 62 ? 40 : 34;
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    var hayNota = els.some(function(f){ return f.nota; });
+    var notaW = hayNota ? 190 : 0;
+
+    els.forEach(function(f, i){
+      var cy = top + alto*i + alto/2;
+      // puesto
+      ctx.fillStyle='#fff'; ctx.font='800 '+(fs+6)+'px '+FF;
+      var px = P, pw = ctx.measureText(String(f.pos)).width;
+      ctx.fillText(String(f.pos), px, cy);
+      // nombre y debajo el municipio
+      var tx = px + Math.max(pw, 46) + 22;
+      var maxW = W - tx - P - notaW;
+      ctx.font='800 '+fs+'px '+FF; setLS(ctx,'-1px');
+      ctx.fillText(fit(ctx, f.nombre, maxW), tx, cy - (alto>70?15:11));
+      setLS(ctx,'0px');
+      ctx.font='500 '+(fs-16)+'px '+FF; ctx.fillStyle='rgba(255,255,255,.82)';
+      ctx.fillText(fit(ctx, f.sub || '', maxW), tx, cy + (alto>70?24:18));
+      // nota a la derecha
+      if (f.nota){
+        ctx.fillStyle='#fff'; ctx.font='800 '+(fs+2)+'px '+FF; ctx.textAlign='right';
+        ctx.fillText(f.nota, W-P, cy); ctx.textAlign='left';
       }
-      var url=URL.createObjectURL(blob), a=document.createElement('a');
-      a.download=nom; a.href=url; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
     });
 
-    $('copiar')?.addEventListener('click', async function(e){
-      var t=$('copy').value, btn=e.target;
-      try { await navigator.clipboard.writeText(t); }
-      catch(_){ var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(x){} ta.remove(); }
-      var o=btn.textContent; btn.textContent='✓ Copiado'; setTimeout(function(){ btn.textContent=o; }, 1500);
-    });
+    // pie
+    ctx.shadowColor='transparent'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='600 34px '+FF;
+    ctx.fillText('rankingspain.com', W/2, H-46);
+    ctx.textAlign='left';
+    refrescarCopy();
+  }
+
+  function refrescarCopy(){
+    var els=elegidas(); if(!$('copy')) return;
+    if(!els.length){ $('copy').value='Marca al menos un sitio en la lista.'; return; }
+    var info=D.info||{}, amb=D.ambitoTxt||'España';
+    var tit=($('tituloIn')&&$('tituloIn').value.trim())||info.titulo||'';
+    var slug=function(s){ return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]/g,''); };
+    var enOrden = els.every(function(f,i){ return f.pos === i+1; });
+    var cab = enOrden ? ('TOP ' + els.length + ' ' + tit.toUpperCase() + ' DE ' + amb.toUpperCase())
+                      : (tit.toUpperCase() + ' DE ' + amb.toUpperCase() + ' — NUESTRA SELECCIÓN');
+    var l = [cab + ' ' + (info.emoji||''), ''];
+    els.forEach(function(f){ l.push('#' + f.pos + ' ' + f.nombre + ' · ' + (f.sub||'') + (f.nota ? ' — ' + f.nota : '')); });
+    l.push('');
+    if (!enOrden) l.push('(El número es su puesto real en el ranking de rankingspain.com)', '');
+    var conFrase = els.find(function(f){ return f.frase; });
+    if (conFrase) l.push(conFrase.nombre + ': ' + conFrase.frase, '');
+    l.push('¿Cuál te falta por visitar? Cuéntamelo en comentarios 👇',
+           '📌 Guárdalo para tu próxima escapada',
+           '🔗 Ranking completo en rankingspain.com', '',
+           '#España #turismoespaña #viajarporespaña #escapadas #' + (info.hash||'turismo') +
+           (amb!=='España' ? ' #'+slug(amb) : ''));
+    $('copy').value = l.join('\n');
+  }
+
+  // fondo automático: foto del nº1 (o del primero que tenga)
+  (async function(){
+    var conFoto = filas.find(function(f){ return f.foto; });
+    imgs['bg'] = await cargar(conFoto && conFoto.foto);
+    pintar();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(pintar).catch(function(){});
   })();
+
+  function dataURLtoBlob(d){ var p=d.split(','), m=(p[0].match(/:(.*?);/)||[])[1]||'image/png', b=atob(p[1]), u=new Uint8Array(b.length); for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i); return new Blob([u],{type:m}); }
+  $('descargar')?.addEventListener('click', async function(){
+    pintar();
+    var blob; try { blob = dataURLtoBlob($('post').toDataURL('image/png')); }
+    catch(e){ alert('Una foto bloqueó la descarga. Elige otro fondo y reintenta.'); return; }
+    var nom = ((D.info&&D.info.titulo)||'ranking').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-') + '-rankingspain.png';
+    var file = new File([blob], nom, {type:'image/png'});
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      try { await navigator.share({files:[file], title:'Ranking Spain'}); return; } catch(err){ if(err&&err.name==='AbortError') return; }
+    }
+    var url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.download=nom; a.href=url; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+  });
+
+  $('copiar')?.addEventListener('click', async function(e){
+    var t=$('copy').value, b=e.target;
+    try { await navigator.clipboard.writeText(t); }
+    catch(_){ var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(x){} ta.remove(); }
+    var o=b.textContent; b.textContent='✓ Copiado'; setTimeout(function(){ b.textContent=o; },1500);
+  });
+})();
 </script>
 </body></html>
