@@ -210,7 +210,8 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, cat, modo });
       <>
         <div class="card">
           <div style="font-weight:800;font-size:14px">✅ Elige los que salen en el post</div>
-          <div class="hint" style="margin-top:-4px">Cada uno conserva su <b>puesto real</b>: puedes sacar el 1, el 5 y el 15 juntos.</div>
+          <div class="hint" style="margin-top:-4px">Cada uno conserva su <b>puesto real</b>: puedes sacar el 1, el 5 y el 15 juntos.
+          Si alguno de los elegidos aparece <b>“sin nota”</b>, la imagen oculta la columna de notas en todos (media tabla con número y media sin él parece un error).</div>
           <div class="row" style="gap:6px;flex-wrap:wrap">
             <button class="btn mini" type="button" data-sel="3">Top 3</button>
             <button class="btn mini" type="button" data-sel="5">Top 5</button>
@@ -281,7 +282,8 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, cat, modo });
     d.className = 'it' + (sel[f.pos] ? ' on' : '');
     d.innerHTML = '<input type="checkbox"' + (sel[f.pos] ? ' checked' : '') + '>' +
       '<span class="p">' + f.pos + '</span>' +
-      '<span class="n">' + f.nombre + ' <span class="s">· ' + (f.sub || '') + (f.nota ? ' · ' + f.nota : '') + '</span></span>';
+      '<span class="n">' + f.nombre + ' <span class="s">· ' + (f.sub || '') +
+      (f.nota ? ' · ' + f.nota : ' · sin nota') + '</span></span>';
     d.querySelector('input').addEventListener('change', function(e){
       if (e.target.checked) sel[f.pos] = true; else delete sel[f.pos];
       d.classList.toggle('on', !!sel[f.pos]);
@@ -392,7 +394,9 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, cat, modo });
     }
     ctx.font='800 '+tfs+'px '+FF; setLS(ctx,'-3px');
     var tl = wrap(ctx, tit, W-2*P).slice(0,3);
-    var ty = 196 + 118;
+    // la primera línea baja según lo grande que sea el título: si no, las
+    // mayúsculas suben y se comen el "NUESTRA SELECCIÓN" de arriba
+    var ty = 196 + Math.round(tfs * 0.82);
     tl.forEach(function(l){ ctx.fillText(l, W/2, ty); ty += tfs + 6; });
     setLS(ctx,'0px');
     ctx.font='700 54px '+FF; ctx.fillStyle='rgba(255,255,255,.92)';
@@ -410,7 +414,9 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, cat, modo });
     // nombres grandes (se leen en el feed); con muchas filas bajan lo justo
     var fs   = alto >= 110 ? 68 : alto >= 92 ? 60 : alto >= 74 ? 52 : alto >= 62 ? 44 : 38;
     ctx.textAlign='left'; ctx.textBaseline='middle';
-    var hayNota = els.some(function(f){ return f.nota; });
+    // La nota solo se muestra si la tienen TODOS los elegidos: media tabla con
+    // número y media sin él descuadra y parece un error.
+    var hayNota = els.length > 0 && els.every(function(f){ return f.nota; });
     var notaW = hayNota ? Math.round(fs * 3.1) : 0;
 
     els.forEach(function(f, i){
@@ -428,12 +434,14 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, cat, modo });
       while (ctx.measureText(f.nombre).width > maxW && nfs > minFs) {
         nfs -= 2; ctx.font='800 '+nfs+'px '+FF;
       }
-      ctx.fillText(fit(ctx, f.nombre, maxW), tx, cy - (alto > 70 ? 17 : 12));
+      // separación proporcional al tamaño: si es fija, el nombre pisa al municipio
+      var subFs = Math.round(nfs * 0.5);
+      ctx.fillText(fit(ctx, f.nombre, maxW), tx, cy - Math.round(nfs * 0.30));
       setLS(ctx,'0px');
-      ctx.font='600 '+Math.round(nfs*0.56)+'px '+FF; ctx.fillStyle='rgba(255,255,255,.85)';
-      ctx.fillText(fit(ctx, f.sub || '', maxW), tx, cy + (alto > 70 ? 28 : 20));
+      ctx.font='600 '+subFs+'px '+FF; ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.fillText(fit(ctx, f.sub || '', maxW), tx, cy + Math.round(nfs * 0.40));
       // nota a la derecha
-      if (f.nota){
+      if (hayNota && f.nota){
         ctx.fillStyle='#fff'; ctx.font='800 '+(fs+2)+'px '+FF; ctx.textAlign='right';
         ctx.fillText(f.nota, W-P, cy); ctx.textAlign='left';
       }
