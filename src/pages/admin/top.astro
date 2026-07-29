@@ -372,20 +372,33 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, cat, modo });
     ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle='#fff';
     ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=16; ctx.shadowOffsetY=2;
 
-    // marca + TOP N + título + ámbito
-    ctx.font='800 52px '+FF; setLS(ctx,'-1px'); ctx.fillText('Ranking Spain', W/2, 108); setLS(ctx,'0px');
+    // Cabecera pensada para que se LEA EN EL FEED (la miniatura va a ~1/3):
+    // marca discreta, y "TOP N" + título enormes.
+    ctx.font='700 40px '+FF; setLS(ctx,'0px'); ctx.fillStyle='rgba(255,255,255,.85)';
+    ctx.fillText('Ranking Spain', W/2, 92);
+    ctx.fillStyle='#fff';
     // "TOP N" solo si son los N primeros; si has elegido salteados (1, 5, 15…) no lo es
     var consecutivos = n > 0 && els.every(function(f, i){ return f.pos === i + 1; });
-    ctx.font='700 40px '+FF; setLS(ctx,'3px');
-    ctx.fillText(!n ? 'RANKING' : consecutivos ? ('TOP ' + n) : 'NUESTRA SELECCIÓN', W/2, 214); setLS(ctx,'0px');
+    var kicker = !n ? 'RANKING' : consecutivos ? ('TOP ' + n) : 'NUESTRA SELECCIÓN';
+    ctx.font='800 ' + (kicker.length > 10 ? 52 : 76) + 'px '+FF; setLS(ctx,'4px');
+    ctx.fillText(kicker, W/2, 196); setLS(ctx,'0px');
     var tit = ($('tituloIn') && $('tituloIn').value.trim()) || (D.info && D.info.titulo) || '';
-    ctx.font='800 92px '+FF; setLS(ctx,'-2.5px');
-    var tl = wrap(ctx, tit, W-2*P).slice(0,2);
-    var ty = 300;
-    tl.forEach(function(l){ ctx.fillText(l, W/2, ty); ty += 96; });
+    // el título se agranda todo lo que permita el ancho (hasta 3 líneas)
+    var tfs = 150;
+    for (; tfs > 78; tfs -= 4) {
+      ctx.font='800 '+tfs+'px '+FF; setLS(ctx,'-3px');
+      var prueba = wrap(ctx, tit, W-2*P);
+      if (prueba.length <= 2) break;
+    }
+    ctx.font='800 '+tfs+'px '+FF; setLS(ctx,'-3px');
+    var tl = wrap(ctx, tit, W-2*P).slice(0,3);
+    var ty = 196 + 118;
+    tl.forEach(function(l){ ctx.fillText(l, W/2, ty); ty += tfs + 6; });
     setLS(ctx,'0px');
-    ctx.font='600 42px '+FF;
-    ctx.fillText('de ' + (D.ambitoTxt || 'España'), W/2, ty + 6);
+    ctx.font='700 54px '+FF; ctx.fillStyle='rgba(255,255,255,.92)';
+    ctx.fillText('de ' + (D.ambitoTxt || 'España'), W/2, ty + 10);
+    ctx.fillStyle='#fff';
+    ty += 10;
 
     if (!n) { ctx.shadowColor='transparent'; ctx.textAlign='left'; refrescarCopy(); return; }
 
@@ -394,25 +407,31 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, cat, modo });
     var alto = Math.min(118, Math.floor(dispo / n));
     // con pocos elementos sobraría medio cartel: se centra el bloque en el hueco
     var top = zona + Math.max(0, (dispo - alto * n) / 2);
-    var fs   = alto >= 100 ? 54 : alto >= 78 ? 46 : alto >= 62 ? 40 : 34;
+    // nombres grandes (se leen en el feed); con muchas filas bajan lo justo
+    var fs   = alto >= 110 ? 68 : alto >= 92 ? 60 : alto >= 74 ? 52 : alto >= 62 ? 44 : 38;
     ctx.textAlign='left'; ctx.textBaseline='middle';
     var hayNota = els.some(function(f){ return f.nota; });
-    var notaW = hayNota ? 190 : 0;
+    var notaW = hayNota ? Math.round(fs * 3.1) : 0;
 
     els.forEach(function(f, i){
       var cy = top + alto*i + alto/2;
       // puesto
-      ctx.fillStyle='#fff'; ctx.font='800 '+(fs+6)+'px '+FF;
+      ctx.fillStyle='#fff'; ctx.font='800 '+(fs+8)+'px '+FF;
       var px = P, pw = ctx.measureText(String(f.pos)).width;
       ctx.fillText(String(f.pos), px, cy);
-      // nombre y debajo el municipio
-      var tx = px + Math.max(pw, 46) + 22;
+      // nombre: se ENCOGE hasta un mínimo antes de cortarse (así no se pierde el final)
+      var tx = px + Math.max(pw, 52) + 24;
       var maxW = W - tx - P - notaW;
-      ctx.font='800 '+fs+'px '+FF; setLS(ctx,'-1px');
-      ctx.fillText(fit(ctx, f.nombre, maxW), tx, cy - (alto>70?15:11));
+      var nfs = fs;
+      ctx.font='800 '+nfs+'px '+FF; setLS(ctx,'-1px');
+      var minFs = Math.max(30, Math.round(fs * 0.62));   // hasta un 38% menos antes de cortar
+      while (ctx.measureText(f.nombre).width > maxW && nfs > minFs) {
+        nfs -= 2; ctx.font='800 '+nfs+'px '+FF;
+      }
+      ctx.fillText(fit(ctx, f.nombre, maxW), tx, cy - (alto > 70 ? 17 : 12));
       setLS(ctx,'0px');
-      ctx.font='500 '+(fs-16)+'px '+FF; ctx.fillStyle='rgba(255,255,255,.82)';
-      ctx.fillText(fit(ctx, f.sub || '', maxW), tx, cy + (alto>70?24:18));
+      ctx.font='600 '+Math.round(nfs*0.56)+'px '+FF; ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.fillText(fit(ctx, f.sub || '', maxW), tx, cy + (alto > 70 ? 28 : 20));
       // nota a la derecha
       if (f.nota){
         ctx.fillStyle='#fff'; ctx.font='800 '+(fs+2)+'px '+FF; ctx.textAlign='right';
