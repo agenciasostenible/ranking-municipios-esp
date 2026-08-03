@@ -20,6 +20,6 @@ export const GET: APIRoute = async ({ url }) => {
   const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
   return new Response(bytes, {
-    headers: { 'Content-Type': mime, 'Cache-Control': 'public, max-age=3600' },
+    headers: { 'Content-Type': mime, 'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable' },
   });
 };

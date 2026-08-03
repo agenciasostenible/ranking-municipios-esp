@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ url }) => {
 
   const headers: Record<string, string> = {
     'Content-Type': mime,
-    'Cache-Control': 'public, max-age=86400',
+    'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable',
   };
   // ?dl=1 → fuerza la descarga del archivo (para retocar la foto en el panel)
   if (url.searchParams.get('dl')) {

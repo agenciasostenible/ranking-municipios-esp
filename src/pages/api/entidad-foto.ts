@@ -10,6 +10,6 @@ export const GET: APIRoute = async ({ url }) => {
   const img = decodeStoredImage(row?.foto_data);
   if (!img) return new Response('Not found', { status: 404 });
   return new Response(img.bytes, {
-    headers: { 'Content-Type': img.mime, 'Cache-Control': 'public, max-age=3600' },
+    headers: { 'Content-Type': img.mime, 'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable' },
   });
 };
