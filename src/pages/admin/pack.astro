@@ -1,0 +1,274 @@
+---
+/**
+ * /admin/pack — Pack para ayuntamientos.
+ * Genera el TOP de una provincia/comunidad y, para CADA municipio del top, deja
+ * listo el mensaje (DM de Instagram y email) con su puesto y su nota, su cuenta
+ * de Instagram, su email y el enlace a su ficha. Objetivo: que el ayuntamiento
+ * comparta el post (difusión gratis) y que nos dé su email / una reunión.
+ */
+import { DB } from '../../lib/d1client';
+
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+const k = encodeURIComponent(key);
+
+const CATS: Record<string, string> = {
+  ranking_global: 'turismo',
+  pueblo_bonito: 'pueblos bonitos',
+  gastronomia: 'gastronomía',
+  Playas: 'playas',
+  monumentos: 'monumentos',
+  castillos: 'castillos',
+  naturaleza: 'naturaleza',
+  senderismo: 'senderismo',
+  fiestas: 'fiestas',
+  festivales: 'festivales',
+  museos: 'museos',
+  TurismoRural: 'turismo rural',
+  turismo_activo: 'turismo activo',
+  vinos: 'enoturismo',
+  oleoturismo: 'oleoturismo',
+  estrellas: 'astroturismo',
+};
+
+const cat     = Astro.url.searchParams.get('cat') || 'ranking_global';
+const ambTipo = Astro.url.searchParams.get('ambTipo') || 'prov';
+const ambVal  = Astro.url.searchParams.get('ambVal') || '';
+const n = Math.min(10, Math.max(3, parseInt(Astro.url.searchParams.get('n') || '3')));
+
+let ccaas: string[] = [], provincias: string[] = [], filas: any[] = [];
+let ambitoTxt = '', catTxt = CATS[cat] || cat;
+
+if (ok) {
+  const c1 = await DB.prepare(`SELECT DISTINCT comunidad FROM municipios WHERE comunidad IS NOT NULL ORDER BY comunidad`).all();
+  ccaas = (c1.results as any[]).map(r => r.comunidad);
+  const p1 = await DB.prepare(`SELECT DISTINCT provincia FROM municipios WHERE provincia IS NOT NULL ORDER BY provincia`).all();
+  provincias = (p1.results as any[]).map(r => r.provincia);
+
+  const valor = ambVal || (ambTipo === 'prov' ? provincias[0] : ccaas[0]) || '';
+  ambitoTxt = valor;
+  const cond = ambTipo === 'ccaa' ? 'AND m.comunidad = ?' : 'AND m.provincia = ?';
+
+  const { results } = await DB.prepare(`
+    SELECT m.codigo_ine, m.nombre, m.provincia, m.comunidad, p.puntuacion,
+           a.instagram, a.email, a.ig_dm_enviado_at, a.email_enviado_at
+    FROM puntuaciones p
+    JOIN municipios m ON m.codigo_ine = p.codigo_ine
+    LEFT JOIN ayuntamientos_contacto a ON a.codigo_ine = m.codigo_ine
+    WHERE p.categoria = ? AND p.puntuacion > 0 AND COALESCE(m.es_duplicado,0)=0 ${cond}
+    ORDER BY p.puntuacion DESC LIMIT ?
+  `).bind(cat, valor, n).all();
+
+  filas = ((results as any[]) || []).map((r, i) => ({
+    pos: i + 1, codigo: r.codigo_ine, nombre: r.nombre, provincia: r.provincia,
+    nota: Number(r.puntuacion).toFixed(1),
+    ig: String(r.instagram || '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/.*$/, ''),
+    email: r.email || '',
+    dmHecho: !!r.ig_dm_enviado_at,
+    emailHecho: !!r.email_enviado_at,
+  }));
+}
+
+const datos = JSON.stringify({ filas, ambitoTxt, catTxt, cat, n });
+---
+<html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pack para ayuntamientos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{ --rausch:#FF385C; --line:#e7dfd3; --muted:#8a7f70; --ok:#0a7d3c; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Plus Jakarta Sans","Helvetica Neue",Arial,system-ui,sans-serif; background:#faf8f5; color:#171412; }
+  .bar{ padding:13px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
+  .bar h1{ font-size:16px; margin:0; font-weight:800; letter-spacing:-.02em; }
+  .bar a{ font-size:20px; color:#171412; text-decoration:none; }
+  .wrap{ max-width:620px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
+  form,.card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  label.fld{ display:flex; flex-direction:column; gap:5px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; }
+  select{ font:inherit; font-size:16px; padding:10px 12px; border-radius:10px; border:1px solid #d9cfc0; background:#fff; width:100%; }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn{ font:inherit; font-size:15px; padding:12px 14px; border-radius:12px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; flex:1; font-weight:600; text-align:center; text-decoration:none; color:#171412; }
+  .btn.primary{ background:var(--rausch); color:#fff; border:0; font-weight:700; }
+  .mini{ font-size:13px; padding:8px 12px; border-radius:9px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; text-decoration:none; color:#171412; font-weight:600; display:inline-block; }
+  .mini.ok{ background:var(--ok); color:#fff; border:0; }
+  .mini.ig{ background:#171412; color:#fff; border:0; }
+  .muni{ border:1px solid var(--line); border-radius:14px; padding:13px 14px; background:#fff; }
+  .muni.done{ opacity:.55; }
+  .m-top{ display:flex; align-items:baseline; gap:10px; }
+  .m-pos{ font-weight:800; color:var(--rausch); font-size:19px; }
+  .m-nom{ font-weight:800; font-size:17px; letter-spacing:-.02em; }
+  .m-nota{ margin-left:auto; font-weight:800; color:var(--muted); }
+  .m-sub{ font-size:12.5px; color:var(--muted); margin:3px 0 9px; }
+  .tag{ display:inline-block; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:999px; margin-left:6px; }
+  .tag.si{ background:#e4f4ea; color:#0a5c2c; }
+  .tag.no{ background:#fdeaea; color:#a12; }
+  textarea{ width:100%; font:inherit; font-size:13px; line-height:1.5; padding:10px; border-radius:10px; border:1px solid #d9cfc0; background:#fafaf7; min-height:120px; resize:vertical; margin-top:8px; }
+  .hint{ font-size:12.5px; color:var(--muted); line-height:1.45; }
+  .vacio{ background:#fff3e6; padding:12px 14px; border-radius:12px; font-size:14px; }
+  .noauth{ padding:60px 20px; text-align:center; color:var(--muted); }
+  .paso{ background:#171412; color:#fff; border-radius:14px; padding:14px 16px; font-size:14px; line-height:1.55; }
+  .paso b{ color:#ffd0d8; }
+</style></head>
+<body>
+{ !ok ? (
+  <div class="noauth">Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</div>
+) : (
+<div>
+  <div class="bar"><a href={`/admin?key=${key}`}>←</a><h1>🏛️ Pack para ayuntamientos</h1></div>
+  <div class="wrap">
+    <div class="paso">
+      <b>Cómo funciona:</b> eliges una provincia y sale su TOP. Publicas la imagen del ranking y, con un toque,
+      avisas por Instagram o email a cada ayuntamiento de que su municipio sale en el post.
+      Ellos lo comparten con sus vecinos → <b>difusión gratis</b> y, de paso, conseguimos su email o una reunión.
+    </div>
+
+    <form method="get" action="/admin/pack">
+      <input type="hidden" name="key" value={key} />
+      <div class="row">
+        <label class="fld" style="flex:1">Ámbito
+          <select name="ambTipo" id="ambTipo">
+            <option value="prov" selected={ambTipo === 'prov'}>Provincia</option>
+            <option value="ccaa" selected={ambTipo === 'ccaa'}>Comunidad</option>
+          </select>
+        </label>
+        <label class="fld" style="flex:1">Cuántos
+          <select name="n">
+            {[3, 5, 10].map(v => <option value={v} selected={v === n}>Top {v}</option>)}
+          </select>
+        </label>
+      </div>
+      <label class="fld" id="wrapProv" style={ambTipo === 'prov' ? '' : 'display:none'}>Provincia
+        <select name="ambVal" id="selProv" disabled={ambTipo !== 'prov'}>
+          {provincias.map(p => <option value={p} selected={p === ambitoTxt}>{p}</option>)}
+        </select>
+      </label>
+      <label class="fld" id="wrapCcaa" style={ambTipo === 'ccaa' ? '' : 'display:none'}>Comunidad
+        <select name="ambVal" id="selCcaa" disabled={ambTipo !== 'ccaa'}>
+          {ccaas.map(c => <option value={c} selected={c === ambitoTxt}>{c}</option>)}
+        </select>
+      </label>
+      <label class="fld">Ranking de
+        <select name="cat">
+          {Object.entries(CATS).map(([v, l]) => <option value={v} selected={v === cat}>{l}</option>)}
+        </select>
+      </label>
+      <button class="btn primary" type="submit">🔎 Preparar el pack</button>
+    </form>
+
+    { filas.length === 0 ? (
+      <div class="vacio">No hay municipios con datos en ese ámbito. Prueba otra provincia o categoría.</div>
+    ) : (
+      <>
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">1️⃣ La publicación</div>
+          <div class="hint" style="margin-top:-4px">Genera la imagen del <b>TOP {n} de {catTxt} de {ambitoTxt}</b> y publícala. Luego vuelve aquí para avisar a los ayuntamientos.</div>
+          <a class="btn primary" href={`/admin/top?key=${k}&modo=municipios&cat=${encodeURIComponent(cat)}&ambTipo=${ambTipo}&ambVal=${encodeURIComponent(ambitoTxt)}`}>🏆 Crear la imagen del ranking →</a>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">2️⃣ Avisa a cada ayuntamiento</div>
+          <div class="hint" style="margin-top:-4px">El mensaje ya menciona su puesto y su nota. Copia, abre su perfil y pega.</div>
+        </div>
+
+        {filas.map((f: any) => (
+          <div class={`muni${f.dmHecho ? ' done' : ''}`} data-muni={f.codigo}>
+            <div class="m-top">
+              <span class="m-pos">#{f.pos}</span>
+              <span class="m-nom">{f.nombre}</span>
+              <span class="m-nota">{f.nota}</span>
+            </div>
+            <div class="m-sub">
+              {f.provincia}
+              {f.ig ? <span class="tag si">@{f.ig}</span> : <span class="tag no">sin Instagram</span>}
+              {f.email ? <span class="tag si">email ✓</span> : <span class="tag no">sin email</span>}
+              {f.dmHecho && <span class="tag si">DM ya enviado</span>}
+            </div>
+            <div class="row">
+              <button class="mini" data-copy-dm={f.codigo}>📋 Copiar mensaje</button>
+              {f.ig && <a class="mini ig" href={`https://instagram.com/${f.ig}`} target="_blank" rel="noopener">📲 Abrir Instagram</a>}
+              {f.email && <a class="mini" href={`mailto:${f.email}`}>✉️ {f.email}</a>}
+              <a class="mini" href={`/municipio/${f.codigo}`} target="_blank" rel="noopener">🔗 Su ficha</a>
+              {f.ig && !f.dmHecho && <button class="mini ok" data-hecho={f.codigo}>✓ Enviado</button>}
+            </div>
+            <textarea data-txt={f.codigo} readonly></textarea>
+          </div>
+        ))}
+
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">3️⃣ Cuando respondan</div>
+          <div class="hint" style="margin-top:-4px">Si te dan un email nuevo, guárdalo en el <a href={`/admin/hoy?key=${k}`}>Plan de HOY</a> para que entre en la campaña. Si quieren reunión, envíales <a href="/reuniones" target="_blank">rankingspain.com/reuniones</a>.</div>
+        </div>
+      </>
+    )}
+  </div>
+</div>
+) }
+
+<script type="application/json" id="datos" set:html={datos}></script>
+<script is:inline define:vars={{ k }}>
+(function(){
+  var D = JSON.parse(document.getElementById('datos')?.textContent || '{}');
+  var $ = function(id){ return document.getElementById(id); };
+
+  var at = $('ambTipo');
+  if (at) at.addEventListener('change', function(){
+    var v = at.value;
+    $('wrapProv').style.display = v === 'prov' ? '' : 'none';
+    $('wrapCcaa').style.display = v === 'ccaa' ? '' : 'none';
+    $('selProv').disabled = v !== 'prov';
+    $('selCcaa').disabled = v !== 'ccaa';
+  });
+
+  var filas = D.filas || [];
+  if (!filas.length) return;
+
+  // el mensaje: su puesto y su nota reales, y una petición clara
+  function mensaje(f){
+    var amb = D.ambitoTxt, cat = D.catTxt, n = D.n;
+    return 'Hola 👋 Somos Ranking Spain, el ranking turístico de los municipios de España.\n\n' +
+      'Acabamos de publicar el TOP ' + n + ' de ' + cat + ' de ' + amb + ' y ' + f.nombre +
+      ' está en el puesto #' + f.pos + ' con una puntuación de ' + f.nota + '. ¡Enhorabuena!\n\n' +
+      'Os dejamos la publicación por si os apetece compartirla con vuestros vecinos, es toda vuestra 🙌\n\n' +
+      'También tenéis la ficha completa de ' + f.nombre + ' aquí: rankingspain.com/municipio/' + f.codigo + '\n' +
+      'Si veis algo que falte o que se pueda mejorar, decídnoslo y lo actualizamos encantados.\n\n' +
+      '¿A qué email os podemos escribir para enviaros vuestra ficha y los datos completos? ¡Gracias!';
+  }
+
+  filas.forEach(function(f){
+    var ta = document.querySelector('[data-txt="' + f.codigo + '"]');
+    if (ta) ta.value = mensaje(f);
+  });
+
+  document.querySelectorAll('[data-copy-dm]').forEach(function(b){
+    b.addEventListener('click', async function(){
+      var cod = b.getAttribute('data-copy-dm');
+      var f = filas.filter(function(x){ return x.codigo === cod; })[0];
+      var t = mensaje(f);
+      try { await navigator.clipboard.writeText(t); }
+      catch(_){ var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(x){} ta.remove(); }
+      var o = b.textContent; b.textContent = '✓ Copiado'; setTimeout(function(){ b.textContent = o; }, 1500);
+    });
+  });
+
+  // marcar como contactado (reutiliza el registro de DMs que ya existe)
+  document.querySelectorAll('[data-hecho]').forEach(function(b){
+    b.addEventListener('click', async function(){
+      var cod = b.getAttribute('data-hecho');
+      b.disabled = true; b.textContent = '…';
+      try{
+        var r = await fetch('/api/admin/instagram-dm?key=' + k, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ codigo_ine: cod, enviado: true })
+        });
+        var j = await r.json();
+        if (j.ok) { document.querySelector('[data-muni="' + cod + '"]').classList.add('done'); b.textContent = '✓'; }
+        else { b.disabled = false; b.textContent = '✓ Enviado'; }
+      }catch(_){ b.disabled = false; b.textContent = '✓ Enviado'; }
+    });
+  });
+})();
+</script>
+</body></html>
