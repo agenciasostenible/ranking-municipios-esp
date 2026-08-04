@@ -562,42 +562,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 )}
 
 <!-- ── QUÉ VER CERCA DE TI (destacado, geolocalización) ── -->
-<section class="nearby">
-  <div class="nearby-card">
-    <span class="nearby-eyebrow"><Icon name="map_pin" size={14} /> A tu lado · Nuevo</span>
-    <h2 class="nearby-title">¿Qué ver cerca de ti?</h2>
-    <p class="nearby-sub">Comparte tu ubicación y descubre al instante <strong>todo lo que tienes al lado para visitar</strong>.</p>
-    <a href="/cerca" id="home-cerca-btn" class="nearby-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="20" height="20"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
-      Ver qué hay cerca de mí
-    </a>
-    <div class="nearby-tags">
-      <span><Icon name="account_balance" size={14} /> Monumentos</span>
-      <span><Icon name="landscape" size={14} /> Naturaleza</span>
-      <span><Icon name="binoculars" size={14} /> Miradores</span>
-      <span><Icon name="castle" size={14} /> Castillos</span>
-      <span><Icon name="dark_mode" size={14} /> Misterio</span>
-    </div>
-  </div>
-</section>
-<script is:inline>
-  (function () {
-    var b = document.getElementById('home-cerca-btn');
-    if (!b) return;
-    b.addEventListener('click', function (e) {
-      if (!navigator.geolocation) return; // deja navegar a /cerca
-      e.preventDefault();
-      b.style.opacity = '.75';
-      navigator.geolocation.getCurrentPosition(
-        function (p) { window.location.href = '/cerca?lat=' + p.coords.latitude.toFixed(4) + '&lon=' + p.coords.longitude.toFixed(4); },
-        function () { window.location.href = '/cerca'; },
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
-      );
-    });
-  })();
-</script>
-
-<!-- ── PLANIFICADOR DE RUTAS (destacado) ── -->
 <section class="route-promo">
   <form class="rp-card" method="get" action="/ruta" id="rp-card" data-mode="zona">
     <div class="rp-head">
@@ -744,66 +708,7 @@ const municipios = (rankingGlobal as any[]).map(r => ({
   : <div class="home-banner"><img src={bannerCats.foto} alt={bannerCats.alt ?? 'Publicidad'} loading="lazy" /></div>
 )}
 
-<!-- ── CATEGORY CHIPS (Airbnb style) ── -->
-<div class="chips-wrap">
-  <button class="chips-arrow chips-arrow-left" id="chips-prev" aria-label="Anterior">&#8249;</button>
-  <div class="chips-bar" id="chips-bar">
-    <div class="chips-inner">
-      {TABS.map((t) => (
-        <a href={`/ranking/${t.key}`} class="chip-cat">
-          <Icon name={t.icon} size={20} />
-          {t.label}
-        </a>
-      ))}
-    </div>
-  </div>
-  <button class="chips-arrow chips-arrow-right" id="chips-next" aria-label="Siguiente">&#8250;</button>
-</div>
-<script>
-  const bar = document.getElementById('chips-bar');
-  document.getElementById('chips-prev')?.addEventListener('click', () => bar?.scrollBy({ left: -300, behavior: 'smooth' }));
-  document.getElementById('chips-next')?.addEventListener('click', () => bar?.scrollBy({ left: 300, behavior: 'smooth' }));
-</script>
-
 <!-- ── JOYAS SIN MASIFICAR (desactivado) ── -->
-
-<!-- ── INSTAGRAMERS ── -->
-<section class="ig-home-sec">
-  <div class="ig-home-header">
-    <h2 class="ig-home-title">Instagramers de España</h2>
-    <p class="ig-home-sub">Creadores que recorren el país y comparten sus rincones favoritos</p>
-  </div>
-  <div class="ig-hero-card">
-    <img src="/instagramers-banner.jpg" alt="" class="ig-hero-img" aria-hidden="true" />
-    <div class="ig-hero-grad"></div>
-    <div class="ig-hero-top">
-      <span class="ig-hero-pill">📸 Comunidad</span>
-    </div>
-    <div class="ig-hero-bottom">
-      <h3 class="ig-hero-title">Descubre qué recomienda cada instagramer</h3>
-      <p class="ig-hero-sub">Instagramers verificados especializados en turismo por España</p>
-      <a href="/instagramers/unirme" class="ig-hero-btn">¿Eres creador? Únete gratis →</a>
-    </div>
-  </div>
-  <div class="ig-profiles-scroll">
-    {igHome.map((ig: any) => (
-      <a class="ig-profile-card" href={`/instagramers#ig-${ig.id}`}>
-        {ig.avatar_url
-          ? <img class="ig-p-av" src={ig.avatar_url} alt={`@${ig.handle}`} loading="lazy" />
-          : <span class="ig-p-av ig-p-ph">{String(ig.handle || '?')[0].toUpperCase()}</span>
-        }
-        <span class="ig-p-handle">@{ig.handle}</span>
-        {ig.seguidores > 0 && <span class="ig-p-seg">{ig.seguidores >= 1000000 ? (ig.seguidores/1000000).toFixed(1)+' mill.' : ig.seguidores >= 1000 ? Math.round(ig.seguidores/1000)+' mil' : ig.seguidores} seg.</span>}
-        {ig.especialidad && (() => { const esp = String(ig.especialidad).split(',').map((s: string) => s.trim()).find((s: string) => s && s.toLowerCase() !== 'general') || String(ig.especialidad).split(',')[0].trim(); return <span class="ig-p-tag">{esp}</span>; })()}
-      </a>
-    ))}
-    <a class="ig-join-card" href="/instagramers/unirme">
-      <span class="ig-join-plus">+</span>
-      <span class="ig-join-text">¿Eres creador?<br/>Únete gratis</span>
-    </a>
-  </div>
-  <a href="/instagramers" class="ig-see-all">Ver todos los instagramers →</a>
-</section>
 
 <!-- ── SEPARADOR ── -->
 <div class="sec-divider"></div>
@@ -864,30 +769,6 @@ const municipios = (rankingGlobal as any[]).map(r => ({
 .sp-un .sp-cta { color: #8a6608; }
 </style>
 
-<!-- ── EXPLORAR POR CATEGORÍA (agrupado) ── -->
-<section class="cat-explore" id="explora">
-  <div class="cx-head">
-    <h2 class="cx-title">Explora por categoría</h2>
-    <a href="/mapa" class="cx-map-btn"><Icon name="globe" size={16} /> Ver en el mapa →</a>
-  </div>
-  {SIDEBAR_GROUPS.map((g) => (
-    <div class="cx-group">
-      <div class="cx-group-title"><Icon name={g.icon} size={15} /> {g.title}</div>
-      <div class="cx-cards">
-        {g.items.map((it) => (
-          <a href={`/ranking/${it.key}`} class="cx-card">
-            <span class="cx-ic"><Icon name={it.icon} size={20} /></span>
-            <span class="cx-text">
-              <span class="cx-label">{it.label}</span>
-              {getSubtitle(it.key) && <span class="cx-sub">{getSubtitle(it.key)}</span>}
-            </span>
-          </a>
-        ))}
-      </div>
-    </div>
-  ))}
-</section>
-
 <!-- ── MAPA EMBEBIDO ── -->
 <section class="home-map-sec">
   <div class="hms-head">
@@ -895,6 +776,11 @@ const municipios = (rankingGlobal as any[]).map(r => ({
     <a href="/mapa" class="hms-more"><Icon name="sliders" size={16} /> Filtrar el mapa por categoría →</a>
   </div>
   <div id="home-map"></div>
+  {/* geolocalización: antes era una sección aparte que repetía la idea del mapa */}
+  <a href="/cerca" id="home-cerca-btn" class="hms-cerca">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="19" height="19"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+    Ver qué hay cerca de mí
+  </a>
 </section>
 <script id="home-map-data" type="application/json" set:html={homeMapData}></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -1356,6 +1242,9 @@ function doSearch() {
   background: var(--primary); padding: 13px 24px; border-radius: 999px; text-decoration: none; white-space: nowrap;
   box-shadow: 0 4px 14px rgba(255,56,92,.38); transition: transform .12s, box-shadow .12s; }
 .hms-more:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,56,92,.48); }
+.hms-cerca { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 12px 18px;
+  border-radius: 999px; background: #171412; color: #fff; font-weight: 700; font-size: .95rem; text-decoration: none; }
+.hms-cerca:hover { background: #2a231e; }
 #home-map { width: 100%; height: 460px; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); background: #e8eef0; z-index: 0; }
 @media (max-width: 560px) { #home-map { height: 360px; } }
 .cx-title { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0; }
