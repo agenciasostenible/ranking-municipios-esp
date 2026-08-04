@@ -410,11 +410,16 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
     if (a.frase) l.push('▸ ' + a.nombre + ': ' + a.frase);
     if (b.frase) l.push('▸ ' + b.nombre + ': ' + b.frase);
     if (a.frase || b.frase) l.push('');
+    // hashtags sin repetir (p. ej. un duelo en Granada con el municipio Granada)
+    var tags = ['España','turismoespaña','viajarporespaña', info.hash||'turismo'];
+    if (amb !== 'España') tags.push(slug(amb));
+    tags.push(slug(a.nombre), slug(b.nombre));
+    var vistos = {}, unicos = [];
+    tags.forEach(function(t){ var k=t.toLowerCase(); if(t && !vistos[k]){ vistos[k]=1; unicos.push('#'+t); } });
     l.push('Vota 🅰️ o 🅱️ en comentarios y defiende tu elección 👇',
            'Mañana publico el resultado en Stories.',
            '🔗 El ranking completo, en rankingspain.com', '',
-           '#España #turismoespaña #viajarporespaña #' + (info.hash||'turismo') +
-           (amb!=='España' ? ' #'+slug(amb) : '') + ' #' + slug(a.nombre) + ' #' + slug(b.nombre));
+           unicos.join(' '));
     $('copy').value = l.join('\n');
 
     var av=$('avisoDif');
