@@ -197,9 +197,13 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
             <select id="selB"></select>
           </label>
           <div class="row">
-            <button class="btn" type="button" id="aleatorio">🎲 Duelo al azar</button>
+            <button class="btn primary" type="button" id="ia">🧠 Elige tú el duelo</button>
+          </div>
+          <div class="row">
+            <button class="btn" type="button" id="aleatorio">🎲 Al azar</button>
             <button class="btn" type="button" id="reñido">🔥 El más reñido</button>
           </div>
+          <div class="hint" id="avisoIA" style="display:none;background:#f3f0ff;padding:10px 12px;border-radius:10px;color:#4527a0"></div>
           <div class="hint" id="avisoDif"></div>
         </div>
 
@@ -274,6 +278,30 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
     while (j === i && filas.length > 1) j = Math.floor(Math.random()*filas.length);
     selA.value = i; selB.value = j; recargar();
   });
+  // 🧠 que lo elija la IA: valora si son comparables, si hay pique y si está reñido
+  $('ia')?.addEventListener('click', async function(e){
+    var btn=e.target, o=btn.textContent;
+    btn.disabled=true; btn.textContent='Pensando el duelo…';
+    var av=$('avisoIA'); av.style.display='none';
+    try{
+      var candidatos = filas.map(function(f,i){ return { i:i, nombre:f.nombre, sub:f.sub, nota:f.nota, pos:f.pos }; });
+      var r = await fetch('/api/admin/duelo-ia?key=' + encodeURIComponent(new URLSearchParams(location.search).get('key')||''), {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ candidatos: candidatos, categoria: (D.info&&D.info.titulo)||'', ambito: D.ambitoTxt, modo: D.modo })
+      });
+      var d = await r.json();
+      if (d.ok) {
+        selA.value = d.a; selB.value = d.b;
+        if (d.pregunta && $('pregunta')) $('pregunta').value = d.pregunta;
+        await recargar();
+        if (d.motivo) { av.textContent = '🧠 ' + d.motivo; av.style.display='block'; }
+      } else {
+        av.textContent = '⚠️ ' + (d.error || 'No pude elegir el duelo.'); av.style.display='block';
+      }
+    }catch(err){ av.textContent='⚠️ Error de red al pensar el duelo.'; av.style.display='block'; }
+    finally{ btn.disabled=false; btn.textContent=o; }
+  });
+
   // el duelo más interesante es el que está más igualado
   $('reñido')?.addEventListener('click', function(){
     var mejor = null;
@@ -370,8 +398,12 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
     ctx.fillStyle=gc; ctx.fillRect(0,0,W,cab);
     ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle='rgba(255,255,255,.85)';
     ctx.font='700 38px '+FF; ctx.fillText('Ranking Spain', W/2, 74);
-    ctx.fillStyle='#fff'; ctx.font='800 104px '+FF; setLS(ctx,'-2px');
+    ctx.fillStyle='#fff'; setLS(ctx,'-2px');
     var preg=($('pregunta') && $('pregunta').value.trim()) || '¿Cuál gana?';
+    // la pregunta se encoge hasta caber: "¿Pampaneira o Guadix?" no cabe a 104px
+    var pfs=104;
+    ctx.font='800 '+pfs+'px '+FF;
+    while (ctx.measureText(preg).width > W-90 && pfs > 46) { pfs -= 3; ctx.font='800 '+pfs+'px '+FF; }
     ctx.fillText(preg, W/2, 176); setLS(ctx,'0px');
     ctx.font='600 40px '+FF; ctx.fillStyle='rgba(255,255,255,.8)';
     ctx.fillText((D.info.titulo||'') + ' · ' + (D.ambitoTxt||'España'), W/2, 224);
