@@ -1,0 +1,452 @@
+---
+/**
+ * /admin/duelo — "Granada VS Córdoba": el formato que más comentarios genera.
+ * Eliges categoría y ámbito, y enfrentas dos candidatos (sitios o municipios).
+ * Salen su puesto y su nota REALES, así que el duelo no es una opinión: es un
+ * empate/diferencia que la gente puede ir a comprobar a la web.
+ */
+import { DB } from '../../lib/d1client';
+import { CAT_FUENTES, CAT_TIPOS_F, ORDER_SITIOS } from '../../lib/entidades';
+
+const env = (k: string) =>
+  (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
+const key = Astro.url.searchParams.get('key') ?? '';
+const ok = env('ADMIN_KEY') && key === env('ADMIN_KEY');
+
+const CATS: Record<string, { titulo: string; sust: string; color: string; emoji: string; hash: string }> = {
+  ranking_global:  { titulo: 'Municipios',       sust: 'municipio',    color: '#FF385C', emoji: '🏆', hash: 'turismo' },
+  pueblo_bonito:   { titulo: 'Pueblos bonitos',  sust: 'pueblo',       color: '#FF385C', emoji: '✨', hash: 'pueblosbonitos' },
+  Playas:          { titulo: 'Playas',           sust: 'playa',        color: '#0277BD', emoji: '🏖️', hash: 'playas' },
+  gastronomia:     { titulo: 'Gastronomía',      sust: 'sitio',        color: '#E65100', emoji: '🍽️', hash: 'gastronomia' },
+  cuevas:          { titulo: 'Cuevas',           sust: 'cueva',        color: '#5D4037', emoji: '🕳️', hash: 'cuevas' },
+  castillos:       { titulo: 'Castillos',        sust: 'castillo',     color: '#6D4C41', emoji: '🏰', hash: 'castillos' },
+  monumentos:      { titulo: 'Monumentos',       sust: 'monumento',    color: '#8D6E63', emoji: '🏛️', hash: 'monumentos' },
+  museos:          { titulo: 'Museos',           sust: 'museo',        color: '#5E35B1', emoji: '🖼️', hash: 'museos' },
+  miradores:       { titulo: 'Miradores',        sust: 'mirador',      color: '#00838F', emoji: '🌄', hash: 'miradores' },
+  naturaleza:      { titulo: 'Naturaleza',       sust: 'sitio',        color: '#2E7D32', emoji: '🌿', hash: 'naturaleza' },
+  senderismo:      { titulo: 'Senderismo',       sust: 'ruta',         color: '#558B2F', emoji: '🥾', hash: 'senderismo' },
+  pozas:           { titulo: 'Pozas y cascadas', sust: 'sitio',        color: '#0097A7', emoji: '💦', hash: 'pozas' },
+  estrellas:       { titulo: 'Astroturismo',     sust: 'sitio',        color: '#283593', emoji: '✨', hash: 'astroturismo' },
+  hoteles_encanto: { titulo: 'Hoteles',          sust: 'hotel',        color: '#AD1457', emoji: '🏨', hash: 'hoteles' },
+  fiestas:         { titulo: 'Fiestas',          sust: 'fiesta',       color: '#C2185B', emoji: '🎉', hash: 'fiestas' },
+};
+
+const modo    = Astro.url.searchParams.get('modo') || 'municipios';
+const cat     = Astro.url.searchParams.get('cat') || 'ranking_global';
+const ambTipo = Astro.url.searchParams.get('ambTipo') || 'pais';
+const ambVal  = Astro.url.searchParams.get('ambVal') || '';
+
+let ccaas: string[] = [], provincias: string[] = [], filas: any[] = [];
+let ambitoTxt = '';
+const info = CATS[cat] ?? CATS.ranking_global;
+
+if (ok) {
+  const c1 = await DB.prepare(`SELECT DISTINCT comunidad FROM municipios WHERE comunidad IS NOT NULL ORDER BY comunidad`).all();
+  ccaas = (c1.results as any[]).map(r => r.comunidad);
+  const p1 = await DB.prepare(`SELECT DISTINCT provincia FROM municipios WHERE provincia IS NOT NULL ORDER BY provincia`).all();
+  provincias = (p1.results as any[]).map(r => r.provincia);
+
+  ambitoTxt = (ambTipo !== 'pais' && ambVal) ? ambVal : 'España';
+  const cond = ambTipo === 'ccaa' && ambVal ? 'AND m.comunidad = ?'
+             : ambTipo === 'prov' && ambVal ? 'AND m.provincia = ?' : '';
+
+  if (modo === 'municipios') {
+    const params: any[] = [cat];
+    if (cond) params.push(ambVal);
+    const { results } = await DB.prepare(`
+      SELECT m.nombre, m.provincia, m.codigo_ine, m.foto_url, p.puntuacion
+      FROM puntuaciones p JOIN municipios m ON m.codigo_ine = p.codigo_ine
+      WHERE p.categoria = ? AND p.puntuacion > 0 AND COALESCE(m.es_duplicado,0)=0 ${cond}
+      ORDER BY p.puntuacion DESC LIMIT 40
+    `).bind(...params).all();
+    filas = ((results as any[]) || []).map((r, i) => ({
+      pos: i + 1, nombre: r.nombre, sub: r.provincia,
+      foto: /^https:\/\/upload\.wikimedia\.org\//.test(r.foto_url || '') ? r.foto_url : '',
+      nota: Number(r.puntuacion).toFixed(1), frase: '',
+    }));
+  } else {
+    const fuentes = CAT_FUENTES[cat] ?? [];
+    const tipos = CAT_TIPOS_F[cat];
+    if (fuentes.length) {
+      const params: any[] = [cat, ...fuentes, ...(tipos ?? [])];
+      if (cond) params.push(ambVal);
+      const { results } = await DB.prepare(`
+        SELECT MIN(e.nombre) AS nombre, MIN(e.descripcion) AS descripcion,
+               MIN(CASE WHEN e.foto_url LIKE 'https://upload.wikimedia.org%' THEN e.foto_url END) AS foto_sitio,
+               MIN(CASE WHEN m.foto_url LIKE 'https://upload.wikimedia.org%' THEN m.foto_url END) AS foto_muni,
+               MIN(m.codigo_ine || '|' || m.nombre || '|' || COALESCE(m.provincia,'')) AS muni_pack,
+               MAX(e.puntuacion) AS ent_score,
+               COALESCE(MAX(e.puntuacion), p.puntuacion, 0) AS puntuacion
+        FROM entidades e
+        JOIN municipios m ON m.codigo_ine = e.codigo_ine
+        LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = ?
+        WHERE e.fuente IN (${fuentes.map(() => '?').join(',')})
+          ${tipos ? `AND e.tipo IN (${tipos.map(() => '?').join(',')})` : ''}
+          AND COALESCE(m.es_duplicado,0)=0
+          ${cond}
+        GROUP BY LOWER(e.nombre), CASE WHEN e.fuente='mil_lugares' THEN '' ELSE m.codigo_ine END
+        HAVING (MAX(e.puntuacion) IS NOT NULL
+                OR (MIN(e.nivel_sello) IS NOT NULL AND MIN(e.nivel_sello)!='')
+                OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
+                OR MIN(e.fuente) IN ('bandera_azul','guia_michelin','hoteles_encanto','starlight','cuevas','balnearios','pueblos_mas_bonitos'))
+           AND LENGTH(MIN(e.nombre)) < 60
+        ORDER BY ${ORDER_SITIOS}
+        LIMIT 40
+      `).bind(...params).all();
+      filas = ((results as any[]) || []).map((r, i) => {
+        const [, municipio, provincia] = String(r.muni_pack || '||').split('|');
+        const d = (r.descripcion || '').replace(/\s+/g, ' ').trim();
+        return {
+          pos: i + 1, nombre: r.nombre,
+          sub: municipio + (ambitoTxt === 'España' && provincia ? ` · ${provincia}` : ''),
+          foto: r.foto_sitio || r.foto_muni || '',
+          nota: r.ent_score != null ? Number(r.ent_score).toFixed(1) : '',
+          frase: d.split(/(?<=[.!?])\s/)[0] || '',
+        };
+      });
+    }
+  }
+}
+
+const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
+---
+<html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Duelo para Instagram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{ --rausch:#FF385C; --line:#e7dfd3; --muted:#8a7f70; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Plus Jakarta Sans","Helvetica Neue",Arial,system-ui,sans-serif; background:#faf8f5; color:#171412; }
+  .bar{ padding:13px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
+  .bar h1{ font-size:16px; margin:0; font-weight:800; letter-spacing:-.02em; }
+  .bar a{ font-size:20px; color:#171412; text-decoration:none; }
+  .wrap{ max-width:560px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
+  form,.card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  label.fld{ display:flex; flex-direction:column; gap:5px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; }
+  select,input[type=text]{ font:inherit; font-size:16px; padding:10px 12px; border-radius:10px; border:1px solid #d9cfc0; background:#fff; width:100%; }
+  .row{ display:flex; gap:8px; }
+  .btn{ font:inherit; font-size:15px; padding:12px 14px; border-radius:12px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; flex:1; font-weight:600; text-align:center; }
+  .btn.primary{ background:var(--rausch); color:#fff; border:0; font-weight:700; }
+  .btn.dark{ background:#171412; color:#fff; border:0; font-weight:700; }
+  canvas#post{ width:100%; max-width:340px; margin:0 auto; display:block; border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.18); }
+  textarea{ width:100%; font:inherit; font-size:13.5px; line-height:1.5; padding:12px; border-radius:12px; border:1px solid #d9cfc0; background:#fafaf7; min-height:210px; resize:vertical; }
+  .vacio{ background:#fff3e6; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.5; }
+  .hint{ font-size:12.5px; color:var(--muted); line-height:1.45; }
+  .noauth{ padding:60px 20px; text-align:center; color:var(--muted); }
+  input[type=file]{ display:none; }
+  .fchip{ font-size:13px; padding:7px 12px; border-radius:999px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; display:inline-block; }
+</style></head>
+<body>
+{ !ok ? (
+  <div class="noauth">Acceso restringido. Añade <code>?key=TU_CLAVE</code> a la URL.</div>
+) : (
+<div>
+  <div class="bar"><a href={`/admin?key=${key}`}>←</a><h1>⚔️ Duelo para Instagram</h1></div>
+  <div class="wrap">
+    <div class="hint">El formato que más comentarios genera: la gente defiende su tierra. Los datos son los reales de la web, así que el duelo se puede comprobar.</div>
+
+    <form method="get" action="/admin/duelo">
+      <input type="hidden" name="key" value={key} />
+      <div class="row">
+        <label class="fld" style="flex:1">Duelo de
+          <select name="modo">
+            <option value="municipios" selected={modo === 'municipios'}>Municipios</option>
+            <option value="sitios" selected={modo === 'sitios'}>Sitios concretos</option>
+          </select>
+        </label>
+        <label class="fld" style="flex:1">Ámbito
+          <select name="ambTipo" id="ambTipo">
+            <option value="pais" selected={ambTipo === 'pais'}>Toda España</option>
+            <option value="ccaa" selected={ambTipo === 'ccaa'}>Comunidad</option>
+            <option value="prov" selected={ambTipo === 'prov'}>Provincia</option>
+          </select>
+        </label>
+      </div>
+      <label class="fld">Categoría
+        <select name="cat">
+          {Object.entries(CATS).map(([v, c]) => (
+            <option value={v} selected={v === cat}>{c.emoji} {c.titulo}</option>
+          ))}
+        </select>
+      </label>
+      <label class="fld" id="wrapCcaa" style={ambTipo === 'ccaa' ? '' : 'display:none'}>Comunidad
+        <select name="ambVal" id="selCcaa" disabled={ambTipo !== 'ccaa'}>
+          {ccaas.map(c => <option value={c} selected={c === ambVal}>{c}</option>)}
+        </select>
+      </label>
+      <label class="fld" id="wrapProv" style={ambTipo === 'prov' ? '' : 'display:none'}>Provincia
+        <select name="ambVal" id="selProv" disabled={ambTipo !== 'prov'}>
+          {provincias.map(p => <option value={p} selected={p === ambVal}>{p}</option>)}
+        </select>
+      </label>
+      <button class="btn primary" type="submit">🔎 Buscar candidatos</button>
+    </form>
+
+    { filas.length < 2 ? (
+      <div class="vacio">No hay al menos dos candidatos con datos en ese ámbito. Prueba con toda España u otra categoría.</div>
+    ) : (
+      <>
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">⚔️ Los dos contrincantes</div>
+          <label class="fld">🅰️ Rival A
+            <select id="selA"></select>
+          </label>
+          <label class="fld">🅱️ Rival B
+            <select id="selB"></select>
+          </label>
+          <div class="row">
+            <button class="btn" type="button" id="aleatorio">🎲 Duelo al azar</button>
+            <button class="btn" type="button" id="reñido">🔥 El más reñido</button>
+          </div>
+          <div class="hint" id="avisoDif"></div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">🎨 Fotos</div>
+          <div class="hint" style="margin-top:-4px">Si algún rival no tiene foto propia, sube una tú (se ve mucho mejor que un fondo liso).</div>
+          <div class="row">
+            <label class="fchip" for="fA">📷 Foto de A</label>
+            <label class="fchip" for="fB">📷 Foto de B</label>
+          </div>
+          <input type="file" id="fA" accept="image/*" />
+          <input type="file" id="fB" accept="image/*" />
+          <label class="fld">Pregunta del duelo
+            <input type="text" id="pregunta" value="¿Cuál gana?" />
+          </label>
+        </div>
+
+        <canvas id="post" width="1080" height="1350"></canvas>
+        <div class="row">
+          <button class="btn dark" type="button" id="descargar">📲 Descargar / Compartir</button>
+        </div>
+        <div class="card">
+          <div style="font-weight:800;font-size:14px">📝 Copy para Instagram</div>
+          <textarea id="copy" readonly></textarea>
+          <button class="btn primary" type="button" id="copiar">📋 Copiar el copy</button>
+        </div>
+        <div class="hint">⚠️ Publica el resultado al día siguiente en Stories: cerrar el duelo es lo que hace que la gente vuelva al siguiente.</div>
+      </>
+    )}
+  </div>
+</div>
+) }
+
+<script type="application/json" id="datos" set:html={datos}></script>
+<script is:inline>
+(function(){
+  var D = JSON.parse(document.getElementById('datos')?.textContent || '{}');
+  var $ = function(id){ return document.getElementById(id); };
+  var FF = '"Plus Jakarta Sans","Helvetica Neue",Arial,system-ui,sans-serif';
+
+  var at = $('ambTipo');
+  if (at) at.addEventListener('change', function(){
+    var v = at.value;
+    $('wrapCcaa').style.display = v === 'ccaa' ? '' : 'none';
+    $('wrapProv').style.display = v === 'prov' ? '' : 'none';
+    $('selCcaa').disabled = v !== 'ccaa';
+    $('selProv').disabled = v !== 'prov';
+  });
+
+  var filas = D.filas || [];
+  if (filas.length < 2) return;
+
+  // desplegables de rivales
+  var selA = $('selA'), selB = $('selB');
+  filas.forEach(function(f, i){
+    var t = '#' + f.pos + ' ' + f.nombre + ' · ' + (f.sub || '') + (f.nota ? ' — ' + f.nota : '');
+    var oA = document.createElement('option'); oA.value = i; oA.textContent = t; selA.appendChild(oA);
+    var oB = document.createElement('option'); oB.value = i; oB.textContent = t; selB.appendChild(oB);
+  });
+  selA.value = 0; selB.value = 1;
+
+  var imgA = null, imgB = null, propA = null, propB = null;
+
+  function A(){ return filas[parseInt(selA.value,10)] || filas[0]; }
+  function B(){ return filas[parseInt(selB.value,10)] || filas[1]; }
+
+  [selA, selB].forEach(function(s){ s.addEventListener('change', recargar); });
+  $('pregunta')?.addEventListener('input', pintar);
+
+  $('aleatorio')?.addEventListener('click', function(){
+    var i = Math.floor(Math.random()*filas.length), j = Math.floor(Math.random()*filas.length);
+    while (j === i && filas.length > 1) j = Math.floor(Math.random()*filas.length);
+    selA.value = i; selB.value = j; recargar();
+  });
+  // el duelo más interesante es el que está más igualado
+  $('reñido')?.addEventListener('click', function(){
+    var mejor = null;
+    for (var i=0;i<filas.length;i++) for (var j=i+1;j<filas.length;j++){
+      var a=parseFloat(filas[i].nota||0), b=parseFloat(filas[j].nota||0);
+      if (!a || !b) continue;
+      var d = Math.abs(a-b) + (j-i)*0.01;      // igualados y no consecutivos por casualidad
+      if (!mejor || d < mejor.d) mejor = { i:i, j:j, d:d };
+    }
+    if (mejor){ selA.value = mejor.i; selB.value = mejor.j; recargar(); }
+  });
+
+  function cargar(url){ return new Promise(function(res){
+    if(!url) return res(null);
+    var im=new Image(); im.crossOrigin='anonymous';
+    im.onload=function(){res(im);}; im.onerror=function(){res(null);};
+    im.src=url; setTimeout(function(){res(null);},6000); }); }
+
+  function fileTo(which){ return function(e){
+    var f=e.target.files[0]; if(!f) return;
+    var im=new Image();
+    im.onload=function(){ if(which==='A'){ propA=im; } else { propB=im; } pintar(); };
+    im.src=URL.createObjectURL(f);
+  }; }
+  $('fA')?.addEventListener('change', fileTo('A'));
+  $('fB')?.addEventListener('change', fileTo('B'));
+
+  async function recargar(){
+    propA = null; propB = null;
+    imgA = await cargar(A().foto); imgB = await cargar(B().foto);
+    pintar();
+  }
+
+  // ── canvas ──
+  function fit(ctx,t,maxW){ var s=t; while(ctx.measureText(s).width>maxW && s.length>6) s=s.slice(0,-2); return s===t?t:s+'…'; }
+  function cover(ctx,im,x0,y0,W,H){ var ir=im.width/im.height, cr=W/H, dw,dh,dx,dy;
+    if(ir>cr){dh=H;dw=H*ir;dx=x0+(W-dw)/2;dy=y0;}else{dw=W;dh=W/ir;dx=x0;dy=y0+(H-dh)/2;}
+    ctx.save(); ctx.beginPath(); ctx.rect(x0,y0,W,H); ctx.clip(); ctx.drawImage(im,dx,dy,dw,dh); ctx.restore(); }
+  function setLS(ctx,v){ try{ ctx.letterSpacing=v; }catch(e){} }
+  function brillo(im){ try{ var c=document.createElement('canvas'); c.width=24;c.height=24;
+      var x=c.getContext('2d'); x.drawImage(im,0,0,24,24); var d=x.getImageData(0,0,24,24).data,s=0;
+      for(var i=0;i<d.length;i+=4) s+=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+      return s/(d.length/4); }catch(e){ return 110; } }
+
+  function mitad(ctx, im, y0, alto, W, f, etiqueta, colorEtiq){
+    if (im) {
+      cover(ctx, im, 0, y0, W, alto);
+      var b = brillo(im);
+      var op = Math.min(0.78, Math.max(0.46, 0.36 + (b/255)*0.55));
+      ctx.fillStyle='rgba(0,0,0,'+op.toFixed(2)+')'; ctx.fillRect(0,y0,W,alto);
+    } else {
+      var g=ctx.createLinearGradient(0,y0,W,y0+alto);
+      g.addColorStop(0, D.info.color); g.addColorStop(1,'#15110e');
+      ctx.fillStyle=g; ctx.fillRect(0,y0,W,alto);
+      ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillRect(0,y0,W,alto);
+    }
+    var P=64, cy=y0+alto/2;
+    ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=20; ctx.shadowOffsetY=3;
+    // etiqueta A / B
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.font='800 92px '+FF; ctx.fillStyle=colorEtiq;
+    ctx.fillText(etiqueta, P, cy - 4);
+    var ex = P + ctx.measureText(etiqueta).width + 30;
+    // nombre (se encoge si es largo)
+    var maxW = W - ex - P - (f.nota ? 210 : 0);
+    var nfs = 76;
+    ctx.font='800 '+nfs+'px '+FF; setLS(ctx,'-1.5px');
+    while (ctx.measureText(f.nombre).width > maxW && nfs > 44) { nfs -= 2; ctx.font='800 '+nfs+'px '+FF; }
+    ctx.fillStyle='#fff';
+    ctx.fillText(fit(ctx, f.nombre, maxW), ex, cy - Math.round(nfs*0.32));
+    setLS(ctx,'0px');
+    // municipio/provincia + puesto
+    ctx.font='600 '+Math.round(nfs*0.48)+'px '+FF; ctx.fillStyle='rgba(255,255,255,.86)';
+    var sub = (f.sub || '') + '   ·   #' + f.pos + ' de España';
+    if (D.ambitoTxt && D.ambitoTxt !== 'España') sub = (f.sub || '') + '   ·   #' + f.pos + ' de ' + D.ambitoTxt;
+    ctx.fillText(fit(ctx, sub, maxW), ex, cy + Math.round(nfs*0.42));
+    // nota
+    if (f.nota){
+      ctx.textAlign='right'; ctx.fillStyle='#fff'; ctx.font='800 84px '+FF;
+      ctx.fillText(f.nota, W-P, cy); ctx.textAlign='left';
+    }
+    ctx.shadowColor='transparent';
+  }
+
+  function pintar(){
+    var cv=$('post'); if(!cv) return; var ctx=cv.getContext('2d');
+    var W=1080,H=1350, cab=250, pie=104;
+    var alto=(H-cab-pie)/2;
+    ctx.clearRect(0,0,W,H);
+
+    // cabecera
+    var gc=ctx.createLinearGradient(0,0,W,cab);
+    gc.addColorStop(0,'#171412'); gc.addColorStop(1,'#2a211c');
+    ctx.fillStyle=gc; ctx.fillRect(0,0,W,cab);
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle='rgba(255,255,255,.85)';
+    ctx.font='700 38px '+FF; ctx.fillText('Ranking Spain', W/2, 74);
+    ctx.fillStyle='#fff'; ctx.font='800 104px '+FF; setLS(ctx,'-2px');
+    var preg=($('pregunta') && $('pregunta').value.trim()) || '¿Cuál gana?';
+    ctx.fillText(preg, W/2, 176); setLS(ctx,'0px');
+    ctx.font='600 40px '+FF; ctx.fillStyle='rgba(255,255,255,.8)';
+    ctx.fillText((D.info.titulo||'') + ' · ' + (D.ambitoTxt||'España'), W/2, 224);
+
+    mitad(ctx, propA || imgA, cab, alto, W, A(), '🅰️', '#4FC3F7');
+    mitad(ctx, propB || imgB, cab+alto, alto, W, B(), '🅱️', '#FF8A65');
+
+    // franja VS en el centro
+    var vy=cab+alto;
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(W/2, vy, 62, 0, 7); ctx.fill();
+    ctx.fillStyle='#171412'; ctx.font='800 56px '+FF; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('VS', W/2, vy+2);
+
+    // pie
+    ctx.textBaseline='alphabetic';
+    ctx.fillStyle='#171412'; ctx.fillRect(0,H-pie,W,pie);
+    ctx.fillStyle='#fff'; ctx.font='800 46px '+FF;
+    ctx.fillText('Vota A o B en comentarios 👇', W/2, H-46);
+    ctx.textAlign='left';
+    refrescarCopy();
+  }
+
+  function refrescarCopy(){
+    if(!$('copy')) return;
+    var a=A(), b=B(), info=D.info||{}, amb=D.ambitoTxt||'España';
+    var slug=function(s){ return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]/g,''); };
+    var preg=($('pregunta') && $('pregunta').value.trim()) || '¿Cuál gana?';
+    var dif = (a.nota && b.nota) ? Math.abs(parseFloat(a.nota)-parseFloat(b.nota)).toFixed(1) : null;
+    var l = [ preg.toUpperCase() + ' ' + (info.emoji||'') + ' ' + (info.titulo||'') + ' de ' + amb, '',
+      '🅰️ ' + a.nombre + ' · ' + (a.sub||'') + (a.nota ? '  —  ' + a.nota + ' (#' + a.pos + ')' : ''),
+      '🅱️ ' + b.nombre + ' · ' + (b.sub||'') + (b.nota ? '  —  ' + b.nota + ' (#' + b.pos + ')' : ''), '' ];
+    if (dif !== null) {
+      l.push(parseFloat(dif) <= 1 ? ('Les separan solo ' + dif + ' puntos en nuestro ranking. Prácticamente un empate.')
+                                  : ('Les separan ' + dif + ' puntos en nuestro ranking.'), '');
+    }
+    if (a.frase) l.push('▸ ' + a.nombre + ': ' + a.frase);
+    if (b.frase) l.push('▸ ' + b.nombre + ': ' + b.frase);
+    if (a.frase || b.frase) l.push('');
+    l.push('Vota 🅰️ o 🅱️ en comentarios y defiende tu elección 👇',
+           'Mañana publico el resultado en Stories.',
+           '🔗 El ranking completo, en rankingspain.com', '',
+           '#España #turismoespaña #viajarporespaña #' + (info.hash||'turismo') +
+           (amb!=='España' ? ' #'+slug(amb) : '') + ' #' + slug(a.nombre) + ' #' + slug(b.nombre));
+    $('copy').value = l.join('\n');
+
+    var av=$('avisoDif');
+    if (av) av.textContent = dif === null ? ''
+      : (parseFloat(dif) <= 1 ? '🔥 Duelo muy igualado (' + dif + ' puntos): de los que más comentarios generan.'
+                              : 'Diferencia de ' + dif + ' puntos. Los más reñidos funcionan mejor: prueba “El más reñido”.');
+  }
+
+  function dataURLtoBlob(d){ var p=d.split(','), m=(p[0].match(/:(.*?);/)||[])[1]||'image/png', b=atob(p[1]), u=new Uint8Array(b.length); for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i); return new Blob([u],{type:m}); }
+  $('descargar')?.addEventListener('click', async function(){
+    pintar();
+    var blob; try { blob = dataURLtoBlob($('post').toDataURL('image/png')); }
+    catch(e){ alert('Una foto bloqueó la descarga. Sube tú las fotos y reintenta.'); return; }
+    var nom = 'duelo-' + (A().nombre+'-'+B().nombre).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-') + '.png';
+    var file = new File([blob], nom, {type:'image/png'});
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      try { await navigator.share({files:[file], title:'Duelo · Ranking Spain'}); return; } catch(err){ if(err&&err.name==='AbortError') return; }
+    }
+    var url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.download=nom; a.href=url; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+  });
+
+  $('copiar')?.addEventListener('click', async function(e){
+    var t=$('copy').value, b=e.target;
+    try { await navigator.clipboard.writeText(t); }
+    catch(_){ var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(x){} ta.remove(); }
+    var o=b.textContent; b.textContent='✓ Copiado'; setTimeout(function(){ b.textContent=o; },1500);
+  });
+
+  recargar();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(pintar).catch(function(){});
+})();
+</script>
+</body></html>
