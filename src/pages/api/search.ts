@@ -106,8 +106,36 @@ function entidadLabel(fuente: string, tipo: string): string {
   if (tipo === 'monumento' || tipo === 'palacio' || tipo === 'iglesia') return 'Monumento';
   if (tipo === 'espacio') return 'Espacio natural';
   if (tipo === 'museo' || tipo === 'Museo') return 'Museo';
-  return 'Lugar';
+  return TIPO_LABEL[tipo] || 'Lugar';
 }
+
+// Respaldo por TIPO de entidad: hay decenas de fuentes y siempre habrá alguna sin
+// mapear (p. ej. el Festival Etnosur tiene fuente='turismo'), pero el tipo sí es
+// fiable. Sirve para la etiqueta y para abrir la ficha por su sección.
+const TIPO_CAT: Record<string, string> = {
+  festival: 'festivales', fiesta: 'fiestas', castillo: 'castillos', torre: 'castillos',
+  fortaleza: 'castillos', alcazaba: 'castillos', muralla: 'castillos',
+  monumento: 'monumentos', palacio: 'monumentos', ermita: 'monumentos', yacimiento: 'monumentos',
+  iglesia: 'turismo_religioso', religioso: 'turismo_religioso',
+  museo: 'museos', Museo: 'museos',
+  espacio: 'naturaleza', fauna: 'naturaleza', montaña: 'naturaleza',
+  sendero: 'senderismo', ciclismo: 'ciclismo', activo: 'turismo_activo',
+  playa: 'Playas', playa_urbana: 'Playas', playa_fluvial: 'pozas',
+  poza: 'pozas', cascada: 'pozas', termas: 'pozas', senda_fluvial: 'pozas',
+  cueva: 'cuevas', mirador: 'miradores', astro: 'estrellas', starlight: 'estrellas',
+  balneario: 'balnearios', bodega: 'vinos', vino: 'vinos', oleoturismo: 'oleoturismo',
+  restaurante: 'gastronomia', bar: 'gastronomia', gastronomia: 'gastronomia',
+  alojamiento: 'hoteles_encanto', rural: 'TurismoRural', camping: 'Campings',
+  mascotas: 'turismo_mascotas', lgtbi: 'turismo_lgtbi', misterio: 'misterioso', lujo: 'lujo',
+};
+
+const TIPO_LABEL: Record<string, string> = {
+  festival: 'Festival', fiesta: 'Fiesta', sendero: 'Ruta', poza: 'Poza', cascada: 'Cascada',
+  cueva: 'Cueva', mirador: 'Mirador', playa: 'Playa', restaurante: 'Restaurante',
+  alojamiento: 'Alojamiento', rural: 'Casa rural', camping: 'Camping', bodega: 'Bodega',
+  balneario: 'Balneario', activo: 'Turismo activo', ciclismo: 'Ruta en bici',
+  astro: 'Astroturismo', religioso: 'Templo', fauna: 'Fauna', termas: 'Termas',
+};
 
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
@@ -166,21 +194,38 @@ export const GET: APIRoute = async ({ request }) => {
       DB.prepare(
         `SELECT DISTINCT comunidad FROM municipios WHERE LOWER(comunidad) LIKE LOWER(?) OR ${normProv('comunidad')} LIKE ? ORDER BY comunidad LIMIT 2`
       ).bind(`%${q}%`, `%${qNorm}%`).all(),
-      // Busca en nombres de entidades (monumentos, castillos, restaurantes, naturaleza…)
-      DB.prepare(
-        `SELECT e.nombre AS ent_nombre, e.fuente, e.tipo,
-                m.codigo_ine, m.nombre AS mun_nombre, m.provincia,
-                COALESCE(p.puntuacion, 0) AS pts
-         FROM entidades e
-         JOIN municipios m ON m.codigo_ine = e.codigo_ine
-         LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = 'ranking_global'
-         WHERE COALESCE(m.es_duplicado,0)=0
-           AND (LOWER(e.nombre) LIKE LOWER(?) OR ${normProv('e.nombre')} LIKE ?)
-         ORDER BY
-           CASE WHEN LOWER(e.nombre) LIKE LOWER(?) THEN 0 ELSE 1 END,
-           pts DESC, length(e.nombre) ASC
-         LIMIT 8`
-      ).bind(`%${q}%`, `%${qNorm}%`, `%${q}%`).all(),
+      // Lugares: por NOMBRE y también por DESCRIPCIÓN, palabra a palabra.
+      // Antes se buscaba la frase entera solo en el nombre: "rio ebro" no
+      // encontraba "Sotos del río Ebro" y se perdía todo lo que menciona el río.
+      (() => {
+        const palabras = qNorm.split(/\s+/).filter(w => w.length > 2).slice(0, 4);
+        const condNombre = palabras.length
+          ? palabras.map(() => `${normProv('e.nombre')} LIKE ?`).join(' AND ')
+          : `${normProv('e.nombre')} LIKE ?`;
+        const condDesc = palabras.length
+          ? palabras.map(() => `${normProv('e.descripcion')} LIKE ?`).join(' AND ')
+          : `${normProv('e.descripcion')} LIKE ?`;
+        const pNombre = palabras.length ? palabras.map(w => `%${w}%`) : [`%${qNorm}%`];
+        const pDesc = [...pNombre];
+        return DB.prepare(
+          `SELECT e.nombre AS ent_nombre, e.fuente, e.tipo, e.descripcion,
+                  m.codigo_ine, m.nombre AS mun_nombre, m.provincia,
+                  COALESCE(p.puntuacion, 0) AS pts,
+                  CASE WHEN ${condNombre} THEN 0 ELSE 1 END AS en_nombre
+           FROM entidades e
+           JOIN municipios m ON m.codigo_ine = e.codigo_ine
+           LEFT JOIN puntuaciones p ON p.codigo_ine = m.codigo_ine AND p.categoria = 'ranking_global'
+           WHERE COALESCE(m.es_duplicado,0)=0
+             AND ((${condNombre}) OR (${condDesc}))
+           GROUP BY LOWER(e.nombre), m.codigo_ine
+           ORDER BY
+             en_nombre,                                   -- primero los que lo llevan en el nombre
+             CASE WHEN ${normProv('e.nombre')} LIKE ? THEN 0 ELSE 1 END,  -- luego coincidencia exacta
+             MAX(e.puntuacion) IS NULL,                   -- los curados antes que los genéricos
+             pts DESC, length(e.nombre) ASC
+           LIMIT 14`
+        ).bind(...pNombre, ...pNombre, ...pDesc, `${qNorm}%`).all();
+      })(),
     ]);
 
     geoResults = [
@@ -189,13 +234,17 @@ export const GET: APIRoute = async ({ request }) => {
     ];
 
     entResults = (entRows as any[])
-      .map(r => ({
-        tipo: 'lugar',
-        nombre: r.ent_nombre,
-        subtitulo: `${entidadLabel(r.fuente, r.tipo)} · ${r.mun_nombre} (${r.provincia})`,
-        codigo_ine: r.codigo_ine,
-        url: `/municipio/${r.codigo_ine}${FUENTE_CAT[r.fuente] ? `?desde=${FUENTE_CAT[r.fuente]}&ent=${encodeURIComponent(r.ent_nombre)}#desde-block` : ''}`,
-      }));
+      .map(r => {
+        // la sección de la ficha sale de la fuente y, si no está mapeada, del tipo
+        const cat = FUENTE_CAT[r.fuente] || TIPO_CAT[r.tipo] || '';
+        return {
+          tipo: 'lugar',
+          nombre: r.ent_nombre,
+          subtitulo: `${entidadLabel(r.fuente, r.tipo)} · ${r.mun_nombre} (${r.provincia})`,
+          codigo_ine: r.codigo_ine,
+          url: `/municipio/${r.codigo_ine}${cat ? `?desde=${cat}&ent=${encodeURIComponent(r.ent_nombre)}#desde-block` : ''}`,
+        };
+      });
   }
 
   if (q) {
