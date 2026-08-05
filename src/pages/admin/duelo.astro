@@ -137,6 +137,8 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
   .hint{ font-size:12.5px; color:var(--muted); line-height:1.45; }
   .noauth{ padding:60px 20px; text-align:center; color:var(--muted); }
   input[type=file]{ display:none; }
+  .btn.est{ font-size:14px; padding:11px 10px; }
+  .btn.est.on{ background:#171412; color:#fff; border-color:#171412; }
   .fchip{ font-size:13px; padding:7px 12px; border-radius:999px; border:1px solid #d9cfc0; background:#fff; cursor:pointer; display:inline-block; }
 </style></head>
 <body>
@@ -209,6 +211,16 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
         </div>
 
         <div class="card">
+          <div style="font-weight:800;font-size:14px">🎨 Estilo del cartel</div>
+          <div class="hint" style="margin-top:-4px">Pruébalos: el cartel cambia al instante.</div>
+          <div class="row">
+            <button class="btn est on" type="button" data-est="clasico">Clásico</button>
+            <button class="btn est" type="button" data-est="marcador">Marcador</button>
+            <button class="btn est" type="button" data-est="limpio">Limpio</button>
+          </div>
+        </div>
+
+        <div class="card">
           <div style="font-weight:800;font-size:14px">🎨 Fotos</div>
           <div class="hint" style="margin-top:-4px">Si algún rival no tiene foto propia, sube una tú (se ve mucho mejor que un fondo liso).</div>
           <div class="row">
@@ -267,12 +279,19 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
   selA.value = 0; selB.value = 1;
 
   var imgA = null, imgB = null, propA = null, propB = null;
+  var estilo = 'clasico';
 
   function A(){ return filas[parseInt(selA.value,10)] || filas[0]; }
   function B(){ return filas[parseInt(selB.value,10)] || filas[1]; }
 
   [selA, selB].forEach(function(s){ s.addEventListener('change', recargar); });
   $('pregunta')?.addEventListener('input', pintar);
+  document.querySelectorAll('.btn.est').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.btn.est').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on'); estilo = b.dataset.est; pintar();
+    });
+  });
 
   $('aleatorio')?.addEventListener('click', function(){
     var i = Math.floor(Math.random()*filas.length), j = Math.floor(Math.random()*filas.length);
@@ -403,43 +422,146 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
 
   function pintar(){
     var cv=$('post'); if(!cv) return; var ctx=cv.getContext('2d');
-    var W=1080,H=1350, cab=250, pie=104;
-    var alto=(H-cab-pie)/2;
+    var W=1080,H=1350;
     ctx.clearRect(0,0,W,H);
+    var preg=($('pregunta') && $('pregunta').value.trim()) || '¿Cuál gana?';
+    var nfsComun = tamComun(ctx, W);
+    if (estilo === 'marcador') pintarMarcador(ctx, W, H, preg, nfsComun);
+    else if (estilo === 'limpio') pintarLimpio(ctx, W, H, preg, nfsComun);
+    else pintarClasico(ctx, W, H, preg, nfsComun);
+    refrescarCopy();   // el copy se regenera con cada repintado
+  }
 
-    // cabecera
+  // pastilla de categoría: se lee mucho mejor que el texto gris pequeño de antes
+  function pastillaCat(ctx, W, y){
+    var txt = ((D.info && D.info.emoji) || '') + '  ' + ((D.info && D.info.titulo) || '') +
+              '  ·  ' + (D.ambitoTxt || 'España');
+    ctx.font='800 34px '+FF; setLS(ctx,'1.5px');
+    var tw=ctx.measureText(txt).width, padX=30, h=64, w=tw+padX*2, x=(W-w)/2;
+    ctx.fillStyle=(D.info && D.info.color) || '#FF385C';
+    roundRect(ctx,x,y,w,h,h/2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(txt, W/2, y+h/2+1);
+    ctx.textBaseline='alphabetic'; setLS(ctx,'0px');
+    return h;
+  }
+  function roundRect(ctx,x,y,w,h,r){ r=Math.min(r,h/2,w/2); ctx.beginPath(); ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  function cabecera(ctx, W, cab, preg){
     var gc=ctx.createLinearGradient(0,0,W,cab);
     gc.addColorStop(0,'#171412'); gc.addColorStop(1,'#2a211c');
     ctx.fillStyle=gc; ctx.fillRect(0,0,W,cab);
-    ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle='rgba(255,255,255,.85)';
-    ctx.font='700 38px '+FF; ctx.fillText('Ranking Spain', W/2, 74);
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillStyle='rgba(255,255,255,.7)'; ctx.font='700 32px '+FF;
+    ctx.fillText('Ranking Spain', W/2, 62);
+    // la pregunta, con AIRE por debajo (antes se pegaba a la categoría)
     ctx.fillStyle='#fff'; setLS(ctx,'-2px');
-    var preg=($('pregunta') && $('pregunta').value.trim()) || '¿Cuál gana?';
-    // la pregunta se encoge hasta caber: "¿Pampaneira o Guadix?" no cabe a 104px
-    var pfs=104;
-    ctx.font='800 '+pfs+'px '+FF;
+    var pfs=112; ctx.font='800 '+pfs+'px '+FF;
     while (ctx.measureText(preg).width > W-90 && pfs > 46) { pfs -= 3; ctx.font='800 '+pfs+'px '+FF; }
-    ctx.fillText(preg, W/2, 176); setLS(ctx,'0px');
-    ctx.font='600 40px '+FF; ctx.fillStyle='rgba(255,255,255,.8)';
-    ctx.fillText((D.info.titulo||'') + ' · ' + (D.ambitoTxt||'España'), W/2, 224);
+    ctx.fillText(preg, W/2, 62 + 42 + pfs*0.74); setLS(ctx,'0px');
+    pastillaCat(ctx, W, cab - 92);
+  }
 
-    var nfsComun = tamComun(ctx, W);
-    mitad(ctx, propA || imgA, cab, alto, W, A(), '🅰️', '#4FC3F7', nfsComun);
-    mitad(ctx, propB || imgB, cab+alto, alto, W, B(), '🅱️', '#FF8A65', nfsComun);
-
-    // franja VS en el centro
-    var vy=cab+alto;
-    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(W/2, vy, 62, 0, 7); ctx.fill();
-    ctx.fillStyle='#171412'; ctx.font='800 56px '+FF; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('VS', W/2, vy+2);
-
-    // pie
-    ctx.textBaseline='alphabetic';
-    ctx.fillStyle='#171412'; ctx.fillRect(0,H-pie,W,pie);
-    ctx.fillStyle='#fff'; ctx.font='800 46px '+FF;
-    ctx.fillText('Vota A o B en comentarios 👇', W/2, H-46);
+  function pie(ctx, W, H, alto){
+    ctx.fillStyle='#171412'; ctx.fillRect(0,H-alto,W,alto);
+    ctx.fillStyle='#fff'; ctx.font='800 46px '+FF; ctx.textAlign='center';
+    ctx.fillText('Vota A o B en comentarios 👇', W/2, H-alto/2+16);
     ctx.textAlign='left';
-    refrescarCopy();
+  }
+
+  // ── ESTILO 1: clásico (cabecera + dos mitades) ──
+  function pintarClasico(ctx, W, H, preg, nfs){
+    var cab=310, p=104, alto=(H-cab-p)/2;
+    cabecera(ctx, W, cab, preg);
+    mitad(ctx, propA || imgA, cab, alto, W, A(), '🅰️', '#4FC3F7', nfs);
+    mitad(ctx, propB || imgB, cab+alto, alto, W, B(), '🅱️', '#FF8A65', nfs);
+    circuloVS(ctx, W/2, cab+alto, 62);
+    pie(ctx, W, H, p);
+  }
+
+  // ── ESTILO 2: marcador (la nota manda, como un resultado deportivo) ──
+  function pintarMarcador(ctx, W, H, preg, nfs){
+    var cab=310, p=104, alto=(H-cab-p)/2;
+    cabecera(ctx, W, cab, preg);
+    [[propA||imgA, A(), 'A', '#4FC3F7', cab], [propB||imgB, B(), 'B', '#FF8A65', cab+alto]]
+      .forEach(function(x){
+        var im=x[0], f=x[1], et=x[2], col=x[3], y0=x[4], cy=y0+alto/2;
+        if (im){ cover(ctx,im,0,y0,W,alto);
+          var b=brillo(im), op=Math.min(.8,Math.max(.5,.4+(b/255)*.55));
+          ctx.fillStyle='rgba(0,0,0,'+op.toFixed(2)+')'; ctx.fillRect(0,y0,W,alto);
+        } else { ctx.fillStyle='#1d1815'; ctx.fillRect(0,y0,W,alto); }
+        ctx.shadowColor='rgba(0,0,0,.65)'; ctx.shadowBlur=22;
+        // nota enorme a la izquierda, como un marcador
+        ctx.textAlign='left'; ctx.textBaseline='middle';
+        ctx.fillStyle=col; ctx.font='800 150px '+FF; setLS(ctx,'-4px');
+        var nota = f.nota || '—';
+        ctx.fillText(nota, 64, cy); 
+        var nx = 64 + ctx.measureText(nota).width + 40;
+        setLS(ctx,'0px');
+        // nombre y municipio a la derecha de la nota
+        var maxW = W - nx - 64;
+        var t = Math.min(nfs, 66);
+        ctx.font='800 '+t+'px '+FF; setLS(ctx,'-1.5px'); ctx.fillStyle='#fff';
+        while (ctx.measureText(f.nombre).width > maxW && t > 40) { t-=2; ctx.font='800 '+t+'px '+FF; }
+        ctx.fillText(fit(ctx,f.nombre,maxW), nx, cy - 22); setLS(ctx,'0px');
+        ctx.font='600 36px '+FF; ctx.fillStyle='rgba(255,255,255,.9)';
+        ctx.fillText(fit(ctx,(f.sub||'')+'  ·  #'+f.pos, maxW), nx, cy + 30);
+        // letra A/B en una esquina, discreta
+        ctx.font='800 40px '+FF; ctx.fillStyle=col; ctx.textAlign='right';
+        ctx.fillText(et, W-56, y0+58); ctx.textAlign='left';
+        ctx.shadowColor='transparent';
+      });
+    circuloVS(ctx, W/2, cab+alto, 58);
+    pie(ctx, W, H, p);
+  }
+
+  // ── ESTILO 3: limpio (sin cabecera negra; todo sobre las fotos) ──
+  function pintarLimpio(ctx, W, H, preg, nfs){
+    var p=104, alto=(H-p)/2;
+    [[propA||imgA, A(), '#4FC3F7', 0], [propB||imgB, B(), '#FF8A65', alto]].forEach(function(x){
+      var im=x[0], f=x[1], col=x[2], y0=x[3], cy=y0+alto/2;
+      if (im){ cover(ctx,im,0,y0,W,alto);
+        var b=brillo(im), op=Math.min(.8,Math.max(.5,.42+(b/255)*.55));
+        ctx.fillStyle='rgba(0,0,0,'+op.toFixed(2)+')'; ctx.fillRect(0,y0,W,alto);
+      } else { var g=ctx.createLinearGradient(0,y0,W,y0+alto);
+        g.addColorStop(0,(D.info&&D.info.color)||'#FF385C'); g.addColorStop(1,'#15110e');
+        ctx.fillStyle=g; ctx.fillRect(0,y0,W,alto); }
+      ctx.shadowColor='rgba(0,0,0,.7)'; ctx.shadowBlur=24;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      var t=Math.min(nfs, 78), maxW=W-140;
+      ctx.font='800 '+t+'px '+FF; setLS(ctx,'-2px'); ctx.fillStyle='#fff';
+      while (ctx.measureText(f.nombre).width > maxW && t > 42) { t-=2; ctx.font='800 '+t+'px '+FF; }
+      var dy = (y0===0) ? 40 : -40;                 // el texto huye del círculo VS central
+      ctx.fillText(fit(ctx,f.nombre,maxW), W/2, cy + dy - 26); setLS(ctx,'0px');
+      ctx.font='600 38px '+FF; ctx.fillStyle='rgba(255,255,255,.92)';
+      ctx.fillText(fit(ctx,(f.sub||''), maxW), W/2, cy + dy + 30);
+      if (f.nota){ ctx.font='800 64px '+FF; ctx.fillStyle=col;
+        ctx.fillText(f.nota, W/2, cy + dy + 96); }
+      ctx.shadowColor='transparent';
+    });
+    // pregunta arriba, sobre la foto
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.shadowColor='rgba(0,0,0,.75)'; ctx.shadowBlur=26;
+    ctx.fillStyle='#fff'; setLS(ctx,'-2px');
+    var pfs=104; ctx.font='800 '+pfs+'px '+FF;
+    while (ctx.measureText(preg).width > W-100 && pfs > 44) { pfs-=3; ctx.font='800 '+pfs+'px '+FF; }
+    ctx.fillText(preg, W/2, 132); setLS(ctx,'0px');
+    ctx.shadowColor='transparent';
+    pastillaCat(ctx, W, 160);
+    circuloVS(ctx, W/2, alto, 62);
+    pie(ctx, W, H, p);
+  }
+
+  function circuloVS(ctx, x, y, r){
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=18;
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle='#171412'; ctx.font='800 '+Math.round(r*0.9)+'px '+FF;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('VS', x, y+2);
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
   }
 
   function refrescarCopy(){
