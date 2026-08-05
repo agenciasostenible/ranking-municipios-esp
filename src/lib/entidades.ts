@@ -47,6 +47,21 @@ export const CAT_TIPOS_F: Record<string, string[]> = {
 };
 
 /**
+ * Entradas que NO son un sitio visitable y no deben salir como candidatos en las
+ * herramientas de publicación: el sello genérico ("Bandera Azul 2026" está 229
+ * veces, una por municipio premiado), las etiquetas de distinción ("Uno de Los
+ * Pueblos más Bonitos…") y los viales sueltos de OSM.
+ * Se usa dentro de un HAVING, por eso los agregados MIN().
+ */
+export const FILTRO_NO_SITIO = `
+  MIN(e.nombre) NOT LIKE 'Bandera Azul %'
+  AND MIN(e.nombre) NOT LIKE 'Uno de %'
+  AND MIN(e.nombre) NOT LIKE 'Calle %'
+  AND MIN(e.nombre) NOT LIKE 'Avenida %'
+  AND MIN(e.nombre) NOT LIKE 'Plaza %'
+  AND MIN(e.nombre) NOT LIKE 'Carretera %'`;
+
+/**
  * Criterio de orden de los SITIOS dentro de una categoría (el mismo en el listado
  * /entidades/[cat] y en la home): primero los distinguidos —nota curada de sitio,
  * sello o distinción oficial—, luego por prestigio del sello/fuente y nota.

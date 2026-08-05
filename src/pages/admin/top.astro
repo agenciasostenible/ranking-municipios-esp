@@ -7,7 +7,7 @@
  * El orden es el de la web (lib/entidades), así que nunca la contradice.
  */
 import { DB } from '../../lib/d1client';
-import { CAT_FUENTES, CAT_TIPOS_F, ORDER_SITIOS } from '../../lib/entidades';
+import { CAT_FUENTES, CAT_TIPOS_F, ORDER_SITIOS, FILTRO_NO_SITIO } from '../../lib/entidades';
 
 const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
@@ -99,7 +99,7 @@ if (ok) {
                 OR (MIN(e.nivel_sello) IS NOT NULL AND MIN(e.nivel_sello)!='')
                 OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
                 OR MIN(e.fuente) IN ('bandera_azul','guia_michelin','hoteles_encanto','starlight','cuevas','balnearios','pueblos_mas_bonitos'))
-           AND MIN(e.nombre) NOT LIKE 'Calle %' AND MIN(e.nombre) NOT LIKE 'Bandera Azul %'
+           AND ${FILTRO_NO_SITIO}
            AND LENGTH(MIN(e.nombre)) < 60
         ORDER BY ${ORDER_SITIOS}
         LIMIT 30

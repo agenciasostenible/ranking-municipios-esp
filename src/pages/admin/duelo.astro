@@ -6,7 +6,7 @@
  * empate/diferencia que la gente puede ir a comprobar a la web.
  */
 import { DB } from '../../lib/d1client';
-import { CAT_FUENTES, CAT_TIPOS_F, ORDER_SITIOS } from '../../lib/entidades';
+import { CAT_FUENTES, CAT_TIPOS_F, ORDER_SITIOS, FILTRO_NO_SITIO } from '../../lib/entidades';
 
 const env = (k: string) =>
   (import.meta as any).env?.[k] ?? (typeof process !== 'undefined' ? (process as any).env[k] : undefined);
@@ -90,6 +90,7 @@ if (ok) {
                 OR (MIN(e.sello_oficial) IS NOT NULL AND MIN(e.sello_oficial)!='')
                 OR MIN(e.fuente) IN ('bandera_azul','guia_michelin','hoteles_encanto','starlight','cuevas','balnearios','pueblos_mas_bonitos'))
            AND LENGTH(MIN(e.nombre)) < 60
+           AND ${FILTRO_NO_SITIO}
         ORDER BY ${ORDER_SITIOS}
         LIMIT 40
       `).bind(...params).all();
@@ -346,7 +347,22 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
       for(var i=0;i<d.length;i+=4) s+=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
       return s/(d.length/4); }catch(e){ return 110; } }
 
-  function mitad(ctx, im, y0, alto, W, f, etiqueta, colorEtiq){
+  // Tamaño de letra COMÚN a los dos rivales: si cada mitad calcula el suyo, el
+  // nombre corto sale grande y el largo pequeño, y el cartel queda descompensado.
+  function tamComun(ctx, W){
+    var base = 76, min = 46;
+    [A(), B()].forEach(function(f){
+      var ex = 64 + 92 + 30;                       // margen + etiqueta A/B + hueco
+      var maxW = W - ex - 64 - (f.nota ? 210 : 0);
+      var t = base;
+      ctx.font='800 '+t+'px '+FF; setLS(ctx,'-1.5px');
+      while (ctx.measureText(f.nombre).width > maxW && t > min) { t -= 2; ctx.font='800 '+t+'px '+FF; }
+      if (t < base) base = t;
+    });
+    return base;
+  }
+
+  function mitad(ctx, im, y0, alto, W, f, etiqueta, colorEtiq, nfsComun){
     if (im) {
       cover(ctx, im, 0, y0, W, alto);
       var b = brillo(im);
@@ -365,16 +381,15 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
     ctx.font='800 92px '+FF; ctx.fillStyle=colorEtiq;
     ctx.fillText(etiqueta, P, cy - 4);
     var ex = P + ctx.measureText(etiqueta).width + 30;
-    // nombre (se encoge si es largo)
+    // nombre: mismo tamaño en las dos mitades
     var maxW = W - ex - P - (f.nota ? 210 : 0);
-    var nfs = 76;
+    var nfs = nfsComun;
     ctx.font='800 '+nfs+'px '+FF; setLS(ctx,'-1.5px');
-    while (ctx.measureText(f.nombre).width > maxW && nfs > 44) { nfs -= 2; ctx.font='800 '+nfs+'px '+FF; }
     ctx.fillStyle='#fff';
     ctx.fillText(fit(ctx, f.nombre, maxW), ex, cy - Math.round(nfs*0.32));
     setLS(ctx,'0px');
-    // municipio/provincia + puesto
-    ctx.font='600 '+Math.round(nfs*0.48)+'px '+FF; ctx.fillStyle='rgba(255,255,255,.86)';
+    // municipio/provincia + puesto (con mínimo legible: antes se encogía con el nombre)
+    ctx.font='600 '+Math.max(34, Math.round(nfs*0.48))+'px '+FF; ctx.fillStyle='rgba(255,255,255,.92)';
     var sub = (f.sub || '') + '   ·   #' + f.pos + ' de España';
     if (D.ambitoTxt && D.ambitoTxt !== 'España') sub = (f.sub || '') + '   ·   #' + f.pos + ' de ' + D.ambitoTxt;
     ctx.fillText(fit(ctx, sub, maxW), ex, cy + Math.round(nfs*0.42));
@@ -408,8 +423,9 @@ const datos = JSON.stringify({ filas, info, ambitoTxt, modo });
     ctx.font='600 40px '+FF; ctx.fillStyle='rgba(255,255,255,.8)';
     ctx.fillText((D.info.titulo||'') + ' · ' + (D.ambitoTxt||'España'), W/2, 224);
 
-    mitad(ctx, propA || imgA, cab, alto, W, A(), '🅰️', '#4FC3F7');
-    mitad(ctx, propB || imgB, cab+alto, alto, W, B(), '🅱️', '#FF8A65');
+    var nfsComun = tamComun(ctx, W);
+    mitad(ctx, propA || imgA, cab, alto, W, A(), '🅰️', '#4FC3F7', nfsComun);
+    mitad(ctx, propB || imgB, cab+alto, alto, W, B(), '🅱️', '#FF8A65', nfsComun);
 
     // franja VS en el centro
     var vy=cab+alto;
